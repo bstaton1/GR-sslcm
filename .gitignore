@@ -1,36 +1,27 @@
-# History files
+# Files associated with R sessions/projects
+.Rproj.user/
 .Rhistory
-.Rapp.history
-
-# Session Data files
 .RData
-
-# User-specific files
 .Ruserdata
 
-# Example code in package build process
-*-Ex.R
-
-# Output files from R CMD build
-/*.tar.gz
-
-# Output files from R CMD check
-/*.Rcheck/
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
-
-# knitr and R markdown default cache directories
-*_cache/
-/cache/
+# Saved R objects (e.g., posterior samples)
+*.rds
 
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+
+# HTML files (generated from R markdown)
+*.html
+
+# Figure files: these are reproducible from source at any time
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
+# JAGS model files: these are never edited directly
+*.txt
+
+# ignore anything in the scratch folder (personal sandboxes)
+98-scratch/*
