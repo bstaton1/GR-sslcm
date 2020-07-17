@@ -22,6 +22,7 @@ Survival,"phi_Ma_M[y,j]","\\phi_{Ma \\rightarrow M,y,j}",Survival from LGD to oc
 Survival,"phi_M_O1[y,j]","\\phi_{M \\rightarrow O1,y,j}",Survival for first winter in ocean,Survivors are age 3 fish
 Survival,"phi_O1_O2[y,j]","\\phi_{O1 \\rightarrow O2,y,j}",Survival for second winter in ocean,Survivors are age 4 fish
 Survival,"phi_O2_O3[y,j]","\\phi_{O2 \\rightarrow O3,y,j}",Survival for third winter in ocean,Survivors are age 5 fish
+Survival,"phi_Ra_S[t,k,s,o,j]","\\phi_{Ra \\rightarrow S,t,k,s,o,j}",Survival of adults on spawning grounds,
 Maturation,"psi_O1_R[y,j]","\\psi_{O1 \\rightarrow R,y,j}","Probability of maturing at age 3, given survived to that point",
 Maturation,"psi_O2_R[y,j]","\\psi_{O2 \\rightarrow R,y,j}","Probability of maturing at age 4, given survived and not yet matured",
 Maturation,"psi_O3_R[y,j]","\\psi_{O3 \\rightarrow R,y,j}","Probability of maturing at age 5, given survived and not yet matured",Equal to 1
