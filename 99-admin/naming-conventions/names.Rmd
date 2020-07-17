@@ -4,12 +4,17 @@ subtitle: "Grande Ronde State-Space Life Cycle Model"
 output: html_document
 ---
 
-```{r setup, include = F}
-knitr::opts_chunk$set(echo = F)
+```{r directories, include = F}
+# set root directory to the project directory: two levels up from this location
+knitr::opts_knit$set(root.dir = "../../")
+```
 
+```{r pkg-and-options, include = F}
 # load packages
-library(knitr)
-library(kableExtra)
+source("00-packages.R")
+
+# set global knitting options
+opts_chunk$set(echo = F)
 ```
 
 # General Conventions:
@@ -39,16 +44,18 @@ library(kableExtra)
 
 ```{r read-manip-table}
 # raw input file
-tab = read.csv("names.csv", allowEscapes = T, stringsAsFactors = F)
+tab = read.csv("99-admin/naming-conventions/names.csv", allowEscapes = T, stringsAsFactors = F)
 
 # mark it up
 tab$code = paste0("`", tab$code, "`")
 tab$symbol = paste0("$", tab$symbol, "$")
 
+# edit column names
 colnames(tab) = c("", "In Code", "Symbol", "Description", "Notes")
 ```
 
 ```{r create-table-fun}
+# function to create a table based on the type of quantity
 create_table = function(group) {
   kable(tab[tab[,1] == group,-1], format = "html", escape = F, row.names = F) %>%
     kable_styling(full_width = F, bootstrap_options = c("condensed", "striped"))
@@ -56,6 +63,8 @@ create_table = function(group) {
 ```
 
 _NOTE_: From a hierarchical perspective, the tables below only include the lowest level of the hierarchy (where applicable), e.g., the year- and population-specific quantity. See the next section for naming conventions for higher levels in the hierarchy.
+
+_NOTE_: The "code" column specifies how the variables/parameters will be referred to in the JAGS model code and post-processing code, not necessarily the same as the raw data or preparation of raw data code.
 
 ## Indices
 
