@@ -8,6 +8,9 @@ rm(list = ls(all = T))
 # load all necessary packages
 source("00-packages.R")
 
+# load all necessary functions
+invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
+
 # specify where data files are found
 data_dir = "../GR-sslcm-data/bio"
 
@@ -169,4 +172,48 @@ tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
 
 # rename the data frame, and remove "tmp" objects
 juvenile_abundance = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
+
+##### JUVENILE SURVIVAL DATA #####
+
+# read the data
+tmp = read.csv(file.path(data_dir, "04-juv-survival.csv"), stringsAsFactors = F)
+
+# remove any records that don't have a point estimate
+tmp = tmp[!is.na(tmp$surv_est),]
+
+# calculate the logit-scale standard error
+tmp$logit_surv_se = with(tmp, get_logit_se(n_tagged, surv_est, surv_se, surv_ci_low, surv_ci_high))
+
+# exclude some survival estimates: only keep the four main populations
+tmp = tmp[tmp$population %in% c("CAT", "LOS", "MIN", "UGR"),]
+
+# exclude some survival estimates: only keep summer, fall, and spring tagging to LGR
+tmp = tmp[tmp$season %in% c("summer", "fall", "spring"),]
+
+# add a brood_year column: two years prior to migration year
+tmp$brood_year = tmp$mig_year - 2
+
+# drop irrelevant columns
+tmp = tmp[,c("population", "season", "brood_year", "surv_est", "logit_surv_se")]
+
+# give season levels: for ordering purposes only
+tmp$season = factor(tmp$season, levels = c("summer", "fall", "spring"))
+
+# create two data frames: one for the point ests and one for SEs
+tmp_est = tmp[,c("population", "season", "brood_year", "surv_est")]
+tmp_se = tmp[,c("population", "season", "brood_year", "logit_surv_se")]
+
+# reshape these
+tmp_est = dcast(tmp_est, population + brood_year ~ season, value.var = "surv_est")
+tmp_se = dcast(tmp_se, population + brood_year ~ season, value.var = "logit_surv_se")
+
+# improve column names
+colnames(tmp_est)[3:5] = paste0(colnames(tmp_est)[3:5], "_surv_est")
+colnames(tmp_se)[3:5] = paste0(colnames(tmp_se)[3:5], "_surv_logit_se")
+
+# combine back into one data set
+tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
+
+# rename the data frame and remove "tmp" objects
+juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 

@@ -12,3 +12,17 @@ sig2cv = function(sig) {
   sqrt(exp(sig^2) - 1)
 }
 
+##### LOGIT TRANFORMATION #####
+# p should be a vector on the interval (0,1)
+
+logit = function(p) {
+  log(p/(1 - p))
+}
+
+##### INVERSE LOGIT TRANSFORMATION #####
+# lp should be a vector on the interval (-Inf,Inf)
+# a value in logit scale
+
+expit = function(lp) {
+  exp(lp)/(1 + exp(lp))
+}
