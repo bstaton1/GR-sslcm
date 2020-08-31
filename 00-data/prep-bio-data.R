@@ -220,3 +220,15 @@ tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
 # rename the data frame and remove "tmp" objects
 juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 
+##### COMBINE THESE DATA SOURCES INTO ONE DATA FRAME #####
+
+# merge together the various data sets
+dat = merge(juvenile_abundance, juvenile_survival, by = c("population", "brood_year"), all = T)
+dat = merge(dat, adult_abundance, by = c("population", "brood_year"), all = T)
+dat = merge(dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
+dat = merge(dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
+
+# create an empty data frame for merging
+# this ensures all populations have rows for every year
+empty_df = with(dat, expand.grid(population = unique(population), brood_year = seq(min(brood_year), max(brood_year))))
+dat = merge(dat, empty_df, by = c("population", "brood_year"), all = T)
