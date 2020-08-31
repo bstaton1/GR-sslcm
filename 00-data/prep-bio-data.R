@@ -132,3 +132,41 @@ colnames(tmp)[3:ncol(tmp)] = paste("weir", colnames(tmp)[3:ncol(tmp)], sep = "_"
 # rename the data frame, and remove "tmp" objects
 adult_weir_composition = tmp; rm(tmp)
 
+##### JUVENILE ABUNDANCE #####
+
+# read the data
+tmp = read.csv(file.path(data_dir, "03-juv-abundance.csv"), stringsAsFactors = F)
+
+# remove any records that don't have a point estimate
+tmp = tmp[!is.na(tmp$abund_est),]
+
+# convert the mean estimate and standard error into a "CV"
+tmp$abund_cv = tmp$abund_se/tmp$abund_est
+
+# convert the "CV" into a lognormal standard deviation
+tmp$abund_sigma = cv2sig(tmp$abund_cv)
+
+# drop irrelevant columns
+tmp = tmp[,c("population", "season", "brood_year", "abund_est", "abund_sigma")]
+
+# give season levels: for ordering purposes only
+tmp$season = factor(tmp$season, levels = c("fall", "spring"))
+
+# create two data frames: one for the point ests and one for sigmas
+tmp_est = tmp[,c("population", "season", "brood_year", "abund_est")]
+tmp_se = tmp[,c("population", "season", "brood_year", "abund_sigma")]
+
+# reshape these
+tmp_est = dcast(tmp_est, population + brood_year ~ season, value.var = "abund_est")
+tmp_se = dcast(tmp_se, population + brood_year ~ season, value.var = "abund_sigma")
+
+# improve column names
+colnames(tmp_est)[3:4] = paste0(colnames(tmp_est)[3:4], "_passage_est")
+colnames(tmp_se)[3:4] = paste0(colnames(tmp_se)[3:4], "_passage_log_se")
+
+# combine back into one data set
+tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
+
+# rename the data frame, and remove "tmp" objects
+juvenile_abundance = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
+
