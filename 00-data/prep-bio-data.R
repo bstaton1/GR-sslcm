@@ -20,13 +20,16 @@ data_dir = "../GR-sslcm-data/bio"
 tmp = read.csv(file.path(data_dir, "01-adult-abundance.csv"), stringsAsFactors = F)
 
 # keep only relevant columns
-tmp = tmp[,c("population", "return_year", "n_returned", "n_above_weir")]
+tmp = tmp[,c("population", "return_year", "n_returned", "n_above_weir", "abund_cv")]
+
+# convert cv to lognormal sd
+tmp$abund_cv = cv2sig(tmp$abund_cv)
 
 # update column names
 # note: return_year renamed to "brood_year" to allow merging with other data sets
 # and for consistent indexing in model.
 # just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
-colnames(tmp) = c("population", "brood_year", "adults_at_weir", "adults_above_weir")
+colnames(tmp) = c("population", "brood_year", "adults_at_weir", "adults_above_weir", "adult_log_se")
 
 # rename the data frame, and remove "tmp" object
 adult_abundance = tmp; rm(tmp)
