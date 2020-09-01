@@ -26,3 +26,11 @@ logit = function(p) {
 expit = function(lp) {
   exp(lp)/(1 + exp(lp))
 }
+
+##### OPPOSITE OF %in% #####
+# it is annoying to have to write !(a %in% b)
+# to find cases where elements of a are NOT found in b
+
+`%!in%` = function(x, y) {
+  !(x %in% y)
+}
