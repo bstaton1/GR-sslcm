@@ -275,3 +275,36 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
   return(out_list)
 }
 
+##### APPEND JAGS_DATA LIST WITH ELEMENTS THAT DO NOT CONTAIN NA VALUES #####
+
+# adds information to a jags_data object that specifies which
+# elements of data notes do not have NA values
+# will allow us to include structural NAs to keep everything square
+# while only fitting to non-NA values
+
+append_no_na_indices = function(jags_data) {
+  
+  # obtain the elements in each dimension that do not have NA values
+  # for each data type
+  fit_list = with(jags_data, {
+    list(
+      fit_Pa = find_no_na_indices(Pa_obs),
+      fit_Mb = find_no_na_indices(Mb_obs),
+      fit_Lphi_Pb_Ma = find_no_na_indices(Lphi_obs_Pb_Ma),
+      fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
+      fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
+      fit_Ra = find_no_na_indices(Ra_obs)
+    )
+  })
+  
+  # calculate the number of elements for each data type without NA values
+  nfit_list = lapply(fit_list, function(x) xdim(x)[1])
+  names(nfit_list) = paste0("n", names(nfit_list))
+  
+  # append these with the original jags_data object
+  out = append(jags_data, append(fit_list, nfit_list))
+  
+  # return the output list: now ready for JAGS
+  return(out)
+}
+
