@@ -223,12 +223,15 @@ juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 ##### COMBINE THESE DATA SOURCES INTO ONE DATA FRAME #####
 
 # merge together the various data sets
-dat = merge(juvenile_abundance, juvenile_survival, by = c("population", "brood_year"), all = T)
-dat = merge(dat, adult_abundance, by = c("population", "brood_year"), all = T)
-dat = merge(dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
-dat = merge(dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
+bio_dat = merge(juvenile_abundance, juvenile_survival, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, adult_abundance, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year
-empty_df = with(dat, expand.grid(population = unique(population), brood_year = seq(min(brood_year), max(brood_year))))
-dat = merge(dat, empty_df, by = c("population", "brood_year"), all = T)
+empty_df = with(bio_dat, expand.grid(population = unique(population), brood_year = seq(min(brood_year), max(brood_year))))
+bio_dat = merge(bio_dat, empty_df, by = c("population", "brood_year"), all = T)
+
+# remove unnecessary objects from workspace, retain only bio_dat
+rm(list = setdiff(ls(), "bio_dat"))
