@@ -206,3 +206,72 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   return(out)
 }
 
+##### CREATE DATA LIST FOR JAGS: MULTIPLE POPULATIONS #####
+
+# formats the appropriate information from the bio_dat object
+# to be used by a JAGS model, multiple populations
+# calls create_jags_data_one() on each supplied population
+# and places the data in the right dimensions of each list element
+
+# pops: a vector containing at least two of "CAT", "LOS", "MIN", "UGR"
+# first_y: the first return year to model
+# last_y: the last return year to model
+
+create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
+  # create the jags_data list for each population, store them as elements of a larger list
+  main_list = lapply(as.list(pops), create_jags_data_one, first_y = first_y, last_y = last_y)
+  
+  # assign this list names for the population dimension
+  names(main_list) = pops
+  
+  # extract the dimension variables from one of the populations
+  dims_list = main_list[[1]][c("ny", "nt", "nk", "ns", "ni", "no", "kmin", "kmax")]
+  
+  # add on nj to dimensions: number of populations
+  dims_list = append(dims_list, list(nj = length(pops)))
+  
+  # for each data type, loop through populations extracting that data type
+  # and abind it with the same data type from other populations
+  obs_list = list(
+    # fall trap count
+    Pa_obs = abind(lapply(main_list, function(x) x$Pa_obs), along = 3),
+    sig_Pa_obs = abind(lapply(main_list, function(x) x$sig_Pa_obs), along = 3),
+    
+    # spring trap count
+    Mb_obs = abind(lapply(main_list, function(x) x$Mb_obs), along = 3),
+    sig_Mb_obs = abind(lapply(main_list, function(x) x$sig_Mb_obs), along = 3),
+    
+    # summer tagging to LGD survival
+    Lphi_obs_Pb_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Pb_Ma), along = 2),
+    sig_Lphi_obs_Pb_Ma = abind(lapply(main_list, function(x) x$sig_Lphi_obs_Pb_Ma), along = 2),
+    
+    # fall trap tagging to LGD survival
+    Lphi_obs_Pa_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Pa_Ma), along = 3),
+    sig_Lphi_obs_Pa_Ma = abind(lapply(main_list, function(x) x$sig_Lphi_obs_Pa_Ma), along = 3),
+    
+    # spring trap tagging to LGD survival
+    Lphi_obs_Mb_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Mb_Ma), along = 3),
+    sig_Lphi_obs_Mb_Ma = abind(lapply(main_list, function(x) x$sig_Lphi_obs_Mb_Ma), along = 3),
+    
+    # adult returns to tributary
+    Ra_obs = abind(lapply(main_list, function(x) x$Ra_obs), along = 2),
+    sig_Ra_obs = abind(lapply(main_list, function(x) x$sig_Ra_obs), along = 2),
+    
+    # age/sex composition of returns to tributary
+    x_obs = abind(lapply(main_list, function(x) x$x_obs), along = 3),
+    nx_obs = abind(lapply(main_list, function(x) x$nx_obs), along = 2),
+    
+    # broodstock removals
+    p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 2),
+    
+    # proportion of hatchery origin returns
+    p_HOR = abind(lapply(main_list, function(x) x$p_HOR), along = 2)
+  )
+  
+  # append dimension and observation lists together
+  out_list = append(dims_list, obs_list)
+  
+  # return the output
+  return(out_list)
+}
+
