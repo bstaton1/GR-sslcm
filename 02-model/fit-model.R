@@ -85,3 +85,41 @@ jags_dims = list(
   parallel = F
 )
 
+##### STEP 5: GENERATE INITIAL VALUES #####
+
+jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data)
+
+##### STEP 6: CALL THE JAGS SAMPLER #####
+
+post = jags.basic(
+  data = jags_data,
+  inits = jags_inits,
+  parameters.to.save = jags_params, 
+  model.file = jags_file, 
+  n.chains = jags_dims$n_chain, 
+  n.adapt = jags_dims$n_adapt, 
+  n.iter = jags_dims$n_post + jags_dims$n_burn, 
+  n.burnin = jags_dims$n_burn, 
+  n.thin = jags_dims$n_thin,
+  parallel = jags_dims$parallel
+)
+
+# delete the text file that contains the JAGS code
+unlink(jags_file)
+
+##### STEP 7: SAVE THE OUTPUT #####
+
+if (!dir.exists(out_dir)) dir.create(out_dir)
+
+# create the output object: stores data, posterior samples, and population name
+out_obj = list(
+  jags_data = jags_data,
+  post = post,
+  pop = pop
+)
+
+# create the output file name
+out_file = paste0(pop, "-output.rds")
+
+# save the file
+saveRDS(out_obj, file.path(out_dir, out_file))
