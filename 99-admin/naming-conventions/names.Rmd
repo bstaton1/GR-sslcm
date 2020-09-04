@@ -24,13 +24,13 @@ opts_chunk$set(echo = F)
 *  $O$ is used for ocean juveniles
 *  $R$ is used for returning adults
 *  $S$ is used for spawning adults
-*  $b$ is used to denote "before migration" 
-*  $a$ is used to denote "after migration"
+*  $b$ is used to denote "before event", generally migration from one location to another or a mortality source 
+*  $a$ is used to denote "after event"
 *  $\phi$ is used to denote a survival term, subscripts used to denote the from/to states
 *  $\psi$ is used to denote maturation from ocean juvenile to returning adult (no distinction between jacks and adults because they are all sexually mature)
 *  $\dot{x}$ is used to denote that $x$ is an observed quantity (data)
 *  $L$ (uppercase) is used to denote that the quantity has been logit-tranformed, $l$ (lowercase) is used to denote that the quantity has been log-transformed.
-*  $y$ represents brood year fish were spawned; $t$ represents return year for adults
+*  $y$ represents brood year fish were spawned for all non-adult states. For adult states, it is the brood year in which they return
 
 **Notes following 7/10/2020 Call**
 
