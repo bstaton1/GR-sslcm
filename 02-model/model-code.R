@@ -227,4 +227,41 @@ jags_model_code = function() {
     }
   }
   
+  ### OBSERVATION MODEL ###
+  
+  # age/sex composition
+  for (y in (kmax+1):ny) {
+    x_obs[y,1:nks] ~ dmulti(q[y,1:nks], nx_obs[y])
+  }
+  
+  # the "fit" objects allow using square objects but skipping over missing obs in likelihoods
+  # fall trap abundance
+  for (d in 1:nfit_Pa) {
+    Pa_obs[fit_Pa[d,1],fit_Pa[d,2]] ~ dlnorm(log(Pa[fit_Pa[d,1],fit_Pa[d,2]]), 1/sig_Pa_obs[fit_Pa[d,1],fit_Pa[d,2]]^2)
+  }
+  
+  # spring trap abundance
+  for (d in 1:nfit_Mb) {
+    Mb_obs[fit_Mb[d,1],fit_Mb[d,2]] ~ dlnorm(log(Mb[fit_Mb[d,1],fit_Mb[d,2]]), 1/sig_Mb_obs[fit_Mb[d,1],fit_Mb[d,2]]^2)
+  }
+  
+  # adult abundance
+  for (d in 1:nfit_Ra) {
+    Ra_obs[fit_Ra[d]] ~ dlnorm(log(Ra_tot[fit_Ra[d]]), 1/sig_Ra_obs[fit_Ra[d]]^2)
+  }
+  
+  # summer tagging to LGD
+  for (d in 1:nfit_Lphi_Pb_Ma) {
+    Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d]] ~ dnorm(logit(phi_Pb_Ma[fit_Lphi_Pb_Ma[d]]), 1/sig_Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d]]^2)
+  }
+  
+  # fall tagging to LGD
+  for (d in 1:nfit_Lphi_Pa_Ma) {
+    Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2]] ~ dnorm(logit(phi_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2]]), 1/sig_Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2]]^2)
+  }
+  
+  # spring tagging to LGD
+  for (d in 1:nfit_Lphi_Mb_Ma) {
+    Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2]] ~ dnorm(logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2]]), 1/sig_Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2]]^2)
+  }
 }
