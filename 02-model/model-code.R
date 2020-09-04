@@ -104,4 +104,41 @@ jags_model_code = function() {
     phi_Sb_Sa[y] <- mu_phi_Sb_Sa
   }
   
+  ### PROCESS MODEL: INITIALIZATION ###
+  # need to do something special with first kmax brood years prior to data collection
+  # to populate adult states for reproduction/observation in the first years with data
+  # THIS APPROACH: 
+  #  Estimate the mean and year-specific TOTAL ADULT RECRUITS (arriving to mouth of river) 
+  #  for the first kmax brood years. Then, based on the hyperparams of return-by-sex, return-by-age, and ocean survival
+  #  (this is the p_init_prime and p_init stuff below)
+  #  derive the probability of returning at age for each sex that will apply equally to all kmax of the first brood years
+  #  Then place these adult recruits in the appropriate return year by age/sex
+  
+  # obtain expected probability of adult recruits returning at age for each sex
+  for (s in 1:ns) {
+    p_init_prime[1,s] <- mu_phi_M_O1 * mu_psi_O1_Rb[s]
+    p_init_prime[2,s] <- mu_phi_M_O1 * (1 - mu_psi_O1_Rb[s]) * mu_phi_O1_O2 * mu_psi_O2_Rb[s]
+    p_init_prime[3,s] <- mu_phi_M_O1 * (1 - mu_psi_O1_Rb[s]) * mu_phi_O1_O2 * (1 - mu_psi_O2_Rb[s]) * mu_phi_O2_O3 * mu_psi_O3_Rb[s]
+    for (k in 1:nk) {
+      p_init[k,s] <- p_init_prime[k,s]/sum(p_init_prime[1:nk,s])
+    }
+  }
+  
+  # hyperparameters for initialization
+  mu_init_recruits ~ dunif(0, max_init_recruits)
+  sig_init_lrecruits ~ dunif(0,10)
+  
+  for (y in 1:kmax) {
+    # random, constant-mean adult recruits for first kmax brood years
+    init_recruits[y] ~ dlnorm(log(mu_init_recruits), 1/sig_init_lrecruits^2) %_% T(,max_init_recruits)
+    for (s in 1:ns) {
+      # apportion them to each sex
+      init_recruits_sex[y,s] <- init_recruits[y] * mu_omega[s]
+      for (k in 1:nk) {
+        # apportion them to return year, age, and sex
+        Rb[y+kmin+k-1,k,s] <- init_recruits_sex[y,s] * p_init[k,s] 
+      }
+    }
+  }
+  
 }
