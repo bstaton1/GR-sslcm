@@ -141,4 +141,90 @@ jags_model_code = function() {
     }
   }
   
+  ### PROCESS MODEL: COMPLETE LIFE CYCLE FOR REMAINING BROOD YEARS ###
+  for (y in (kmax+1):ny) {
+    
+    # reproductive link: total summer parr
+    Pb_pred[y] <- Sa_tot[y]/(1/alpha + Sa_tot[y]/beta)
+    Pb[y] ~ dlnorm(log(Pb_pred[y]), 1/sigma_Pb^2)
+    
+    for (i in 1:ni) {
+      # apportion to LH-strategy: parr after fall migration
+      Pa[y,i] <- Pb[y] * pi[y,i]
+
+      # survive over winter: smolt before spring migration
+      Mb[y,i] <- Pa[y,i] * phi_Pa_Mb[y,i]
+
+      # move to LGD: smolt after spring migration, at top of LGD
+      Ma[y,i] <- Mb[y,i] * phi_Mb_Ma[y,i]
+      
+      # derived survival for fitting: fall trap to LGD
+      phi_Pa_Ma[y,i] <- Ma[y,i]/Pa[y,i]
+    }
+    
+    # derived survival for fitting: summer tagging to LGD
+    phi_Pb_Ma[y] <- sum(Ma[y,1:ni])/Pb[y]
+    
+    # sex-specific processes
+    for (s in 1:ns) {
+      # move to estuary and assign to sex
+      M[y,s] <- sum(Ma[y,1:ni]) * phi_Ma_M[y] * omega[y,s]
+
+      # move juveniles through ocean ages and survivals
+      O[y,1,s] <- M[y,s] * phi_M_O1[y] # survive first winter at sea. now SWA1, TA3
+      O[y,2,s] <- O[y,1,s] * (1 - psi_O1_Rb[y,s]) * phi_O1_O2[y] # don't mature at SWA1 and survive second winter at sea. now SWA2, TA4
+      O[y,3,s] <- O[y,2,s] * (1 - psi_O2_Rb[y,s]) * phi_O2_O3[y] # don't mature at SWA2 and survive third winter at sea. now SWA3, TA5
+    
+      # mature and return to river in appropriate year at age/sex
+      Rb[y+kmin+1-1,1,s] <- O[y,1,s] * psi_O1_Rb[y,s]
+      Rb[y+kmin+2-1,2,s] <- O[y,2,s] * psi_O2_Rb[y,s]
+      Rb[y+kmin+3-1,3,s] <- O[y,3,s] * psi_O3_Rb[y,s]
+    }
+    
+    # adult in-river processes
+    # y now represents brood year these fish are returning in
+    for (k in 1:nk) {
+      for (s in 1:ns) {
+        # survive upstream migration
+        Ra[y,k,s,1] <- Rb[y,k,s] * phi_Rb_Ra[y]
+        
+        # expansion to obtain returning hatchery adults
+        # natural origin fish only accounted for up until this point
+        # could (should) make p_HOR[y] sex-specific - but problems when p_HOR[y,s] == 1?
+        Ra[y,k,s,2] <- (Ra[y,k,s,1]/(1 - p_HOR[y])) - Ra[y,k,s,1]
+        
+        for (o in 1:no) {
+          # remove fish for brood stock
+          # currently assumed to apply equally to hatchery and wild origin returns
+          # and to be age/sex non-selective
+          Sb[y,k,s,o] <- Ra[y,k,s,o] * (1 - p_remove[y])
+          
+          # survive pre-spawn mortality
+          # same assumptions as p_remove
+          Sa[y,k,s,o] <- Sb[y,k,s,o] * phi_Sb_Sa[y]
+        }
+      }
+    }
+    
+    # total adults returned to trib
+    Ra_tot[y] <- sum(Ra[y,1:nk,1:ns,1:no])
+    
+    # total spawning adults: used as spawning stock
+    # assumes all spawners contribute equally to progeny
+    Sa_tot[y] <- sum(Sa[y,1:nk,1:ns,1:no])
+    
+    # reformat for age comp calculation/fitting
+    for (k in 1:nk) {
+      # female return by age, natural + hatchery
+      Ra_2d[y,k] <- Ra[y,k,1,1] + Ra[y,k,1,2]
+      # male return by age, natural + hatchery
+      Ra_2d[y,nk+k] <- Ra[y,k,2,1] + Ra[y,k,2,2]
+    }
+    
+    # calculate age/sex composition
+    for (ks in 1:nks) {
+      q[y,ks] <- Ra_2d[y,ks]/sum(Ra_2d[y,1:nks])
+    }
+  }
+  
 }
