@@ -127,3 +127,12 @@ find_no_na_indices = function(x) {
   # return this object
   return(out)
 }
+
+##### PRODUCE PREDICTION OUT OF A BEVERTON-HOLT MODEL #####
+# x: the x-value (e.g., spawners)
+# alpha: max recruits/spawner
+# capacity: max recruits
+
+BH = function(x, alpha, beta) {
+  x/((1/alpha) + (x/beta))
+}
