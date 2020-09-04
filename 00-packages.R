@@ -2,3 +2,5 @@ library(knitr)          # for rendering Rmarkdown documents; install.packages("k
 library(kableExtra)     # for building nice tables in Rmarkdown; install.packages("kableExtra")
 library(reshape2)       # for reformatting data (e.g., long to wide); install.packages("reshape2")
 library(abind)          # for binding together array objects; install.packages("abind")
+library(jagsUI)         # for calling JAGS from R; install.packages("jagsUI")
+library(postpack)       # for processing posterior samples; remotes::install.packages("bstaton1/postpack")

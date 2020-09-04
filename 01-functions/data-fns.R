@@ -54,6 +54,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   kmax = 5              # maximum age of return
   nk = kmax - kmin + 1  # number of ages of return
   ns = 2                # number of sexes of return
+  nks = nk * ns         # number of age/sex classes
   ni = 2                # number of juvenile life history strategies
   no = 2                # number of origins
   nt = nrow(sub)        # number of return years tracked
@@ -155,9 +156,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     
     ### DIMENSIONAL VARIABLES ###
     ny = ny,        # number of tracked brood years
-    nt = nt,        # number of tracked return years
     nk = nk,        # number of ages of return
     ns = ns,        # number of sexes of return
+    nks = nks,      # number of age/sex classes of return
     ni = ni,        # number of life history strategies
     no = no,        # number of origin types
     kmin = kmin,    # minimum age of return
@@ -225,7 +226,7 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
   names(main_list) = pops
   
   # extract the dimension variables from one of the populations
-  dims_list = main_list[[1]][c("ny", "nt", "nk", "ns", "ni", "no", "kmin", "kmax")]
+  dims_list = main_list[[1]][c("ny", "nk", "ns", "nks", "ni", "no", "kmin", "kmax")]
   
   # add on nj to dimensions: number of populations
   dims_list = append(dims_list, list(nj = length(pops)))
