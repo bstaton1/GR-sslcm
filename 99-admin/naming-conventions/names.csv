@@ -1,31 +1,36 @@
 group,code,symbol,description,notes
 Indices,k,k,"Age: number of winters alive, freshwater + marine. E.g., fish spawned in 2000 return in 2003 as 3-year-olds","$k = 1$ is age 3; $k = 2$ is age 4; $k = 3$ is age 5. $a$ not used because that is reserved for ""after"""
 Indices,s,s,Sex,$s = 1$ is female; $s = 2$ is male
+Indices,ks,ks,Age/sex class,"$ks$ = 1, 2, 3 are females age 3, 4, 5, the rest are male "
 Indices,o,o,Origin (natural vs. hatchery),$o = 1$ is natural; $o = 2$ is hatchery
 Indices,i,i,Life history strategy (fall vs. spring migrants),$i = 1$ is fall migrants; $i = 2$ is spring migrants
 Indices,j,j,Population,Order here doesn't matter
 Indices,y,y,Brood year,$y = 1$ is the first brood year in the model
-Indices,t,t,Return year,
-Adult States,"Rb[t,k,s,o,j]","Rb_{t,k,s,o,j}","Returning adults by class, before upstream migration",Prior to any in-river mortality
-Adult States,"Ra[t,k,s,o,j]","Ra_{t,k,s,o,j}","Returning adults by class, after upstream migration",Counted at weir prior to pre-spawn mortality
-Adult States,"S[t,k,s,o,j]","S_{t,k,s,o,j}",Adults by class that spawn successfully,Following pre-spawn mortality
-Adult States,"E[t,j]","E_{t,j}",Total egg production,
+Adult States,"Rb[y,k,s,o,j]","Rb_{y,k,s,o,j}","Returning adults by class, before upstream migration",Prior to any in-river mortality
+Adult States,"Ra[y,k,s,o,j]","Ra_{y,k,s,o,j}","Returning adults by class, after upstream migration",Counted at weir prior to broodstock removal and pre-spawn mortality
+Adult States,"Sb[y,k,s,o,j]","Sb_{y,k,s,o,j}",Adults by class that have a chance to spawn,Before pre-spawn mortality
+Adult States,"Sa[y,k,s,o,j]","Sa_{y,k,s,o,j}",Adults by class that spawn successfully,Following pre-spawn mortality
+Adult States,"E[y,j]","E_{y,j}",Total egg production,
+Adult States,"q[y,ks,j]","q_{y,ks,j}",Proportional composition of return by age/sex,Aggregated across origins **for now**
+FW Juv States,"pi[y,i]","\\pi_{y,i}",Probability of a parr belonging to life history type $i$ at end of summer,"Not really a ""state"", but not really sure where to put it otherwise"
 FW Juv States,"Pb[y,j]","Pb_{y,j}",Total parr produced in brood year surviving to end of summer,Output of Beverton Holt function. Not yet assigned to life history strategy
 FW Juv States,"Pa[y,i,j]","Pa_{y,i,j}",Parr after fall migration,"$Pa_{y,1,j}$ can be counted at the fall trap, prior to overwinter mortality"
 FW Juv States,"Mb[y,i,j]","Mb_{y,i,j}",Smolt before spring migration,"$Mb_{y,2,j}$ can be counted at the spring trap, prior to spring migration mortality"
 FW Juv States,"Ma[y,i,j]","Ma_{y,i,j}",Smolt after spring migration,At top of LGD
-FW Juv States,"M[y,j]","M_{y,j}",Smolt entering ocean,After hydrosystem survival - note removal of life history index
-SW Juv States,"O[y,k,j]","O_{y,k,j}",Ocean juveniles,"After ocean mortality each year, and before maturation"
+FW Juv States,"M[y,s,j]","M_{y,s,j}","Smolt entering ocean, first part of life cycle where sex is introduced",After hydrosystem survival - note removal of life history index
+SW Juv States,"O[y,k,s,j]","O_{y,k,s,j}",Ocean juveniles,"After ocean mortality each year, and before maturation"
 Survival,"phi_Pa_Mb[y,i,j]","\\phi_{Pa \\rightarrow Mb,y,i,j}",Survival from life history assignment in fall to spring,Over-winter survival
 Survival,"phi_Mb_Ma[y,i,j]","\\phi_{Mb \\rightarrow Ma,y,i,j}",Survival from spring to LGD,
 Survival,"phi_Ma_M[y,j]","\\phi_{Ma \\rightarrow M,y,j}",Survival from LGD to ocean,"Will be ""data""?"
 Survival,"phi_M_O1[y,j]","\\phi_{M \\rightarrow O1,y,j}",Survival for first winter in ocean,Survivors are age 3 fish
 Survival,"phi_O1_O2[y,j]","\\phi_{O1 \\rightarrow O2,y,j}",Survival for second winter in ocean,Survivors are age 4 fish
 Survival,"phi_O2_O3[y,j]","\\phi_{O2 \\rightarrow O3,y,j}",Survival for third winter in ocean,Survivors are age 5 fish
-Survival,"phi_Ra_S[t,k,s,o,j]","\\phi_{Ra \\rightarrow S,t,k,s,o,j}",Survival of adults on spawning grounds,
-Maturation,"psi_O1_R[y,j]","\\psi_{O1 \\rightarrow R,y,j}","Probability of maturing at age 3, given survived to that point",
-Maturation,"psi_O2_R[y,j]","\\psi_{O2 \\rightarrow R,y,j}","Probability of maturing at age 4, given survived and not yet matured",
-Maturation,"psi_O3_R[y,j]","\\psi_{O3 \\rightarrow R,y,j}","Probability of maturing at age 5, given survived and not yet matured",Equal to 1
+Survival,"phi_Rb_Ra[y,j]","\\phi_{Rb \\rightarrow Ra,y,j}",Survival during upstream migration,"Predation, fishery, and hydro mortality as adults all are captured here **for now**"
+Survival,"phi_Sb_Sa[y,k,s,o,j]","\\phi_{Sb \\rightarrow Sa,y,k,s,o,j}",Survival of adults on spawning grounds,
+Maturation,"omega[y,s,j]","\\omega_{y,s,j}",Probability of being sex $s$ upon reaching ocean,"Not really a ""maturation"" parameter, but not sure where to put it otherwise"
+Maturation,"psi_O1_Rb[y,s,j]","\\psi_{O1 \\rightarrow Rb,y,s,j}","Probability of maturing at age 3 for sex $s$, given survived to that point",
+Maturation,"psi_O2_Rb[y,s,j]","\\psi_{O2 \\rightarrow Rb,y,s,j}","Probability of maturing at age 4 for sex $s$, given survived and not yet matured",
+Maturation,"psi_O3_Rb[y,s,j]","\\psi_{O3 \\rightarrow Rb,y,s,j}","Probability of maturing at age 5 for sex $s$, given survived and not yet matured",Equal to 1
 Recruitment Function,alpha[j],\\alpha_j,Beverton-Holt productivity,
 Recruitment Function,beta[j],\\beta_j,Beverton-Holt capacity,
 Recruitment Function,"Sigma_Pb[,]",\\Sigma_{Pb},Variance-covariance matrix on parr recruitment,"Diagnonal is between year variance within a population, off-diagnonal is covariance among populations"
@@ -41,6 +46,6 @@ Data: FW Juv Abundance,"Pa_obs[y,1,j]","\\dot{Pa}_{y,1,j}",Estimated fall trap p
 Data: FW Juv Abundance,"sig_Pa_obs[y,1,j]","\\dot{\\sigma}_{lPa,y,1,j}",Estimated standard error of fall trap passage,Log-normal scale; denoted by $l$
 Data: FW Juv Abundance,"Mb_obs[y,2,j]","\\dot{Mb}_{y,2,j}",Estimated spring trap passage,
 Data: FW Juv Abundance,"sig_Mb_obs[y,2,j]","\\dot{\\sigma}_{lMb,y,2,j}",Estimated standard error of spring trap passage,Log-normal scale; denoted by $l$
-Data: Adult Abundance,"Ra_obs[t,j]","\\dot{Ra}_{t,j}",Estimated returning adults,
-Data: Adult Abundance,"sig_Ra_obs[t,j]","\\dot{\\sigma}_{lRa,t,j}","""Assigned"" standard error of returning adults",Log-normal scale; denoted by $l$
-Data: Adult Composition,"x_obs[t,k,s,o,j]","\\dot{x}_{t,k,s,o,j}",Composition counts by adult class,
+Data: Adult Abundance,"Ra_obs[y,j]","\\dot{Ra}_{y,j}",Estimated returning adults,
+Data: Adult Abundance,"sig_Ra_obs[y,j]","\\dot{\\sigma}_{lRa,y,j}","""Assigned"" standard error of returning adults",Log-normal scale; denoted by $l$
+Data: Adult Composition,"x_obs[y,ks,j]","\\dot{x}_{y,ks,j}",Composition counts by adult class,Aggregated across origins **for now**
