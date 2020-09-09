@@ -43,6 +43,82 @@ observable = (jags_data$kmax+1):jags_data$ny
 
 The code used to render this output relies heavily on Staton's 'postpack' package (currently under CRAN review). Take a look at [this vignette](https://bstaton1.github.io/postpack/articles/feature-overview.html) for a primer on how to use it.
 
+# MCMC Information {.tabset .tabset-pills}
+
+## Attributes
+
+This table shows some dimensions of the MCMC run.
+
+```{r mcmc-dims}
+# query the dimensions of the posterior samples
+dims = post_dim(post)
+
+# build a data frame for printing
+df = data.frame(Quantity = c("Burn-in + Adapt Iters", "Post Burn-in Iters", "Thinning Interval", "Chains", "Saved Iters", "Monitored Quantities"), Value = unname(dims))
+
+# render the table
+kable(df, format.args = list(big.mark = ",")) %>%
+  kable_styling(full_width = F, bootstrap_options = "condensed")
+```
+
+## Diagnostic Summaries
+
+This table shows the number of parameters that fail to meet some diagnostic threshold. Lower Rhat values are good, larger Neff values are good, and lower MCMC SE/Mean values are good.
+
+The "match" column shows the kinds of parameters summarized in that row. E.g., `^mu_phi` covers all parameter names that start with `mu_phi` and are followed by anything else (`r paste(match_params(post, "^mu_phi"), collapse = ", ")`).
+
+This model was ran for a very short time, and I'm impressed with how well the sampling performed even considering this.
+
+```{r mcmc-diags}
+# groups of parameters to match and calculate diagnostic summaries for separately
+diag_params = list(
+  c("alpha", "beta", "sigma_Pb"),
+  "^mu_phi",
+  "^mu_psi",
+  "^mu_omega",
+  "^mu_pi",
+  "^sig_Lphi",
+  "^sig_Lpsi",
+  c("^sig_Lomega", "^sig_Lpi"),
+  "^Pb[", 
+  "init_recruits", 
+  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]"
+)
+
+# calculate the diagnostic statistics for each group
+diags = lapply(diag_params, function(param) post_summ(post, param, Rhat = T, neff = T, mcse = T)[c("mean", "Rhat", "neff", "mcse_mean"),])
+
+# count up the number of parameters by group that fail to meet certain thresholds
+diag_summ = t(sapply(diags, function(param) {
+  mc_cv = (param["mcse_mean",]/param["mean",]) * 100
+  c(
+    n_total = ncol(param),
+    n_Rhat_1 = sum(param["Rhat",] > 1.05),
+    n_Rhat_2 = sum(param["Rhat",] > 1.1),
+    n_Rhat_3 = sum(param["Rhat",] > 1.2),
+    n_neff_1 = sum(param["neff",] < 2000),
+    n_neff_2 = sum(param["neff",] < 1000),
+    n_neff_3 = sum(param["neff",] < 500),
+    mc_cv_1 = sum(mc_cv > 1),
+    mc_cv_2 = sum(mc_cv > 5),
+    mc_cv_3 = sum(mc_cv > 10)
+  )
+}))
+
+# format to a table
+diag_summ = as.data.frame(diag_summ)
+colnames(diag_summ) = c("Total Params", ">1.05", ">1.1", ">1.2", "<3000", "<1000", "<500", ">1%", ">5%", ">10%")
+df = cbind("Match" = unlist(lapply(diag_params, paste, collapse = ", ")), diag_summ)
+
+# render the table
+kable(df, align = "lcccccccccc") %>%
+  kable_styling(full_width = F, bootstrap_options = c("condensed", "striped")) %>%
+  add_header_above(c(" " = 2, "Rhat" = 3, "Neff" = 3, "MCMC SE/Mean * 100%" = 3)) %>%
+  column_spec(1, monospace = T) %>%
+  column_spec(c(2,5,8), border_right = T)
+
+```
+
 # Fit to Data {.tabset .tabset-pills}
 
 In the figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
