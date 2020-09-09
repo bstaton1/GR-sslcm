@@ -87,3 +87,59 @@ mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 ```
 
+# Spawner-to-Parr Relationship
+
+All red component are posterior summaries (medians and 95% credible intervals). The black curve is from an `nls()` fit on reconstructed parr and spawners -- the grey region is the confidence interval around this fit (from a parametric bootstrap).
+
+```{r spawners-to-parr, fig.width = 6, fig.height = 4}
+# extract posterior samples of the BH productivity and capacity parameters
+bh_params = post_subset(post, c("alpha", "beta"), matrix = T)
+
+# extract posterior summaries of total spawners by brood year
+Sa_tot = post_summ(post, "Sa_tot")
+
+# extract posterior summaries of total parr recruits by brood year
+Pb = post_summ(post, "^Pb[")
+
+# predict parr recruits along a sequence of spawner abundances
+Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
+Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(Sa_pred, bh_params[i,1], bh_params[i,2])))
+colnames(Pb_pred) = paste0("Pb_pred[", 1:length(Sa_pred), "]")
+Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
+Pb_pred = post_summ(Pb_pred, "Pb_pred")
+
+# fit ordinary least squares version
+ols_fit = fit_basic_BH(jags_data)$BH_fit
+
+# draw 1000 random parameters
+ols_params = exp(rmvnorm(1000, coef(ols_fit), vcov(ols_fit)))
+
+# calculate predicted curve at each pair/summarize
+ols_R_pred = t(sapply(1:1000, function(i) BH(Sa_pred, ols_params[i,1], ols_params[i,2])))
+ols_R_pred = apply(ols_R_pred, 2, function(x) quantile(x, c(0.5, 0.025, 0.975)))
+
+# graphical parameters
+par(mar = c(3,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
+
+# empty plot
+plot(1, 1, type = "n", xlim = range(0, Sa_tot[5,]), ylim = range(0, Pb[5,], Pb_pred[5,]),
+     xlab = "Spawners", ylab = "Parr Recruits")
+
+# draw fitted relationship: Bayesian
+polygon(c(Sa_pred, rev(Sa_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
+lines(Pb_pred[4,] ~ Sa_pred, col = "red", lty = 2)
+lines(Pb_pred[5,] ~ Sa_pred, col = "red", lty = 2)
+
+# draw fitted relationship: OLS
+polygon(c(Sa_pred, rev(Sa_pred)), c(ols_R_pred[2,], rev(ols_R_pred[3,])), col = alpha("grey", 0.5), border = NA)
+lines(ols_R_pred[1,] ~ Sa_pred, lwd = 2)
+lines(ols_R_pred[2,] ~ Sa_pred, lty = 2)
+lines(ols_R_pred[3,] ~ Sa_pred, lty = 2)
+lines(Pb_pred[3,] ~ Sa_pred, col = "red", lwd = 2)
+
+# draw state pairs + uncertainty
+segments(Sa_tot[4,], Pb[3,], Sa_tot[5,], Pb[3,], col = "red")
+segments(Sa_tot[3,], Pb[4,], Sa_tot[3,], Pb[5,], col = "red")
+points(Pb[3,] ~ Sa_tot[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5))
+```
+

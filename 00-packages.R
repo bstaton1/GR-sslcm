@@ -5,3 +5,4 @@ library(abind)          # for binding together array objects; install.packages("
 library(jagsUI)         # for calling JAGS from R; install.packages("jagsUI")
 library(postpack)       # for processing posterior samples; remotes::install.packages("bstaton1/postpack")
 library(scales)         # for transparent colors in plots; install.packages("scales")
+library(mvtnorm)        # for sampling multivariate normal random variables; install.packages("mvtnorm")
