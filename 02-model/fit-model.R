@@ -71,7 +71,7 @@ jags_params = c(
   
   # states
   "Pb", "Pa", "Mb", "Ma", "M", "O", "Rb",
-  "Ra", "Sb", "Sa", "q", "Sa_tot"
+  "Ra", "Sb", "Sa", "q", "Sa_tot", "Ra_tot"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
