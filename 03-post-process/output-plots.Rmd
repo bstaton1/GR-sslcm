@@ -43,3 +43,47 @@ observable = (jags_data$kmax+1):jags_data$ny
 
 The code used to render this output relies heavily on Staton's 'postpack' package (currently under CRAN review). Take a look at [this vignette](https://bstaton1.github.io/postpack/articles/feature-overview.html) for a primer on how to use it.
 
+# Fit to Data {.tabset .tabset-pills}
+
+In the figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
+
+## Abundance Data
+
+```{r abundance-data-fits, fig.width = 3, fig.height = 5}
+par(mfcol = c(3,1), oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, "^Pa[.+,1]$"), jags_data$Pa_obs[observable,1], main = "Fall Trap Abundance")
+plot_tseries(post_summ(post, "^Mb[.+,2]$"), jags_data$Mb_obs[observable,2], main = "Spring Trap Abundance")
+plot_tseries(post_summ(post, "^Ra_tot["), jags_data$Ra_obs[observable], main = "Weir Abundance")
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Abundance")
+```
+
+## Survival Data
+
+```{r survival-data-fits, fig.width = 3, fig.height = 5}
+par(mfcol = c(3,1), oma = c(1.5,1.5,0,0))
+
+plot_tseries(post_summ(post, "^phi_Pb_Ma["), expit(jags_data$Lphi_obs_Pb_Ma[observable]), main = "Summer Tagging to LGD")
+plot_tseries(post_summ(post, "^phi_Pa_Ma[.+,1]$"), expit(jags_data$Lphi_obs_Pa_Ma[observable,1]), main = "Fall Trap to LGD")
+plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2]), main = "Spring Trap to LGD")
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Survival")
+```
+
+## Composition Data
+
+```{r comp-data-fits, fig.width = 6, fig.height = 5}
+# calculate observed q
+q_obs = t(apply(jags_data$x_obs, 1, function(y) y/sum(y)))
+
+par(mfcol = c(3,2), oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, "^q[.+,1]$"), q_obs[observable,1], main = "Female Age 3")
+plot_tseries(post_summ(post, "^q[.+,2]$"), q_obs[observable,2], main = "Female Age 4")
+plot_tseries(post_summ(post, "^q[.+,3]$"), q_obs[observable,3], main = "Female Age 5")
+plot_tseries(post_summ(post, "^q[.+,4]$"), q_obs[observable,4], main = "Male Age 3")
+plot_tseries(post_summ(post, "^q[.+,5]$"), q_obs[observable,5], main = "Male Age 4")
+plot_tseries(post_summ(post, "^q[.+,6]$"), q_obs[observable,6], main = "Male Age 5")
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+```
+
