@@ -1,0 +1,288 @@
+---
+title: "Output Summary"
+subtitle: "`r c('CAT' = 'Catherine Creek', 'LOS' = 'Lostine', 'UGR' = 'Upper Grande Ronde')[params$pop]`"
+output: html_document
+params:
+  pop:
+    label: "Population"
+    value: CAT
+    input: select
+    choices: [CAT, LOS, UGR]
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r directories, include = F}
+# set root directory to the project directory: one level up from this location
+knitr::opts_knit$set(root.dir = "../")
+```
+
+```{r setup, include = FALSE}
+# set global knitting options
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center")
+
+# load packages
+source("00-packages.R")
+
+# load all necessary functions
+invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
+
+# set the input directory
+in_dir = "02-model/model-output"
+
+# read information from this model
+model_info = readRDS(file.path(in_dir, paste0(params$pop, "-output.rds")))
+
+# extract the two key structures from this object
+post = model_info$post
+jags_data = model_info$jags_data
+
+# which years are "observable"?
+observable = (jags_data$kmax+1):jags_data$ny
+```
+
+The code used to render this output relies heavily on Staton's 'postpack' package (currently under CRAN review). Take a look at [this vignette](https://bstaton1.github.io/postpack/articles/feature-overview.html) for a primer on how to use it.
+
+# MCMC Information {.tabset .tabset-pills}
+
+## Attributes
+
+This table shows some dimensions of the MCMC run.
+
+```{r mcmc-dims}
+# query the dimensions of the posterior samples
+dims = post_dim(post)
+
+# build a data frame for printing
+df = data.frame(Quantity = c("Burn-in + Adapt Iters", "Post Burn-in Iters", "Thinning Interval", "Chains", "Saved Iters", "Monitored Quantities"), Value = unname(dims))
+
+# render the table
+kable(df, format.args = list(big.mark = ",")) %>%
+  kable_styling(full_width = F, bootstrap_options = "condensed")
+```
+
+## Diagnostic Summaries
+
+This table shows the number of parameters that fail to meet some diagnostic threshold. Lower Rhat values are good, larger Neff values are good, and lower MCMC SE/Mean values are good.
+
+The "match" column shows the kinds of parameters summarized in that row. E.g., `^mu_phi` covers all parameter names that start with `mu_phi` and are followed by anything else (`r paste(match_params(post, "^mu_phi"), collapse = ", ")`).
+
+This model was ran for a very short time, and I'm impressed with how well the sampling performed even considering this.
+
+```{r mcmc-diags}
+# groups of parameters to match and calculate diagnostic summaries for separately
+diag_params = list(
+  c("alpha", "beta", "sigma_Pb"),
+  "^mu_phi",
+  "^mu_psi",
+  "^mu_omega",
+  "^mu_pi",
+  "^sig_Lphi",
+  "^sig_Lpsi",
+  c("^sig_Lomega", "^sig_Lpi"),
+  "^Pb[", 
+  "init_recruits", 
+  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]"
+)
+
+# calculate the diagnostic statistics for each group
+diags = lapply(diag_params, function(param) post_summ(post, param, Rhat = T, neff = T, mcse = T)[c("mean", "Rhat", "neff", "mcse_mean"),])
+
+# count up the number of parameters by group that fail to meet certain thresholds
+diag_summ = t(sapply(diags, function(param) {
+  mc_cv = (param["mcse_mean",]/param["mean",]) * 100
+  c(
+    n_total = ncol(param),
+    n_Rhat_1 = sum(param["Rhat",] > 1.05),
+    n_Rhat_2 = sum(param["Rhat",] > 1.1),
+    n_Rhat_3 = sum(param["Rhat",] > 1.2),
+    n_neff_1 = sum(param["neff",] < 2000),
+    n_neff_2 = sum(param["neff",] < 1000),
+    n_neff_3 = sum(param["neff",] < 500),
+    mc_cv_1 = sum(mc_cv > 1),
+    mc_cv_2 = sum(mc_cv > 5),
+    mc_cv_3 = sum(mc_cv > 10)
+  )
+}))
+
+# format to a table
+diag_summ = as.data.frame(diag_summ)
+colnames(diag_summ) = c("Total Params", ">1.05", ">1.1", ">1.2", "<3000", "<1000", "<500", ">1%", ">5%", ">10%")
+df = cbind("Match" = unlist(lapply(diag_params, paste, collapse = ", ")), diag_summ)
+
+# render the table
+kable(df, align = "lcccccccccc") %>%
+  kable_styling(full_width = F, bootstrap_options = c("condensed", "striped")) %>%
+  add_header_above(c(" " = 2, "Rhat" = 3, "Neff" = 3, "MCMC SE/Mean * 100%" = 3)) %>%
+  column_spec(1, monospace = T) %>%
+  column_spec(c(2,5,8), border_right = T)
+
+```
+
+# Fit to Data {.tabset .tabset-pills}
+
+In the figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
+
+## Abundance Data
+
+```{r abundance-data-fits, fig.width = 3, fig.height = 5}
+par(mfcol = c(3,1), oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, "^Pa[.+,1]$"), jags_data$Pa_obs[observable,1], main = "Fall Trap Abundance")
+plot_tseries(post_summ(post, "^Mb[.+,2]$"), jags_data$Mb_obs[observable,2], main = "Spring Trap Abundance")
+plot_tseries(post_summ(post, "^Ra_tot["), jags_data$Ra_obs[observable], main = "Weir Abundance")
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Abundance")
+```
+
+## Survival Data
+
+```{r survival-data-fits, fig.width = 3, fig.height = 5}
+par(mfcol = c(3,1), oma = c(1.5,1.5,0,0))
+
+plot_tseries(post_summ(post, "^phi_Pb_Ma["), expit(jags_data$Lphi_obs_Pb_Ma[observable]), main = "Summer Tagging to LGD")
+plot_tseries(post_summ(post, "^phi_Pa_Ma[.+,1]$"), expit(jags_data$Lphi_obs_Pa_Ma[observable,1]), main = "Fall Trap to LGD")
+plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2]), main = "Spring Trap to LGD")
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Survival")
+```
+
+## Composition Data
+
+```{r comp-data-fits, fig.width = 6, fig.height = 5}
+# calculate observed q
+q_obs = t(apply(jags_data$x_obs, 1, function(y) y/sum(y)))
+
+par(mfcol = c(3,2), oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, "^q[.+,1]$"), q_obs[observable,1], main = "Female Age 3")
+plot_tseries(post_summ(post, "^q[.+,2]$"), q_obs[observable,2], main = "Female Age 4")
+plot_tseries(post_summ(post, "^q[.+,3]$"), q_obs[observable,3], main = "Female Age 5")
+plot_tseries(post_summ(post, "^q[.+,4]$"), q_obs[observable,4], main = "Male Age 3")
+plot_tseries(post_summ(post, "^q[.+,5]$"), q_obs[observable,5], main = "Male Age 4")
+plot_tseries(post_summ(post, "^q[.+,6]$"), q_obs[observable,6], main = "Male Age 5")
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+```
+
+# Spawner-to-Parr Relationship
+
+All red component are posterior summaries (medians and 95% credible intervals). The black curve is from an `nls()` fit on reconstructed parr and spawners -- the grey region is the confidence interval around this fit (from a parametric bootstrap).
+
+```{r spawners-to-parr, fig.width = 6, fig.height = 4}
+# extract posterior samples of the BH productivity and capacity parameters
+bh_params = post_subset(post, c("alpha", "beta"), matrix = T)
+
+# extract posterior summaries of total spawners by brood year
+Sa_tot = post_summ(post, "Sa_tot")
+
+# extract posterior summaries of total parr recruits by brood year
+Pb = post_summ(post, "^Pb[")
+
+# predict parr recruits along a sequence of spawner abundances
+Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
+Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(Sa_pred, bh_params[i,1], bh_params[i,2])))
+colnames(Pb_pred) = paste0("Pb_pred[", 1:length(Sa_pred), "]")
+Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
+Pb_pred = post_summ(Pb_pred, "Pb_pred")
+
+# fit ordinary least squares version
+ols_fit = fit_basic_BH(jags_data)$BH_fit
+
+# draw 1000 random parameters
+ols_params = exp(rmvnorm(1000, coef(ols_fit), vcov(ols_fit)))
+
+# calculate predicted curve at each pair/summarize
+ols_R_pred = t(sapply(1:1000, function(i) BH(Sa_pred, ols_params[i,1], ols_params[i,2])))
+ols_R_pred = apply(ols_R_pred, 2, function(x) quantile(x, c(0.5, 0.025, 0.975)))
+
+# graphical parameters
+par(mar = c(3,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
+
+# empty plot
+plot(1, 1, type = "n", xlim = range(0, Sa_tot[5,]), ylim = range(0, Pb[5,], Pb_pred[5,]),
+     xlab = "Spawners", ylab = "Parr Recruits")
+
+# draw fitted relationship: Bayesian
+polygon(c(Sa_pred, rev(Sa_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
+lines(Pb_pred[4,] ~ Sa_pred, col = "red", lty = 2)
+lines(Pb_pred[5,] ~ Sa_pred, col = "red", lty = 2)
+
+# draw fitted relationship: OLS
+polygon(c(Sa_pred, rev(Sa_pred)), c(ols_R_pred[2,], rev(ols_R_pred[3,])), col = alpha("grey", 0.5), border = NA)
+lines(ols_R_pred[1,] ~ Sa_pred, lwd = 2)
+lines(ols_R_pred[2,] ~ Sa_pred, lty = 2)
+lines(ols_R_pred[3,] ~ Sa_pred, lty = 2)
+lines(Pb_pred[3,] ~ Sa_pred, col = "red", lwd = 2)
+
+# draw state pairs + uncertainty
+segments(Sa_tot[4,], Pb[3,], Sa_tot[5,], Pb[3,], col = "red")
+segments(Sa_tot[3,], Pb[4,], Sa_tot[3,], Pb[5,], col = "red")
+points(Pb[3,] ~ Sa_tot[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5))
+```
+
+# Parameter Estimates {.tabset .tabset-pills}
+
+**Quick refresher on parameter names**
+_In alphabetical order, as displayed in figures_
+
+* `mu_omega[1]`: mean probability of being a female at ocean entry
+* `mu_phi_Ma_M`: mean probability of surviving from LGD to ocean entry
+* `mu_phi_Mb_Ma`: mean probability of surviving movement from tributary to LGD (same for both LH types)
+* `mu_phi_Pa_Mb`: mean probability of surviving overwinter in tributary (`[1]`: fall migrants, `[2]`: spring migrants)
+* `mu_pi[1]`: mean probability of becoming a fall migrant LH type at end of summer
+* `mu_psi_O1_Rb`: mean probability of maturing at age 3 given survived to that point (`[1]`: females, `[2]`: males)
+* `mu_psi_O2_Rb`: mean probability of maturing at age 4 given did not mature at age 3 and survived to that point (`[1]`: females, `[2]`: males)
+
+`sig_L*` are the among-year logit-normal standard deviations of these quantities. `sigma_Pb` is lognormal standard deviation of parr recruitment.
+
+## Means
+
+```{r mu-boxplots, fig.width = 6, fig.height = 6}
+# parameters to display
+keep = match_params(post, "mu")
+
+# remove redundant elements
+keep = keep[-which(keep %in% c("mu_init_recruits", "mu_omega[2]", "mu_phi_Mb_Ma[2]", "mu_pi[2]"))]
+
+# extract posterior samples of these parameters: for drawing initial box plot
+post_samples = post_subset(post, keep, T)
+
+# calculate custom summaries of these parameters: for drawing actual box plot
+post_summaries = post_summ(post, keep, probs = c(0.025, 0.25, 0.5, 0.75, 0.975))[-c(1:2),]
+
+# graphical parameters
+par(mar = c(8,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
+
+# set up a box plot and replace the stats with the custom stats
+bp = boxplot(post_samples, plot = F)
+bp$stats = post_summaries
+
+# draw the box plot
+bxp(bp, ylim = c(0,1), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```
+
+## Standard Deviations
+
+```{r sig-boxplots, fig.width = 6, fig.height = 6}
+# parameters to display
+keep = match_params(post, "sig")
+
+# remove redundant elements
+keep = keep[-which(keep %in% c("sig_init_lrecruits", "sig_Lphi_Mb_Ma[2]"))]
+
+# extract posterior samples of these parameters: for drawing initial box plot
+post_samples = post_subset(post, keep, T)
+
+# calculate custom summaries of these parameters: for drawing actual box plot
+post_summaries = post_summ(post, keep, probs = c(0.025, 0.25, 0.5, 0.75, 0.975))[-c(1:2),]
+
+# graphical parameters
+par(mar = c(8,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
+
+# set up a box plot and replace the stats with the custom stats
+bp = boxplot(post_samples, plot = F)
+bp$stats = post_summaries
+
+# draw the box plot
+bxp(bp, ylim = c(0,max(post_summaries)), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```
+
