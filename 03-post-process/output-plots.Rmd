@@ -143,3 +143,70 @@ segments(Sa_tot[3,], Pb[4,], Sa_tot[3,], Pb[5,], col = "red")
 points(Pb[3,] ~ Sa_tot[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5))
 ```
 
+# Parameter Estimates {.tabset .tabset-pills}
+
+**Quick refresher on parameter names**
+_In alphabetical order, as displayed in figures_
+
+* `mu_omega[1]`: mean probability of being a female at ocean entry
+* `mu_phi_Ma_M`: mean probability of surviving from LGD to ocean entry
+* `mu_phi_Mb_Ma`: mean probability of surviving movement from tributary to LGD (same for both LH types)
+* `mu_phi_Pa_Mb`: mean probability of surviving overwinter in tributary (`[1]`: fall migrants, `[2]`: spring migrants)
+* `mu_pi[1]`: mean probability of becoming a fall migrant LH type at end of summer
+* `mu_psi_O1_Rb`: mean probability of maturing at age 3 given survived to that point (`[1]`: females, `[2]`: males)
+* `mu_psi_O2_Rb`: mean probability of maturing at age 4 given did not mature at age 3 and survived to that point (`[1]`: females, `[2]`: males)
+
+`sig_L*` are the among-year logit-normal standard deviations of these quantities. `sigma_Pb` is lognormal standard deviation of parr recruitment.
+
+## Means
+
+```{r mu-boxplots, fig.width = 6, fig.height = 6}
+# parameters to display
+keep = match_params(post, "mu")
+
+# remove redundant elements
+keep = keep[-which(keep %in% c("mu_init_recruits", "mu_omega[2]", "mu_phi_Mb_Ma[2]", "mu_pi[2]"))]
+
+# extract posterior samples of these parameters: for drawing initial box plot
+post_samples = post_subset(post, keep, T)
+
+# calculate custom summaries of these parameters: for drawing actual box plot
+post_summaries = post_summ(post, keep, probs = c(0.025, 0.25, 0.5, 0.75, 0.975))[-c(1:2),]
+
+# graphical parameters
+par(mar = c(8,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
+
+# set up a box plot and replace the stats with the custom stats
+bp = boxplot(post_samples, plot = F)
+bp$stats = post_summaries
+
+# draw the box plot
+bxp(bp, ylim = c(0,1), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```
+
+## Standard Deviations
+
+```{r sig-boxplots, fig.width = 6, fig.height = 6}
+# parameters to display
+keep = match_params(post, "sig")
+
+# remove redundant elements
+keep = keep[-which(keep %in% c("sig_init_lrecruits", "sig_Lphi_Mb_Ma[2]"))]
+
+# extract posterior samples of these parameters: for drawing initial box plot
+post_samples = post_subset(post, keep, T)
+
+# calculate custom summaries of these parameters: for drawing actual box plot
+post_summaries = post_summ(post, keep, probs = c(0.025, 0.25, 0.5, 0.75, 0.975))[-c(1:2),]
+
+# graphical parameters
+par(mar = c(8,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
+
+# set up a box plot and replace the stats with the custom stats
+bp = boxplot(post_samples, plot = F)
+bp$stats = post_summaries
+
+# draw the box plot
+bxp(bp, ylim = c(0,max(post_summaries)), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```
+
