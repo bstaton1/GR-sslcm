@@ -19,6 +19,30 @@ get_logit_se = function(N, p_mean, p_se, p_lwr, p_upr) {
   (logit(p_upr) - logit(p_lwr))/(2 * qnorm(0.975))
 }
 
+
+##### CREATE NAMES FOR A SPECIFIC COMPOSITION DATA SET #####
+# o_names = c("Nat", "Hat")
+# s_names = c("F", "M")
+# k_names = c(3, 4, 5)
+# type = "weir"; type = "carc", type = "rm"
+
+create_comp_names = function(type, o_names, s_names, k_names) {
+  # create combinations of origins, sexes, and ages
+  x = expand.grid(o = o_names, s = s_names, k = k_names)
+  
+  # sort them by origin and sex
+  x = x[order(x$o, x$s),]
+  
+  # combine into strings, along with the type: carc, weir, or rm
+  x = apply(x, 1, function(x) paste(c(type, x), collapse = "_"))
+  
+  # build a list with the names for each origin type
+  list(
+    nat_names = unname(x[1:(length(k_names) * length(s_names))]),
+    hat_names = unname(x[((length(k_names) * length(s_names)) + 1):(length(o_names) * length(k_names) * length(s_names))])
+  )
+}
+
 ##### CREATE DATA LIST FOR JAGS: ONE POPULATION #####
 
 # formats the appropriate information from the bio_dat object
