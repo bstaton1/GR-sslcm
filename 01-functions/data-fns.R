@@ -19,6 +19,30 @@ get_logit_se = function(N, p_mean, p_se, p_lwr, p_upr) {
   (logit(p_upr) - logit(p_lwr))/(2 * qnorm(0.975))
 }
 
+
+##### CREATE NAMES FOR A SPECIFIC COMPOSITION DATA SET #####
+# o_names = c("Nat", "Hat")
+# s_names = c("F", "M")
+# k_names = c(3, 4, 5)
+# type = "weir"; type = "carc", type = "rm"
+
+create_comp_names = function(type, o_names, s_names, k_names) {
+  # create combinations of origins, sexes, and ages
+  x = expand.grid(o = o_names, s = s_names, k = k_names)
+  
+  # sort them by origin and sex
+  x = x[order(x$o, x$s),]
+  
+  # combine into strings, along with the type: carc, weir, or rm
+  x = apply(x, 1, function(x) paste(c(type, x), collapse = "_"))
+  
+  # build a list with the names for each origin type
+  list(
+    nat_names = unname(x[1:(length(k_names) * length(s_names))]),
+    hat_names = unname(x[((length(k_names) * length(s_names)) + 1):(length(o_names) * length(k_names) * length(s_names))])
+  )
+}
+
 ##### CREATE DATA LIST FOR JAGS: ONE POPULATION #####
 
 # formats the appropriate information from the bio_dat object
@@ -112,15 +136,11 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   
   ### ADULT AGE COMP: WEIR ###
   # obtain names of age comp variables
-  x = expand.grid(o = o_names, s = s_names, k = k_names)
-  x = x[order(x$o, x$s),]
-  x = apply(x, 1, function(x) paste(c("weir", x), collapse = "_"))
-  nat_names = x[1:(nk * ns)]
-  hat_names = x[((nk * ns) + 1):(no * nk * ns)]
+  weir_comp_names = create_comp_names("weir", o_names, s_names, k_names)
   
   # extract them by origin and coerce NA to zero
-  nat_comp = sub[,nat_names]
-  hat_comp = sub[,hat_names]
+  nat_comp = sub[,weir_comp_names$nat_names]
+  hat_comp = sub[,weir_comp_names$hat_names]
   nat_comp[is.na(nat_comp)] = 0
   hat_comp[is.na(hat_comp)] = 0
   
@@ -137,11 +157,39 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   x_obs[y_names %in% sub$brood_year,] = as.matrix(hat_comp + nat_comp)
   nx_obs = rowSums(x_obs)
   
-  ### ADULT ABUNDANCE ###
-  # proportion of total adults arriving at weir that are removed for broodstock
-  p_remove = rep(NA, ny); names(p_remove) = y_names
-  p_remove[y_names %in% sub$brood_year] = (sub$adults_at_weir - sub$adults_above_weir)/sub$adults_at_weir
+  ### PROPORTION OF RETURNING ADULTS REMOVED FOR BROODSTOCK ###
+  weir_comp_names = create_comp_names("weir", o_names, s_names, k_names)
+  rm_comp_names = create_comp_names("rm", o_names, s_names, k_names)
   
+  # extract compositions by type and coerce NAs to zero
+  weir_comp = sub[,c(weir_comp_names$nat_names, weir_comp_names$hat_names)]
+  rm_comp = sub[,c(rm_comp_names$nat_names, rm_comp_names$hat_names)]
+  weir_comp[is.na(weir_comp)] = 0
+  rm_comp[is.na(rm_comp)] = 0
+  
+  # calculate the proportion of all fish sampled at the weir that were of each age/sex/origin
+  weir_prop = t(apply(weir_comp, 1, function(x) x/sum(x)))
+  
+  # calculate the proportion of all fish arriving at the weir that were of each age/sex/origin
+  at_weir_N = apply(weir_prop, 2, function(x) x * sub$adults_at_weir)
+  at_weir_N[is.na(at_weir_N)] = 0
+  
+  # calculate the proportion of all fish arriving at the weir that were removed by each age/sex/origin
+  p_take = rm_comp/at_weir_N
+  p_take[p_take > 1] = 1    # this is VERY rare, and only ever < 1.05
+  p_take[is.na(p_take)] = 0
+  p_take = as.matrix(p_take)
+  
+  # place p_take in the correct location of p_remove: same numbers just reformatted array
+  # structure used by model
+  p_remove = array(NA, dim = c(ny, nk, ns, no)); dimnames(p_remove) = list(y_names, k_names, s_names, o_names)
+  p_remove[y_names %in% sub$brood_year,,s_names[1],o_names[1]] = p_take[,paste("rm", o_names[1], s_names[1], k_names, sep = "_")]
+  p_remove[y_names %in% sub$brood_year,,s_names[2],o_names[1]] = p_take[,paste("rm", o_names[1], s_names[2], k_names, sep = "_")]
+  p_remove[y_names %in% sub$brood_year,,s_names[1],o_names[2]] = p_take[,paste("rm", o_names[2], s_names[1], k_names, sep = "_")]
+  p_remove[y_names %in% sub$brood_year,,s_names[2],o_names[2]] = p_take[,paste("rm", o_names[2], s_names[2], k_names, sep = "_")]
+  
+  ### ADULT ABUNDANCE ###
+
   # total returning adults, nat + hat
   Ra_obs = rep(NA, ny); names(Ra_obs) = y_names
   Ra_obs[y_names %in% sub$brood_year] = sub$adults_at_weir
@@ -263,7 +311,7 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     nx_obs = abind(lapply(main_list, function(x) x$nx_obs), along = 2),
     
     # broodstock removals
-    p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 2),
+    p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 5),
     
     # proportion of hatchery origin returns
     p_HOR = abind(lapply(main_list, function(x) x$p_HOR), along = 2)
