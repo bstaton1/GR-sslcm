@@ -136,15 +136,11 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   
   ### ADULT AGE COMP: WEIR ###
   # obtain names of age comp variables
-  x = expand.grid(o = o_names, s = s_names, k = k_names)
-  x = x[order(x$o, x$s),]
-  x = apply(x, 1, function(x) paste(c("weir", x), collapse = "_"))
-  nat_names = x[1:(nk * ns)]
-  hat_names = x[((nk * ns) + 1):(no * nk * ns)]
+  weir_comp_names = create_comp_names("weir", o_names, s_names, k_names)
   
   # extract them by origin and coerce NA to zero
-  nat_comp = sub[,nat_names]
-  hat_comp = sub[,hat_names]
+  nat_comp = sub[,weir_comp_names$nat_names]
+  hat_comp = sub[,weir_comp_names$hat_names]
   nat_comp[is.na(nat_comp)] = 0
   hat_comp[is.na(hat_comp)] = 0
   
