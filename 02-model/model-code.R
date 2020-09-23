@@ -30,6 +30,10 @@ jags_model_code = function() {
   mu_phi_Ma_M ~ dbeta(1, 1)
   sig_Lphi_Ma_M ~ dunif(0, 5)
   
+  # pre-spawn survival (after brood-stock removal to successful spawning)
+  mu_phi_Sb_Sa ~ dbeta(1, 1)
+  sig_Lphi_Sb_Sa ~ dunif(0, 5)
+  
   ### PRIORS: MATURATION ###
   # probability of returning as female ([1]) or male ([2])
   mu_omega[1] ~ dbeta(1, 1)
@@ -101,7 +105,8 @@ jags_model_code = function() {
     phi_Rb_Ra[y] <- mu_phi_Rb_Ra
     
     # pre-spawn survival
-    phi_Sb_Sa[y] <- mu_phi_Sb_Sa
+    Lphi_Sb_Sa[y] ~ dnorm(logit(mu_phi_Sb_Sa), 1/sig_Lphi_Sb_Sa^2)
+    phi_Sb_Sa[y] <- ilogit(Lphi_Sb_Sa[y])
   }
   
   ### PROCESS MODEL: INITIALIZATION ###
@@ -262,5 +267,10 @@ jags_model_code = function() {
   # spring tagging to LGD
   for (d in 1:nfit_Lphi_Mb_Ma) {
     Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2]] ~ dnorm(logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2]]), 1/sig_Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2]]^2)
+  }
+  
+  # pre-spawn survival
+  for (d in 1:nfit_spawned) {
+    carcs_spawned[fit_spawned[d]] ~ dbin(phi_Sb_Sa[fit_spawned[d]], carcs_sampled[fit_spawned[d]])
   }
 }
