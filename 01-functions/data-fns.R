@@ -198,6 +198,13 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   sig_Ra_obs = rep(NA, ny); names(sig_Ra_obs) = y_names
   sig_Ra_obs[y_names %in% sub$brood_year] = sub$adult_log_se
   
+  ### ADULT PRESPAWN DATA ###
+  
+  # number of carcasses sampled and found to have spawned successfully
+  carcs_spawned = carcs_sampled = rep(NA, ny); names(carcs_spawned) = names(carcs_sampled) = y_names
+  carcs_spawned[y_names %in% sub$brood_year] = sub$carcs_status_spawned
+  carcs_sampled[y_names %in% sub$brood_year] = sub$carcs_samp_for_status
+  
   ### BUILD LIST TO RETURN ###
   
   out = list(
@@ -248,7 +255,13 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     nx_obs = nx_obs,   # multinomial sample size
     
     # proportion of hatchery origin returns
-    p_HOR = p_HOR
+    p_HOR = p_HOR,
+    
+    # number of carcasses sampled for spawn status
+    carcs_sampled = carcs_sampled,
+    
+    # number of carcasses found to have spawned successfully
+    carcs_spawned = carcs_spawned
   )
   
   # return output
