@@ -41,7 +41,7 @@ jags_data = model_info$jags_data
 observable = (jags_data$kmax+1):jags_data$ny
 ```
 
-The code used to render this output relies heavily on Staton's 'postpack' package (currently under CRAN review). Take a look at [this vignette](https://bstaton1.github.io/postpack/articles/feature-overview.html) for a primer on how to use it.
+The code used to render this output relies heavily on Staton's 'postpack' package (now available on CRAN). Take a look at [this vignette](https://bstaton1.github.io/postpack/articles/feature-overview.html) for a primer on how to use it.
 
 # MCMC Information {.tabset .tabset-pills}
 

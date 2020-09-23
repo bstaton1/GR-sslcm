@@ -93,7 +93,7 @@ We are using the [**Feature Branch Workflow**](https://www.atlassian.com/git/tut
   
   * If you include a new package into this file, include a brief statement about what it is used for and how to obtain it, e.g.,
     ```R
-    library(postpack) # summarizing posterior samples; remotes::install_github("bstaton1/postpack")
+    library(postpack) # summarizing posterior samples; install.packages("postpack")
     library(jagsUI)   # calling JAGS from R; install.packages("jagsUI")
     ```
   * To the extent practicable, we should strive to minimize dependencies
