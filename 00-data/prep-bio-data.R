@@ -198,6 +198,44 @@ tmp = tmp[,c("population", "brood_year", sort(colnames(tmp)[3:ncol(tmp)]))]
 # rename the data frame, and remove "tmp" objects
 adult_rm_composition = tmp; rm(tmp)
 
+##### ADULT PRE-SPAWN SURVIVAL: CARCASS DATA #####
+
+# read the data
+tmp = read.csv(file.path(data_dir, "02a-adult-indiv-carcass.csv"), stringsAsFactors = F)
+
+# drop out non-known females
+tmp = tmp[tmp$sex == "F",]
+
+# drop out non-known spawn status
+tmp = tmp[tmp$prespawn != "Unk" & !is.na(tmp$prespawn),]
+
+# add a count variable: for use in summing records
+tmp$count = 1
+
+# aggregate data: total carcasses sampled by population and year
+sampled = aggregate(count ~ population + year, tmp, sum)
+colnames(sampled)[3] = "carcs_samp_for_status"
+
+# aggregate data: total carcasses sampled that were spawned out by population and year
+success = aggregate(count ~ population + year, subset(tmp, prespawn == "Spawned"), sum)
+colnames(success)[3] = "carcs_status_spawned"
+
+# merge these two data sets
+tmp = merge(sampled, success, all = T)
+
+# if carcasses were sampled in a year, but none were found successfully spawned,
+# there will be an NA in that cell. These should be zeros
+tmp$carcs_status_spawned[is.na(tmp$carcs_status_spawned)] = 0
+
+# update column names
+# note: year renamed to "brood_year" to allow merging with other data sets
+# and for consistent indexing in model.
+# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
+colnames(tmp)[2] = "brood_year"
+
+# rename the data frame, and remove "tmp" objects
+adult_prespawn = tmp; rm(tmp)
+
 ##### JUVENILE ABUNDANCE #####
 
 # read the data
@@ -288,6 +326,7 @@ bio_dat = merge(bio_dat, adult_abundance, by = c("population", "brood_year"), al
 bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year
