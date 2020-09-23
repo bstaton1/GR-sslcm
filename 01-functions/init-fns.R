@@ -14,6 +14,9 @@ fit_basic_BH = function(jags_data, plot = FALSE) {
     # get "observed" summer parr
     Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma)
     
+    # get "observed" pre-spawn mortality
+    mu_phi_Sb_Sa = mean(carcs_spawned/carcs_sampled, na.rm = T)
+    
     # get "observed" spawners
     Sa_obs = Ra_obs * mu_phi_Sb_Sa
     
