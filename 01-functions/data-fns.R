@@ -327,7 +327,13 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 5),
     
     # proportion of hatchery origin returns
-    p_HOR = abind(lapply(main_list, function(x) x$p_HOR), along = 2)
+    p_HOR = abind(lapply(main_list, function(x) x$p_HOR), along = 2),
+    
+    # number of carcasses sampled for spawn status
+    carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
+    
+    # number of carcasses sampled with successful spawning status
+    carcs_spawned = abind(lapply(main_list, function(x) x$carcs_spawned), along = 2)
   )
   
   # append dimension and observation lists together
