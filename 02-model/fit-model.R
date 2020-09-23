@@ -30,8 +30,7 @@ add_jags_data = list(
   mu_phi_M_O1 = 0.2,    # survival from arrival to estuary to next spring (become SWA1)
   mu_phi_O1_O2 = 0.8,   # survival from SWA1 to SWA2
   mu_phi_O2_O3 = 0.8,   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra = 0.7,   # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
-  mu_phi_Sb_Sa = 0.9    # survival on the spawning grounds
+  mu_phi_Rb_Ra = 0.7   # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
 
 # calculate the upper bound on initial adult recruits and add to data
