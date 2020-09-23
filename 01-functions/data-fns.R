@@ -361,7 +361,8 @@ append_no_na_indices = function(jags_data) {
       fit_Lphi_Pb_Ma = find_no_na_indices(Lphi_obs_Pb_Ma),
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
-      fit_Ra = find_no_na_indices(Ra_obs)
+      fit_Ra = find_no_na_indices(Ra_obs),
+      fit_spawned = find_no_na_indices(carcs_spawned)
     )
   })
   
