@@ -119,6 +119,32 @@ kable(df, align = "lcccccccccc") %>%
 
 ```
 
+## Diagnostic Plots {.tabset .tabset-pills}
+
+### `alpha`, `beta`
+
+```{r alpha-beta-diag-plots, fig.width = 4, fig.height = 5}
+diag_plots(post, c("alpha", "beta"), layout = "2x1")
+```
+
+### `^mu`
+
+```{r mu-diag-plots, fig.width = 7, fig.height = 7}
+diag_plots(post, "^mu", layout = "5x3")
+```
+
+### `^sig`
+
+```{r sig-diag-plots, fig.width = 7, fig.height = 7}
+diag_plots(post, "^sig", layout = "5x3")
+```
+
+### `init_recruits`
+
+```{r init-recruits-diag-plots, fig.width = 5, fig.height = 7}
+diag_plots(post, "init_recruits", layout = "4x2")
+```
+
 # Fit to Data {.tabset .tabset-pills}
 
 In the figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
