@@ -163,9 +163,26 @@ mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 ```
 
+## Spawn Status Data
+
+```{r spawn-status-fits, fig.width = 3.5, fig.height = 5}
+par(oma = c(1.5,1.5,0,0))
+layout(matrix(c(1,2), 2, 1), heights = c(1, 0.65))
+plot_tseries(post_summ(post, "^phi_Sb_Sa["), with(jags_data, carcs_spawned/carcs_sampled)[observable], main = "Successful Spawning")
+mtext(side = 2, "Survival Probability", line = 1.5)
+
+at_x = seq(1, length(observable), 4)
+par(mar = c(2,2,0,1), yaxs = "i")
+mp = barplot(jags_data$carcs_sampled[observable], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
+axis(side = 1, at = mp[at_x], labels = substr( names(jags_data$carcs_sampled[observable]), 3, 4)[at_x])
+box()
+mtext(side = 2, "Carcasses Sampled", line = 1.5)
+mtext(side = 1, "Brood Year", line = 1.5)
+```
+
 # Spawner-to-Parr Relationship
 
-All red component are posterior summaries (medians and 95% credible intervals). The black curve is from an `nls()` fit on reconstructed parr and spawners -- the grey region is the confidence interval around this fit (from a parametric bootstrap).
+All red components are posterior summaries (medians and 95% credible intervals). The black curve is from an `nls()` fit on reconstructed parr and spawners -- the grey region is the confidence interval around this fit (from a parametric bootstrap).
 
 ```{r spawners-to-parr, fig.width = 6, fig.height = 4}
 # extract posterior samples of the BH productivity and capacity parameters
