@@ -261,7 +261,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     carcs_sampled = carcs_sampled,
     
     # number of carcasses found to have spawned successfully
-    carcs_spawned = carcs_spawned
+    carcs_spawned = carcs_spawned,
+    
+    # pool equivalent units
+    peu = PEU[pop]
   )
   
   # return output
