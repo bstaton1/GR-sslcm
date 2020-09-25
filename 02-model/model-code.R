@@ -14,11 +14,16 @@ jags_model_code = function() {
   sig_Lpi ~ dunif(0, 5)
   mu_pi[2] <- 1 - mu_pi[1]
   
-  # overwinter survival: LH-specific
+  # overwinter survival parameters: LH-specific
+  # uses logistic relationship to introduce density-depdendence
+  # gamma0: LH-specific intercepts
+  # gamma1: LH-common slopes
   for (i in 1:ni) {
-    mu_phi_Pa_Mb[i] ~ dbeta(1, 1)  
+    gamma0[i] ~ dnorm(0, 1e-3)
     sig_Lphi_Pa_Mb[i] ~ dunif(0, 5)
   }
+  gamma1[1] ~ dnorm(0, 1e-3)
+  gamma1[2] <- gamma1[1]
 
   # movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
   mu_phi_Mb_Ma[2] ~ dbeta(1, 1)
