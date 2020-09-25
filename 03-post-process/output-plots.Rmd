@@ -73,6 +73,7 @@ This model was ran for a very short time, and I'm impressed with how well the sa
 # groups of parameters to match and calculate diagnostic summaries for separately
 diag_params = list(
   c("alpha", "beta", "sigma_Pb"),
+  "gamma",
   "^mu_phi",
   "^mu_psi",
   "^mu_omega",
@@ -125,6 +126,12 @@ kable(df, align = "lcccccccccc") %>%
 
 ```{r alpha-beta-diag-plots, fig.width = 4, fig.height = 5}
 diag_plots(post, c("alpha", "beta"), layout = "2x1")
+```
+
+### `gamma`
+
+```{r gamma-diag-plots, fig.width = 3, fig.height = 6}
+diag_plots(post, "gamma", layout = "4x1")
 ```
 
 ### `^mu`
