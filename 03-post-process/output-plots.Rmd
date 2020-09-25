@@ -262,6 +262,84 @@ segments(Sa_tot[3,], Pb[4,], Sa_tot[3,], Pb[5,], col = "red")
 points(Pb[3,] ~ Sa_tot[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5))
 ```
 
+# Overwinter Survival Relationships
+
+```{r overwinter-survival, fig.width = 4, fig.height = 7}
+
+# extract parr, scale it to PEU, and add to posterior samples
+Pa = post_subset(post, "^Pa[", matrix = T)
+Pa_scaled = Pa/jags_data$peu
+colnames(Pa_scaled) = gsub("Pa", "Pa_scaled", x = colnames(Pa_scaled))
+post = post_bind(post, Pa_scaled)
+
+# summarize posterior of scaled parr
+Pa_scaled_mean = array_format(post_summ(post, "Pa_scaled")["mean",])
+Pa_scaled_lwr = array_format(post_summ(post, "Pa_scaled")["2.5%",])
+Pa_scaled_upr = array_format(post_summ(post, "Pa_scaled")["97.5%",])
+
+# create vectors to predict survival at: for credible regions and mean curve
+Pa_scaled_seq = matrix(NA, 30, 2)
+Pa_scaled_seq[,1] = seq(min(Pa_scaled_lwr[,1], na.rm = T), max(Pa_scaled_upr[,1], na.rm = T), length = 30)
+Pa_scaled_seq[,2] = seq(min(Pa_scaled_lwr[,2], na.rm = T), max(Pa_scaled_upr[,2], na.rm = T), length = 30)
+
+# extract posteriors of coefficients
+gamma0 = post_subset(post, "gamma0", matrix = T)
+gamma1 = post_subset(post, "gamma1", matrix = T)
+
+# extract/format posterior summaries of realized survivals
+phi_Pa_Mb_mean = array_format(post_summ(post, "^phi_Pa_Mb[")["mean",])
+phi_Pa_Mb_lwr = array_format(post_summ(post, "^phi_Pa_Mb[")["2.5%",])
+phi_Pa_Mb_upr = array_format(post_summ(post, "^phi_Pa_Mb[")["97.5%",])
+
+# function to create predicted survival curves for one posterior sample
+f = function(i) {
+  pred_phi_Pa_Mb1 = plogis(gamma0[i,1] + gamma1[i,1] * Pa_scaled_seq[,1])
+  pred_phi_Pa_Mb2 = plogis(gamma0[i,2] + gamma1[i,2] * Pa_scaled_seq[,2])
+
+  names(pred_phi_Pa_Mb1) = paste0("pred_phi_Pa_Mb[", 1:30, ",1]")
+  names(pred_phi_Pa_Mb2) = paste0("pred_phi_Pa_Mb[", 1:30, ",2]")
+
+  c(pred_phi_Pa_Mb1, pred_phi_Pa_Mb2)
+}
+
+# calculate predicted survivals and add to posterior samples
+pred_phi_Pa_Mb = t(sapply(1:post_dim(post, "saved"), f))
+post = post_bind(post, pred_phi_Pa_Mb)
+
+# summarize predicted survivals
+pred_phi_Pa_Mb_mean = array_format(post_summ(post, "pred_phi_Pa_Mb")["mean",])
+pred_phi_Pa_Mb_lwr = array_format(post_summ(post, "pred_phi_Pa_Mb")["2.5%",])
+pred_phi_Pa_Mb_upr = array_format(post_summ(post, "pred_phi_Pa_Mb")["97.5%",])
+
+# function to draw plot for one LH-type
+plot_fun = function(i) {
+  # blank plot of correct dimensions
+  plot(1,1, type = "n", 
+       ylim = range(pred_phi_Pa_Mb_lwr[,i], pred_phi_Pa_Mb_upr[,i], phi_Pa_Mb_lwr[,i], phi_Pa_Mb_upr[,i], na.rm = T),
+       xlim = range(0, Pa_scaled_seq), 
+       main = c("Fall Migrants", "Spring Migrants")[i]
+  )
+  
+  # expected relationship
+  polygon(c(Pa_scaled_seq[,i], rev(Pa_scaled_seq[,i])), c(pred_phi_Pa_Mb_lwr[,i], rev(pred_phi_Pa_Mb_upr[,i])), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_phi_Pa_Mb_lwr[,i] ~ Pa_scaled_seq[,i], col = "red", lty = 2)
+  lines(pred_phi_Pa_Mb_upr[,i] ~ Pa_scaled_seq[,i], col = "red", lty = 2)
+  lines(pred_phi_Pa_Mb_mean[,i] ~ Pa_scaled_seq[,i], col = "red", lwd = 2)
+  
+  # realized survivals
+  segments(Pa_scaled_lwr[,i], phi_Pa_Mb_mean[,i], Pa_scaled_upr[,i], phi_Pa_Mb_mean[,i], col = alpha("red", 0.5))
+  segments(Pa_scaled_mean[,i], phi_Pa_Mb_lwr[,i], Pa_scaled_mean[,i], phi_Pa_Mb_upr[,i], col = alpha("red", 0.5))
+  points(phi_Pa_Mb_mean[,i] ~ Pa_scaled_mean[,i], pch = 21, col = "red", bg = alpha("salmon", 0.5))
+}
+
+# create the plot
+par(mfrow = c(2,1), mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1), oma = c(2,2,0,0))
+plot_fun(1)
+plot_fun(2)
+mtext(side = 1, line = 1, outer = T, "LH-Specific Parr/PEU", cex = 1.2)
+mtext(side = 2, line = 1, outer = T, "Overwinter Survival", cex = 1.2)
+```
+
 # Parameter Estimates {.tabset .tabset-pills}
 
 **Quick refresher on parameter names**
