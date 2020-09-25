@@ -7,6 +7,9 @@
 # load biological data (also loads packages)
 source("00-data/prep-bio-data.R")
 
+# load environmental/habitat data
+source("00-data/prep-env-data.R")
+
 # load all necessary functions
 invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
 
