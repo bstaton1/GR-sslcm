@@ -30,8 +30,7 @@ add_jags_data = list(
   mu_phi_M_O1 = 0.2,    # survival from arrival to estuary to next spring (become SWA1)
   mu_phi_O1_O2 = 0.8,   # survival from SWA1 to SWA2
   mu_phi_O2_O3 = 0.8,   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra = 0.7,   # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
-  mu_phi_Sb_Sa = 0.9    # survival on the spawning grounds
+  mu_phi_Rb_Ra = 0.7   # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
 
 # calculate the upper bound on initial adult recruits and add to data
@@ -53,15 +52,15 @@ jags_params = c(
   
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Pa_Mb", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
-  "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb",
+  "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
   
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_M",
-  "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb",
+  "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_M", "omega", 
-  "psi_O1_Rb", "psi_O2_Rb",
+  "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",
