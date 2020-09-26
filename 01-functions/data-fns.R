@@ -261,7 +261,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     carcs_sampled = carcs_sampled,
     
     # number of carcasses found to have spawned successfully
-    carcs_spawned = carcs_spawned
+    carcs_spawned = carcs_spawned,
+    
+    # pool equivalent units
+    peu = PEU[pop]
   )
   
   # return output
@@ -333,7 +336,10 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
     
     # number of carcasses sampled with successful spawning status
-    carcs_spawned = abind(lapply(main_list, function(x) x$carcs_spawned), along = 2)
+    carcs_spawned = abind(lapply(main_list, function(x) x$carcs_spawned), along = 2),
+    
+    # pool equivalent units
+    peu = abind(lapply(main_list, function(x) x$peu), along = 1)
   )
   
   # append dimension and observation lists together

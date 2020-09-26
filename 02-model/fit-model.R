@@ -7,6 +7,9 @@
 # load biological data (also loads packages)
 source("00-data/prep-bio-data.R")
 
+# load environmental/habitat data
+source("00-data/prep-env-data.R")
+
 # load all necessary functions
 invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
 
@@ -50,8 +53,11 @@ jags_params = c(
   # reproduction
   "alpha", "beta", "sigma_Pb",
   
+  # overwinter survival coefficients
+  "gamma0", "gamma1",
+  
   # hyperparameters: central tendency
-  "mu_pi", "mu_phi_Pa_Mb", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
+  "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
   "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
   
   # hyperparameters: inter-annual sd
