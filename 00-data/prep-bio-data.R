@@ -116,6 +116,9 @@ tmp = tmp[tmp$sex != "Unk",]
 # discard records with unknown origin
 tmp = tmp[tmp$origin != "Unk",]
 
+# discard records for recaptured fish
+tmp = tmp[-which(tmp$recapture),]
+
 # rename trap_year to year
 colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
 
@@ -171,6 +174,9 @@ tmp = tmp[tmp$origin != "Unk",]
 
 # rename trap_year to year
 colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
+
+# discard records for recaptured fish
+tmp = tmp[-which(tmp$recapture),]
 
 # keep only fish that were removed
 tmp = tmp[tmp$disposition == "removed",]
