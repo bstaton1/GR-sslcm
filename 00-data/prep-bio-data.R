@@ -206,6 +206,11 @@ adult_rm_composition = tmp; rm(tmp)
 
 ##### ADULT PRE-SPAWN SURVIVAL: CARCASS DATA #####
 
+# years with fewer carcasses sampled than this will be assigned
+# NA values for numbers of carcasses sampled and found with spawn status
+# intended to remove the effects of weakly informative data
+status_count_threshold = 0
+
 # read the data
 tmp = read.csv(file.path(data_dir, "02a-adult-indiv-carcass.csv"), stringsAsFactors = F)
 
@@ -238,6 +243,10 @@ tmp$carcs_status_spawned[is.na(tmp$carcs_status_spawned)] = 0
 # and for consistent indexing in model.
 # just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
 colnames(tmp)[2] = "brood_year"
+
+# discard years with too few fish sampled
+tmp$carcs_status_spawned[tmp$carcs_samp_for_status <= status_count_threshold] = NA
+tmp$carcs_samp_for_status[tmp$carcs_samp_for_status <= status_count_threshold] = NA
 
 # rename the data frame, and remove "tmp" objects
 adult_prespawn = tmp; rm(tmp)
