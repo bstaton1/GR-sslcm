@@ -209,7 +209,7 @@ adult_rm_composition = tmp; rm(tmp)
 # years with fewer carcasses sampled than this will be assigned
 # NA values for numbers of carcasses sampled and found with spawn status
 # intended to remove the effects of weakly informative data
-status_count_threshold = 10
+status_count_threshold = 0
 
 # read the data
 tmp = read.csv(file.path(data_dir, "02a-adult-indiv-carcass.csv"), stringsAsFactors = F)
