@@ -179,19 +179,52 @@ mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
 
-## Composition Data
+## Composition Data {.tabset .tabset-pills .tabset-fade}
 
-```{r comp-data-fits, fig.width = 6, fig.height = 5}
+Within a single year, the values across all panels sum to one.
+
+### Weir Sampling
+
+```{r weir-comp-data-fits, fig.width = 8, fig.height = 5}
 # calculate observed q
-q_obs = t(apply(jags_data$x_obs, 1, function(y) y/sum(y)))
+q_obs = t(apply(jags_data$weir_x_obs, 1, function(y) y/sum(y)))
 
-par(mfcol = c(3,2), oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, "^q[.+,1]$"), q_obs[observable,1], main = "Female Age 3")
-plot_tseries(post_summ(post, "^q[.+,2]$"), q_obs[observable,2], main = "Female Age 4")
-plot_tseries(post_summ(post, "^q[.+,3]$"), q_obs[observable,3], main = "Female Age 5")
-plot_tseries(post_summ(post, "^q[.+,4]$"), q_obs[observable,4], main = "Male Age 3")
-plot_tseries(post_summ(post, "^q[.+,5]$"), q_obs[observable,5], main = "Male Age 4")
-plot_tseries(post_summ(post, "^q[.+,6]$"), q_obs[observable,6], main = "Male Age 5")
+par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, "^q_Ra[.+,1]$"), q_obs[observable,1], main = "Nat. Female Age 3")
+plot_tseries(post_summ(post, "^q_Ra[.+,2]$"), q_obs[observable,2], main = "Nat. Female Age 4")
+plot_tseries(post_summ(post, "^q_Ra[.+,3]$"), q_obs[observable,3], main = "Nat. Female Age 5")
+plot_tseries(post_summ(post, "^q_Ra[.+,4]$"), q_obs[observable,4], main = "Nat. Male Age 3")
+plot_tseries(post_summ(post, "^q_Ra[.+,5]$"), q_obs[observable,5], main = "Nat. Male Age 4")
+plot_tseries(post_summ(post, "^q_Ra[.+,6]$"), q_obs[observable,6], main = "Nat. Male Age 5")
+plot_tseries(post_summ(post, "^q_Ra[.+,7]$"), q_obs[observable,7], main = "Hat. Female Age 3")
+plot_tseries(post_summ(post, "^q_Ra[.+,8]$"), q_obs[observable,8], main = "Hat. Female Age 4")
+plot_tseries(post_summ(post, "^q_Ra[.+,9]$"), q_obs[observable,9], main = "Hat. Female Age 5")
+plot_tseries(post_summ(post, "^q_Ra[.+,10]$"), q_obs[observable,10], main = "Hat. Male Age 3")
+plot_tseries(post_summ(post, "^q_Ra[.+,11]$"), q_obs[observable,11], main = "Hat. Male Age 4")
+plot_tseries(post_summ(post, "^q_Ra[.+,12]$"), q_obs[observable,12], main = "Hat. Male Age 5")
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+```
+
+### Carcass Sampling
+
+```{r carc-comp-data-fits, fig.width = 8, fig.height = 5}
+# calculate observed q
+q_obs = t(apply(jags_data$carc_x_obs, 1, function(y) y/sum(y)))
+
+par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,1]$"), q_obs[observable,1], main = "Nat. Female Age 3")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,2]$"), q_obs[observable,2], main = "Nat. Female Age 4")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,3]$"), q_obs[observable,3], main = "Nat. Female Age 5")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,4]$"), q_obs[observable,4], main = "Nat. Male Age 3")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,5]$"), q_obs[observable,5], main = "Nat. Male Age 4")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,6]$"), q_obs[observable,6], main = "Nat. Male Age 5")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,7]$"), q_obs[observable,7], main = "Hat. Female Age 3")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,8]$"), q_obs[observable,8], main = "Hat. Female Age 4")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,9]$"), q_obs[observable,9], main = "Hat. Female Age 5")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,10]$"), q_obs[observable,10], main = "Hat. Male Age 3")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,11]$"), q_obs[observable,11], main = "Hat. Male Age 4")
+plot_tseries(post_summ(post, "^q_Sa_adj[.+,12]$"), q_obs[observable,12], main = "Hat. Male Age 5")
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 ```
