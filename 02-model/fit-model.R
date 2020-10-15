@@ -16,12 +16,28 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
+# handle command line arguments
+# run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
+# or if in interactive session, uncomment the pop you wish to fit
+args = commandArgs(trailingOnly = T)
+pop = args[1]
+rmd = as.logical(args[2])
 
-# select the population to fit
-# pop = "UGR"
-# pop = "CAT"
-# pop = "MIN"  # don't do this one yet, the data prep steps (for age comp mostly) aren't correct for MIN
-pop = "LOS"
+# if pop not supplied, set a value and warn
+if (is.na(pop)) {
+  pop = "CAT"
+  # pop = "LOS"
+  # pop = "MIN" # don't do this one yet, the data prep steps (for age comp mostly) aren't correct for MIN
+  # pop = "UGR"
+  cat("\n\n'pop' was not supplied as a command line argument.", pop, " will be used.")
+}
+
+if (is.na(rmd)) {
+  rmd = T
+  # rmd = F
+  cat("\n\n'rmd' was not supplied as a command line argument.", rmd, " will be used.")
+}
+
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
@@ -33,7 +49,6 @@ add_jags_data = list(
   mu_phi_M_O1 = 0.2,    # survival from arrival to estuary to next spring (become SWA1)
   mu_phi_O1_O2 = 0.8,   # survival from SWA1 to SWA2
   mu_phi_O2_O3 = 0.8,   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra = 0.7   # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
   mu_phi_Rb_Ra = 0.7    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
 
@@ -85,7 +100,6 @@ jags_params = c(
   
   # states
   "Pb", "Pa", "Mb", "Ma", "M", "O", "Rb",
-  "Ra", "Sb", "Sa", "q", "Sa_tot", "Ra_tot"
   "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot",
   
   # carcass vs. weir correction
@@ -100,7 +114,7 @@ jags_dims = list(
   n_thin = 2, 
   n_chain = 2,
   n_adapt = 1000,
-  parallel = F
+  parallel = T
 )
 
 ##### STEP 5: GENERATE INITIAL VALUES #####
@@ -109,6 +123,12 @@ jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data)
 
 ##### STEP 6: CALL THE JAGS SAMPLER #####
 
+# print a start message
+cat("\n\nRunning JAGS on Population:", pop)
+starttime = Sys.time()
+cat("\nMCMC started:", format(starttime))
+
+# call JAGS
 post = jags.basic(
   data = jags_data,
   inits = jags_inits,
@@ -119,8 +139,14 @@ post = jags.basic(
   n.iter = jags_dims$n_post + jags_dims$n_burn, 
   n.burnin = jags_dims$n_burn, 
   n.thin = jags_dims$n_thin,
-  parallel = jags_dims$parallel
+  parallel = jags_dims$parallel,
+  verbose = F
 )
+
+# print a stop message
+stoptime = Sys.time()
+cat("\nMCMC ended:", format(stoptime))
+cat("\nMCMC elapsed:", format(round(stoptime - starttime, 2)))
 
 # delete the text file that contains the JAGS code
 unlink(jags_file)
@@ -140,4 +166,18 @@ out_obj = list(
 out_file = paste0(pop, "-output.rds")
 
 # save the file
+cat("\nSaving rds Output")
 saveRDS(out_obj, file.path(out_dir, out_file))
+
+# render the output plots if requested
+if (rmd) {
+  cat("\nRendering Rmd Output")
+  setwd("03-post-process")
+  rmarkdown::render(input = "output-plots.Rmd",
+                    output_file = paste0(pop, "-output-plots.html"), 
+                    params = list(pop = pop), 
+                    quiet = T
+  )
+  setwd("../")
+  cat("\n\nDone.")
+}
