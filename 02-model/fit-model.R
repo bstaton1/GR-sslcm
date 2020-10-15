@@ -16,13 +16,13 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
-##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # select the population to fit
 # pop = "UGR"
 # pop = "CAT"
 # pop = "MIN"  # don't do this one yet, the data prep steps (for age comp mostly) aren't correct for MIN
 pop = "LOS"
+##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
 jags_data = create_jags_data_one(pop)
@@ -34,7 +34,16 @@ add_jags_data = list(
   mu_phi_O1_O2 = 0.8,   # survival from SWA1 to SWA2
   mu_phi_O2_O3 = 0.8,   # survival from SWA2 to SWA3
   mu_phi_Rb_Ra = 0.7   # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
+  mu_phi_Rb_Ra = 0.7    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
+
+# some dummy variables for performing weir vs. carcass composition correction
+add_jags_data2 = list(
+  age3 = c(1,0,0),      # is each k age 3? 1 = yes; 0 = no
+  age5 = c(0,0,1),      # is each k age 5?
+  male = c(0,1)         # is each s male?
+)
+add_jags_data = append(add_jags_data, add_jags_data2)
 
 # calculate the upper bound on initial adult recruits and add to data
 add_jags_data = append(add_jags_data, list(max_init_recruits = max(jags_data$Ra_obs/(add_jags_data$mu_phi_Rb_Ra) * 1.5, na.rm = T)))
@@ -77,6 +86,10 @@ jags_params = c(
   # states
   "Pb", "Pa", "Mb", "Ma", "M", "O", "Rb",
   "Ra", "Sb", "Sa", "q", "Sa_tot", "Ra_tot"
+  "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot",
+  
+  # carcass vs. weir correction
+  "z", "carc_adj"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
