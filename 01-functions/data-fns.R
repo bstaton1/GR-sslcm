@@ -344,9 +344,13 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     Ra_obs = abind(lapply(main_list, function(x) x$Ra_obs), along = 2),
     sig_Ra_obs = abind(lapply(main_list, function(x) x$sig_Ra_obs), along = 2),
     
-    # age/sex composition of returns to tributary
-    x_obs = abind(lapply(main_list, function(x) x$x_obs), along = 3),
-    nx_obs = abind(lapply(main_list, function(x) x$nx_obs), along = 2),
+    # age/sex composition of returns: weir
+    weir_x_obs = abind(lapply(main_list, function(x) x$weir_x_obs), along = 3),
+    weir_nx_obs = abind(lapply(main_list, function(x) x$weir_nx_obs), along = 2),
+    
+    # age/sex composition of returns: carcass
+    carc_x_obs = abind(lapply(main_list, function(x) x$carc_x_obs), along = 3),
+    carc_nx_obs = abind(lapply(main_list, function(x) x$carc_nx_obs), along = 2),
     
     # broodstock removals
     p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 5),
