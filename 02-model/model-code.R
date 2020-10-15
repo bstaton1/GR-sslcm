@@ -200,8 +200,7 @@ jags_model_code = function() {
         
         # expansion to obtain returning hatchery adults
         # natural origin fish only accounted for up until this point
-        # could (should) make p_HOR[y] sex-specific - but problems when p_HOR[y,s] == 1?
-        Ra[y,k,s,2] <- (Ra[y,k,s,1]/(1 - p_HOR[y])) - Ra[y,k,s,1]
+        Ra[y,k,s,2] <- (Ra[y,k,s,1]/(1 - p_HOR[y,k,s])) - Ra[y,k,s,1]
         
         for (o in 1:no) {
           # remove fish for brood stock
