@@ -78,9 +78,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   kmax = 5              # maximum age of return
   nk = kmax - kmin + 1  # number of ages of return
   ns = 2                # number of sexes of return
-  nks = nk * ns         # number of age/sex classes
   ni = 2                # number of juvenile life history strategies
   no = 2                # number of origins
+  nks = nk * ns         # number of age/sex classes
+  nkso = nk * ns * no   # number of age/sex/origin classes
   nt = nrow(sub)        # number of return years tracked
   ny = nt + kmax        # number of brood years tracked
   
@@ -91,6 +92,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   s_names = c("F", "M")
   o_names = c("Nat", "Hat")
   ks_names = c(paste0(s_names[1], k_names), paste0(s_names[2], k_names))
+  kso_names = c(paste0(ks_names, "-", o_names[1]), paste0(ks_names, "-", o_names[2]))
   
   ### JUVENILE ABUNDANCE DATA ###
   # fall trap count
@@ -152,10 +154,25 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   p_HOR[y_names %in% sub$brood_year] = rowSums(hat_comp)/(rowSums(nat_comp + hat_comp))
   p_HOR[is.na(p_HOR)] = 0
   
-  # age frequencies: hat + nat; for fitting composition of returns
-  x_obs = matrix(NA, ny, ns * nk); dimnames(x_obs) = list(y_names, ks_names)
-  x_obs[y_names %in% sub$brood_year,] = as.matrix(hat_comp + nat_comp)
-  nx_obs = rowSums(x_obs)
+  # age frequencies: for fitting composition of returns
+  weir_x_obs = matrix(NA, ny, no * ns * nk); dimnames(weir_x_obs) = list(y_names, kso_names)
+  weir_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
+  weir_nx_obs = rowSums(weir_x_obs)
+  
+  ### ADULT AGE COMP: CARCASSES ###
+  # obtain names of age comp variables
+  carc_comp_names = create_comp_names("carc", o_names, s_names, k_names)
+  
+  # extract them by origin and coerce NA to zero
+  nat_comp = sub[,carc_comp_names$nat_names]
+  hat_comp = sub[,carc_comp_names$hat_names]
+  nat_comp[is.na(nat_comp)] = 0
+  hat_comp[is.na(hat_comp)] = 0
+  
+  # age frequencies: for fitting composition of returns
+  carc_x_obs = matrix(NA, ny, no * ns * nk); dimnames(carc_x_obs) = list(y_names, kso_names)
+  carc_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
+  carc_nx_obs = rowSums(carc_x_obs)
   
   ### PROPORTION OF RETURNING ADULTS REMOVED FOR BROODSTOCK ###
   weir_comp_names = create_comp_names("weir", o_names, s_names, k_names)
@@ -214,6 +231,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     nk = nk,        # number of ages of return
     ns = ns,        # number of sexes of return
     nks = nks,      # number of age/sex classes of return
+    nkso = nkso,    # number of age/sex/origin classes of return
     ni = ni,        # number of life history strategies
     no = no,        # number of origin types
     kmin = kmin,    # minimum age of return
@@ -250,9 +268,13 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     p_remove = p_remove,
     
     ### ADULT COMPOSITION ###
-    # observed frequency of age/sex arriving at "weir"
-    x_obs = x_obs,
-    nx_obs = nx_obs,   # multinomial sample size
+    # observed frequency of age/sex/origin arriving at weir
+    weir_x_obs = weir_x_obs,
+    weir_nx_obs = weir_nx_obs,   # multinomial sample size
+    
+    # observed frequency of age/sex/origin sampled as carcasses
+    carc_x_obs = carc_x_obs,
+    carc_nx_obs = carc_nx_obs,   # multinomial sample size
     
     # proportion of hatchery origin returns
     p_HOR = p_HOR,
