@@ -111,6 +111,18 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   sig_Mb_obs = matrix(NA, ny, ni); dimnames(sig_Mb_obs) = list(y_names, i_names)
   sig_Mb_obs[y_names %in% sub$brood_year,i_names == "spring-mig"] = sub$spring_passage_log_se
   
+  # hatchery releases
+  Mb_rel = matrix(NA, ny, ni); dimnames(Mb_rel) = list(y_names, i_names)
+  Mb_rel[y_names %in% sub$brood_year,i_names == "spring-mig"] = sub$hatchery_smolt
+  
+  # uncertainty in hatchery releases
+  sig_Mb_rel = matrix(NA, ny, ni); dimnames(sig_Mb_rel) = list(y_names, i_names)
+  
+  # combine natural and hatchery Mb
+  Mb_obs = abind(Mb_obs, Mb_rel, along = 3)
+  sig_Mb_obs = abind(sig_Mb_obs, sig_Mb_rel, along = 3)
+  dimnames(Mb_obs)[[3]]  = dimnames(sig_Mb_obs)[[3]] = o_names
+  
   ### JUVENILE SURVIVAL DATA ###
   # summer logit(surv) to LGD
   Lphi_obs_Pb_Ma = rep(NA, ny); names(Lphi_obs_Pb_Ma) = y_names
@@ -329,8 +341,8 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     sig_Pa_obs = abind(lapply(main_list, function(x) x$sig_Pa_obs), along = 3),
     
     # spring trap count
-    Mb_obs = abind(lapply(main_list, function(x) x$Mb_obs), along = 3),
-    sig_Mb_obs = abind(lapply(main_list, function(x) x$sig_Mb_obs), along = 3),
+    Mb_obs = abind(lapply(main_list, function(x) x$Mb_obs), along = 4),
+    sig_Mb_obs = abind(lapply(main_list, function(x) x$sig_Mb_obs), along = 4),
     
     # summer tagging to LGD survival
     Lphi_obs_Pb_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Pb_Ma), along = 2),
@@ -393,7 +405,7 @@ append_no_na_indices = function(jags_data) {
   fit_list = with(jags_data, {
     list(
       fit_Pa = find_no_na_indices(Pa_obs),
-      fit_Mb = find_no_na_indices(Mb_obs),
+      fit_Mb = find_no_na_indices(sig_Mb_obs),   # use sig for Mb b/c hatchery releases don't have sig, and shouldn't be fitted to
       fit_Lphi_Pb_Ma = find_no_na_indices(Lphi_obs_Pb_Ma),
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
