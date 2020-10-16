@@ -11,16 +11,21 @@
 # yaxis_side: 2 or 4 or NULL, where should the y-axis be placed?
 # set_par: set some par() options internally?
 
-plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2, set_par = T) {
+plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2, set_par = T, ylim = NULL) {
   # extract year labels
   yrs = as.numeric(names(obs))
+  
+  # set y limits
+  if (is.null(ylim)) {
+    ylim = range(rbind(est[c("2.5%", "97.5%"),], obs), na.rm = T)
+  }
   
   # set the graphics device parameters
   if (set_par) par(mar = c(2,2,2,1), tcl = -0.2, mgp = c(2,0.3,0))
   
   # create empty plot with correct dimensions/labels
   plot(1,1, type = "n", 
-       xlim = range(yrs), ylim = range(rbind(est[c("2.5%", "97.5%"),], obs), na.rm = T),
+       xlim = range(yrs), ylim = ylim,
        xlab = "", las = 1, ylab = "", main = main, xaxt = "n", yaxt = "n")
   
   # draw band representing 95% credible region

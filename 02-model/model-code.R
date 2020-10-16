@@ -114,6 +114,20 @@ jags_model_code = function() {
     phi_Sb_Sa[y] <- ilogit(Lphi_Sb_Sa[y])
   }
   
+  ### PRIORS: OBSERVATION MODEL ###
+  
+  # carcass vs. weir composition correction factor coefficients
+  for (i in 1:3) {
+    z[i] ~ dunif(-10,10)
+  }
+  
+  # calculate correction factor
+  for (k in 1:3) {
+    for (s in 1:2) {
+      log(carc_adj[k,s]) <- z[1] * age3[k] + z[2] * age5[k] + z[3] * male[s]
+    }
+  }
+  
   ### PROCESS MODEL: INITIALIZATION ###
   # need to do something special with first kmax brood years prior to data collection
   # to populate adult states for reproduction/observation in the first years with data
@@ -200,8 +214,7 @@ jags_model_code = function() {
         
         # expansion to obtain returning hatchery adults
         # natural origin fish only accounted for up until this point
-        # could (should) make p_HOR[y] sex-specific - but problems when p_HOR[y,s] == 1?
-        Ra[y,k,s,2] <- (Ra[y,k,s,1]/(1 - p_HOR[y])) - Ra[y,k,s,1]
+        Ra[y,k,s,2] <- (Ra[y,k,s,1]/(1 - p_HOR[y,k,s])) - Ra[y,k,s,1]
         
         for (o in 1:no) {
           # remove fish for brood stock
@@ -211,6 +224,9 @@ jags_model_code = function() {
           # currently assumed to apply equally to hatchery and wild origin returns
           # and to be age/sex non-selective
           Sa[y,k,s,o] <- Sb[y,k,s,o] * phi_Sb_Sa[y]
+          
+          # calculate "adjusted carcasses": accounts for sampling bias relative to weir
+          Sa_adj[y,k,s,o] <- Sa[y,k,s,o] * carc_adj[k,s]
         }
       }
     }
@@ -222,25 +238,34 @@ jags_model_code = function() {
     # assumes all spawners contribute equally to progeny
     Sa_tot[y] <- sum(Sa[y,1:nk,1:ns,1:no])
     
-    # reformat for age comp calculation/fitting
-    for (k in 1:nk) {
-      # female return by age, natural + hatchery
-      Ra_2d[y,k] <- Ra[y,k,1,1] + Ra[y,k,1,2]
-      # male return by age, natural + hatchery
-      Ra_2d[y,nk+k] <- Ra[y,k,2,1] + Ra[y,k,2,2]
-    }
+    # reformat returner by age/sex/origin for fitting to weir comp data
+    Ra_2d[y,1:nk] <- Ra[y,1:nk,1,1]            # nat. females, all ages
+    Ra_2d[y,(nk+1):(2*nk)] <- Ra[y,1:nk,2,1]   # nat. males, all ages
+    Ra_2d[y,(2*nk+1):(3*nk)] <- Ra[y,1:nk,1,2] # hat. females, all ages
+    Ra_2d[y,(3*nk+1):(4*nk)] <- Ra[y,1:nk,2,2] # hat. males, all ages
     
-    # calculate age/sex composition
-    for (ks in 1:nks) {
-      q[y,ks] <- Ra_2d[y,ks]/sum(Ra_2d[y,1:nks])
+    # reformat "adjusted carcasses" by age/sex/origin for fitting to carcass comp data
+    Sa_adj_2d[y,1:nk] <- Sa_adj[y,1:nk,1,1]            # nat. females, all ages
+    Sa_adj_2d[y,(nk+1):(2*nk)] <- Sa_adj[y,1:nk,2,1]   # nat. males, all ages
+    Sa_adj_2d[y,(2*nk+1):(3*nk)] <- Sa_adj[y,1:nk,1,2] # hat. females, all ages
+    Sa_adj_2d[y,(3*nk+1):(4*nk)] <- Sa_adj[y,1:nk,2,2] # hat. males, all ages
+
+    # calculate age/sex compositions
+    for (kso in 1:nkso) {
+      q_Ra[y,kso] <- Ra_2d[y,kso]/sum(Ra_2d[y,1:nkso])
+      q_Sa_adj[y,kso] <- Sa_adj_2d[y,kso]/sum(Sa_adj_2d[y,1:nkso])
     }
   }
-  
+
   ### OBSERVATION MODEL ###
   
   # age/sex composition
   for (y in (kmax+1):ny) {
-    x_obs[y,1:nks] ~ dmulti(q[y,1:nks], nx_obs[y])
+    # at weir
+    weir_x_obs[y,1:nkso] ~ dmulti(q_Ra[y,1:nkso], weir_nx_obs[y])
+    
+    # for carcasses
+    carc_x_obs[y,1:nkso] ~ dmulti(q_Sa_adj[y,1:nkso], carc_nx_obs[y])
   }
   
   # the "fit" objects allow using square objects but skipping over missing obs in likelihoods
