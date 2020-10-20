@@ -44,6 +44,24 @@ if (is.na(rmd)) {
 jags_data = create_jags_data_one(pop)
 jags_data = append_no_na_indices(jags_data)
 
+# drop "impossible" composition outcomes
+# this is a band-aid for now.
+# if we keep this approach, put it somewhere better than this
+# see issue #44 (https://github.com/bstaton1/GR-sslcm/issues/44)
+# for details
+f_release = ifelse(pop == "LOS", 1997, ifelse(pop == "MIN", 2014, 1998))
+age = rep(c(3:5), 2)
+sex = rep(c("F", "M"), each = 3)
+for (ks in 1:6) {
+  f_valid = f_release + age[ks]
+  col = paste0(sex[ks], age[ks], "-Hat")
+  alt_years = 1991:(f_valid - 1)
+  jags_data$carc_x_obs[as.character(alt_years),col] = 0
+  jags_data$weir_x_obs[as.character(alt_years),col] = 0
+}
+jags_data$carc_nx_obs = rowSums(jags_data$carc_x_obs)
+jags_data$weir_nx_obs = rowSums(jags_data$weir_x_obs)
+
 # some parameters we are assuming known (for now)
 add_jags_data = list(
   mu_phi_M_O1 = 0.2,    # survival from arrival to estuary to next spring (become SWA1)
