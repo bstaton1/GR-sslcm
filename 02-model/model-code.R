@@ -35,6 +35,10 @@ jags_model_code = function() {
   mu_phi_Ma_M ~ dbeta(1, 1)
   sig_Lphi_Ma_M ~ dunif(0, 5)
   
+  # movement survival (trib to estuary): for hatchery fish only
+  mu_phi_Mb_M ~ dbeta(1, 1)
+  sig_Lphi_Mb_M ~ dunif(0, 5)
+  
   # pre-spawn survival (after brood-stock removal to successful spawning)
   mu_phi_Sb_Sa ~ dbeta(1, 1)
   sig_Lphi_Sb_Sa ~ dunif(0, 5)
@@ -87,6 +91,9 @@ jags_model_code = function() {
     Lomega1[y] ~ dnorm(logit(mu_omega[1]), 1/sig_Lomega^2)
     omega[y,1] <- ilogit(Lomega1[y])
     omega[y,2] <- 1 - omega[y,1]
+    # movement survival: trib to estuary (hatchery fish)
+    Lphi_Mb_M[y] ~ dnorm(logit(mu_phi_Mb_M), 1/sig_Lphi_Mb_M^2)
+    phi_Mb_M[y] <- ilogit(Lphi_Mb_M[y])
     
     # sex-specific maturation probabilities
     for (s in 1:ns) {
