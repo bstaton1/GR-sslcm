@@ -63,11 +63,12 @@ jags_data$carc_nx_obs = rowSums(jags_data$carc_x_obs)
 jags_data$weir_nx_obs = rowSums(jags_data$weir_x_obs)
 
 # some parameters we are assuming known (for now)
+# [1] is natural, [2] is hatchery origin
 add_jags_data = list(
-  mu_phi_M_O1 = 0.2,    # survival from arrival to estuary to next spring (become SWA1)
-  mu_phi_O1_O2 = 0.8,   # survival from SWA1 to SWA2
-  mu_phi_O2_O3 = 0.8,   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra = 0.7    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
+  mu_phi_M_O1 = c(0.2, 0.2),    # survival from arrival to estuary to next spring (become SWA1)
+  mu_phi_O1_O2 = c(0.8, 0.8),   # survival from SWA1 to SWA2
+  mu_phi_O2_O3 = c(0.8, 0.8),   # survival from SWA2 to SWA3
+  mu_phi_Rb_Ra = c(0.7, 0.7)    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
 
 # some dummy variables for performing weir vs. carcass composition correction
