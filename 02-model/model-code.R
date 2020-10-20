@@ -201,19 +201,23 @@ jags_model_code = function() {
     Pb_pred[y] <- Sa_tot[y]/(1/alpha + Sa_tot[y]/beta)
     Pb[y] ~ dlnorm(log(Pb_pred[y]), 1/sigma_Pb^2)
     
+    # natural origin tributary-to-LGD dynamics
     for (i in 1:ni) {
       # apportion to LH-strategy: parr after fall migration
       Pa[y,i] <- Pb[y] * pi[y,i]
 
       # survive over winter: smolt before spring migration
-      Mb[y,i] <- Pa[y,i] * phi_Pa_Mb[y,i]
+      Mb[y,i,1] <- Pa[y,i] * phi_Pa_Mb[y,i]
 
       # move to LGD: smolt after spring migration, at top of LGD
-      Ma[y,i] <- Mb[y,i] * phi_Mb_Ma[y,i]
+      Ma[y,i] <- Mb[y,i,1] * phi_Mb_Ma[y,i]
       
       # derived survival for fitting: fall trap to LGD
       phi_Pa_Ma[y,i] <- Ma[y,i]/Pa[y,i]
     }
+    
+    # put hatchery smolts in tributary
+    Mb[y,2,2] <- Mb_obs[y,2,2]
     
     # derived survival for fitting: summer tagging to LGD
     phi_Pb_Ma[y] <- sum(Ma[y,1:ni])/Pb[y]
