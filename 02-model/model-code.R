@@ -156,10 +156,11 @@ jags_model_code = function() {
   #  Then place these adult recruits in the appropriate return year by age/sex
   
   # obtain expected probability of adult recruits returning at age for each sex
+  # natural origin fish only
   for (s in 1:ns) {
-    p_init_prime[1,s] <- mu_phi_M_O1 * mu_psi_O1_Rb[s]
-    p_init_prime[2,s] <- mu_phi_M_O1 * (1 - mu_psi_O1_Rb[s]) * mu_phi_O1_O2 * mu_psi_O2_Rb[s]
-    p_init_prime[3,s] <- mu_phi_M_O1 * (1 - mu_psi_O1_Rb[s]) * mu_phi_O1_O2 * (1 - mu_psi_O2_Rb[s]) * mu_phi_O2_O3 * mu_psi_O3_Rb[s]
+    p_init_prime[1,s] <- mu_phi_M_O1[1] * mu_psi_O1_Rb[s,1]
+    p_init_prime[2,s] <- mu_phi_M_O1[1] * (1 - mu_psi_O1_Rb[s,1]) * mu_phi_O1_O2[1] * mu_psi_O2_Rb[s,1]
+    p_init_prime[3,s] <- mu_phi_M_O1[1] * (1 - mu_psi_O1_Rb[s,1]) * mu_phi_O1_O2[1] * (1 - mu_psi_O2_Rb[s,1]) * mu_phi_O2_O3[1] * mu_psi_O3_Rb[s,1]
     for (k in 1:nk) {
       p_init[k,s] <- p_init_prime[k,s]/sum(p_init_prime[1:nk,s])
     }
@@ -169,15 +170,26 @@ jags_model_code = function() {
   mu_init_recruits ~ dunif(0, max_init_recruits)
   sig_init_lrecruits ~ dunif(0,10)
   
+  # for natural origin
   for (y in 1:kmax) {
     # random, constant-mean adult recruits for first kmax brood years
     init_recruits[y] ~ dlnorm(log(mu_init_recruits), 1/sig_init_lrecruits^2) %_% T(,max_init_recruits)
     for (s in 1:ns) {
       # apportion them to each sex
-      init_recruits_sex[y,s] <- init_recruits[y] * mu_omega[s]
+      init_recruits_sex[y,s] <- init_recruits[y] * mu_omega[s,1]
       for (k in 1:nk) {
         # apportion them to return year, age, and sex
-        Rb[y+kmin+k-1,k,s] <- init_recruits_sex[y,s] * p_init[k,s] 
+        Rb[y+kmin+k-1,k,s,1] <- init_recruits_sex[y,s] * p_init[k,s] 
+      }
+    }
+  }
+  
+  # for hatchery origin
+  for (y in 1:kmax) {
+    for (s in 1:ns) {
+      for (k in 1:nk) {
+        # there were no hatchery operations in these years, but still need to populate with a number
+        Rb[y+kmin+k-1,k,s,2] <- 0 
       }
     }
   }
