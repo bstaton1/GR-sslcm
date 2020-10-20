@@ -22,6 +22,7 @@ out_dir = "02-model/model-output"
 args = commandArgs(trailingOnly = T)
 pop = args[1]
 rmd = as.logical(args[2])
+rmd_mcmc_plots = T
 
 # if pop not supplied, set a value and warn
 if (is.na(pop)) {
@@ -196,7 +197,7 @@ if (rmd) {
   setwd("03-post-process")
   rmarkdown::render(input = "output-plots.Rmd",
                     output_file = paste0(pop, "-output-plots.html"), 
-                    params = list(pop = pop), 
+                    params = list(pop = pop, mcmc_plots = rmd_mcmc_plots), 
                     quiet = T
   )
   setwd("../")
