@@ -44,24 +44,29 @@ jags_model_code = function() {
   sig_Lphi_Sb_Sa ~ dunif(0, 5)
   
   ### PRIORS: MATURATION ###
-  # probability of returning as female ([1]) or male ([2])
-  mu_omega[1] ~ dbeta(1, 1)
-  mu_omega[2] <- 1 - mu_omega[1]
-  sig_Lomega ~ dunif(0, 5)
+  # probability of returning as female ([1,]) or male ([2,])
+  # by origin ([,1] natural; [,2] hatchery)
+  for (o in 1:no) {
+    mu_omega[1,o] ~ dbeta(1, 1)
+    mu_omega[2,o] <- 1 - mu_omega[1,o]
+    sig_Lomega[o] ~ dunif(0, 5)
+  }
   
-  # sex-specific maturation probabilities
+  # sex/origin-specific maturation probabilities
   for (s in 1:ns) {
-    # pr(return at SWA1)
-    mu_psi_O1_Rb[s] ~ dbeta(1, 1)     
-    sig_Lpsi_O1_Rb[s] ~ dunif(0, 5)
-    
-    # pr(return at SWA2|not returned at SWA1)
-    mu_psi_O2_Rb[s] ~ dbeta(1, 1)
-    sig_Lpsi_O2_Rb[s] ~ dunif(0, 5)
-    
-    # pr(return at SWA3|not returned at SWA1 or SWA2)
-    mu_psi_O3_Rb[s] <- 1
-    sig_Lpsi_O3_Rb[s] <- 0
+    for (o in 1:no) {
+      # pr(return at SWA1)
+      mu_psi_O1_Rb[s,o] ~ dbeta(1, 1)     
+      sig_Lpsi_O1_Rb[s,o] ~ dunif(0, 5)
+      
+      # pr(return at SWA2|not returned at SWA1)
+      mu_psi_O2_Rb[s,o] ~ dbeta(1, 1)
+      sig_Lpsi_O2_Rb[s,o] ~ dunif(0, 5)
+      
+      # pr(return at SWA3|not returned at SWA1 or SWA2)
+      mu_psi_O3_Rb[s,o] <- 1
+      sig_Lpsi_O3_Rb[s,o] <- 0
+    }
   }
   
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
@@ -87,34 +92,39 @@ jags_model_code = function() {
     Lphi_Ma_M[y] ~ dnorm(logit(mu_phi_Ma_M), 1/sig_Lphi_Ma_M^2)
     phi_Ma_M[y] <- ilogit(Lphi_Ma_M[y])
     
-    # probability of returning as female ([1]) or male ([2])
-    Lomega1[y] ~ dnorm(logit(mu_omega[1]), 1/sig_Lomega^2)
-    omega[y,1] <- ilogit(Lomega1[y])
-    omega[y,2] <- 1 - omega[y,1]
     # movement survival: trib to estuary (hatchery fish)
     Lphi_Mb_M[y] ~ dnorm(logit(mu_phi_Mb_M), 1/sig_Lphi_Mb_M^2)
     phi_Mb_M[y] <- ilogit(Lphi_Mb_M[y])
     
-    # sex-specific maturation probabilities
-    for (s in 1:ns) {
-      # pr(return at SWA1)
-      Lpsi_O1_Rb[y,s] ~ dnorm(logit(mu_psi_O1_Rb[s]), 1/sig_Lpsi_O1_Rb[s]^2)
-      psi_O1_Rb[y,s] <- ilogit(Lpsi_O1_Rb[y,s])
-      
-      # pr(return at SWA2|not returned at SWA1)
-      Lpsi_O2_Rb[y,s] ~ dnorm(logit(mu_psi_O2_Rb[s]), 1/sig_Lpsi_O2_Rb[s]^2)
-      psi_O2_Rb[y,s] <- ilogit(Lpsi_O2_Rb[y,s])
-      
-      # pr(return at SWA3|not returned at SWA1 or SWA2)
-      psi_O3_Rb[y,s] <- 1
+    # probability of returning as female ([1]) or male ([2]) by origin
+    for (o in 1:no) {
+      Lomega1[y,o] ~ dnorm(logit(mu_omega[1,o]), 1/sig_Lomega[o]^2)
+      omega[y,1,o] <- ilogit(Lomega1[y,o])
+      omega[y,2,o] <- 1 - omega[y,1,o]
     }
-    # ocean survival
-    phi_M_O1[y] <- mu_phi_M_O1
-    phi_O1_O2[y] <- mu_phi_O1_O2
-    phi_O2_O3[y] <- mu_phi_O2_O3
     
-    # upstream adult survival
-    phi_Rb_Ra[y] <- mu_phi_Rb_Ra
+    # sex/origin-specific maturation probabilities
+    for (o in 1:no) {
+      for (s in 1:ns) {
+        # pr(return at SWA1)
+        Lpsi_O1_Rb[y,s,o] ~ dnorm(logit(mu_psi_O1_Rb[s,o]), 1/sig_Lpsi_O1_Rb[s,o]^2)
+        psi_O1_Rb[y,s,o] <- ilogit(Lpsi_O1_Rb[y,s,o])
+        
+        # pr(return at SWA2|not returned at SWA1)
+        Lpsi_O2_Rb[y,s,o] ~ dnorm(logit(mu_psi_O2_Rb[s,o]), 1/sig_Lpsi_O2_Rb[s,o]^2)
+        psi_O2_Rb[y,s,o] <- ilogit(Lpsi_O2_Rb[y,s,o])
+        
+        # pr(return at SWA3|not returned at SWA1 or SWA2)
+        psi_O3_Rb[y,s,o] <- 1
+      }
+      # ocean survival
+      phi_M_O1[y,o] <- mu_phi_M_O1[o]
+      phi_O1_O2[y,o] <- mu_phi_O1_O2[o]
+      phi_O2_O3[y,o] <- mu_phi_O2_O3[o]
+      
+      # upstream adult survival
+      phi_Rb_Ra[y,o] <- mu_phi_Rb_Ra[o]
+    }
     
     # pre-spawn survival
     Lphi_Sb_Sa[y] ~ dnorm(logit(mu_phi_Sb_Sa), 1/sig_Lphi_Sb_Sa^2)
