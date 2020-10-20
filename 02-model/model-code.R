@@ -222,34 +222,36 @@ jags_model_code = function() {
     # derived survival for fitting: summer tagging to LGD
     phi_Pb_Ma[y] <- sum(Ma[y,1:ni])/Pb[y]
     
-    # sex-specific processes
+    # sex/origin-specific processes
     for (s in 1:ns) {
-      # move to estuary and assign to sex
-      M[y,s] <- sum(Ma[y,1:ni]) * phi_Ma_M[y] * omega[y,s]
+      # move natural origin to estuary and assign to sex
+      M[y,s,1] <- sum(Ma[y,1:ni]) * phi_Ma_M[y] * omega[y,s,1]
+      
+      # move hatchery origin from tributary to estuary and assign to sex
+      M[y,s,2] <- Mb[y,2,2] * phi_Mb_M[y] * omega[y,s,2]
 
-      # move juveniles through ocean ages and survivals
-      O[y,1,s] <- M[y,s] * phi_M_O1[y] # survive first winter at sea. now SWA1, TA3
-      O[y,2,s] <- O[y,1,s] * (1 - psi_O1_Rb[y,s]) * phi_O1_O2[y] # don't mature at SWA1 and survive second winter at sea. now SWA2, TA4
-      O[y,3,s] <- O[y,2,s] * (1 - psi_O2_Rb[y,s]) * phi_O2_O3[y] # don't mature at SWA2 and survive third winter at sea. now SWA3, TA5
-    
-      # mature and return to river in appropriate year at age/sex
-      Rb[y+kmin+1-1,1,s] <- O[y,1,s] * psi_O1_Rb[y,s]
-      Rb[y+kmin+2-1,2,s] <- O[y,2,s] * psi_O2_Rb[y,s]
-      Rb[y+kmin+3-1,3,s] <- O[y,3,s] * psi_O3_Rb[y,s]
+      for (o in 1:no) {
+        # move juveniles through ocean ages and survivals
+        O[y,1,s,o] <- M[y,s,o] * phi_M_O1[y,o] # survive first winter at sea. now SWA1, TA3
+        O[y,2,s,o] <- O[y,1,s,o] * (1 - psi_O1_Rb[y,s,o]) * phi_O1_O2[y,o] # don't mature at SWA1 and survive second winter at sea. now SWA2, TA4
+        O[y,3,s,o] <- O[y,2,s,o] * (1 - psi_O2_Rb[y,s,o]) * phi_O2_O3[y,o] # don't mature at SWA2 and survive third winter at sea. now SWA3, TA5
+        
+        # mature and return to river in appropriate year at age/sex
+        Rb[y+kmin+1-1,1,s,o] <- O[y,1,s,o] * psi_O1_Rb[y,s,o]
+        Rb[y+kmin+2-1,2,s,o] <- O[y,2,s,o] * psi_O2_Rb[y,s,o]
+        Rb[y+kmin+3-1,3,s,o] <- O[y,3,s,o] * psi_O3_Rb[y,s,o]
+      }
     }
     
     # adult in-river processes
     # y now represents brood year these fish are returning in
     for (k in 1:nk) {
       for (s in 1:ns) {
-        # survive upstream migration
-        Ra[y,k,s,1] <- Rb[y,k,s] * phi_Rb_Ra[y]
-        
-        # expansion to obtain returning hatchery adults
-        # natural origin fish only accounted for up until this point
-        Ra[y,k,s,2] <- (Ra[y,k,s,1]/(1 - p_HOR[y,k,s])) - Ra[y,k,s,1]
-        
         for (o in 1:no) {
+          
+          # survive upstream migration
+          Ra[y,k,s,o] <- Rb[y,k,s,o] * phi_Rb_Ra[y,o]
+          
           # remove fish for brood stock
           Sb[y,k,s,o] <- Ra[y,k,s,o] * (1 - p_remove[y,k,s,o])
           
@@ -309,7 +311,7 @@ jags_model_code = function() {
   
   # spring trap abundance
   for (d in 1:nfit_Mb) {
-    Mb_obs[fit_Mb[d,1],fit_Mb[d,2]] ~ dlnorm(log(Mb[fit_Mb[d,1],fit_Mb[d,2]]), 1/sig_Mb_obs[fit_Mb[d,1],fit_Mb[d,2]]^2)
+    Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3]] ~ dlnorm(log(Mb[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3]]), 1/sig_Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3]]^2)
   }
   
   # adult abundance
