@@ -83,7 +83,8 @@ diag_params = list(
   c("^sig_Lomega", "^sig_Lpi"),
   "^Pb[", 
   "init_recruits", 
-  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]"
+  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]",
+  "^phi_Mb_M["
 )
 
 # calculate the diagnostic statistics for each group
@@ -161,7 +162,7 @@ In the figures below, the thick red line is the posterior median value each year
 ```{r abundance-data-fits, fig.width = 3, fig.height = 5}
 par(mfcol = c(3,1), oma = c(1.5,1.5,0,0))
 plot_tseries(post_summ(post, "^Pa[.+,1]$"), jags_data$Pa_obs[observable,1], main = "Fall Trap Abundance")
-plot_tseries(post_summ(post, "^Mb[.+,2]$"), jags_data$Mb_obs[observable,2], main = "Spring Trap Abundance")
+plot_tseries(post_summ(post, "^Mb[.+,2,1]$"), jags_data$Mb_obs[observable,2,1], main = "Spring Trap Abundance")
 plot_tseries(post_summ(post, "^Ra_tot["), jags_data$Ra_obs[observable], main = "Weir Abundance")
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Abundance")
@@ -387,6 +388,7 @@ _In alphabetical order, as displayed in figures_
 
 * `mu_omega[1]`: mean probability of being a female at ocean entry
 * `mu_phi_Ma_M`: mean probability of surviving from LGD to ocean entry
+* `mu_phi_Mb_M`: mean probability of surviving from hatchery release in spring to estuary (hatchery fish)
 * `mu_phi_Mb_Ma`: mean probability of surviving movement from tributary to LGD (same for both LH types)
 * `mu_phi_Pa_Mb`: mean probability of surviving overwinter in tributary (`[1]`: fall migrants, `[2]`: spring migrants)
 * `mu_pi[1]`: mean probability of becoming a fall migrant LH type at end of summer
