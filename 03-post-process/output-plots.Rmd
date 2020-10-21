@@ -1,7 +1,10 @@
 ---
 title: "Output Summary"
 subtitle: "`r c('CAT' = 'Catherine Creek', 'LOS' = 'Lostine', 'UGR' = 'Upper Grande Ronde')[params$pop]`"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 params:
   pop:
     label: "Population"
@@ -558,5 +561,44 @@ bp$stats = post_summaries
 
 # draw the box plot
 bxp(bp, ylim = c(0,max(post_summaries)), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```
+
+# Numerical Summaries
+
+## Recruitment Function
+
+```{r}
+# extract posterior summaries
+alpha_summ = post_summ(post, "alpha", digits = 0)
+beta_summ = post_summ(post, "beta", digits = -3)
+sigma_summ = post_summ(post, "sigma_Pb", digits = 2)
+
+# create/format the table
+tab = cbind(alpha_summ, beta_summ, sigma_summ)
+colnames(tab) = c("$\\alpha$", "$\\beta$", "$\\sigma_{Pb}$")
+
+# produce html table
+kable(tab, format.args = list(big.mark = ","), escape = F) %>%
+  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
+  column_spec(1, bold = T)
+```
+
+## Carcass Correction Factors
+
+```{r}
+# extract posterior summaries
+carc_adj = post_summ(post, "carc_adj", digits = 1)
+
+# create/format table
+x = paste0(carc_adj["mean",], " (", carc_adj["2.5%",], " -- ", carc_adj["97.5%",], ")")
+names(x) = colnames(carc_adj)
+tab = array_format(x)
+colnames(tab) = c("Female", "Male")
+rownames(tab) = c("Age 3", "Age 4", "Age 5")
+
+# produce html table
+kable(tab) %>%
+  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
+  column_spec(1, bold = T)
 ```
 
