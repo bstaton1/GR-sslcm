@@ -163,18 +163,6 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   weir_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
   weir_nx_obs = rowSums(weir_x_obs)
   
-  ### PERCENT OF HATCHERY ORIGIN RETURN ###
-  # used to expand natural origin adult returns to obtain
-  # done on an age/sex structured basis
-  nat_comp = as.matrix(nat_comp)
-  hat_comp = as.matrix(hat_comp)
-  p_HOR = array(NA, c(ny, nk, ns)); dimnames(p_HOR) = list(y_names, k_names, s_names)
-  p_HOR[y_names %in% sub$brood_year,,1] = hat_comp[,1:nk]/(hat_comp[,1:nk] + nat_comp[,1:nk]) 
-  p_HOR[y_names %in% sub$brood_year,,2] = hat_comp[,(nk+1):(2*nk)]/(hat_comp[,(nk+1):(2*nk)] + nat_comp[,(nk+1):(2*nk)]) 
-  p_HOR[is.na(p_HOR)] = 0
-  p_HOR[p_HOR == 0] = 0.01  # needed to explain some carcass counts of hatchery fish in early years
-  p_HOR[p_HOR == 1] = 0.95  # needed to allow some natural fish to be present even though they weren't sampled at weir
-  
   ### ADULT AGE COMP: CARCASSES ###
   # obtain names of age comp variables
   carc_comp_names = create_comp_names("carc", o_names, s_names, k_names)
@@ -292,9 +280,6 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     carc_x_obs = carc_x_obs,
     carc_nx_obs = carc_nx_obs,   # multinomial sample size
     
-    # proportion of hatchery origin returns
-    p_HOR = p_HOR,
-    
     # number of carcasses sampled for spawn status
     carcs_sampled = carcs_sampled,
     
@@ -370,9 +355,6 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     
     # broodstock removals
     p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 5),
-    
-    # proportion of hatchery origin returns
-    p_HOR = abind(lapply(main_list, function(x) x$p_HOR), along = 4),
     
     # number of carcasses sampled for spawn status
     carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
