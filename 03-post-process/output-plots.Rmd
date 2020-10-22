@@ -1,13 +1,20 @@
 ---
 title: "Output Summary"
 subtitle: "`r c('CAT' = 'Catherine Creek', 'LOS' = 'Lostine', 'UGR' = 'Upper Grande Ronde')[params$pop]`"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 params:
   pop:
     label: "Population"
     value: CAT
     input: select
     choices: [CAT, LOS, UGR]
+  mcmc_plots:
+    label: "Make MCMC Plots"
+    input: checkbox
+    value: FALSE
 editor_options: 
   chunk_output_type: console
 ---
@@ -83,7 +90,8 @@ diag_params = list(
   c("^sig_Lomega", "^sig_Lpi"),
   "^Pb[", 
   "init_recruits", 
-  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]"
+  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]",
+  "^phi_Mb_M["
 )
 
 # calculate the diagnostic statistics for each group
@@ -120,35 +128,35 @@ kable(df, align = "lcccccccccc") %>%
 
 ```
 
-## Diagnostic Plots {.tabset .tabset-pills}
+`r if (params$mcmc_plots) "## Diagnostic Plots {.tabset .tabset-pills}"`
 
-### `alpha`, `beta`
+`r if (params$mcmc_plots) "### $\\alpha$, $\\beta$"`
 
-```{r alpha-beta-diag-plots, fig.width = 4, fig.height = 5}
+```{r alpha-beta-diag-plots, eval = params$mcmc_plots, fig.width = 4, fig.height = 5}
 diag_plots(post, c("alpha", "beta"), layout = "2x1")
 ```
 
-### `gamma`
+`r if (params$mcmc_plots) "### $\\gamma$"`
 
-```{r gamma-diag-plots, fig.width = 3, fig.height = 6}
+```{r gamma-diag-plots, eval = params$mcmc_plots, fig.width = 3, fig.height = 6}
 diag_plots(post, "gamma", layout = "4x1")
 ```
 
-### `^mu`
+`r if (params$mcmc_plots) "### $\\mu$"`
 
-```{r mu-diag-plots, fig.width = 7, fig.height = 7}
+```{r mu-diag-plots, eval = params$mcmc_plots, fig.width = 7, fig.height = 7}
 diag_plots(post, "^mu", layout = "5x3")
 ```
 
-### `^sig`
+`r if (params$mcmc_plots) "### $$\\sigma$"`
 
-```{r sig-diag-plots, fig.width = 7, fig.height = 7}
+```{r sig-diag-plots, eval = params$mcmc_plots, fig.width = 7, fig.height = 7}
 diag_plots(post, "^sig", layout = "5x3")
 ```
 
-### `init_recruits`
+`r if (params$mcmc_plots) "### init_recruits"`
 
-```{r init-recruits-diag-plots, fig.width = 5, fig.height = 7}
+```{r init-recruits-diag-plots, eval = params$mcmc_plots, fig.width = 5, fig.height = 7}
 diag_plots(post, "init_recruits", layout = "4x2")
 ```
 
@@ -161,7 +169,7 @@ In the figures below, the thick red line is the posterior median value each year
 ```{r abundance-data-fits, fig.width = 3, fig.height = 5}
 par(mfcol = c(3,1), oma = c(1.5,1.5,0,0))
 plot_tseries(post_summ(post, "^Pa[.+,1]$"), jags_data$Pa_obs[observable,1], main = "Fall Trap Abundance")
-plot_tseries(post_summ(post, "^Mb[.+,2]$"), jags_data$Mb_obs[observable,2], main = "Spring Trap Abundance")
+plot_tseries(post_summ(post, "^Mb[.+,2,1]$"), jags_data$Mb_obs[observable,2,1], main = "Spring Trap Abundance")
 plot_tseries(post_summ(post, "^Ra_tot["), jags_data$Ra_obs[observable], main = "Weir Abundance")
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Abundance")
@@ -380,6 +388,113 @@ mtext(side = 1, line = 1, outer = T, "LH-Specific Parr/PEU", cex = 1.2)
 mtext(side = 2, line = 1, outer = T, "Overwinter Survival", cex = 1.2)
 ```
 
+# Smolt-to-Adult Rates
+
+This is survival from $Mb$ (smolts in tributary, prior to mortality associated with movement to LGD) to $Ra$ (adults returning to tributary, vulnerable to being counted at weir).
+
+The adult part is calculated across return years, by summing the number of adults of each age (regardless of sex) that return in the appropriate years. For example, the SAR for brood year 1991 uses smolt that were spawned in 1991, out-migrated in spring 1993, divided by the sum of age 3 adults in 1994, age 4 adults in 1995, and age 5 adults in 1996. The calculation is done for hatchery and natural origin fish separately. Only SARs through brood year 2014 are calculated, since this is the last year of complete adult returns.
+
+Other SARS could be calculated, but currently this is the only one that is comparable between hatchery and natural origins.
+
+```{r}
+# function to calculate posterior 
+get_SAR_post = function(post, jags_data) {
+  # extract posterior abundances
+  Ra_post = post_subset(post, "^Ra[", T) # adults returning to tributary
+  Mb_post = post_subset(post, "^Mb[", T) # smolts leaving tributary in spring
+  
+  # number of saved samples
+  ni = post_dim(post, "saved")
+  
+  # first and last brood year SAR can be calculated for
+  first_SAR_y = jags_data$kmax + 1
+  last_SAR_y = jags_data$ny - jags_data$kmax
+  
+  # containers
+  nat_SAR = hat_SAR = NULL
+  
+  # loop over mcmc iters
+  for (i in 1:ni) {
+    # extract quantities for this iter
+    Ra = array_format(Ra_post[i,])
+    Mb = array_format(Mb_post[i,])
+    
+    # give names
+    dimnames(Ra) = dimnames(jags_data$p_remove)
+    dimnames(Mb) = dimnames(jags_data$Mb_obs)
+    
+    # drop sex structure from Ra
+    Ra = Ra[,,1,] + Ra[,,2,]
+    
+    # loop over years
+    nat_SAR_i = hat_SAR_i = NULL
+    for (y in first_SAR_y:last_SAR_y) {
+      # sum up smolts across life history types
+      nat_smolt = sum(Mb[y,,"Nat"])
+      hat_smolt = sum(Mb[y,,"Hat"], na.rm = T)
+      
+      # sum up returing adults from this brood
+      nat_adults = Ra[y+3,1,"Nat"] + Ra[y+4,2,"Nat"] + Ra[y+5,3,"Nat"]
+      hat_adults = Ra[y+3,1,"Hat"] + Ra[y+4,2,"Hat"] + Ra[y+5,3,"Hat"]
+      
+      nat_SAR_i = c(nat_SAR_i, nat_adults/nat_smolt)
+      hat_SAR_i = c(hat_SAR_i, hat_adults/hat_smolt)
+    }
+    
+    # combine with other mcmc iters
+    nat_SAR = rbind(nat_SAR, nat_SAR_i)
+    hat_SAR = rbind(hat_SAR, hat_SAR_i)
+  }
+  
+  colnames(nat_SAR) = paste0("SAR[", first_SAR_y:last_SAR_y, ",1]")
+  colnames(hat_SAR) = paste0("SAR[", first_SAR_y:last_SAR_y, ",2]")
+  
+  # drop out SAR years for hatchery fish where missing
+  hat_SAR = hat_SAR[,!is.na(colSums(hat_SAR))]
+  
+  out = cbind(nat_SAR, hat_SAR)
+  return(out)
+}
+
+# apply the function
+SAR_post = get_SAR_post(post, jags_data)
+
+# combine samples with main posterior object
+post = post_bind(post, SAR_post)
+
+# calculate/format posterior summaries
+SAR_mean = array_format(post_summ(post, "SAR")["mean",]) * 100
+SAR_lwr = array_format(post_summ(post, "SAR")["2.5%",]) * 100
+SAR_upr = array_format(post_summ(post, "SAR")["97.5%",]) * 100
+
+# subset years
+all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
+SAR_yrs = all_yrs[1:nrow(SAR_mean)]
+
+# graphics device
+par(mar = c(3,3,1,1), mgp = c(2,0.35,0), tcl = -0.2)
+
+# blank plot with appropriate dimensions
+plot(SAR_mean[,1] ~ SAR_yrs, ylab = "Adults/100 Smolt", xlab = "Brood Year",
+     xlim = range(all_yrs), ylim = c(0, max(SAR_upr, na.rm = T)), type = "n", las = 1)
+
+# draw posterior summary for natural origin
+polygon(x = c(SAR_yrs, rev(SAR_yrs)), y = c(SAR_lwr[,1], rev(SAR_upr[,1])), col = alpha("skyblue2", 0.5), border = NA)
+lines(SAR_lwr[,1] ~ SAR_yrs, col = "blue", lty = 2)
+lines(SAR_upr[,1] ~ SAR_yrs, col = "blue", lty = 2)
+lines(SAR_mean[,1] ~ SAR_yrs, col = "blue", lwd = 2)
+
+# draw posterior summary for hatchery origin
+polygon(x = c(SAR_yrs, rev(SAR_yrs)), y = c(SAR_lwr[,2], rev(SAR_upr[,2])), col = alpha("salmon", 0.5), border = NA)
+lines(SAR_lwr[,2] ~ SAR_yrs, col = "red", lty = 2)
+lines(SAR_upr[,2] ~ SAR_yrs, col = "red", lty = 2)
+lines(SAR_mean[,2] ~ SAR_yrs, col = "red", lwd = 2)
+
+# draw a legend
+legend("topright", legend = c("Natural", "Hatchery"), title = "Origin",
+       pch = 22, col = c("blue", "red"), pt.cex = 2, pt.bg = alpha(c("skyblue2", "salmon"), 0.5), bty = "n")
+```
+
 # Parameter Estimates {.tabset .tabset-pills}
 
 **Quick refresher on parameter names**
@@ -387,6 +502,7 @@ _In alphabetical order, as displayed in figures_
 
 * `mu_omega[1]`: mean probability of being a female at ocean entry
 * `mu_phi_Ma_M`: mean probability of surviving from LGD to ocean entry
+* `mu_phi_Mb_M`: mean probability of surviving from hatchery release in spring to estuary (hatchery fish)
 * `mu_phi_Mb_Ma`: mean probability of surviving movement from tributary to LGD (same for both LH types)
 * `mu_phi_Pa_Mb`: mean probability of surviving overwinter in tributary (`[1]`: fall migrants, `[2]`: spring migrants)
 * `mu_pi[1]`: mean probability of becoming a fall migrant LH type at end of summer
@@ -445,5 +561,44 @@ bp$stats = post_summaries
 
 # draw the box plot
 bxp(bp, ylim = c(0,max(post_summaries)), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```
+
+# Numerical Summaries
+
+## Recruitment Function
+
+```{r}
+# extract posterior summaries
+alpha_summ = post_summ(post, "alpha", digits = 0)
+beta_summ = post_summ(post, "beta", digits = -3)
+sigma_summ = post_summ(post, "sigma_Pb", digits = 2)
+
+# create/format the table
+tab = cbind(alpha_summ, beta_summ, sigma_summ)
+colnames(tab) = c("$\\alpha$", "$\\beta$", "$\\sigma_{Pb}$")
+
+# produce html table
+kable(tab, format.args = list(big.mark = ","), escape = F) %>%
+  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
+  column_spec(1, bold = T)
+```
+
+## Carcass Correction Factors
+
+```{r}
+# extract posterior summaries
+carc_adj = post_summ(post, "carc_adj", digits = 1)
+
+# create/format table
+x = paste0(carc_adj["mean",], " (", carc_adj["2.5%",], " -- ", carc_adj["97.5%",], ")")
+names(x) = colnames(carc_adj)
+tab = array_format(x)
+colnames(tab) = c("Female", "Male")
+rownames(tab) = c("Age 3", "Age 4", "Age 5")
+
+# produce html table
+kable(tab) %>%
+  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
+  column_spec(1, bold = T)
 ```
 

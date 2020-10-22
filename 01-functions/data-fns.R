@@ -111,6 +111,18 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   sig_Mb_obs = matrix(NA, ny, ni); dimnames(sig_Mb_obs) = list(y_names, i_names)
   sig_Mb_obs[y_names %in% sub$brood_year,i_names == "spring-mig"] = sub$spring_passage_log_se
   
+  # hatchery releases
+  Mb_rel = matrix(NA, ny, ni); dimnames(Mb_rel) = list(y_names, i_names)
+  Mb_rel[y_names %in% sub$brood_year,i_names == "spring-mig"] = sub$hatchery_smolt
+  
+  # uncertainty in hatchery releases
+  sig_Mb_rel = matrix(NA, ny, ni); dimnames(sig_Mb_rel) = list(y_names, i_names)
+  
+  # combine natural and hatchery Mb
+  Mb_obs = abind(Mb_obs, Mb_rel, along = 3)
+  sig_Mb_obs = abind(sig_Mb_obs, sig_Mb_rel, along = 3)
+  dimnames(Mb_obs)[[3]]  = dimnames(sig_Mb_obs)[[3]] = o_names
+  
   ### JUVENILE SURVIVAL DATA ###
   # summer logit(surv) to LGD
   Lphi_obs_Pb_Ma = rep(NA, ny); names(Lphi_obs_Pb_Ma) = y_names
@@ -150,18 +162,6 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   weir_x_obs = matrix(NA, ny, no * ns * nk); dimnames(weir_x_obs) = list(y_names, kso_names)
   weir_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
   weir_nx_obs = rowSums(weir_x_obs)
-  
-  ### PERCENT OF HATCHERY ORIGIN RETURN ###
-  # used to expand natural origin adult returns to obtain
-  # done on an age/sex structured basis
-  nat_comp = as.matrix(nat_comp)
-  hat_comp = as.matrix(hat_comp)
-  p_HOR = array(NA, c(ny, nk, ns)); dimnames(p_HOR) = list(y_names, k_names, s_names)
-  p_HOR[y_names %in% sub$brood_year,,1] = hat_comp[,1:nk]/(hat_comp[,1:nk] + nat_comp[,1:nk]) 
-  p_HOR[y_names %in% sub$brood_year,,2] = hat_comp[,(nk+1):(2*nk)]/(hat_comp[,(nk+1):(2*nk)] + nat_comp[,(nk+1):(2*nk)]) 
-  p_HOR[is.na(p_HOR)] = 0
-  p_HOR[p_HOR == 0] = 0.01  # needed to explain some carcass counts of hatchery fish in early years
-  p_HOR[p_HOR == 1] = 0.95  # needed to allow some natural fish to be present even though they weren't sampled at weir
   
   ### ADULT AGE COMP: CARCASSES ###
   # obtain names of age comp variables
@@ -280,9 +280,6 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     carc_x_obs = carc_x_obs,
     carc_nx_obs = carc_nx_obs,   # multinomial sample size
     
-    # proportion of hatchery origin returns
-    p_HOR = p_HOR,
-    
     # number of carcasses sampled for spawn status
     carcs_sampled = carcs_sampled,
     
@@ -329,8 +326,8 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     sig_Pa_obs = abind(lapply(main_list, function(x) x$sig_Pa_obs), along = 3),
     
     # spring trap count
-    Mb_obs = abind(lapply(main_list, function(x) x$Mb_obs), along = 3),
-    sig_Mb_obs = abind(lapply(main_list, function(x) x$sig_Mb_obs), along = 3),
+    Mb_obs = abind(lapply(main_list, function(x) x$Mb_obs), along = 4),
+    sig_Mb_obs = abind(lapply(main_list, function(x) x$sig_Mb_obs), along = 4),
     
     # summer tagging to LGD survival
     Lphi_obs_Pb_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Pb_Ma), along = 2),
@@ -358,9 +355,6 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     
     # broodstock removals
     p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 5),
-    
-    # proportion of hatchery origin returns
-    p_HOR = abind(lapply(main_list, function(x) x$p_HOR), along = 4),
     
     # number of carcasses sampled for spawn status
     carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
@@ -393,7 +387,7 @@ append_no_na_indices = function(jags_data) {
   fit_list = with(jags_data, {
     list(
       fit_Pa = find_no_na_indices(Pa_obs),
-      fit_Mb = find_no_na_indices(Mb_obs),
+      fit_Mb = find_no_na_indices(sig_Mb_obs),   # use sig for Mb b/c hatchery releases don't have sig, and shouldn't be fitted to
       fit_Lphi_Pb_Ma = find_no_na_indices(Lphi_obs_Pb_Ma),
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),

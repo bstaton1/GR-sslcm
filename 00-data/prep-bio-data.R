@@ -333,6 +333,27 @@ tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
 # rename the data frame and remove "tmp" objects
 juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 
+
+##### HATCHERY RELEASES OF SMOLTS #####
+
+# read the data
+tmp = read.csv(file.path(data_dir, "05-hatchery-juv-releases.csv"), stringsAsFactors = F)
+
+# note this record: some fish released in fall as parr
+tmp[!is.na(tmp$comments),]
+
+# approach for now: ignore these fish, and just count smolt released as usual
+tmp[tmp$population == "UGR" & tmp$brood_year == 2000,"n_smolt_released"] = 151443
+
+# keep only relevant columns
+tmp = tmp[,c("population", "brood_year", "n_smolt_released")]
+
+# rename column
+colnames(tmp)[colnames(tmp) == "n_smolt_released"] = "hatchery_smolt"
+
+# rename the data frame, and remove "tmp" object
+hatchery_releases = tmp; rm(tmp)
+
 ##### COMBINE THESE DATA SOURCES INTO ONE DATA FRAME #####
 
 # merge together the various data sets
@@ -342,11 +363,15 @@ bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_yea
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, hatchery_releases, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year
 empty_df = with(bio_dat, expand.grid(population = unique(population), brood_year = seq(min(brood_year), max(brood_year))))
 bio_dat = merge(bio_dat, empty_df, by = c("population", "brood_year"), all = T)
+
+# make hatchery releases be zero if NA
+bio_dat$hatchery_smolt[is.na(bio_dat$hatchery_smolt)] = 0
 
 # remove unnecessary objects from workspace, retain only bio_dat
 rm(list = setdiff(ls(), "bio_dat"))

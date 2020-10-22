@@ -22,6 +22,7 @@ out_dir = "02-model/model-output"
 args = commandArgs(trailingOnly = T)
 pop = args[1]
 rmd = as.logical(args[2])
+rmd_mcmc_plots = T
 
 # if pop not supplied, set a value and warn
 if (is.na(pop)) {
@@ -44,12 +45,31 @@ if (is.na(rmd)) {
 jags_data = create_jags_data_one(pop)
 jags_data = append_no_na_indices(jags_data)
 
+# drop "impossible" composition outcomes
+# this is a band-aid for now.
+# if we keep this approach, put it somewhere better than this
+# see issue #44 (https://github.com/bstaton1/GR-sslcm/issues/44)
+# for details
+f_release = ifelse(pop == "LOS", 1997, ifelse(pop == "MIN", 2014, 1998))
+age = rep(c(3:5), 2)
+sex = rep(c("F", "M"), each = 3)
+for (ks in 1:6) {
+  f_valid = f_release + age[ks]
+  col = paste0(sex[ks], age[ks], "-Hat")
+  alt_years = 1991:(f_valid - 1)
+  jags_data$carc_x_obs[as.character(alt_years),col] = 0
+  jags_data$weir_x_obs[as.character(alt_years),col] = 0
+}
+jags_data$carc_nx_obs = rowSums(jags_data$carc_x_obs)
+jags_data$weir_nx_obs = rowSums(jags_data$weir_x_obs)
+
 # some parameters we are assuming known (for now)
+# [1] is natural, [2] is hatchery origin
 add_jags_data = list(
-  mu_phi_M_O1 = 0.2,    # survival from arrival to estuary to next spring (become SWA1)
-  mu_phi_O1_O2 = 0.8,   # survival from SWA1 to SWA2
-  mu_phi_O2_O3 = 0.8,   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra = 0.7    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
+  mu_phi_M_O1 = c(0.2, 0.2),    # survival from arrival to estuary to next spring (become SWA1)
+  mu_phi_O1_O2 = c(0.8, 0.8),   # survival from SWA1 to SWA2
+  mu_phi_O2_O3 = c(0.8, 0.8),   # survival from SWA2 to SWA3
+  mu_phi_Rb_Ra = c(0.7, 0.7)    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
 
 # some dummy variables for performing weir vs. carcass composition correction
@@ -83,14 +103,16 @@ jags_params = c(
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
   "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
+  "mu_phi_Mb_M",
   
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_M",
   "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
+  "sig_Lphi_Mb_M",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_M", "omega", 
-  "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
+  "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa", "phi_Mb_M",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",
@@ -175,7 +197,7 @@ if (rmd) {
   setwd("03-post-process")
   rmarkdown::render(input = "output-plots.Rmd",
                     output_file = paste0(pop, "-output-plots.html"), 
-                    params = list(pop = pop), 
+                    params = list(pop = pop, mcmc_plots = rmd_mcmc_plots), 
                     quiet = T
   )
   setwd("../")
