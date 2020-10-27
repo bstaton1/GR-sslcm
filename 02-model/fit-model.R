@@ -127,7 +127,7 @@ jags_params = c(
   "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot",
   
   # carcass vs. weir correction
-  "z", "carc_adj"
+  "z", "carc_adj", "n_stray_tot", "stray_comp"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
