@@ -131,6 +131,29 @@ jags_model_code = function() {
     phi_Sb_Sa[y] <- ilogit(Lphi_Sb_Sa[y])
   }
   
+  ### PRIORS: HATCHERY STRAYS RETURNING IN YEARS WITH NO ASSOCIATED SMOLT RELEASE ###
+  # the number of hatchery strays: only estimate in years where no other mechanism for generating hatchery fish
+  for (i in 1:n_stray_yrs) {
+    n_stray_tot[stray_yrs[i]] ~ dunif(0, 5000)
+  }
+  for (i in 1:n_not_stray_yrs) {
+    n_stray_tot[not_stray_yrs[i]] <- 0
+  }
+  
+  # when n_stray_tot > 0, what age/sex are they? (assume all hatchery fish)
+  stray_comp_2d[1:nks] ~ ddirich(rep(1, nks))
+  
+  # put stray_comp_2d into array format for looping in process model
+  for (k in 1:nk) {
+    for (s in 1:ns) {
+      # assume no strays for natural fish
+      stray_comp[k,s,1] <- 0
+      
+      # place stray_comp_2d in the right index locations
+      stray_comp[k,s,2] <- stray_comp_2d[k + nk * (s-1)]
+    }
+  }
+  
   ### PRIORS: OBSERVATION MODEL ###
   
   # carcass vs. weir composition correction factor coefficients
@@ -249,8 +272,8 @@ jags_model_code = function() {
       for (s in 1:ns) {
         for (o in 1:no) {
           
-          # survive upstream migration
-          Ra[y,k,s,o] <- Rb[y,k,s,o] * phi_Rb_Ra[y,o]
+          # survive upstream migration and add strays
+          Ra[y,k,s,o] <- Rb[y,k,s,o] * phi_Rb_Ra[y,o] + n_stray_tot[y] * stray_comp[k,s,o]
           
           # remove fish for brood stock
           Sb[y,k,s,o] <- Ra[y,k,s,o] * (1 - p_remove[y,k,s,o])
