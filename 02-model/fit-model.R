@@ -45,24 +45,6 @@ if (is.na(rmd)) {
 jags_data = create_jags_data_one(pop)
 jags_data = append_no_na_indices(jags_data)
 
-# drop "impossible" composition outcomes
-# this is a band-aid for now.
-# if we keep this approach, put it somewhere better than this
-# see issue #44 (https://github.com/bstaton1/GR-sslcm/issues/44)
-# for details
-f_release = ifelse(pop == "LOS", 1997, ifelse(pop == "MIN", 2014, 1998))
-age = rep(c(3:5), 2)
-sex = rep(c("F", "M"), each = 3)
-for (ks in 1:6) {
-  f_valid = f_release + age[ks]
-  col = paste0(sex[ks], age[ks], "-Hat")
-  alt_years = 1991:(f_valid - 1)
-  jags_data$carc_x_obs[as.character(alt_years),col] = 0
-  jags_data$weir_x_obs[as.character(alt_years),col] = 0
-}
-jags_data$carc_nx_obs = rowSums(jags_data$carc_x_obs)
-jags_data$weir_nx_obs = rowSums(jags_data$weir_x_obs)
-
 # some parameters we are assuming known (for now)
 # [1] is natural, [2] is hatchery origin
 add_jags_data = list(
@@ -79,6 +61,26 @@ add_jags_data2 = list(
   male = c(0,1)         # is each s male?
 )
 add_jags_data = append(add_jags_data, add_jags_data2)
+
+# the years in which strays will be needed
+if (pop != "MIN") {
+  yrs = as.numeric(names(jags_data$Mb_obs[,2,2]))
+  first_brood_release = min(yrs[jags_data$Mb_obs[,2,2] > 0], na.rm = T)
+  first_adult_return = first_brood_release + jags_data$kmax
+  stray_yrs = 6:(which(yrs == (first_adult_return - 1)))
+  not_stray_yrs = max(stray_yrs+1):jags_data$ny
+} else {
+  stray_yrs = 6:jags_data$ny
+  not_stray_yrs = numeric(0)
+}
+
+add_jags_data3 = list(
+  stray_yrs = stray_yrs,
+  not_stray_yrs = not_stray_yrs,
+  n_stray_yrs = length(stray_yrs),
+  n_not_stray_yrs = length(not_stray_yrs)
+)
+add_jags_data = append(add_jags_data, add_jags_data3)
 
 # calculate the upper bound on initial adult recruits and add to data
 add_jags_data = append(add_jags_data, list(max_init_recruits = max(jags_data$Ra_obs/(add_jags_data$mu_phi_Rb_Ra) * 1.5, na.rm = T)))
@@ -125,7 +127,7 @@ jags_params = c(
   "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot",
   
   # carcass vs. weir correction
-  "z", "carc_adj"
+  "z", "carc_adj", "n_stray_tot", "stray_comp"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####

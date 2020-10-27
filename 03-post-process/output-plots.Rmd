@@ -148,7 +148,7 @@ diag_plots(post, "gamma", layout = "4x1")
 diag_plots(post, "^mu", layout = "5x3")
 ```
 
-`r if (params$mcmc_plots) "### $$\\sigma$"`
+`r if (params$mcmc_plots) "### $\\sigma$"`
 
 ```{r sig-diag-plots, eval = params$mcmc_plots, fig.width = 7, fig.height = 7}
 diag_plots(post, "^sig", layout = "5x3")
@@ -158,6 +158,17 @@ diag_plots(post, "^sig", layout = "5x3")
 
 ```{r init-recruits-diag-plots, eval = params$mcmc_plots, fig.width = 5, fig.height = 7}
 diag_plots(post, "init_recruits", layout = "4x2")
+```
+
+`r if (params$mcmc_plots) "### stray"`
+
+_There are some elements of both `n_stray_tot` and `stray_comp` that are exactly zero each MCMC iteration. These are omitted from the plots below._
+
+```{r stray-diag-plots, eval = params$mcmc_plots, fig.width = 7, fig.height = 7}
+stray = post_subset(post, "stray", T)
+non_zero_stray = apply(stray, 2, function(x) all(x != 0))
+stray_nodes = names(non_zero_stray)[non_zero_stray]
+diag_plots(post, stray_nodes, layout = "5x3")
 ```
 
 # Fit to Data {.tabset .tabset-pills}
@@ -396,7 +407,7 @@ The adult part is calculated across return years, by summing the number of adult
 
 Other SARS could be calculated, but currently this is the only one that is comparable between hatchery and natural origins.
 
-```{r}
+```{r sar-plot}
 # function to calculate posterior 
 get_SAR_post = function(post, jags_data) {
   # extract posterior abundances
@@ -467,6 +478,10 @@ SAR_mean = array_format(post_summ(post, "SAR")["mean",]) * 100
 SAR_lwr = array_format(post_summ(post, "SAR")["2.5%",]) * 100
 SAR_upr = array_format(post_summ(post, "SAR")["97.5%",]) * 100
 
+SAR_mean[SAR_mean == "Inf"] = NA
+SAR_lwr[SAR_lwr == "Inf"] = NA
+SAR_upr[SAR_upr == "Inf"] = NA
+
 # subset years
 all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
 SAR_yrs = all_yrs[1:nrow(SAR_mean)]
@@ -493,6 +508,15 @@ lines(SAR_mean[,2] ~ SAR_yrs, col = "red", lwd = 2)
 # draw a legend
 legend("topright", legend = c("Natural", "Hatchery"), title = "Origin",
        pch = 22, col = c("blue", "red"), pt.cex = 2, pt.bg = alpha(c("skyblue2", "salmon"), 0.5), bty = "n")
+```
+
+# Number of Strays
+
+```{r stray-tot-plot}
+par(oma = c(1,1,0,0))
+plot_tseries(post_summ(post, "n_stray_tot"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]))
+mtext(side = 1, outer = T, line = -0.5, "Return Year")
+mtext(side = 2, outer = T, line = 0, "Number of Strays")
 ```
 
 # Parameter Estimates {.tabset .tabset-pills}
@@ -601,4 +625,3 @@ kable(tab) %>%
   kable_styling(full_width = F, bootstrap_options = "condensed") %>%
   column_spec(1, bold = T)
 ```
-

@@ -11,9 +11,12 @@
 # yaxis_side: 2 or 4 or NULL, where should the y-axis be placed?
 # set_par: set some par() options internally?
 
-plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2, set_par = T, ylim = NULL) {
+plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2, set_par = T, ylim = NULL, yrs = NULL) {
+  
   # extract year labels
-  yrs = as.numeric(names(obs))
+  if (is.null(yrs)) {
+    yrs = as.numeric(names(obs))
+  }
   
   # set y limits
   if (is.null(ylim)) {
