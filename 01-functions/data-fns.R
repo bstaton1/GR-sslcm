@@ -141,12 +141,14 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   sig_Lphi_obs_Pa_Ma[y_names %in% sub$brood_year,i_names == "fall-mig"] = sub$fall_surv_logit_se
   
   # spring logit(surv) to LGD
-  Lphi_obs_Mb_Ma = matrix(NA, ny, ni); dimnames(Lphi_obs_Mb_Ma) = list(y_names, i_names)
-  Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig"] = logit(sub$spring_surv_est)
+  Lphi_obs_Mb_Ma = array(NA, dim = c(ny, ni, no)); dimnames(Lphi_obs_Mb_Ma) = list(y_names, i_names, o_names)
+  Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Nat"] = logit(sub$spring_surv_est)
+  Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Hat"] = logit(sub$hatchery_spring_surv_est)
   
   # sd spring logit(surv) to LGD
-  sig_Lphi_obs_Mb_Ma = matrix(NA, ny, ni); dimnames(sig_Lphi_obs_Mb_Ma) = list(y_names, i_names)
-  sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig"] = sub$spring_surv_logit_se
+  sig_Lphi_obs_Mb_Ma = array(NA, dim = c(ny, ni, no)); dimnames(sig_Lphi_obs_Mb_Ma) = list(y_names, i_names, o_names)
+  sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Nat"] = sub$spring_surv_logit_se
+  sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Hat"] = sub$hatchery_spring_surv_logit_se
   
   ### ADULT AGE COMP: WEIR ###
   # obtain names of age comp variables
@@ -260,6 +262,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     sig_Lphi_obs_Pa_Ma = sig_Lphi_obs_Pa_Ma,
     
     # spring trap tagging to LGD
+    # also, includes hatchery survival from release in spring to LGD
     Lphi_obs_Mb_Ma = Lphi_obs_Mb_Ma,
     sig_Lphi_obs_Mb_Ma = sig_Lphi_obs_Mb_Ma,
     
