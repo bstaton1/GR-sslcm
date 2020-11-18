@@ -298,7 +298,7 @@ tmp = read.csv(file.path(data_dir, "04-juv-survival.csv"), stringsAsFactors = F)
 tmp = tmp[!is.na(tmp$surv_est),]
 
 # calculate the logit-scale standard error
-tmp$logit_surv_se = with(tmp, get_logit_se(n_tagged, surv_est, surv_se, surv_ci_low, surv_ci_high))
+tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_ci_high))
 
 # exclude some survival estimates: only keep the four main populations
 tmp = tmp[tmp$population %in% c("CAT", "LOS", "MIN", "UGR"),]
@@ -332,7 +332,6 @@ tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
 
 # rename the data frame and remove "tmp" objects
 juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
-
 
 ##### HATCHERY RELEASES OF SMOLTS #####
 
