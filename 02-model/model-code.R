@@ -25,19 +25,21 @@ jags_model_code = function() {
   gamma1[1] ~ dnorm(0, 1e-3)
   gamma1[2] <- gamma1[1]
 
-  # movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
-  mu_phi_Mb_Ma[2] ~ dbeta(1, 1)
-  sig_Lphi_Mb_Ma[2] ~ dunif(0, 5)
-  mu_phi_Mb_Ma[1] <- mu_phi_Mb_Ma[2]
-  sig_Lphi_Mb_Ma[1] <- sig_Lphi_Mb_Ma[2]
+  # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
+  mu_phi_Mb_Ma[2,1] ~ dbeta(1, 1)
+  sig_Lphi_Mb_Ma[2,1] ~ dunif(0, 5)
+  mu_phi_Mb_Ma[1,1] <- mu_phi_Mb_Ma[2,1]
+  sig_Lphi_Mb_Ma[1,1] <- sig_Lphi_Mb_Ma[2,1]
   
-  # movement survival (LGD to estuary): same for both LH types
-  mu_phi_Ma_M ~ dbeta(1, 1)
-  sig_Lphi_Ma_M ~ dunif(0, 5)
+  # hatchery origin movement survival (trib to LGD): have spring migrants only
+  mu_phi_Mb_Ma[2,2] ~ dbeta(1, 1)
+  sig_Lphi_Mb_Ma[2,2] ~ dunif(0, 5)
   
-  # movement survival (trib to estuary): for hatchery fish only
-  mu_phi_Mb_M ~ dbeta(1, 1)
-  sig_Lphi_Mb_M ~ dunif(0, 5)
+  # movement survival (LGD to estuary): same for both LH types, different for origin types
+  for (o in 1:no) {
+    mu_phi_Ma_M[o] ~ dbeta(1, 1)
+    sig_Lphi_Ma_M[o] ~ dunif(0, 5)
+  }
   
   # pre-spawn survival (after brood-stock removal to successful spawning)
   mu_phi_Sb_Sa ~ dbeta(1, 1)
