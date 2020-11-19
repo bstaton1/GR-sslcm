@@ -239,27 +239,31 @@ jags_model_code = function() {
       Mb[y,i,1] <- Pa[y,i] * phi_Pa_Mb[y,i]
 
       # move to LGD: smolt after spring migration, at top of LGD
-      Ma[y,i] <- Mb[y,i,1] * phi_Mb_Ma[y,i]
+      Ma[y,i,1] <- Mb[y,i,1] * phi_Mb_Ma[y,i,1]
       
       # derived survival for fitting: fall trap to LGD
-      phi_Pa_Ma[y,i] <- Ma[y,i]/Pa[y,i]
+      phi_Pa_Ma[y,i] <- Ma[y,i,1]/Pa[y,i]
     }
+    
+    # derived survival for fitting: summer tagging to LGD
+    phi_Pb_Ma[y] <- sum(Ma[y,1:ni,1])/Pb[y]
     
     # put hatchery smolts in tributary
     Mb[y,2,2] <- Mb_obs[y,2,2]
     
-    # derived survival for fitting: summer tagging to LGD
-    phi_Pb_Ma[y] <- sum(Ma[y,1:ni])/Pb[y]
+    # move hatchery smolts from tributary to LGD
+    Ma[y,2,2] <- Mb[y,2,2] * phi_Mb_Ma[y,2,2]
+    
+    # create zeros for fall migrant hatchery fish at LGD
+    # needed because we sum over this dimension below
+    Ma[y,1,2] <- 0
     
     # sex/origin-specific processes
     for (s in 1:ns) {
-      # move natural origin to estuary and assign to sex
-      M[y,s,1] <- sum(Ma[y,1:ni]) * phi_Ma_M[y] * omega[y,s,1]
-      
-      # move hatchery origin from tributary to estuary and assign to sex
-      M[y,s,2] <- Mb[y,2,2] * phi_Mb_M[y] * omega[y,s,2]
-
       for (o in 1:no) {
+        # move origin-specific smolts from LGD to estuary and assign to sex
+        M[y,s,o] <- sum(Ma[y,1:ni,o]) * phi_Ma_M[y,o] * omega[y,s,o]
+        
         # move juveniles through ocean ages and survivals
         O[y,1,s,o] <- M[y,s,o] * phi_M_O1[y,o] # survive first winter at sea. now SWA1, TA3
         O[y,2,s,o] <- O[y,1,s,o] * (1 - psi_O1_Rb[y,s,o]) * phi_O1_O2[y,o] # don't mature at SWA1 and survive second winter at sea. now SWA2, TA4
