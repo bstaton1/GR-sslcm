@@ -84,19 +84,23 @@ jags_model_code = function() {
       phi_Pa_Mb[y,i] <- ilogit(Lphi_Pa_Mb[y,i])
     }
     
-    # movement survival: trib to LGD
+    # natural origin movement survival: trib to LGD
     # assume equal between LH types
-    Lphi_Mb_Ma[y,2] ~ dnorm(logit(mu_phi_Mb_Ma[2]), 1/sig_Lphi_Mb_Ma[2]^2)
-    phi_Mb_Ma[y,2] <- ilogit(Lphi_Mb_Ma[y,2])
-    phi_Mb_Ma[y,1] <- phi_Mb_Ma[y,2]
+    Lphi_Mb_Ma[y,2,1] ~ dnorm(logit(mu_phi_Mb_Ma[2,1]), 1/sig_Lphi_Mb_Ma[2,1]^2)
+    phi_Mb_Ma[y,2,1] <- ilogit(Lphi_Mb_Ma[y,2,1])
+    phi_Mb_Ma[y,1,1] <- phi_Mb_Ma[y,2,1]
+    
+    # hatchery origin movement survival: trib to LGD
+    # spring migrants only
+    Lphi_Mb_Ma[y,2,2] ~ dnorm(logit(mu_phi_Mb_Ma[2,2]), 1/sig_Lphi_Mb_Ma[2,2]^2)
+    phi_Mb_Ma[y,2,2] <- ilogit(Lphi_Mb_Ma[y,2,2])
     
     # movement survival: LGD to estuary
-    Lphi_Ma_M[y] ~ dnorm(logit(mu_phi_Ma_M), 1/sig_Lphi_Ma_M^2)
-    phi_Ma_M[y] <- ilogit(Lphi_Ma_M[y])
-    
-    # movement survival: trib to estuary (hatchery fish)
-    Lphi_Mb_M[y] ~ dnorm(logit(mu_phi_Mb_M), 1/sig_Lphi_Mb_M^2)
-    phi_Mb_M[y] <- ilogit(Lphi_Mb_M[y])
+    # separate for each origin type
+    for (o in 1:no) {
+      Lphi_Ma_M[y,o] ~ dnorm(logit(mu_phi_Ma_M[o]), 1/sig_Lphi_Ma_M[o]^2)
+      phi_Ma_M[y,o] <- ilogit(Lphi_Ma_M[y,o])
+    }
     
     # probability of returning as female ([1]) or male ([2]) by origin
     for (o in 1:no) {
