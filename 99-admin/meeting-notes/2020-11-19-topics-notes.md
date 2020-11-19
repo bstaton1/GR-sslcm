@@ -52,7 +52,7 @@
 * From P. Gibson's work in issue [#49](https://github.com/bstaton1/GR-sslcm/issues/49), it seems we have multiple options for informing these hydropower survival estimates
   * They are LGD to BON. So first ocean survival term would be from BON to spring of following year
 * Using the estimates from Table A.1 pasted in the comments on that issue, I attempted to fit a model that estimates origin- and age-specific time-varying ocean survival (constant across sexes)
-  * There was an issue with hatchery fish where we were missing the survival from release to LGD. A fixed value of 0.6 was inserted to get around this at the time. PR [#](https://github.com/bstaton1/GR-sslcm/pull/52) will fix that problem.
+  * There was an issue with hatchery fish where we were missing the survival from release to LGD. A fixed value of 0.6 was inserted to get around this at the time. PR [#52](https://github.com/bstaton1/GR-sslcm/pull/52) will fix that problem.
   * The model displayed MCMC sampling issues for the first time
   * R. Sharma (and B. Lessard) have warned that we will run into problems here because maturity and survival are confounded.
   * Ideas for things to try to remedy this:
