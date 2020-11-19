@@ -298,7 +298,7 @@ tmp = read.csv(file.path(data_dir, "04-juv-survival.csv"), stringsAsFactors = F)
 tmp = tmp[!is.na(tmp$surv_est),]
 
 # calculate the logit-scale standard error
-tmp$logit_surv_se = with(tmp, get_logit_se(n_tagged, surv_est, surv_se, surv_ci_low, surv_ci_high))
+tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_ci_high))
 
 # exclude some survival estimates: only keep the four main populations
 tmp = tmp[tmp$population %in% c("CAT", "LOS", "MIN", "UGR"),]
@@ -333,26 +333,35 @@ tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
 # rename the data frame and remove "tmp" objects
 juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 
-
-##### HATCHERY RELEASES OF SMOLTS #####
+##### HATCHERY RELEASES OF SMOLTS AND SURVIVAL TO LGD #####
 
 # read the data
 tmp = read.csv(file.path(data_dir, "05-hatchery-juv-releases.csv"), stringsAsFactors = F)
 
+# discard any records prior to 1995
+# these releases were very early and did not follow the same
+# procedures as in the rest of the "official" hatchery program years
+tmp = tmp[tmp$brood_year > 1995,]
+
 # note this record: some fish released in fall as parr
-tmp[!is.na(tmp$comments),]
+tmp[tmp$population == "UGR" & tmp$brood_year == 2000,"comments"]
 
 # approach for now: ignore these fish, and just count smolt released as usual
 tmp[tmp$population == "UGR" & tmp$brood_year == 2000,"n_smolt_released"] = 151443
 
-# keep only relevant columns
-tmp = tmp[,c("population", "brood_year", "n_smolt_released")]
+# convert survival se into logit survival se
+tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, NA, NA))
 
-# rename column
+# keep only relevant columns
+tmp = tmp[,c("population", "brood_year", "n_smolt_released", "surv_est", "logit_surv_se")]
+
+# rename columns
 colnames(tmp)[colnames(tmp) == "n_smolt_released"] = "hatchery_smolt"
+colnames(tmp)[colnames(tmp) == "surv_est"] = "hatchery_spring_surv_est"
+colnames(tmp)[colnames(tmp) == "logit_surv_se"] = "hatchery_spring_surv_logit_se"
 
 # rename the data frame, and remove "tmp" object
-hatchery_releases = tmp; rm(tmp)
+hatchery_release_survival = tmp; rm(tmp)
 
 ##### COMBINE THESE DATA SOURCES INTO ONE DATA FRAME #####
 
@@ -363,7 +372,7 @@ bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_yea
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, hatchery_releases, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year

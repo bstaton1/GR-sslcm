@@ -105,16 +105,14 @@ jags_params = c(
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
   "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
-  "mu_phi_Mb_M",
   
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_M",
   "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
-  "sig_Lphi_Mb_M",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_M", "omega", 
-  "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa", "phi_Mb_M",
+  "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",

@@ -9,7 +9,7 @@ fit_basic_BH = function(jags_data, plot = FALSE) {
   out = with(jags_data, {
     # get "observed" smolt at LGD
     Ma_obs = Pa_obs[,"fall-mig"] * expit(Lphi_obs_Pa_Ma[,"fall-mig"]) + 
-      Mb_obs[,"spring-mig",1] * expit(Lphi_obs_Mb_Ma[,"spring-mig"])
+      Mb_obs[,"spring-mig",1] * expit(Lphi_obs_Mb_Ma[,"spring-mig",1])
     
     # get "observed" summer parr
     Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma)
