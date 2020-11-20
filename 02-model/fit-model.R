@@ -82,6 +82,17 @@ add_jags_data3 = list(
 )
 add_jags_data = append(add_jags_data, add_jags_data3)
 
+# create index names, for when it would help improve readibility of the JAGS code
+add_jags_data4 = list(
+  i_fall = 1,     # fall migrants are i = 1
+  i_spring = 2,   # spring migrants are i = 2,
+  o_nat = 1,      # natural origin are o = 1,
+  o_hat = 2,      # hatchery origin are o = 2,
+  s_female = 1,   # females are s = 1,
+  s_male = 2     # males are s = 2
+)
+add_jags_data = append(add_jags_data, add_jags_data4)
+
 # calculate the upper bound on initial adult recruits and add to data
 add_jags_data = append(add_jags_data, list(max_init_recruits = max(jags_data$Ra_obs/(add_jags_data$mu_phi_Rb_Ra) * 1.5, na.rm = T)))
 jags_data = append(jags_data, add_jags_data)
