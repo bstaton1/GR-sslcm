@@ -298,7 +298,7 @@ tmp = read.csv(file.path(data_dir, "04-juv-survival.csv"), stringsAsFactors = F)
 tmp = tmp[!is.na(tmp$surv_est),]
 
 # calculate the logit-scale standard error
-tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_ci_high))
+tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_ci_high, alpha = 0.05))
 
 # exclude some survival estimates: only keep the four main populations
 tmp = tmp[tmp$population %in% c("CAT", "LOS", "MIN", "UGR"),]
@@ -350,7 +350,7 @@ tmp[tmp$population == "UGR" & tmp$brood_year == 2000,"comments"]
 tmp[tmp$population == "UGR" & tmp$brood_year == 2000,"n_smolt_released"] = 151443
 
 # convert survival se into logit survival se
-tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, NA, NA))
+tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, NA, NA, alpha = 0.05))
 
 # keep only relevant columns
 tmp = tmp[,c("population", "brood_year", "n_smolt_released", "surv_est", "logit_surv_se")]
