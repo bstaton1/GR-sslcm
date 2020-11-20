@@ -2,9 +2,9 @@ jags_model_code = function() {
   
   ### PRIORS: RECRUITMENT FUNCTION ###
   # spawner to aggregate parr recruitment function
-  log_alpha ~ dnorm(0, 0.001)             # log productivity
+  log_alpha ~ dnorm(0, 0.001) %_% T(,9.2) # log productivity. bound to prevent nonsensically large draws
   alpha <- exp(log_alpha)
-  log_beta ~ dnorm(0, 0.001) %_% T(,15)    # log capacity. bound to prevent nonsensically large draws
+  log_beta ~ dnorm(0, 0.001) %_% T(,15)   # log capacity. bound to prevent nonsensically large draws
   beta <- exp(log_beta)
   sigma_Pb ~ dunif(0, 5)
   
