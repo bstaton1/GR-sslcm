@@ -22,6 +22,7 @@ out_dir = "02-model/model-output"
 args = commandArgs(trailingOnly = T)
 pop = args[1]
 rmd = as.logical(args[2])
+mcmc_length = args[3]
 rmd_mcmc_plots = T
 
 # if pop not supplied, set a value and warn
@@ -37,6 +38,11 @@ if (is.na(rmd)) {
   rmd = T
   # rmd = F
   cat("\n\n'rmd' was not supplied as a command line argument.", rmd, " will be used.")
+}
+
+if (is.na(mcmc_length)) {
+  mcmc_length = "medium"
+  cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, " will be used.")
 }
 
 ##### STEP 1: PREPARE DATA FOR JAGS #####
@@ -142,11 +148,11 @@ jags_params = c(
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = 10000,
-  n_burn = 5000,
-  n_thin = 2, 
-  n_chain = 2,
-  n_adapt = 1000,
+  n_post = switch(mcmc_length,  "short" = 1000, "medium" = 12000, "long" = 24000),
+  n_burn = switch(mcmc_length,  "short" = 500,  "medium" = 5000,  "long" = 20000),
+  n_thin = switch(mcmc_length,  "short" = 1,    "medium" = 4,     "long" = 8),
+  n_chain = switch(mcmc_length, "short" = 3,    "medium" = 3,     "long" = 3),
+  n_adapt = switch(mcmc_length, "short" = 100,  "medium" = 1000,  "long" = 1000),
   parallel = T
 )
 
