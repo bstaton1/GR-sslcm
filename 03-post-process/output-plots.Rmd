@@ -187,13 +187,15 @@ mtext(side = 2, outer = T, line = 0.25, "Abundance")
 
 ## Survival Data
 
-```{r survival-data-fits, fig.width = 3, fig.height = 6}
-par(mfcol = c(4,1), oma = c(1.5,1.5,0,0))
+```{r survival-data-fits, fig.width = 5, fig.height = 6}
+par(mfcol = c(3,2), oma = c(1.5,1.5,0,0))
 
 plot_tseries(post_summ(post, "^phi_Pb_Ma["), expit(jags_data$Lphi_obs_Pb_Ma[observable]), main = "(Nat) Summer Tagging to LGD")
 plot_tseries(post_summ(post, "^phi_Pa_Ma[.+,1]$"), expit(jags_data$Lphi_obs_Pa_Ma[observable,1]), main = "(Nat) Fall Trap to LGD")
 plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2,1]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2,1]), main = "(Nat) Spring Trap to LGD")
 plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2,2]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2,2]), main = "(Hat) Spring Release to LGD")
+plot_tseries(post_summ(post, "^phi_Ma_M[.+,1]$"), expit(jags_data$Lphi_obs_Ma_M[observable,1]), main = "(Nat) LGD to BON")
+plot_tseries(post_summ(post, "^phi_Ma_M[.+,2]$"), expit(jags_data$Lphi_obs_Ma_M[observable,2]), main = "(Hat) LGD to BON")
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
