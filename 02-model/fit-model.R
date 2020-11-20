@@ -16,6 +16,9 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
+# specify a scenario name
+scenario = "base"
+
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
 # or if in interactive session, uncomment the pop you wish to fit
@@ -198,11 +201,12 @@ if (!dir.exists(out_dir)) dir.create(out_dir)
 out_obj = list(
   jags_data = jags_data,
   post = post,
-  pop = pop
+  pop = pop,
+  scenario = scenario
 )
 
 # create the output file name
-out_file = paste0(pop, "-output.rds")
+out_file = paste0(pop, "-output-", scenario, ".rds")
 
 # save the file
 cat("\nSaving rds Output")
@@ -213,8 +217,8 @@ if (rmd) {
   cat("\nRendering Rmd Output")
   setwd("03-post-process")
   rmarkdown::render(input = "output-plots.Rmd",
-                    output_file = paste0(pop, "-output-plots.html"), 
-                    params = list(pop = pop, mcmc_plots = rmd_mcmc_plots), 
+                    output_file = paste0(pop, "-output-plots-", scenario, ".html"), 
+                    params = list(pop = pop, scenario = scenario, mcmc_plots = rmd_mcmc_plots), 
                     quiet = T
   )
   setwd("../")

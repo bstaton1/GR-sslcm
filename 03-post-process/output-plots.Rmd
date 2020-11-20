@@ -11,6 +11,10 @@ params:
     value: CAT
     input: select
     choices: [CAT, LOS, UGR]
+  scenario:
+    label: "Scenario"
+    value: base
+    input: text
   mcmc_plots:
     label: "Make MCMC Plots"
     input: checkbox
@@ -38,7 +42,7 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 in_dir = "02-model/model-output"
 
 # read information from this model
-model_info = readRDS(file.path(in_dir, paste0(params$pop, "-output.rds")))
+model_info = readRDS(file.path(in_dir, paste0(params$pop, "-output-", params$scenario, ".rds")))
 
 # extract the two key structures from this object
 post = model_info$post
