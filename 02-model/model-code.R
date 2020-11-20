@@ -10,9 +10,9 @@ jags_model_code = function() {
   
   ### PRIORS: FRESHWATER PARAMETERS ###
   # aggregate parr to LH-specific parr
-  mu_pi[1] ~ dbeta(1, 1)
+  mu_pi[i_fall] ~ dbeta(1, 1)
   sig_Lpi ~ dunif(0, 5)
-  mu_pi[2] <- 1 - mu_pi[1]
+  mu_pi[i_spring] <- 1 - mu_pi[i_fall]
   
   # overwinter survival parameters: LH-specific
   # uses logistic relationship to introduce density-depdendence
@@ -22,18 +22,18 @@ jags_model_code = function() {
     gamma0[i] ~ dnorm(0, 1e-3)
     sig_Lphi_Pa_Mb[i] ~ dunif(0, 5)
   }
-  gamma1[1] ~ dnorm(0, 1e-3)
-  gamma1[2] <- gamma1[1]
+  gamma1[i_fall] ~ dnorm(0, 1e-3)
+  gamma1[i_spring] <- gamma1[i_fall]
 
   # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
-  mu_phi_Mb_Ma[2,1] ~ dbeta(1, 1)
-  sig_Lphi_Mb_Ma[2,1] ~ dunif(0, 5)
-  mu_phi_Mb_Ma[1,1] <- mu_phi_Mb_Ma[2,1]
-  sig_Lphi_Mb_Ma[1,1] <- sig_Lphi_Mb_Ma[2,1]
+  mu_phi_Mb_Ma[i_spring,o_nat] ~ dbeta(1, 1)
+  sig_Lphi_Mb_Ma[i_spring,o_nat] ~ dunif(0, 5)
+  mu_phi_Mb_Ma[i_fall,o_nat] <- mu_phi_Mb_Ma[i_spring,o_nat]
+  sig_Lphi_Mb_Ma[i_fall,o_nat] <- sig_Lphi_Mb_Ma[i_spring,o_nat]
   
   # hatchery origin movement survival (trib to LGD): have spring migrants only
-  mu_phi_Mb_Ma[2,2] ~ dbeta(1, 1)
-  sig_Lphi_Mb_Ma[2,2] ~ dunif(0, 5)
+  mu_phi_Mb_Ma[i_spring,o_hat] ~ dbeta(1, 1)
+  sig_Lphi_Mb_Ma[i_spring,o_hat] ~ dunif(0, 5)
   
   # movement survival (LGD to estuary): same for both LH types, different for origin types
   for (o in 1:no) {
@@ -49,8 +49,8 @@ jags_model_code = function() {
   # probability of returning as female ([1,]) or male ([2,])
   # by origin ([,1] natural; [,2] hatchery)
   for (o in 1:no) {
-    mu_omega[1,o] ~ dbeta(1, 1)
-    mu_omega[2,o] <- 1 - mu_omega[1,o]
+    mu_omega[s_female,o] ~ dbeta(1, 1)
+    mu_omega[s_male,o] <- 1 - mu_omega[s_female,o]
     sig_Lomega[o] ~ dunif(0, 5)
   }
   
@@ -74,9 +74,9 @@ jags_model_code = function() {
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in (kmax+1):ny) {
     # aggregate parr to LH-specific parr
-    Lpi1[y] ~ dnorm(logit(mu_pi[1]), 1/sig_Lpi^2)
-    pi[y,1] <- ilogit(Lpi1[y])
-    pi[y,2] <- 1 - pi[y,1]
+    Lpi1[y] ~ dnorm(logit(mu_pi[i_fall]), 1/sig_Lpi^2)
+    pi[y,i_fall] <- ilogit(Lpi1[y])
+    pi[y,i_spring] <- 1 - pi[y,i_fall]
     
     # overwinter survival: density-dependent
     for (i in 1:ni) {
@@ -86,14 +86,14 @@ jags_model_code = function() {
     
     # natural origin movement survival: trib to LGD
     # assume equal between LH types
-    Lphi_Mb_Ma[y,2,1] ~ dnorm(logit(mu_phi_Mb_Ma[2,1]), 1/sig_Lphi_Mb_Ma[2,1]^2)
-    phi_Mb_Ma[y,2,1] <- ilogit(Lphi_Mb_Ma[y,2,1])
-    phi_Mb_Ma[y,1,1] <- phi_Mb_Ma[y,2,1]
+    Lphi_Mb_Ma[y,i_spring,o_nat] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_nat]), 1/sig_Lphi_Mb_Ma[i_spring,o_nat]^2)
+    phi_Mb_Ma[y,i_spring,o_nat] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_nat])
+    phi_Mb_Ma[y,i_fall,o_nat] <- phi_Mb_Ma[y,i_spring,o_nat]
     
     # hatchery origin movement survival: trib to LGD
     # spring migrants only
-    Lphi_Mb_Ma[y,2,2] ~ dnorm(logit(mu_phi_Mb_Ma[2,2]), 1/sig_Lphi_Mb_Ma[2,2]^2)
-    phi_Mb_Ma[y,2,2] <- ilogit(Lphi_Mb_Ma[y,2,2])
+    Lphi_Mb_Ma[y,i_spring,o_hat] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_hat]), 1/sig_Lphi_Mb_Ma[i_spring,o_hat]^2)
+    phi_Mb_Ma[y,i_spring,o_hat] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_hat])
     
     # movement survival: LGD to estuary
     # separate for each origin type
@@ -104,9 +104,9 @@ jags_model_code = function() {
     
     # probability of returning as female ([1]) or male ([2]) by origin
     for (o in 1:no) {
-      Lomega1[y,o] ~ dnorm(logit(mu_omega[1,o]), 1/sig_Lomega[o]^2)
-      omega[y,1,o] <- ilogit(Lomega1[y,o])
-      omega[y,2,o] <- 1 - omega[y,1,o]
+      Lomega1[y,o] ~ dnorm(logit(mu_omega[s_female,o]), 1/sig_Lomega[o]^2)
+      omega[y,s_female,o] <- ilogit(Lomega1[y,o])
+      omega[y,s_male,o] <- 1 - omega[y,s_female,o]
     }
     
     # sex/origin-specific maturation probabilities
@@ -153,10 +153,10 @@ jags_model_code = function() {
   for (k in 1:nk) {
     for (s in 1:ns) {
       # assume no strays for natural fish
-      stray_comp[k,s,1] <- 0
+      stray_comp[k,s,o_nat] <- 0
       
       # place stray_comp_2d in the right index locations
-      stray_comp[k,s,2] <- stray_comp_2d[k + nk * (s-1)]
+      stray_comp[k,s,o_hat] <- stray_comp_2d[k + nk * (s-1)]
     }
   }
   
@@ -187,9 +187,9 @@ jags_model_code = function() {
   # obtain expected probability of adult recruits returning at age for each sex
   # natural origin fish only
   for (s in 1:ns) {
-    p_init_prime[1,s] <- mu_phi_M_O1[1] * mu_psi_O1_Rb[s,1]
-    p_init_prime[2,s] <- mu_phi_M_O1[1] * (1 - mu_psi_O1_Rb[s,1]) * mu_phi_O1_O2[1] * mu_psi_O2_Rb[s,1]
-    p_init_prime[3,s] <- mu_phi_M_O1[1] * (1 - mu_psi_O1_Rb[s,1]) * mu_phi_O1_O2[1] * (1 - mu_psi_O2_Rb[s,1]) * mu_phi_O2_O3[1] * mu_psi_O3_Rb[s,1]
+    p_init_prime[1,s] <- mu_phi_M_O1[o_nat] * mu_psi_O1_Rb[s,o_nat]
+    p_init_prime[2,s] <- mu_phi_M_O1[o_nat] * (1 - mu_psi_O1_Rb[s,o_nat]) * mu_phi_O1_O2[o_nat] * mu_psi_O2_Rb[s,o_nat]
+    p_init_prime[3,s] <- mu_phi_M_O1[o_nat] * (1 - mu_psi_O1_Rb[s,o_nat]) * mu_phi_O1_O2[o_nat] * (1 - mu_psi_O2_Rb[s,o_nat]) * mu_phi_O2_O3[o_nat] * mu_psi_O3_Rb[s,o_nat]
     for (k in 1:nk) {
       p_init[k,s] <- p_init_prime[k,s]/sum(p_init_prime[1:nk,s])
     }
@@ -205,10 +205,10 @@ jags_model_code = function() {
     init_recruits[y] ~ dlnorm(log(mu_init_recruits), 1/sig_init_lrecruits^2) %_% T(,max_init_recruits)
     for (s in 1:ns) {
       # apportion them to each sex
-      init_recruits_sex[y,s] <- init_recruits[y] * mu_omega[s,1]
+      init_recruits_sex[y,s] <- init_recruits[y] * mu_omega[s,o_nat]
       for (k in 1:nk) {
         # apportion them to return year, age, and sex
-        Rb[y+kmin+k-1,k,s,1] <- init_recruits_sex[y,s] * p_init[k,s] 
+        Rb[y+kmin+k-1,k,s,o_nat] <- init_recruits_sex[y,s] * p_init[k,s] 
       }
     }
   }
@@ -218,7 +218,7 @@ jags_model_code = function() {
     for (s in 1:ns) {
       for (k in 1:nk) {
         # there were no hatchery operations in these years, but still need to populate with a number
-        Rb[y+kmin+k-1,k,s,2] <- 0 
+        Rb[y+kmin+k-1,k,s,o_hat] <- 0 
       }
     }
   }
@@ -236,27 +236,27 @@ jags_model_code = function() {
       Pa[y,i] <- Pb[y] * pi[y,i]
 
       # survive over winter: smolt before spring migration
-      Mb[y,i,1] <- Pa[y,i] * phi_Pa_Mb[y,i]
+      Mb[y,i,o_nat] <- Pa[y,i] * phi_Pa_Mb[y,i]
 
       # move to LGD: smolt after spring migration, at top of LGD
-      Ma[y,i,1] <- Mb[y,i,1] * phi_Mb_Ma[y,i,1]
+      Ma[y,i,o_nat] <- Mb[y,i,o_nat] * phi_Mb_Ma[y,i,o_nat]
       
       # derived survival for fitting: fall trap to LGD
-      phi_Pa_Ma[y,i] <- Ma[y,i,1]/Pa[y,i]
+      phi_Pa_Ma[y,i] <- Ma[y,i,o_nat]/Pa[y,i]
     }
     
     # derived survival for fitting: summer tagging to LGD
-    phi_Pb_Ma[y] <- sum(Ma[y,1:ni,1])/Pb[y]
+    phi_Pb_Ma[y] <- sum(Ma[y,1:ni,o_nat])/Pb[y]
     
     # put hatchery smolts in tributary
-    Mb[y,2,2] <- Mb_obs[y,2,2]
+    Mb[y,i_spring,o_hat] <- Mb_obs[y,i_spring,o_hat]
     
     # move hatchery smolts from tributary to LGD
-    Ma[y,2,2] <- Mb[y,2,2] * phi_Mb_Ma[y,2,2]
+    Ma[y,i_spring,o_hat] <- Mb[y,i_spring,o_hat] * phi_Mb_Ma[y,i_spring,o_hat]
     
     # create zeros for fall migrant hatchery fish at LGD
     # needed because we sum over this dimension below
-    Ma[y,1,2] <- 0
+    Ma[y,i_fall,o_hat] <- 0
     
     # sex/origin-specific processes
     for (s in 1:ns) {
@@ -307,16 +307,16 @@ jags_model_code = function() {
     Sa_tot[y] <- sum(Sa[y,1:nk,1:ns,1:no])
     
     # reformat returner by age/sex/origin for fitting to weir comp data
-    Ra_2d[y,1:nk] <- Ra[y,1:nk,1,1]            # nat. females, all ages
-    Ra_2d[y,(nk+1):(2*nk)] <- Ra[y,1:nk,2,1]   # nat. males, all ages
-    Ra_2d[y,(2*nk+1):(3*nk)] <- Ra[y,1:nk,1,2] # hat. females, all ages
-    Ra_2d[y,(3*nk+1):(4*nk)] <- Ra[y,1:nk,2,2] # hat. males, all ages
+    Ra_2d[y,1:nk] <- Ra[y,1:nk,s_female,o_nat]            # nat. females, all ages
+    Ra_2d[y,(nk+1):(2*nk)] <- Ra[y,1:nk,s_male,o_nat]     # nat. males, all ages
+    Ra_2d[y,(2*nk+1):(3*nk)] <- Ra[y,1:nk,s_female,o_hat] # hat. females, all ages
+    Ra_2d[y,(3*nk+1):(4*nk)] <- Ra[y,1:nk,s_male,o_hat]   # hat. males, all ages
     
     # reformat "adjusted carcasses" by age/sex/origin for fitting to carcass comp data
-    Sa_adj_2d[y,1:nk] <- Sa_adj[y,1:nk,1,1]            # nat. females, all ages
-    Sa_adj_2d[y,(nk+1):(2*nk)] <- Sa_adj[y,1:nk,2,1]   # nat. males, all ages
-    Sa_adj_2d[y,(2*nk+1):(3*nk)] <- Sa_adj[y,1:nk,1,2] # hat. females, all ages
-    Sa_adj_2d[y,(3*nk+1):(4*nk)] <- Sa_adj[y,1:nk,2,2] # hat. males, all ages
+    Sa_adj_2d[y,1:nk] <- Sa_adj[y,1:nk,s_female,o_nat]            # nat. females, all ages
+    Sa_adj_2d[y,(nk+1):(2*nk)] <- Sa_adj[y,1:nk,s_male,o_nat]     # nat. males, all ages
+    Sa_adj_2d[y,(2*nk+1):(3*nk)] <- Sa_adj[y,1:nk,s_female,o_hat] # hat. females, all ages
+    Sa_adj_2d[y,(3*nk+1):(4*nk)] <- Sa_adj[y,1:nk,s_male,o_hat]   # hat. males, all ages
 
     # calculate age/sex compositions
     for (kso in 1:nkso) {
