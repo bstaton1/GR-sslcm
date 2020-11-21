@@ -519,6 +519,48 @@ mtext(side = 1, outer = T, line = -0.5, "Return Year")
 mtext(side = 2, outer = T, line = 0, "Number of Strays")
 ```
 
+# Ocean Survival
+
+```{r ocean-surv-plots, fig.width = 4, fig.height = 6}
+par(mfrow = c(3,2), oma = c(1,1,0,0))
+plot_tseries(post_summ(post, "phi_M_O1[.+,1]$"), main = "BON -> O1 (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_M_O1[.+,2]$"), main = "BON -> O1 (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O1_O2[.+,1]$"), main = "O1 -> O2 (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O1_O2[.+,2]$"), main = "O1 -> O2 (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O2_O3[.+,1]$"), main = "O2 -> O3 (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O2_O3[.+,2]$"), main = "O2 -> O3 (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+mtext(side = 1, outer = T, line = -0.5, "Brood Year")
+mtext(side = 2, outer = T, line = 0, "Survival")
+```
+
+# Sex Apportionment
+
+```{r sex-plots, fig.width = 7, fig.height = 4}
+par(mfrow = c(1,2), oma = c(1,1,0,0))
+plot_tseries(post_summ(post, "^omega[.+,1,1]$"), main = "Natural Origin", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^omega[.+,1,2]$"), main = "Hatchery Origin", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+mtext(side = 1, outer = T, line = -0.5, "Brood Year")
+mtext(side = 2, outer = T, line = 0, "Female Proportion of Esutary Smolts")
+```
+
+# Maturity
+
+```{r maturity-plots, fig.width = 4, fig.height = 7}
+par(mfrow = c(4,2), oma = c(1,1,0,0))
+plot_tseries(post_summ(post, "^psi_O1_Rb[.+,1,1]$"), main = "Age 3 Females (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^psi_O1_Rb[.+,1,2]$"), main = "Age 3 Females (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^psi_O1_Rb[.+,2,1]$"), main = "Age 3 Males (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^psi_O1_Rb[.+,2,2]$"), main = "Age 3 Males (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^psi_O2_Rb[.+,1,1]$"), main = "Age 4 Females (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^psi_O2_Rb[.+,1,2]$"), main = "Age 4 Females (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^psi_O2_Rb[.+,2,1]$"), main = "Age 4 Males (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^psi_O2_Rb[.+,2,2]$"), main = "Age 4 Males (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+
+mtext(side = 1, outer = T, line = -0.5, "Brood Year")
+mtext(side = 2, outer = T, line = 0, "Pr(Mature-at-Age|Alive in Ocean)")
+
+```
+
 # Parameter Estimates {.tabset .tabset-pills}
 
 **Quick refresher on parameter names**
