@@ -57,10 +57,10 @@ jags_data = append_no_na_indices(jags_data)
 # some parameters we are assuming known (for now)
 # [1] is natural, [2] is hatchery origin
 add_jags_data = list(
-  mu_phi_M_O1 = c(0.2, 0.2),    # survival from arrival to estuary to next spring (become SWA1)
-  mu_phi_O1_O2 = c(0.8, 0.8),   # survival from SWA1 to SWA2
-  mu_phi_O2_O3 = c(0.8, 0.8),   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra = c(0.7, 0.7)    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
+  mu_phi_M_O1_assume = c(0.2, 0.2),    # survival from arrival to estuary to next spring (become SWA1)
+  mu_phi_O1_O2_assume = c(0.8, 0.8),   # survival from SWA1 to SWA2
+  mu_phi_O2_O3_assume = c(0.8, 0.8),   # survival from SWA2 to SWA3
+  mu_phi_Rb_Ra_assume = c(0.7, 0.7)    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
 
 # some dummy variables for performing weir vs. carcass composition correction
@@ -125,14 +125,17 @@ jags_params = c(
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
   "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
+  "mu_phi_M_O1", "mu_phi_O1_O2", "mu_phi_O2_O3",
   
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_M",
   "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
+  "sig_Lphi_M_O1", "sig_Lphi_O1_O2", "sig_Lphi_O2_O3",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_M", "omega", 
   "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
+  "phi_M_O1", "phi_O1_O2", "phi_O2_O3",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",

@@ -54,9 +54,17 @@ jags_model_code = function() {
     sig_Lomega[o] ~ dunif(0, 5)
   }
   
-  # sex/origin-specific maturation probabilities
-  for (s in 1:ns) {
-    for (o in 1:no) {
+  for (o in 1:no) {
+    # origin/age-specific ocean survival
+    mu_phi_M_O1[o] <- mu_phi_M_O1_assume[o]    # first winter at sea: to become SWA1
+    mu_phi_O1_O2[o] <- mu_phi_O1_O2_assume[o]   # second winter at sea: to become SWA2
+    mu_phi_O2_O3[o] <- mu_phi_O2_O3_assume[o]   # third winter at sea: to become SW3
+    sig_Lphi_M_O1[o] <- 0
+    sig_Lphi_O1_O2[o] <- 0
+    sig_Lphi_O2_O3[o] <- 0
+    
+    # sex/origin-specific maturation probabilities
+    for (s in 1:ns) {
       # pr(return at SWA1)
       mu_psi_O1_Rb[s,o] ~ dbeta(1, 1)     
       sig_Lpsi_O1_Rb[s,o] ~ dunif(0, 5)
@@ -129,7 +137,7 @@ jags_model_code = function() {
       phi_O2_O3[y,o] <- mu_phi_O2_O3[o]
       
       # upstream adult survival
-      phi_Rb_Ra[y,o] <- mu_phi_Rb_Ra[o]
+      phi_Rb_Ra[y,o] <- mu_phi_Rb_Ra_assume[o]
     }
     
     # pre-spawn survival
