@@ -17,7 +17,7 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 out_dir = "02-model/model-output"
 
 # specify a scenario name
-scenario = "base"
+scenario = "full"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -44,7 +44,7 @@ if (is.na(rmd)) {
 }
 
 if (is.na(mcmc_length)) {
-  mcmc_length = "medium"
+  mcmc_length = "short"
   cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, " will be used.")
 }
 
