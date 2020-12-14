@@ -56,12 +56,12 @@ jags_model_code = function() {
   
   for (o in 1:no) {
     # origin/age-specific ocean survival
-    mu_phi_M_O1[o] <- mu_phi_M_O1_assume[o]    # first winter at sea: to become SWA1
-    mu_phi_O1_O2[o] <- mu_phi_O1_O2_assume[o]   # second winter at sea: to become SWA2
-    mu_phi_O2_O3[o] <- mu_phi_O2_O3_assume[o]   # third winter at sea: to become SW3
-    sig_Lphi_M_O1[o] <- 0
-    sig_Lphi_O1_O2[o] <- 0
-    sig_Lphi_O2_O3[o] <- 0
+    mu_phi_M_O1[o] ~ dbeta(1, 1)    # first winter at sea: to become SWA1
+    mu_phi_O1_O2[o] ~ dbeta(1, 1)   # second winter at sea: to become SWA2
+    mu_phi_O2_O3[o] ~ dbeta(1, 1)   # third winter at sea: to become SW3
+    sig_Lphi_M_O1[o] ~ dunif(0, 5)
+    sig_Lphi_O1_O2[o] ~ dunif(0, 5)
+    sig_Lphi_O2_O3[o] ~ dunif(0, 5)
     
     # sex/origin-specific maturation probabilities
     for (s in 1:ns) {
@@ -131,11 +131,15 @@ jags_model_code = function() {
         # pr(return at SWA3|not returned at SWA1 or SWA2)
         psi_O3_Rb[y,s,o] <- 1
       }
-      # ocean survival
-      phi_M_O1[y,o] <- mu_phi_M_O1[o]
-      phi_O1_O2[y,o] <- mu_phi_O1_O2[o]
-      phi_O2_O3[y,o] <- mu_phi_O2_O3[o]
       
+      # ocean survival
+      Lphi_M_O1[y,o] ~ dnorm(logit(mu_phi_M_O1[o]), 1/sig_Lphi_M_O1[o]^2)
+      phi_M_O1[y,o] <- ilogit(Lphi_M_O1[y,o])
+      Lphi_O1_O2[y,o] ~ dnorm(logit(mu_phi_O1_O2[o]), 1/sig_Lphi_O1_O2[o]^2)
+      phi_O1_O2[y,o] <- ilogit(Lphi_O1_O2[y,o])
+      Lphi_O2_O3[y,o] ~ dnorm(logit(mu_phi_O2_O3[o]), 1/sig_Lphi_O2_O3[o]^2)
+      phi_O2_O3[y,o] <- ilogit(Lphi_O2_O3[y,o])
+
       # upstream adult survival
       phi_Rb_Ra[y,o] <- mu_phi_Rb_Ra_assume[o]
     }
