@@ -54,14 +54,22 @@ jags_model_code = function() {
     sig_Lomega[o] ~ dunif(0, 5)
   }
   
+  # origin/age-specific ocean survival
+  surv_scaler_M_O1 ~ dt(0, 1/1.566^2, 7.763)
+  surv_scaler_O1_O2 ~ dt(0, 1/1.566^2, 7.763)
+  surv_scaler_O2_O3 ~ dt(0, 1/1.566^2, 7.763)
+  mu_phi_M_O1[o_nat] ~ dbeta(1, 1)    # first winter at sea: to become SWA1
+  mu_phi_O1_O2[o_nat] ~ dbeta(1, 1)   # second winter at sea: to become SWA2
+  mu_phi_O2_O3[o_nat] ~ dbeta(1, 1)   # third winter at sea: to become SW3
+  sig_Lphi_M_O1[o_nat] ~ dunif(0, 5)
+  sig_Lphi_O1_O2[o_nat] ~ dunif(0, 5)
+  sig_Lphi_O2_O3[o_nat] ~ dunif(0, 5)
+  
+  logit(mu_phi_M_O1[o_hat]) <- logit(mu_phi_M_O1[o_nat]) + surv_scaler_M_O1
+  logit(mu_phi_O1_O2[o_hat]) <- logit(mu_phi_O1_O2[o_nat]) + surv_scaler_O1_O2
+  logit(mu_phi_O2_O3[o_hat]) <- logit(mu_phi_O2_O3[o_nat]) + surv_scaler_O2_O3
+  
   for (o in 1:no) {
-    # origin/age-specific ocean survival
-    mu_phi_M_O1[o] ~ dbeta(1, 1)    # first winter at sea: to become SWA1
-    mu_phi_O1_O2[o] ~ dbeta(1, 1)   # second winter at sea: to become SWA2
-    mu_phi_O2_O3[o] ~ dbeta(1, 1)   # third winter at sea: to become SW3
-    sig_Lphi_M_O1[o] ~ dunif(0, 5)
-    sig_Lphi_O1_O2[o] ~ dunif(0, 5)
-    sig_Lphi_O2_O3[o] ~ dunif(0, 5)
     
     # sex/origin-specific maturation probabilities
     for (s in 1:ns) {
@@ -118,8 +126,8 @@ jags_model_code = function() {
     }
     
     # sex/origin-specific maturation probabilities
-    for (o in 1:no) {
-      for (s in 1:ns) {
+    for (s in 1:ns) {
+      for (o in 1:no) {
         # pr(return at SWA1)
         Lpsi_O1_Rb[y,s,o] ~ dnorm(logit(mu_psi_O1_Rb[s,o]), 1/sig_Lpsi_O1_Rb[s,o]^2)
         psi_O1_Rb[y,s,o] <- ilogit(Lpsi_O1_Rb[y,s,o])
@@ -131,16 +139,22 @@ jags_model_code = function() {
         # pr(return at SWA3|not returned at SWA1 or SWA2)
         psi_O3_Rb[y,s,o] <- 1
       }
-      
-      # ocean survival
-      Lphi_M_O1[y,o] ~ dnorm(logit(mu_phi_M_O1[o]), 1/sig_Lphi_M_O1[o]^2)
-      phi_M_O1[y,o] <- ilogit(Lphi_M_O1[y,o])
-      Lphi_O1_O2[y,o] ~ dnorm(logit(mu_phi_O1_O2[o]), 1/sig_Lphi_O1_O2[o]^2)
-      phi_O1_O2[y,o] <- ilogit(Lphi_O1_O2[y,o])
-      Lphi_O2_O3[y,o] ~ dnorm(logit(mu_phi_O2_O3[o]), 1/sig_Lphi_O2_O3[o]^2)
-      phi_O2_O3[y,o] <- ilogit(Lphi_O2_O3[y,o])
-
-      # upstream adult survival
+    }
+    
+    # ocean survival
+    Lphi_M_O1[y,o_nat] ~ dnorm(logit(mu_phi_M_O1[o_nat]), 1/sig_Lphi_M_O1[o_nat]^2)
+    phi_M_O1[y,o_nat] <- ilogit(Lphi_M_O1[y,o_nat])
+    Lphi_O1_O2[y,o_nat] ~ dnorm(logit(mu_phi_O1_O2[o_nat]), 1/sig_Lphi_O1_O2[o_nat]^2)
+    phi_O1_O2[y,o_nat] <- ilogit(Lphi_O1_O2[y,o_nat])
+    Lphi_O2_O3[y,o_nat] ~ dnorm(logit(mu_phi_O2_O3[o_nat]), 1/sig_Lphi_O2_O3[o_nat]^2)
+    phi_O2_O3[y,o_nat] <- ilogit(Lphi_O2_O3[y,o_nat])
+    
+    phi_M_O1[y,o_hat] <- ilogit(Lphi_M_O1[y,o_nat] + surv_scaler_M_O1)
+    phi_O1_O2[y,o_hat] <- ilogit(Lphi_O1_O2[y,o_nat] + surv_scaler_O1_O2)
+    phi_O2_O3[y,o_hat] <- ilogit(Lphi_O2_O3[y,o_nat] + surv_scaler_O2_O3)
+    
+    # upstream adult survival
+    for (o in 1:no) {
       phi_Rb_Ra[y,o] <- mu_phi_Rb_Ra_assume[o]
     }
     
