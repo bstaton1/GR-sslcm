@@ -13,7 +13,7 @@ params:
     choices: [CAT, LOS, UGR]
   scenario:
     label: "Scenario"
-    value: base
+    value: "relate-hat-nat"
     input: text
   mcmc_plots:
     label: "Make MCMC Plots"
@@ -94,7 +94,9 @@ diag_params = list(
   c("^sig_Lomega", "^sig_Lpi"),
   "^Pb[", 
   "init_recruits", 
-  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]"
+  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]",
+  "^phi_M_O1", "^phi_O1_O2", "^phi_O2_O3",
+  "^psi_O1_Rb", "^psi_O2_Rb", "surv_scaler"
 )
 
 # calculate the diagnostic statistics for each group
@@ -157,6 +159,12 @@ diag_plots(post, "^sig", layout = "5x3")
 
 ```{r init-recruits-diag-plots, eval = params$mcmc_plots, fig.width = 5, fig.height = 7}
 diag_plots(post, "init_recruits", layout = "4x2")
+```
+
+`r if (params$mcmc_plots) "### surv_scaler"`
+
+```{r surv-scaler-diag-plots, eval = params$mcmc_plots, fig.width = 5, fig.height = 7}
+diag_plots(post, "surv_scaler", layout = "4x1")
 ```
 
 `r if (params$mcmc_plots) "### stray"`
