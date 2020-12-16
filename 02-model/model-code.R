@@ -56,18 +56,18 @@ jags_model_code = function() {
   
   # origin/age-specific ocean survival
   surv_scaler_M_O1 ~ dt(0, 1/1.566^2, 7.763)
-  surv_scaler_O1_O2 ~ dt(0, 1/1.566^2, 7.763)
-  surv_scaler_O2_O3 ~ dt(0, 1/1.566^2, 7.763)
+  surv_scaler_O1_O2 <- surv_scaler_M_O1
+  surv_scaler_O2_O3 <- surv_scaler_O1_O2
   mu_phi_M_O1[o_nat] ~ dbeta(1, 1)    # first winter at sea: to become SWA1
   mu_phi_O1_O2[o_nat] ~ dbeta(1, 1)   # second winter at sea: to become SWA2
-  mu_phi_O2_O3[o_nat] ~ dbeta(1, 1)   # third winter at sea: to become SW3
+  mu_phi_O2_O3[o_nat] <- mu_phi_O1_O2[o_nat]   # third winter at sea: to become SW3
   sig_Lphi_M_O1[o_nat] ~ dunif(0, 5)
   sig_Lphi_O1_O2[o_nat] ~ dunif(0, 5)
-  sig_Lphi_O2_O3[o_nat] ~ dunif(0, 5)
+  sig_Lphi_O2_O3[o_nat] <- sig_Lphi_O1_O2[o_nat]
   
   logit(mu_phi_M_O1[o_hat]) <- logit(mu_phi_M_O1[o_nat]) + surv_scaler_M_O1
   logit(mu_phi_O1_O2[o_hat]) <- logit(mu_phi_O1_O2[o_nat]) + surv_scaler_O1_O2
-  logit(mu_phi_O2_O3[o_hat]) <- logit(mu_phi_O2_O3[o_nat]) + surv_scaler_O2_O3
+  logit(mu_phi_O2_O3[o_hat]) <- logit(mu_phi_O1_O2[o_nat]) + surv_scaler_O2_O3
   
   for (o in 1:no) {
     
@@ -146,12 +146,12 @@ jags_model_code = function() {
     phi_M_O1[y,o_nat] <- ilogit(Lphi_M_O1[y,o_nat])
     Lphi_O1_O2[y,o_nat] ~ dnorm(logit(mu_phi_O1_O2[o_nat]), 1/sig_Lphi_O1_O2[o_nat]^2)
     phi_O1_O2[y,o_nat] <- ilogit(Lphi_O1_O2[y,o_nat])
-    Lphi_O2_O3[y,o_nat] ~ dnorm(logit(mu_phi_O2_O3[o_nat]), 1/sig_Lphi_O2_O3[o_nat]^2)
-    phi_O2_O3[y,o_nat] <- ilogit(Lphi_O2_O3[y,o_nat])
+    # Lphi_O2_O3[y,o_nat] ~ dnorm(logit(mu_phi_O2_O3[o_nat]), 1/sig_Lphi_O2_O3[o_nat]^2)
+    phi_O2_O3[y,o_nat] <- phi_O1_O2[y,o_nat]
     
-    phi_M_O1[y,o_hat] <- ilogit(Lphi_M_O1[y,o_nat] + surv_scaler_M_O1)
-    phi_O1_O2[y,o_hat] <- ilogit(Lphi_O1_O2[y,o_nat] + surv_scaler_O1_O2)
-    phi_O2_O3[y,o_hat] <- ilogit(Lphi_O2_O3[y,o_nat] + surv_scaler_O2_O3)
+    logit(phi_M_O1[y,o_hat]) <- logit(phi_M_O1[y,o_nat]) + surv_scaler_M_O1
+    logit(phi_O1_O2[y,o_hat]) <- logit(phi_O1_O2[y,o_nat]) + surv_scaler_O1_O2
+    phi_O2_O3[y,o_hat] <- phi_O1_O2[y,o_hat]
     
     # upstream adult survival
     for (o in 1:no) {
