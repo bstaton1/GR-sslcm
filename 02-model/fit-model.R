@@ -150,7 +150,8 @@ jags_params = c(
   # carcass vs. weir correction
   "z", "carc_adj", "n_stray_tot", "stray_comp",
   
-  "surv_scaler_M_O1", "surv_scaler_O1_O2", "surv_scaler_O2_O3"
+  # misc parameters
+  "O_phi_scaler_nat_hat"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####

@@ -13,7 +13,7 @@ params:
     choices: [CAT, LOS, UGR]
   scenario:
     label: "Scenario"
-    value: "relate-hat-nat"
+    value: "relate-hat-nat-age-4-5-same"
     input: text
   mcmc_plots:
     label: "Make MCMC Plots"
@@ -96,11 +96,11 @@ diag_params = list(
   "init_recruits", 
   "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]",
   "^phi_M_O1", "^phi_O1_O2", "^phi_O2_O3",
-  "^psi_O1_Rb", "^psi_O2_Rb", "surv_scaler"
+  "^psi_O1_Rb", "^psi_O2_Rb", "O_phi_scaler_nat_hat"
 )
 
 # calculate the diagnostic statistics for each group
-diags = lapply(diag_params, function(param) post_summ(post, param, Rhat = T, neff = T)[c("mean", "Rhat", "neff"),])
+diags = lapply(diag_params, function(param) as.matrix(post_summ(post, param, Rhat = T, neff = T)[c("mean", "Rhat", "neff"),]))
 
 # count up the number of parameters by group that fail to meet certain thresholds
 diag_summ = t(sapply(diags, function(param) {
@@ -163,8 +163,8 @@ diag_plots(post, "init_recruits", layout = "4x2")
 
 `r if (params$mcmc_plots) "### surv_scaler"`
 
-```{r surv-scaler-diag-plots, eval = params$mcmc_plots, fig.width = 5, fig.height = 7}
-diag_plots(post, "surv_scaler", layout = "4x1")
+```{r surv-scaler-diag-plots, eval = params$mcmc_plots, fig.width = 6, fig.height = 4}
+diag_plots(post, "O_phi_scaler_nat_hat")
 ```
 
 `r if (params$mcmc_plots) "### stray"`
