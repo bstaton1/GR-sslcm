@@ -157,11 +157,11 @@ jags_params = c(
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "short" = 1000, "medium" = 24000, "long" = 60000),
+  n_post = switch(mcmc_length,  "short" = 1000, "medium" = 24000,  "long" = 60000),
   n_burn = switch(mcmc_length,  "short" = 500,  "medium" = 20000,  "long" = 30000),
-  n_thin = switch(mcmc_length,  "short" = 1,    "medium" = 8,     "long" = 20),
-  n_chain = switch(mcmc_length, "short" = 3,    "medium" = 3,     "long" = 3),
-  n_adapt = switch(mcmc_length, "short" = 100,  "medium" = 1000,  "long" = 1000),
+  n_thin = switch(mcmc_length,  "short" = 1,    "medium" = 8,      "long" = 20),
+  n_chain = switch(mcmc_length, "short" = 3,    "medium" = 3,      "long" = 3),
+  n_adapt = switch(mcmc_length, "short" = 100,  "medium" = 1000,   "long" = 1000),
   parallel = T
 )
 
@@ -201,6 +201,7 @@ unlink(jags_file)
 
 ##### STEP 7: SAVE THE OUTPUT #####
 
+# create the output directory if it doesn't already exist
 if (!dir.exists(out_dir)) dir.create(out_dir)
 
 # create the output object: stores data, posterior samples, and population name
@@ -221,12 +222,23 @@ saveRDS(out_obj, file.path(out_dir, out_file))
 # render the output plots if requested
 if (rmd) {
   cat("\nRendering Rmd Output")
+  # set working dir to post-processing directory
   setwd("03-post-process")
-  rmarkdown::render(input = "output-plots.Rmd",
-                    output_file = paste0(pop, "-output-plots-", scenario, ".html"), 
-                    params = list(pop = pop, scenario = scenario, mcmc_plots = rmd_mcmc_plots), 
-                    quiet = T
+  
+  # file name of rendered output
+  rmd_out_file = paste0(pop, "-output-plots-", scenario, ".html")
+  
+  # render the output
+  render(input = "output-plots.Rmd",
+         output_file = rmd_out_file, 
+         params = list(pop = pop, scenario = scenario, mcmc_plots = rmd_mcmc_plots), 
+         quiet = T
   )
+  
+  # open the rendered file when complete
+  file.show(rmd_out_file)
+  
+  # set the working dir back
   setwd("../")
   cat("\n\nDone.")
 }
