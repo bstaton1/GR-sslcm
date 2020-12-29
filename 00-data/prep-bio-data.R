@@ -367,7 +367,7 @@ hatchery_release_survival = tmp; rm(tmp)
 
 # read the data: found in scratch folder for now
 # until we decide on the best source for these data
-tmp = read.csv("98-scratch/hydro-surv-ests.csv")
+tmp = read.csv(file.path(data_dir, "06-juv-survival-hydro.csv"), stringsAsFactors = F)
 
 # convert migration year to brood year
 tmp$brood_year = tmp$mig_year - 2
