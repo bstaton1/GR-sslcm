@@ -6,17 +6,17 @@
 # some estimates have p_mean and CIs
 # some estimates have p_mean and p_se
 # either way, obtain CI's of proportion, then convert to a standard error on the logit scale
-get_logit_se = function(p_mean, p_se, p_lwr, p_upr) {
+get_logit_se = function(p_mean, p_se, p_lwr, p_upr, alpha) {
   # turn se's into ci if that is what is available
-  p_lwr = ifelse(is.na(p_se), p_lwr, p_mean + qnorm(0.025) * p_se)
-  p_upr = ifelse(is.na(p_se), p_upr, p_mean + qnorm(0.975) * p_se)
+  p_lwr = ifelse(is.na(p_se), p_lwr, p_mean + qnorm(alpha/2) * p_se)
+  p_upr = ifelse(is.na(p_se), p_upr, p_mean + qnorm(1 - alpha/2) * p_se)
   
   # cap the CI
   p_lwr = ifelse(p_lwr <= 0, 0.001, p_lwr)
   p_upr = ifelse(p_upr >= 1, 0.999, p_upr)
   
   # convert CI into logit-normal standard error: M. Liermann's approximation
-  (logit(p_upr) - logit(p_lwr))/(2 * qnorm(0.975))
+  (logit(p_upr) - logit(p_lwr))/(2 * qnorm(1 - alpha/2))
 }
 
 
@@ -72,6 +72,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   
   # extract all records/variables meeting the query specifications
   sub = subset(bio_dat, brood_year >= first_y & brood_year <= last_y & population == pop)
+  all = subset(bio_dat, brood_year >= first_y & brood_year <= last_y & population == "ALL")
   
   # specify/calculate dimensional variables
   kmin = 3              # minimum age of return
@@ -149,6 +150,16 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   sig_Lphi_obs_Mb_Ma = array(NA, dim = c(ny, ni, no)); dimnames(sig_Lphi_obs_Mb_Ma) = list(y_names, i_names, o_names)
   sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Nat"] = sub$spring_surv_logit_se
   sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Hat"] = sub$hatchery_spring_surv_logit_se
+  
+  # LGD to BON logit(surv)
+  Lphi_obs_Ma_M = matrix(NA, ny, no); dimnames(Lphi_obs_Ma_M) = list(y_names, o_names)
+  Lphi_obs_Ma_M[y_names %in% all$brood_year,"Nat"] = logit(all$nat_hydro_est)
+  Lphi_obs_Ma_M[y_names %in% all$brood_year,"Hat"] = logit(all$hat_hydro_est)
+  
+  # sd LGD to BON logit(surv)
+  sig_Lphi_obs_Ma_M = matrix(NA, ny, no); dimnames(sig_Lphi_obs_Ma_M) = list(y_names, o_names)
+  sig_Lphi_obs_Ma_M[y_names %in% all$brood_year,"Nat"] = all$nat_hydro_logit_se
+  sig_Lphi_obs_Ma_M[y_names %in% all$brood_year,"Hat"] = all$hat_hydro_logit_se
   
   ### ADULT AGE COMP: WEIR ###
   # obtain names of age comp variables
@@ -265,6 +276,11 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     # also, includes hatchery survival from release in spring to LGD
     Lphi_obs_Mb_Ma = Lphi_obs_Mb_Ma,
     sig_Lphi_obs_Mb_Ma = sig_Lphi_obs_Mb_Ma,
+    
+    # LGD to BON
+    # includes both hatchery and natural origin
+    Lphi_obs_Ma_M = Lphi_obs_Ma_M,
+    sig_Lphi_obs_Ma_M = sig_Lphi_obs_Ma_M,
     
     ### ADULT ABUNDANCE ###
     # total adults arriving at "weir"
@@ -394,6 +410,7 @@ append_no_na_indices = function(jags_data) {
       fit_Lphi_Pb_Ma = find_no_na_indices(Lphi_obs_Pb_Ma),
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
+      fit_Lphi_Ma_M = find_no_na_indices(Lphi_obs_Ma_M),
       fit_Ra = find_no_na_indices(Ra_obs),
       fit_spawned = find_no_na_indices(carcs_spawned)
     )

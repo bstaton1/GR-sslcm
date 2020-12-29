@@ -367,6 +367,10 @@ jags_model_code = function() {
     Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3]] ~ dnorm(logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3]]), 1/sig_Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3]]^2)
   }
   
+  for (d in 1:nfit_Lphi_Ma_M) {
+    Lphi_obs_Ma_M[fit_Lphi_Ma_M[d,1],fit_Lphi_Ma_M[d,2]] ~ dnorm(logit(phi_Ma_M[fit_Lphi_Ma_M[d,1],fit_Lphi_Ma_M[d,2]]), 1/sig_Lphi_obs_Ma_M[fit_Lphi_Ma_M[d,1],fit_Lphi_Ma_M[d,2]]^2)
+  }
+  
   # pre-spawn survival
   for (d in 1:nfit_spawned) {
     carcs_spawned[fit_spawned[d]] ~ dbin(phi_Sb_Sa[fit_spawned[d]], carcs_sampled[fit_spawned[d]])

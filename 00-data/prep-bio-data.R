@@ -298,7 +298,7 @@ tmp = read.csv(file.path(data_dir, "04-juv-survival.csv"), stringsAsFactors = F)
 tmp = tmp[!is.na(tmp$surv_est),]
 
 # calculate the logit-scale standard error
-tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_ci_high))
+tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_ci_high, alpha = 0.05))
 
 # exclude some survival estimates: only keep the four main populations
 tmp = tmp[tmp$population %in% c("CAT", "LOS", "MIN", "UGR"),]
@@ -350,7 +350,7 @@ tmp[tmp$population == "UGR" & tmp$brood_year == 2000,"comments"]
 tmp[tmp$population == "UGR" & tmp$brood_year == 2000,"n_smolt_released"] = 151443
 
 # convert survival se into logit survival se
-tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, NA, NA))
+tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, NA, NA, alpha = 0.05))
 
 # keep only relevant columns
 tmp = tmp[,c("population", "brood_year", "n_smolt_released", "surv_est", "logit_surv_se")]
@@ -363,6 +363,45 @@ colnames(tmp)[colnames(tmp) == "logit_surv_se"] = "hatchery_spring_surv_logit_se
 # rename the data frame, and remove "tmp" object
 hatchery_release_survival = tmp; rm(tmp)
 
+##### JUVENILE SURVIVAL: HYDROSYSTEM #####
+
+# read the data: found in scratch folder for now
+# until we decide on the best source for these data
+tmp = read.csv(file.path(data_dir, "06-juv-survival-hydro.csv"), stringsAsFactors = F)
+
+# convert migration year to brood year
+tmp$brood_year = tmp$mig_year - 2
+
+# calculate logit-scale SE of survival estimate: hatchery origin
+tmp$logit_hat_surv_se = sapply(1:nrow(tmp), function(i) {
+  get_logit_se(p_mean = tmp$hat_est[i],
+               p_se = NA, 
+               p_lwr = tmp$hat_lwr90[i], 
+               p_upr = tmp$hat_upr90[i], 
+               alpha = 0.1)
+})
+
+# calculate logit-scale SE of survival estimate: natural origin
+tmp$logit_nat_surv_se = sapply(1:nrow(tmp), function(i) {
+  get_logit_se(p_mean = tmp$nat_est[i],
+               p_se = NA, 
+               p_lwr = tmp$nat_lwr90[i], 
+               p_upr = tmp$nat_upr90[i], 
+               alpha = 0.1)
+})
+
+# retain only necessary columns
+tmp = tmp[,c("brood_year", "nat_est", "logit_nat_surv_se", "hat_est", "logit_hat_surv_se")]
+
+# add a "pop" column
+tmp = cbind(data.frame(pop = "ALL"), tmp)
+
+# change column names
+colnames(tmp) = c("population", "brood_year", "nat_hydro_est", "nat_hydro_logit_se", "hat_hydro_est", "hat_hydro_logit_se")
+
+# rename object and delete tmp
+hydro_surv = tmp; rm(tmp)
+
 ##### COMBINE THESE DATA SOURCES INTO ONE DATA FRAME #####
 
 # merge together the various data sets
@@ -373,6 +412,7 @@ bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_yea
 bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, hydro_surv, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year
@@ -380,7 +420,7 @@ empty_df = with(bio_dat, expand.grid(population = unique(population), brood_year
 bio_dat = merge(bio_dat, empty_df, by = c("population", "brood_year"), all = T)
 
 # make hatchery releases be zero if NA
-bio_dat$hatchery_smolt[is.na(bio_dat$hatchery_smolt)] = 0
+bio_dat$hatchery_smolt[is.na(bio_dat$hatchery_smolt) & bio_dat$population != "ALL"] = 0
 
 # remove unnecessary objects from workspace, retain only bio_dat
 rm(list = setdiff(ls(), "bio_dat"))
