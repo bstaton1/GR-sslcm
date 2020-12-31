@@ -16,12 +16,16 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
+# specify a scenario name
+scenario = "relate-hat-nat-age-4-5-same"
+
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
 # or if in interactive session, uncomment the pop you wish to fit
 args = commandArgs(trailingOnly = T)
 pop = args[1]
 rmd = as.logical(args[2])
+mcmc_length = args[3]
 rmd_mcmc_plots = T
 
 # if pop not supplied, set a value and warn
@@ -39,6 +43,11 @@ if (is.na(rmd)) {
   cat("\n\n'rmd' was not supplied as a command line argument.", rmd, " will be used.")
 }
 
+if (is.na(mcmc_length)) {
+  mcmc_length = "short"
+  cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, " will be used.")
+}
+
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
@@ -48,10 +57,10 @@ jags_data = append_no_na_indices(jags_data)
 # some parameters we are assuming known (for now)
 # [1] is natural, [2] is hatchery origin
 add_jags_data = list(
-  mu_phi_M_O1 = c(0.2, 0.2),    # survival from arrival to estuary to next spring (become SWA1)
-  mu_phi_O1_O2 = c(0.8, 0.8),   # survival from SWA1 to SWA2
-  mu_phi_O2_O3 = c(0.8, 0.8),   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra = c(0.7, 0.7)    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
+  mu_phi_M_O1_assume = c(0.2, 0.2),    # survival from arrival to estuary to next spring (become SWA1)
+  mu_phi_O1_O2_assume = c(0.8, 0.8),   # survival from SWA1 to SWA2
+  mu_phi_O2_O3_assume = c(0.8, 0.8),   # survival from SWA2 to SWA3
+  mu_phi_Rb_Ra_assume = c(0.7, 0.7)    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
 )
 
 # some dummy variables for performing weir vs. carcass composition correction
@@ -116,14 +125,17 @@ jags_params = c(
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
   "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
+  "mu_phi_M_O1", "mu_phi_O1_O2", "mu_phi_O2_O3",
   
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_M",
   "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
+  "sig_Lphi_M_O1", "sig_Lphi_O1_O2", "sig_Lphi_O2_O3",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_M", "omega", 
   "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
+  "phi_M_O1", "phi_O1_O2", "phi_O2_O3",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",
@@ -136,17 +148,20 @@ jags_params = c(
   "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot",
   
   # carcass vs. weir correction
-  "z", "carc_adj", "n_stray_tot", "stray_comp"
+  "z", "carc_adj", "n_stray_tot", "stray_comp",
+  
+  # misc parameters
+  "O_phi_scaler_nat_hat"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = 10000,
-  n_burn = 5000,
-  n_thin = 2, 
-  n_chain = 2,
-  n_adapt = 1000,
+  n_post = switch(mcmc_length,  "short" = 1000, "medium" = 24000,  "long" = 60000),
+  n_burn = switch(mcmc_length,  "short" = 500,  "medium" = 20000,  "long" = 30000),
+  n_thin = switch(mcmc_length,  "short" = 1,    "medium" = 8,      "long" = 20),
+  n_chain = switch(mcmc_length, "short" = 3,    "medium" = 3,      "long" = 3),
+  n_adapt = switch(mcmc_length, "short" = 100,  "medium" = 1000,   "long" = 1000),
   parallel = T
 )
 
@@ -186,17 +201,19 @@ unlink(jags_file)
 
 ##### STEP 7: SAVE THE OUTPUT #####
 
+# create the output directory if it doesn't already exist
 if (!dir.exists(out_dir)) dir.create(out_dir)
 
 # create the output object: stores data, posterior samples, and population name
 out_obj = list(
   jags_data = jags_data,
   post = post,
-  pop = pop
+  pop = pop,
+  scenario = scenario
 )
 
 # create the output file name
-out_file = paste0(pop, "-output.rds")
+out_file = paste0(pop, "-output-", scenario, ".rds")
 
 # save the file
 cat("\nSaving rds Output")
@@ -205,12 +222,23 @@ saveRDS(out_obj, file.path(out_dir, out_file))
 # render the output plots if requested
 if (rmd) {
   cat("\nRendering Rmd Output")
+  # set working dir to post-processing directory
   setwd("03-post-process")
-  rmarkdown::render(input = "output-plots.Rmd",
-                    output_file = paste0(pop, "-output-plots.html"), 
-                    params = list(pop = pop, mcmc_plots = rmd_mcmc_plots), 
-                    quiet = T
+  
+  # file name of rendered output
+  rmd_out_file = paste0(pop, "-output-plots-", scenario, ".html")
+  
+  # render the output
+  render(input = "output-plots.Rmd",
+         output_file = rmd_out_file, 
+         params = list(pop = pop, scenario = scenario, mcmc_plots = rmd_mcmc_plots), 
+         quiet = T
   )
+  
+  # open the rendered file when complete
+  file.show(rmd_out_file)
+  
+  # set the working dir back
   setwd("../")
   cat("\n\nDone.")
 }
