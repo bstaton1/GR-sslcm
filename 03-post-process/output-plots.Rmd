@@ -13,7 +13,7 @@ params:
     choices: [CAT, LOS, UGR]
   scenario:
     label: "Scenario"
-    value: "relate-hat-nat-age-4-5-same"
+    value: "base"
     input: text
   mcmc_plots:
     label: "Make MCMC Plots"
@@ -535,8 +535,8 @@ plot_tseries(post_summ(post, "phi_M_O1[.+,1]$"), main = "BON -> O1 (Nat)", yrs =
 plot_tseries(post_summ(post, "phi_M_O1[.+,2]$"), main = "BON -> O1 (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
 plot_tseries(post_summ(post, "phi_O1_O2[.+,1]$"), main = "O1 -> O2 (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
 plot_tseries(post_summ(post, "phi_O1_O2[.+,2]$"), main = "O1 -> O2 (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "phi_O2_O3[.+,1]$"), main = "O2 -> O3 (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "phi_O2_O3[.+,2]$"), main = "O2 -> O3 (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O2_O3[.+,1]$")[,2:(length(observable)+1)], main = "O2 -> O3 (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O2_O3[.+,2]$")[,2:(length(observable)+1)], main = "O2 -> O3 (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
 mtext(side = 1, outer = T, line = -0.5, "Brood Year")
 mtext(side = 2, outer = T, line = 0, "Survival")
 ```

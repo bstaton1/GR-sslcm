@@ -148,12 +148,12 @@ jags_model_code = function() {
     phi_O1_O2[y,o_nat] <- ilogit(Lphi_O1_O2[y,o_nat])
     
     # natural origin ocean survival SWA2 -> SWA3
-    phi_O2_O3[y,o_nat] <- phi_O1_O2[y,o_nat]
+    phi_O2_O3[y-1,o_nat] <- phi_O1_O2[y,o_nat]
     
     # hatchery origin ocean survival: use scaler
     logit(phi_M_O1[y,o_hat]) <- logit(phi_M_O1[y,o_nat]) + O_phi_scaler_nat_hat
     logit(phi_O1_O2[y,o_hat]) <- logit(phi_O1_O2[y,o_nat]) + O_phi_scaler_nat_hat
-    logit(phi_O2_O3[y,o_hat]) <- logit(phi_O2_O3[y,o_nat]) + O_phi_scaler_nat_hat
+    logit(phi_O2_O3[y-1,o_hat]) <- logit(phi_O2_O3[y-1,o_nat]) + O_phi_scaler_nat_hat
     
     # upstream adult survival
     for (o in 1:no) {
@@ -164,6 +164,10 @@ jags_model_code = function() {
     Lphi_Sb_Sa[y] ~ dnorm(logit(mu_phi_Sb_Sa), 1/sig_Lphi_Sb_Sa^2)
     phi_Sb_Sa[y] <- ilogit(Lphi_Sb_Sa[y])
   }
+  
+  # populate the last year/age of ocean survival with the mean across years
+  phi_O2_O3[ny,o_nat] <- mu_phi_O2_O3[o_nat]
+  phi_O2_O3[ny,o_hat] <- mu_phi_O2_O3[o_hat]
   
   ### PRIORS: HATCHERY STRAYS RETURNING IN YEARS WITH NO ASSOCIATED SMOLT RELEASE ###
   # the number of hatchery strays: only estimate in years where no other mechanism for generating hatchery fish
