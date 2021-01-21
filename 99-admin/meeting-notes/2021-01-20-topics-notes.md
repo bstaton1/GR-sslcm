@@ -1,10 +1,10 @@
 # GR-SSLCM Meeting 1/20/2021
 
-**Attendees**:
+**Attendees**: Burns, Gibson, Justice, Kaylor, Liermann, Sharma, Staton, White
+
+_Post-meeting notes in italic_
 
 ### Refresher on Model: key differences with Liermann & Sharma model
-
-> This is primarily for R. Sharma, L. Burns, and M. Kaylor, if they attend
 
 * Single population model (for now)
 * Model tracks age 3 adults
@@ -15,7 +15,9 @@
 * Model fits to adult composition data from both weir sampling and carcass surveys (includes correction factor to allow discrepancies here)
 * Model fits to pre-spawn mortality data gathered in carcass surveys
 * Model does not weight adult spawners differently in reproductive output (currently)
+* _Forgot to add one of the biggest advancements: estimation of ocean survival_
 * Habitat components: C. Justice is working on a more involved regression modeling approach to quantify weighted usable habitat to replace the "PEU" variable. 
+* _Several clarifying questions were asked here, but not much discussion to report_.
 
 ## Progress Since Last Meeting (PRs merged)
 
@@ -25,6 +27,7 @@
 * Data (estimates) from CSS draft 2020 report
 * Separate survival for hatchery and natural origin fish
 * Fit to data was incredibly poor using assumed values of ocean survival
+* _The group agrees that it would be good to check with experts to ensure this approach is adequate_
 
 ### Estimating Ocean Survival
 
@@ -37,20 +40,26 @@
 * Vastly improved fit to hydrosystem survival data
 * Maturity schedule still fully estimated
 * Convergence is decent, but some indications the model has a hard time estimating these parameters. My hope is that building in all four populations to inform these shared parameters will help
+* _Sharma noted that this is a non-trivial advancement in life cycle models in general and that others will be interested in what we have done._
 
 ### Use Time Lag in Shared Ocean Survival Parameters
 
 * PR [#65](https://github.com/bstaton1/GR-sslcm/pull/65)
 * Because survival OA1 -> OA2 and OA2 -> OA3 occur in two consecutive calendar years for the same brood year,  and survival conditions probably operate on the calendar year basis, it makes sense to use the same parameter for two consecutive brood years, rather than the same brood year
+* _No real discussion here_
 
 ## Unresolved Topics 
 
 **Led by: P. Gibson**
 
 * Should differential reproductive output be accounted for by age/sex/origin/year? More details in issue [#16](https://github.com/bstaton1/GR-sslcm/issues/16)
+  * _Generally, the group likes the idea of using fecundity explicitly as an index of relative reproductive output. Gibson showed some exploratory figures which indicated that fecundity varies with age. There was some evidence of it varying by origin, population, and year, as well, but not in a systematic fashion, indicating that this variability is more likely a result of sampling than something biologically meaningful. The proposition is to include this as varying by age only, not by population, origin, or year._
 * Accounting for juveniles spawned downstream of traps (GR-sslcm-data issue [#15](https://github.com/gibsonpp/GR-sslcm-data/issues/15))
+  * _Some discussion was had on this topic, but after realizing the expansion factor will be relatively small, the group decided it would be best to proceed with this change without digging in much more_.
 * New information about early hatchery releases, issue [#44](https://github.com/bstaton1/GR-sslcm/issues/44)
-* Replace weir removal records with hatchery spawning records, (GR-sslcm-data issue [#7](https://github.com/gibsonpp/GR-sslcm-data/issues/7))
+  * _This analysis is good to have, but ultimately it was decided that we should continue using the "straying" model as is currently implemented. The reasoning was (a) we have a working accommodation, (b) the issue doesn't happen for all populations and only a very small number of years early on, and (c) it would require tracking more years early in the time series for which there are no other data._
+* ~~Replace weir removal records with hatchery spawning records, (GR-sslcm-data issue [#7](https://github.com/gibsonpp/GR-sslcm-data/issues/7))~~
+  * _Gibson indicated that this topic did not need to be discussed_
 
 ## Next Steps
 
@@ -64,4 +73,4 @@
 * Output plots document could use some updates
 * Combine four populations into one model
 
-**Next Meeting Date/Time:** 
+**Next Meeting Date/Time:** _Feb 16 @ 9:00am_
