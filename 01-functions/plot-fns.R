@@ -24,7 +24,7 @@ plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2,
   }
   
   # set the graphics device parameters
-  if (set_par) par(mar = c(2,2,2,1), tcl = -0.2, mgp = c(2,0.3,0))
+  if (set_par) par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
   
   # create empty plot with correct dimensions/labels
   plot(1,1, type = "n", 
