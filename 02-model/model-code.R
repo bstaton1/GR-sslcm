@@ -408,4 +408,50 @@ jags_model_code = function() {
   for (d in 1:nfit_spawned) {
     carcs_spawned[fit_spawned[d]] ~ dbin(phi_Sb_Sa[fit_spawned[d]], carcs_sampled[fit_spawned[d]])
   }
+  
+  ### CALCULATE ALL PROCESS MODEL RESIDUALS ###
+  
+  for (y in (kmax+1):ny) {
+    
+    # total summer parr recruitment
+    lPb_resid[y] <- log(Pb[y]) - log(Pb_pred[y])
+    
+    # proportion of summer parr that become fall migrants
+    Lpi_resid[y] <- logit(pi[y,i_fall]) - logit(mu_pi[i_fall])
+    
+    # LH-specific overwinter survival
+    for (i in 1:ni) {
+      Lphi_Pa_Mb_resid[y,i] <- Lphi_Pa_Mb[y,i] - (gamma0[i] + gamma1[i] * (Pa[y,i]/peu))
+    }
+    
+    # origin-specific quantities
+    for (o in 1:no) {
+      # movement survival to LGR
+      Lphi_Mb_Ma_resid[y,o] <- Lphi_Mb_Ma[y,i_spring,o] - logit(mu_phi_Mb_Ma[i_spring,o])
+      
+      # movement survival from LGR thru BON
+      Lphi_Ma_M_resid[y,o] <- Lphi_Ma_M[y,o] - logit(mu_phi_Ma_M[o])
+      
+      # probability of returning as female
+      Lomega_resid[y,o] <- Lomega1[y,o] - logit(mu_omega[s_female,o])
+      
+      # sex-specific quantities: maturity
+      for (s in 1:ns) {
+        # pr(return at SWA1)
+        Lpsi_O1_Rb_resid[y,s,o] <- Lpsi_O1_Rb[y,s,o] - logit(mu_psi_O1_Rb[s,o])
+        
+        # pr(return at SWA2|not returned at SWA1)
+        Lpsi_O2_Rb_resid[y,s,o] <- Lpsi_O2_Rb[y,s,o] - logit(mu_psi_O2_Rb[s,o])
+      }
+    }
+    
+    # natural origin ocean survival SWA0 -> SWA1
+    Lphi_M_O1_resid[y] <- Lphi_M_O1[y,o_nat] - logit(mu_phi_M_O1[o_nat])
+    
+    # natural origin ocean survival SWA1 -> SWA2
+    Lphi_O1_O2_resid[y] <- Lphi_O1_O2[y,o_nat] - logit(mu_phi_O1_O2[o_nat])
+    
+    # pre-spawn survival
+    Lphi_Sb_Sa_resid[y] <- Lphi_Sb_Sa[y] - logit(mu_phi_Sb_Sa)
+  }
 }
