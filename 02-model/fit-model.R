@@ -151,7 +151,13 @@ jags_params = c(
   "z", "carc_adj", "n_stray_tot", "stray_comp",
   
   # misc parameters
-  "O_phi_scaler_nat_hat"
+  "O_phi_scaler_nat_hat",
+  
+  # residuals
+  "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
+  "Lphi_Ma_M_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
+  "Lpsi_O2_Rb_resid", "Lphi_M_O1_resid", "Lphi_O1_O2_resid",
+  "Lphi_Sb_Sa_resid", "lPb_resid"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
