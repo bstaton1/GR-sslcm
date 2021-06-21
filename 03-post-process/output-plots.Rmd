@@ -675,6 +675,12 @@ kable(tab) %>%
   column_spec(1, bold = T)
 ```
 
+## AR(1) Coefficients
+
+```{r}
+post_summ(post, "kappa", Rhat = TRUE, neff = TRUE, digits = 3)
+```
+
 # JAGS Model and Data {.tabset .tabset-pills}
 
 ## JAGS Model Code
