@@ -85,6 +85,22 @@ jags_model_code = function() {
   logit(mu_phi_O1_O2[o_hat]) <- logit(mu_phi_O1_O2[o_nat]) + O_phi_scaler_nat_hat
   logit(mu_phi_O2_O3[o_hat]) <- logit(mu_phi_O1_O2[o_nat]) + O_phi_scaler_nat_hat
   
+  ### PRIORS: AR(1) COEFFICIENTS
+  kappa_Pb ~ dunif(-0.99,0.99)                # total summer parr recruitment
+  kappa_phi_Mb_Ma[o_nat] ~ dunif(-0.99,0.99)  # movement survival in spring to LGR (natural origin)
+  kappa_phi_Mb_Ma[o_hat] ~ dunif(-0.99,0.99)  # movement survival in spring to LGR (hatchery origin)
+  kappa_phi_Ma_M[o_nat] ~ dunif(-0.99,0.99)   # movement survival from LGR thru BON (natural origin)
+  kappa_phi_Ma_M[o_hat] ~ dunif(-0.99,0.99)   # movement survival from LGR thru BON (hatchery origin)
+  kappa_phi_M_O1 ~ dunif(-0.99,0.99)          # overwinter survival for first winter at sea
+  
+  ### PRIORS: YEAR-0 RESIDUALS FOR ALL TERMS THAT USE AR(1) PROCESS
+  lPb_resid[kmax] ~ dnorm(0, (1/sigma_Pb^2) * (1 - kappa_Pb^2))
+  Lphi_Mb_Ma_resid[kmax,o_nat] ~ dnorm(0, (1/sig_Lphi_Mb_Ma[i_spring,o_nat]^2) * (1 - kappa_phi_Mb_Ma[o_nat]^2))
+  Lphi_Mb_Ma_resid[kmax,o_hat] ~ dnorm(0, (1/sig_Lphi_Mb_Ma[i_spring,o_hat]^2) * (1 - kappa_phi_Mb_Ma[o_hat]^2))
+  Lphi_Ma_M_resid[kmax,o_nat] ~ dnorm(0, (1/sig_Lphi_Ma_M[o_nat]^2) * (1 - kappa_phi_Ma_M[o_nat]^2)) 
+  Lphi_Ma_M_resid[kmax,o_hat] ~ dnorm(0, (1/sig_Lphi_Ma_M[o_hat]^2) * (1 - kappa_phi_Ma_M[o_hat]^2))   
+  Lphi_M_O1_resid[kmax] ~ dnorm(0, (1/sig_Lphi_M_O1[o_nat]^2) * (1 - kappa_phi_M_O1^2))
+  
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in (kmax+1):ny) {
     # aggregate parr to LH-specific parr
@@ -100,19 +116,19 @@ jags_model_code = function() {
     
     # natural origin movement survival: trib to LGD
     # assume equal between LH types
-    Lphi_Mb_Ma[y,i_spring,o_nat] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_nat]), 1/sig_Lphi_Mb_Ma[i_spring,o_nat]^2)
+    Lphi_Mb_Ma[y,i_spring,o_nat] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_nat]) + Lphi_Mb_Ma_resid[y-1,o_nat] * kappa_phi_Mb_Ma[o_nat], 1/sig_Lphi_Mb_Ma[i_spring,o_nat]^2)
     phi_Mb_Ma[y,i_spring,o_nat] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_nat])
     phi_Mb_Ma[y,i_fall,o_nat] <- phi_Mb_Ma[y,i_spring,o_nat]
     
     # hatchery origin movement survival: trib to LGD
     # spring migrants only
-    Lphi_Mb_Ma[y,i_spring,o_hat] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_hat]), 1/sig_Lphi_Mb_Ma[i_spring,o_hat]^2)
+    Lphi_Mb_Ma[y,i_spring,o_hat] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_hat]) + Lphi_Mb_Ma_resid[y-1,o_hat] * kappa_phi_Mb_Ma[o_hat], 1/sig_Lphi_Mb_Ma[i_spring,o_hat]^2)
     phi_Mb_Ma[y,i_spring,o_hat] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_hat])
     
     # movement survival: LGD to estuary
     # separate for each origin type
     for (o in 1:no) {
-      Lphi_Ma_M[y,o] ~ dnorm(logit(mu_phi_Ma_M[o]), 1/sig_Lphi_Ma_M[o]^2)
+      Lphi_Ma_M[y,o] ~ dnorm(logit(mu_phi_Ma_M[o]) + Lphi_Ma_M_resid[y-1,o] * kappa_phi_Ma_M[o], 1/sig_Lphi_Ma_M[o]^2)
       phi_Ma_M[y,o] <- ilogit(Lphi_Ma_M[y,o])
     }
     
@@ -140,7 +156,7 @@ jags_model_code = function() {
     }
     
     # natural origin ocean survival SWA0 -> SWA1
-    Lphi_M_O1[y,o_nat] ~ dnorm(logit(mu_phi_M_O1[o_nat]), 1/sig_Lphi_M_O1[o_nat]^2)
+    Lphi_M_O1[y,o_nat] ~ dnorm(logit(mu_phi_M_O1[o_nat]) + Lphi_M_O1_resid[y-1] * kappa_phi_M_O1, 1/sig_Lphi_M_O1[o_nat]^2)
     phi_M_O1[y,o_nat] <- ilogit(Lphi_M_O1[y,o_nat])
     
     # natural origin ocean survival SWA1 -> SWA2
@@ -190,9 +206,15 @@ jags_model_code = function() {
   ### PRIORS: OBSERVATION MODEL ###
   
   # carcass vs. weir composition correction factor coefficients
-  for (i in 1:3) {
-    z[i] ~ dunif(-10,10)
-  }
+  # for (i in 1:3) {
+  #   z[i] ~ dunif(-10,10)
+  # }
+  
+  # if fitting MIN, use this instead of the priors above
+  # params not estimable for MIN alone
+  z[1] <- -0.76
+  z[2] <- -0.01
+  z[3] <- -0.28
   
   # if fitting MIN, use this instead of the priors above
   # params not estimable for MIN alone
@@ -261,7 +283,7 @@ jags_model_code = function() {
     
     # reproductive link: total summer parr
     Pb_pred[y] <- Sa_tot[y]/(1/alpha + Sa_tot[y]/beta)
-    Pb[y] ~ dlnorm(log(Pb_pred[y]), 1/sigma_Pb^2)
+    Pb[y] ~ dlnorm(log(Pb_pred[y]) + lPb_resid[y-1] * kappa_Pb, 1/sigma_Pb^2)
     
     # natural origin tributary-to-LGD dynamics
     for (i in 1:ni) {
