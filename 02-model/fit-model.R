@@ -17,7 +17,7 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 out_dir = "02-model/model-output"
 
 # specify a scenario name
-scenario = "base"
+scenario = "AR1"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -176,7 +176,10 @@ jags_params = c(
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_M_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
   "Lpsi_O2_Rb_resid", "Lphi_M_O1_resid", "Lphi_O1_O2_resid",
-  "Lphi_Sb_Sa_resid", "lPb_resid"
+  "Lphi_Sb_Sa_resid", "lPb_resid",
+  
+  # AR(1) coefficients
+  "kappa_Pb", "kappa_phi_Mb_Ma", "kappa_phi_Ma_M", "kappa_M_O1"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
