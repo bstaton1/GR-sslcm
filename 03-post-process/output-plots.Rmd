@@ -439,7 +439,7 @@ get_SAR_post = function(post, jags_data) {
     Ma = array_format(Ma_post[i,])
     
     # give names
-    dimnames(Ra) = dimnames(jags_data$p_remove)
+    dimnames(Ra) = dimnames(jags_data$n_broodstock)
     dimnames(Ma) = dimnames(jags_data$Mb_obs)
     
     # drop sex structure from Ra
@@ -673,6 +673,33 @@ rownames(tab) = c("Age 3", "Age 4", "Age 5")
 kable(tab) %>%
   kable_styling(full_width = F, bootstrap_options = "condensed") %>%
   column_spec(1, bold = T)
+```
+
+# Misc
+
+## Brood stock Removals
+
+This figure shows the frequency that `Sb[y,k,s,o]` (spawners passed above weir, following broodstock removals) would go negative if not for the constraint `Sb[y,k,s,o] <- max(Ra[y,k,s,o] - n_broodstock[y,k,s,o], 0)`.
+
+```{r, fig.width = 8, fig.height = 5}
+Sb_post = post_subset(post, "^Sb[", matrix = TRUE)
+p0 = array_format(colMeans(Sb_post == 0))
+dimnames(p0) = dimnames(jags_data$n_broodstock)
+years = as.numeric(dimnames(p1)[[1]])
+
+par(mfcol = c(3,4), oma = c(1.5,1.5,0,0), mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+plot(p0[observable,1,1,1] ~ years[observable], type = "l", main = TeX("$Female\\,Age\\,3\\,(NOR)$"), ylim = c(0,1))
+plot(p0[observable,2,1,1] ~ years[observable], type = "l", main = TeX("$Female\\,Age\\,4\\,(NOR)$"), ylim = c(0,1))
+plot(p0[observable,3,1,1] ~ years[observable], type = "l", main = TeX("$Female\\,Age\\,5\\,(NOR)$"), ylim = c(0,1))
+plot(p0[observable,1,2,1] ~ years[observable], type = "l", main = TeX("$Male\\,Age\\,3\\,(NOR)$"), ylim = c(0,1))
+plot(p0[observable,2,2,1] ~ years[observable], type = "l", main = TeX("$Male\\,Age\\,4\\,(NOR)$"), ylim = c(0,1))
+plot(p0[observable,3,2,1] ~ years[observable], type = "l", main = TeX("$Male\\,Age\\,5\\,(NOR)$"), ylim = c(0,1))
+plot(p0[observable,1,1,2] ~ years[observable], type = "l", main = TeX("$Female\\,Age\\,3\\,(HOR)$"), ylim = c(0,1))
+plot(p0[observable,2,1,2] ~ years[observable], type = "l", main = TeX("$Female\\,Age\\,4\\,(HOR)$"), ylim = c(0,1))
+plot(p0[observable,3,1,2] ~ years[observable], type = "l", main = TeX("$Female\\,Age\\,5\\,(HOR)$"), ylim = c(0,1))
+plot(p0[observable,1,2,2] ~ years[observable], type = "l", main = TeX("$Male\\,Age\\,3\\,(HOR)$"), ylim = c(0,1))
+plot(p0[observable,2,2,2] ~ years[observable], type = "l", main = TeX("$Male\\,Age\\,4\\,(HOR)$"), ylim = c(0,1))
+plot(p0[observable,3,2,2] ~ years[observable], type = "l", main = TeX("$Male\\,Age\\,5\\,(HOR)$"), ylim = c(0,1))
 ```
 
 # JAGS Model and Data {.tabset .tabset-pills}
