@@ -674,3 +674,19 @@ kable(tab) %>%
   kable_styling(full_width = F, bootstrap_options = "condensed") %>%
   column_spec(1, bold = T)
 ```
+
+# JAGS Model and Data {.tabset .tabset-pills}
+
+## JAGS Model Code
+
+```{r, comment = NA}
+# print the JAGS model code
+cat(model_info$jags_model_code, sep = "\n")
+```
+
+## JAGS Model Data
+
+```{r, comment = NA}
+# print the JAGS model data
+model_info$jags_data
+```
