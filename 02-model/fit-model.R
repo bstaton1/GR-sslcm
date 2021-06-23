@@ -113,6 +113,11 @@ source("02-model/model-code.R")
 jags_file = "02-model/model.txt"
 write_model(jags_model_code, jags_file)
 
+# store the model code as an object, to be saved in the output object later
+# use this version rather than 'model.txt' because this one retains the comments
+jags_model_contents = readLines("02-model/model-code.R")
+jags_model_contents[1] = "model {"
+
 ##### STEP 3: SELECT NODES TO MONITOR #####
 
 jags_params = c(
@@ -212,6 +217,7 @@ if (!dir.exists(out_dir)) dir.create(out_dir)
 
 # create the output object: stores data, posterior samples, and population name
 out_obj = list(
+  jags_model_code = jags_model_contents,
   jags_data = jags_data,
   post = post,
   pop = pop,
