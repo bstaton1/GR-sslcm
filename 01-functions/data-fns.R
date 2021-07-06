@@ -357,8 +357,12 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     sig_Lphi_obs_Pa_Ma = abind(lapply(main_list, function(x) x$sig_Lphi_obs_Pa_Ma), along = 3),
     
     # spring trap tagging to LGD survival
-    Lphi_obs_Mb_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Mb_Ma), along = 3),
-    sig_Lphi_obs_Mb_Ma = abind(lapply(main_list, function(x) x$sig_Lphi_obs_Mb_Ma), along = 3),
+    Lphi_obs_Mb_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Mb_Ma), along = 4),
+    sig_Lphi_obs_Mb_Ma = abind(lapply(main_list, function(x) x$sig_Lphi_obs_Mb_Ma), along = 4),
+    
+    # hydropower survival
+    Lphi_obs_Ma_M = main_list[[1]]$Lphi_obs_Ma_M,
+    sig_Lphi_obs_Ma_M = main_list[[1]]$sig_Lphi_obs_Ma_M,
     
     # adult returns to tributary
     Ra_obs = abind(lapply(main_list, function(x) x$Ra_obs), along = 2),
