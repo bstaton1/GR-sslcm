@@ -87,6 +87,7 @@ jags_model_code = function() {
   
   ### PRIORS: AR(1) COEFFICIENTS
   kappa_Pb ~ dunif(-0.99,0.99)                # total summer parr recruitment
+  kappa_pi ~ dunif(-0.99,0.99)                # proportion of summer parr that are fall migrants
   kappa_phi_Mb_Ma[o_nat] ~ dunif(-0.99,0.99)  # movement survival in spring to LGR (natural origin)
   kappa_phi_Mb_Ma[o_hat] ~ dunif(-0.99,0.99)  # movement survival in spring to LGR (hatchery origin)
   kappa_phi_Ma_M[o_nat] ~ dunif(-0.99,0.99)   # movement survival from LGR thru BON (natural origin)
@@ -95,6 +96,7 @@ jags_model_code = function() {
   
   ### PRIORS: YEAR-0 RESIDUALS FOR ALL TERMS THAT USE AR(1) PROCESS
   lPb_resid[kmax] ~ dnorm(0, (1/sigma_Pb^2) * (1 - kappa_Pb^2))
+  Lpi_resid[kmax] ~ dnorm(0, (1/sig_Lpi^2) * (1 - kappa_pi^2))
   Lphi_Mb_Ma_resid[kmax,o_nat] ~ dnorm(0, (1/sig_Lphi_Mb_Ma[i_spring,o_nat]^2) * (1 - kappa_phi_Mb_Ma[o_nat]^2))
   Lphi_Mb_Ma_resid[kmax,o_hat] ~ dnorm(0, (1/sig_Lphi_Mb_Ma[i_spring,o_hat]^2) * (1 - kappa_phi_Mb_Ma[o_hat]^2))
   Lphi_Ma_M_resid[kmax,o_nat] ~ dnorm(0, (1/sig_Lphi_Ma_M[o_nat]^2) * (1 - kappa_phi_Ma_M[o_nat]^2)) 
@@ -104,7 +106,7 @@ jags_model_code = function() {
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in (kmax+1):ny) {
     # aggregate parr to LH-specific parr
-    Lpi1[y] ~ dnorm(logit(mu_pi[i_fall]), 1/sig_Lpi^2)
+    Lpi1[y] ~ dnorm(logit(mu_pi[i_fall]) + Lpi_resid[y-1] * kappa_pi, 1/sig_Lpi^2)
     pi[y,i_fall] <- ilogit(Lpi1[y])
     pi[y,i_spring] <- 1 - pi[y,i_fall]
     
