@@ -207,6 +207,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   n_remove[y_names %in% sub$brood_year,,s_names[1],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[1], k_names, sep = "_")])
   n_remove[y_names %in% sub$brood_year,,s_names[2],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[2], k_names, sep = "_")])
   
+  ### ADULT SURVIVAL PAST SEA LIONS ###
+  phi_SL = rep(NA, ny); names(phi_SL) = y_names
+  phi_SL[y_names %in% sub$brood_year] = sub$surv_est_sea_lions
+  
   ### ADULT ABUNDANCE ###
 
   # total returning adults, nat + hat
@@ -266,6 +270,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     # includes both hatchery and natural origin
     Lphi_obs_Ma_M = Lphi_obs_Ma_M,
     sig_Lphi_obs_Ma_M = sig_Lphi_obs_Ma_M,
+    
+    ### ADULT SURVIVAL ###
+    # adult survival past sea lions (not fitted; assumed known w/o error)
+    phi_SL = phi_SL,
     
     ### ADULT ABUNDANCE ###
     # total adults arriving at "weir"
@@ -348,6 +356,9 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     # hydropower survival
     Lphi_obs_Ma_M = main_list[[1]]$Lphi_obs_Ma_M,
     sig_Lphi_obs_Ma_M = main_list[[1]]$sig_Lphi_obs_Ma_M,
+    
+    # adult survival past sea lions (not fitted; assumed known w/o error)
+    phi_SL = abind(lapply(main_list, function(x) x$phi_SL), along = 2),
     
     # adult returns to tributary
     Ra_obs = abind(lapply(main_list, function(x) x$Ra_obs), along = 2),
