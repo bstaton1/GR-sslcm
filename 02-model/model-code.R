@@ -208,15 +208,15 @@ jags_model_code = function() {
   ### PRIORS: OBSERVATION MODEL ###
   
   # carcass vs. weir composition correction factor coefficients
-  # for (i in 1:3) {
-  #   z[i] ~ dunif(-10,10)
-  # }
+  for (i in 1:3) {
+    z[i] ~ dunif(-10,10)
+  }
   
   # if fitting MIN, use this instead of the priors above
   # params not estimable for MIN alone
-  z[1] <- -0.76
-  z[2] <- -0.01
-  z[3] <- -0.28
+  # z[1] <- -0.76
+  # z[2] <- -0.01
+  # z[3] <- -0.28
   
   # if fitting MIN, use this instead of the priors above
   # params not estimable for MIN alone
