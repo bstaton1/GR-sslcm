@@ -191,21 +191,21 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   carc_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
   carc_nx_obs = rowSums(carc_x_obs)
   
-  ### PROPORTION OF RETURNING ADULTS REMOVED FOR BROODSTOCK ###
+  ### PROPORTION OF RETURNING ADULTS REMOVED AT WEIR ###
   # weir_comp_names = create_comp_names("weir", o_names, s_names, k_names)
   rm_comp_names = create_comp_names("rm", o_names, s_names, k_names)
   
   # extract compositions by type and coerce NAs to zero
-  # this is the number of fish removed at weir for broodstock each year by age/sex/origin class
+  # this is the number of fish removed at weir each year by age/sex/origin class
   rm_comp = sub[,c(rm_comp_names$nat_names, rm_comp_names$hat_names)]
   rm_comp[is.na(rm_comp)] = 0
   
-  # place rm_comp in the correct location of n_broodstock: same numbers just reformatted array structure used by model
-  n_broodstock = array(NA, dim = c(ny, nk, ns, no)); dimnames(n_broodstock) = list(y_names, k_names, s_names, o_names)
-  n_broodstock[y_names %in% sub$brood_year,,s_names[1],o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], s_names[1], k_names, sep = "_")])
-  n_broodstock[y_names %in% sub$brood_year,,s_names[2],o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], s_names[2], k_names, sep = "_")])
-  n_broodstock[y_names %in% sub$brood_year,,s_names[1],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[1], k_names, sep = "_")])
-  n_broodstock[y_names %in% sub$brood_year,,s_names[2],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[2], k_names, sep = "_")])
+  # place rm_comp in the correct location of n_remove: same numbers just reformatted array structure used by model
+  n_remove = array(NA, dim = c(ny, nk, ns, no)); dimnames(n_remove) = list(y_names, k_names, s_names, o_names)
+  n_remove[y_names %in% sub$brood_year,,s_names[1],o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], s_names[1], k_names, sep = "_")])
+  n_remove[y_names %in% sub$brood_year,,s_names[2],o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], s_names[2], k_names, sep = "_")])
+  n_remove[y_names %in% sub$brood_year,,s_names[1],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[1], k_names, sep = "_")])
+  n_remove[y_names %in% sub$brood_year,,s_names[2],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[2], k_names, sep = "_")])
   
   ### ADULT ABUNDANCE ###
 
@@ -272,8 +272,8 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     Ra_obs = Ra_obs,
     sig_Ra_obs = sig_Ra_obs,
     
-    # number removed for broodstock
-    n_broodstock = n_broodstock,
+    # number removed at weir
+    n_remove = n_remove,
     
     ### ADULT COMPOSITION ###
     # observed frequency of age/sex/origin arriving at weir
@@ -361,8 +361,8 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     carc_x_obs = abind(lapply(main_list, function(x) x$carc_x_obs), along = 3),
     carc_nx_obs = abind(lapply(main_list, function(x) x$carc_nx_obs), along = 2),
     
-    # broodstock removals
-    n_broodstock = abind(lapply(main_list, function(x) x$n_broodstock), along = 5),
+    # weir removals removals
+    n_remove = abind(lapply(main_list, function(x) x$n_remove), along = 5),
     
     # number of carcasses sampled for spawn status
     carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
