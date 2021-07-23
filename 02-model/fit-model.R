@@ -239,6 +239,9 @@ if (!dir.exists(out_dir)) dir.create(out_dir)
 out_obj = list(
   jags_model_code = jags_model_contents,
   jags_data = jags_data,
+  jags_inits = jags_inits,
+  jags_dims = jags_dims,
+  jags_time = c(starttime = format(starttime), stoptime = format(stoptime), elapsed = format(round(stoptime - starttime,2))),
   post = post,
   pop = pop,
   scenario = scenario
