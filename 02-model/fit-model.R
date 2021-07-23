@@ -172,6 +172,9 @@ jags_params = c(
   # misc parameters
   "O_phi_scaler_nat_hat",
   
+  # misc derived quantities
+  "beta_per_peu", "Pb_per_Sa_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot",
+  
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_O0_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
