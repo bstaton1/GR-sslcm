@@ -176,7 +176,10 @@ jags_params = c(
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_M_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
   "Lpsi_O2_Rb_resid", "Lphi_M_O1_resid", "Lphi_O1_O2_resid",
-  "Lphi_Sb_Sa_resid", "lPb_resid"
+  "Lphi_Sb_Sa_resid", "lPb_resid",
+  
+  # AR(1) coefficients
+  "kappa_phi_M_O1"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
