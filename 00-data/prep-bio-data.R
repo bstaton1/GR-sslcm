@@ -251,6 +251,23 @@ tmp$carcs_samp_for_status[tmp$carcs_samp_for_status <= status_count_threshold] =
 # rename the data frame, and remove "tmp" objects
 adult_prespawn = tmp; rm(tmp)
 
+##### ADULT SURVIVAL PAST SEA LIONS #####
+
+# read the data
+tmp = read.csv("00-data/sea-lion-surv.csv")
+
+# reformat to long format
+tmp = melt(tmp, id.vars = "year", value.name = "surv_est_sea_lions", variable.name = "population")
+
+# update column names
+# note: return_year renamed to "brood_year" to allow merging with other data sets
+# and for consistent indexing in model.
+# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
+colnames(tmp)[1] = "brood_year"
+
+# rename object and remove "tmp" object
+sea_lion_survival = tmp; rm(tmp)
+
 ##### JUVENILE ABUNDANCE #####
 
 # read the data
@@ -411,6 +428,7 @@ bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_yea
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, sea_lion_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hydro_surv, by = c("population", "brood_year"), all = T)
 

@@ -55,13 +55,27 @@ jags_data = create_jags_data_one(pop)
 jags_data = append_no_na_indices(jags_data)
 
 # some parameters we are assuming known (for now)
-# [1] is natural, [2] is hatchery origin
+# harvest rates Below and Above BON by year, age, origin
+Ub_45_nat = with(jags_data, c(rep(NA, kmax), rep(0.02, ny - kmax)))
+Ub_45_hat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
+Ua_45_nat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
+Ua_45_hat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
+Ub = abind(list(cbind(Ub_45_nat * 0.25, Ub_45_nat, Ub_45_nat), cbind(Ub_45_hat * 0.75, Ub_45_hat, Ub_45_hat)), along = 3)
+Ua = abind(list(cbind(Ua_45_nat * 0.25, Ua_45_nat, Ub_45_nat), cbind(Ua_45_hat * 0.75, Ua_45_hat, Ua_45_hat)), along = 3)
+dimnames(Ub) = dimnames(Ua) = with(jags_data, list(names(Ra_obs), kmin:kmax, c("Nat", "Hat")))
+
 add_jags_data = list(
-  mu_phi_M_O1_assume = c(0.2, 0.2),    # survival from arrival to estuary to next spring (become SWA1)
-  mu_phi_O1_O2_assume = c(0.8, 0.8),   # survival from SWA1 to SWA2
-  mu_phi_O2_O3_assume = c(0.8, 0.8),   # survival from SWA2 to SWA3
-  mu_phi_Rb_Ra_assume = c(0.7, 0.7)    # survival upstream as adults in-river. mortality sources: sea lions, fishery, hydrosystem
+  Ub = Ub,           # harvest rate after sea lion mortality below BON
+  Ua = Ua,           # harvest rate above BON in zone 6 (BON -> MCN)
+  phi_D1_D4 = 0.85,  # survival of adults following harvest between dams 1 and 4 (BON -> MCN)
+  phi_D4_D5 = 0.90,  # survival of adults due to all sources between dams 4 and 5 (MCN -> ICH)
+  phi_D5_D8 = 0.90,  # survival of adults due to all sources between dams 5 and 8 (ICH -> LGR)
+  phi_D8_Ra = 0.95   # survival of adults due to all sources between dam 8 and trib (LGR -> trib)
 )
+
+# calculate a metric for overall survival from estuary to tributary
+# used in obtaining an upper bound for initial adult recruits
+overall_phi_Rb_Ra = with(append(jags_data, add_jags_data), mean(phi_SL, na.rm = T) * (1 - mean(Ub, na.rm = T)) * (1 - mean(Ua, na.rm = T)) * phi_D1_D4 * phi_D4_D5 * phi_D5_D8 * phi_D8_Ra)
 
 # some dummy variables for performing weir vs. carcass composition correction
 add_jags_data2 = list(
@@ -103,7 +117,7 @@ add_jags_data4 = list(
 add_jags_data = append(add_jags_data, add_jags_data4)
 
 # calculate the upper bound on initial adult recruits and add to data
-add_jags_data = append(add_jags_data, list(max_init_recruits = max(jags_data$Ra_obs/(add_jags_data$mu_phi_Rb_Ra) * 1.5, na.rm = T)))
+add_jags_data = append(add_jags_data, list(max_init_recruits = max(jags_data$Ra_obs/(overall_phi_Rb_Ra) * 1.5, na.rm = T)))
 jags_data = append(jags_data, add_jags_data)
 
 ##### STEP 2: SPECIFY JAGS MODEL #####
@@ -169,7 +183,7 @@ jags_params = c(
 
 jags_dims = list(
   n_post = switch(mcmc_length,  "short" = 1000, "medium" = 24000,  "long" = 60000),
-  n_burn = switch(mcmc_length,  "short" = 500,  "medium" = 20000,  "long" = 30000),
+  n_burn = switch(mcmc_length,  "short" = 500,  "medium" = 20000,  "long" = 60000),
   n_thin = switch(mcmc_length,  "short" = 1,    "medium" = 8,      "long" = 20),
   n_chain = switch(mcmc_length, "short" = 3,    "medium" = 3,      "long" = 3),
   n_adapt = switch(mcmc_length, "short" = 100,  "medium" = 1000,   "long" = 1000),
@@ -236,20 +250,20 @@ if (rmd) {
   cat("\nRendering Rmd Output")
   # set working dir to post-processing directory
   setwd("03-post-process")
-  
+
   # file name of rendered output
   rmd_out_file = paste0(pop, "-output-plots-", scenario, ".html")
-  
+
   # render the output
   render(input = "output-plots.Rmd",
-         output_file = rmd_out_file, 
-         params = list(pop = pop, scenario = scenario, mcmc_plots = rmd_mcmc_plots), 
+         output_file = rmd_out_file,
+         params = list(pop = pop, scenario = scenario, mcmc_plots = rmd_mcmc_plots),
          quiet = T
   )
-  
+
   # open the rendered file when complete
   file.show(rmd_out_file)
-  
+
   # set the working dir back
   setwd("../")
   cat("\n\nDone.")

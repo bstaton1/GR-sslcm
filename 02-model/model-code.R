@@ -155,11 +155,6 @@ jags_model_code = function() {
     logit(phi_O1_O2[y,o_hat]) <- logit(phi_O1_O2[y,o_nat]) + O_phi_scaler_nat_hat
     logit(phi_O2_O3[y-1,o_hat]) <- logit(phi_O2_O3[y-1,o_nat]) + O_phi_scaler_nat_hat
     
-    # upstream adult survival
-    for (o in 1:no) {
-      phi_Rb_Ra[y,o] <- mu_phi_Rb_Ra_assume[o]
-    }
-    
     # pre-spawn survival
     Lphi_Sb_Sa[y] ~ dnorm(logit(mu_phi_Sb_Sa), 1/sig_Lphi_Sb_Sa^2)
     phi_Sb_Sa[y] <- ilogit(Lphi_Sb_Sa[y])
@@ -320,8 +315,8 @@ jags_model_code = function() {
       for (s in 1:ns) {
         for (o in 1:no) {
           
-          # survive upstream migration and add strays
-          Ra[y,k,s,o] <- Rb[y,k,s,o] * phi_Rb_Ra[y,o] + n_stray_tot[y] * stray_comp[k,s,o]
+          # survive upstream migration (survive sea lions * survive fisheries * survive through dams and to tributary) and add strays
+          Ra[y,k,s,o] <- Rb[y,k,s,o] * phi_SL[y] * (1 - Ub[y,k,o]) * (1 - Ua[y,k,o]) * phi_D1_D4 * phi_D4_D5 * phi_D5_D8 * phi_D8_Ra + n_stray_tot[y] * stray_comp[k,s,o]
           
           # remove fish for brood stock
           Sb[y,k,s,o] <- max(Ra[y,k,s,o] - n_remove[y,k,s,o], 0)
