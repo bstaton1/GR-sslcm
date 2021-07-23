@@ -439,7 +439,7 @@ get_SAR_post = function(post, jags_data) {
     Ma = array_format(Ma_post[i,])
     
     # give names
-    dimnames(Ra) = dimnames(jags_data$p_remove)
+    dimnames(Ra) = dimnames(jags_data$n_broodstock)
     dimnames(Ma) = dimnames(jags_data$Mb_obs)
     
     # drop sex structure from Ra

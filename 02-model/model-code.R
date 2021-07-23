@@ -324,8 +324,8 @@ jags_model_code = function() {
           Ra[y,k,s,o] <- Rb[y,k,s,o] * phi_Rb_Ra[y,o] + n_stray_tot[y] * stray_comp[k,s,o]
           
           # remove fish for brood stock
-          Sb[y,k,s,o] <- Ra[y,k,s,o] * (1 - p_remove[y,k,s,o])
-          
+          Sb[y,k,s,o] <- max(Ra[y,k,s,o] - n_remove[y,k,s,o], 0)
+
           # survive pre-spawn mortality
           # currently assumed to apply equally to hatchery and wild origin returns
           # and to be age/sex non-selective

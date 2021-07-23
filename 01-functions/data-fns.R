@@ -191,36 +191,21 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   carc_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
   carc_nx_obs = rowSums(carc_x_obs)
   
-  ### PROPORTION OF RETURNING ADULTS REMOVED FOR BROODSTOCK ###
-  weir_comp_names = create_comp_names("weir", o_names, s_names, k_names)
+  ### PROPORTION OF RETURNING ADULTS REMOVED AT WEIR ###
+  # weir_comp_names = create_comp_names("weir", o_names, s_names, k_names)
   rm_comp_names = create_comp_names("rm", o_names, s_names, k_names)
   
   # extract compositions by type and coerce NAs to zero
-  weir_comp = sub[,c(weir_comp_names$nat_names, weir_comp_names$hat_names)]
+  # this is the number of fish removed at weir each year by age/sex/origin class
   rm_comp = sub[,c(rm_comp_names$nat_names, rm_comp_names$hat_names)]
-  weir_comp[is.na(weir_comp)] = 0
   rm_comp[is.na(rm_comp)] = 0
   
-  # calculate the proportion of all fish sampled at the weir that were of each age/sex/origin
-  weir_prop = t(apply(weir_comp, 1, function(x) x/sum(x)))
-  
-  # calculate the proportion of all fish arriving at the weir that were of each age/sex/origin
-  at_weir_N = apply(weir_prop, 2, function(x) x * sub$adults_at_weir)
-  at_weir_N[is.na(at_weir_N)] = 0
-  
-  # calculate the proportion of all fish arriving at the weir that were removed by each age/sex/origin
-  p_take = rm_comp/at_weir_N
-  p_take[p_take > 1] = 1    # this is VERY rare, and only ever < 1.05
-  p_take[is.na(p_take)] = 0
-  p_take = as.matrix(p_take)
-  
-  # place p_take in the correct location of p_remove: same numbers just reformatted array
-  # structure used by model
-  p_remove = array(NA, dim = c(ny, nk, ns, no)); dimnames(p_remove) = list(y_names, k_names, s_names, o_names)
-  p_remove[y_names %in% sub$brood_year,,s_names[1],o_names[1]] = p_take[,paste("rm", o_names[1], s_names[1], k_names, sep = "_")]
-  p_remove[y_names %in% sub$brood_year,,s_names[2],o_names[1]] = p_take[,paste("rm", o_names[1], s_names[2], k_names, sep = "_")]
-  p_remove[y_names %in% sub$brood_year,,s_names[1],o_names[2]] = p_take[,paste("rm", o_names[2], s_names[1], k_names, sep = "_")]
-  p_remove[y_names %in% sub$brood_year,,s_names[2],o_names[2]] = p_take[,paste("rm", o_names[2], s_names[2], k_names, sep = "_")]
+  # place rm_comp in the correct location of n_remove: same numbers just reformatted array structure used by model
+  n_remove = array(NA, dim = c(ny, nk, ns, no)); dimnames(n_remove) = list(y_names, k_names, s_names, o_names)
+  n_remove[y_names %in% sub$brood_year,,s_names[1],o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], s_names[1], k_names, sep = "_")])
+  n_remove[y_names %in% sub$brood_year,,s_names[2],o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], s_names[2], k_names, sep = "_")])
+  n_remove[y_names %in% sub$brood_year,,s_names[1],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[1], k_names, sep = "_")])
+  n_remove[y_names %in% sub$brood_year,,s_names[2],o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], s_names[2], k_names, sep = "_")])
   
   ### ADULT ABUNDANCE ###
 
@@ -287,8 +272,8 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     Ra_obs = Ra_obs,
     sig_Ra_obs = sig_Ra_obs,
     
-    # proportion removed for broodstock
-    p_remove = p_remove,
+    # number removed at weir
+    n_remove = n_remove,
     
     ### ADULT COMPOSITION ###
     # observed frequency of age/sex/origin arriving at weir
@@ -376,8 +361,8 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     carc_x_obs = abind(lapply(main_list, function(x) x$carc_x_obs), along = 3),
     carc_nx_obs = abind(lapply(main_list, function(x) x$carc_nx_obs), along = 2),
     
-    # broodstock removals
-    p_remove = abind(lapply(main_list, function(x) x$p_remove), along = 5),
+    # weir removals removals
+    n_remove = abind(lapply(main_list, function(x) x$n_remove), along = 5),
     
     # number of carcasses sampled for spawn status
     carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
