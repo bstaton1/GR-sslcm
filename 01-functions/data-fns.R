@@ -152,14 +152,14 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Hat"] = sub$hatchery_spring_surv_logit_se
   
   # LGD to BON logit(surv)
-  Lphi_obs_Ma_M = matrix(NA, ny, no); dimnames(Lphi_obs_Ma_M) = list(y_names, o_names)
-  Lphi_obs_Ma_M[y_names %in% all$brood_year,"Nat"] = logit(all$nat_hydro_est)
-  Lphi_obs_Ma_M[y_names %in% all$brood_year,"Hat"] = logit(all$hat_hydro_est)
+  Lphi_obs_Ma_O0 = matrix(NA, ny, no); dimnames(Lphi_obs_Ma_O0) = list(y_names, o_names)
+  Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Nat"] = logit(all$nat_hydro_est)
+  Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Hat"] = logit(all$hat_hydro_est)
   
   # sd LGD to BON logit(surv)
-  sig_Lphi_obs_Ma_M = matrix(NA, ny, no); dimnames(sig_Lphi_obs_Ma_M) = list(y_names, o_names)
-  sig_Lphi_obs_Ma_M[y_names %in% all$brood_year,"Nat"] = all$nat_hydro_logit_se
-  sig_Lphi_obs_Ma_M[y_names %in% all$brood_year,"Hat"] = all$hat_hydro_logit_se
+  sig_Lphi_obs_Ma_O0 = matrix(NA, ny, no); dimnames(sig_Lphi_obs_Ma_O0) = list(y_names, o_names)
+  sig_Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Nat"] = all$nat_hydro_logit_se
+  sig_Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Hat"] = all$hat_hydro_logit_se
   
   ### ADULT AGE COMP: WEIR ###
   # obtain names of age comp variables
@@ -268,8 +268,8 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     
     # LGD to BON
     # includes both hatchery and natural origin
-    Lphi_obs_Ma_M = Lphi_obs_Ma_M,
-    sig_Lphi_obs_Ma_M = sig_Lphi_obs_Ma_M,
+    Lphi_obs_Ma_O0 = Lphi_obs_Ma_O0,
+    sig_Lphi_obs_Ma_O0 = sig_Lphi_obs_Ma_O0,
     
     ### ADULT SURVIVAL ###
     # adult survival past sea lions (not fitted; assumed known w/o error)
@@ -354,8 +354,8 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     sig_Lphi_obs_Mb_Ma = abind(lapply(main_list, function(x) x$sig_Lphi_obs_Mb_Ma), along = 4),
     
     # hydropower survival
-    Lphi_obs_Ma_M = main_list[[1]]$Lphi_obs_Ma_M,
-    sig_Lphi_obs_Ma_M = main_list[[1]]$sig_Lphi_obs_Ma_M,
+    Lphi_obs_Ma_O0 = main_list[[1]]$Lphi_obs_Ma_O0,
+    sig_Lphi_obs_Ma_O0 = main_list[[1]]$sig_Lphi_obs_Ma_O0,
     
     # adult survival past sea lions (not fitted; assumed known w/o error)
     phi_SL = abind(lapply(main_list, function(x) x$phi_SL), along = 2),
@@ -410,7 +410,7 @@ append_no_na_indices = function(jags_data) {
       fit_Lphi_Pb_Ma = find_no_na_indices(Lphi_obs_Pb_Ma),
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
-      fit_Lphi_Ma_M = find_no_na_indices(Lphi_obs_Ma_M),
+      fit_Lphi_Ma_O0 = find_no_na_indices(Lphi_obs_Ma_O0),
       fit_Ra = find_no_na_indices(Ra_obs),
       fit_spawned = find_no_na_indices(carcs_spawned)
     )

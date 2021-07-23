@@ -35,10 +35,10 @@ jags_model_code = function() {
   mu_phi_Mb_Ma[i_spring,o_hat] ~ dbeta(1, 1)
   sig_Lphi_Mb_Ma[i_spring,o_hat] ~ dunif(0, 5)
   
-  # movement survival (LGD to estuary): same for both LH types, different for origin types
+  # movement survival (LGD to estuary [ocean-age 0]): same for both LH types, different for origin types
   for (o in 1:no) {
-    mu_phi_Ma_M[o] ~ dbeta(1, 1)
-    sig_Lphi_Ma_M[o] ~ dunif(0, 5)
+    mu_phi_Ma_O0[o] ~ dbeta(1, 1)
+    sig_Lphi_Ma_O0[o] ~ dunif(0, 5)
   }
   
   # pre-spawn survival (after brood-stock removal to successful spawning)
@@ -72,24 +72,24 @@ jags_model_code = function() {
   
   ### PRIORS: OCEAN SURVIVAL ###
   # natural origin
-  mu_phi_M_O1[o_nat] ~ dbeta(1, 1)             # first winter at sea: to become SWA1
+  mu_phi_O0_O1[o_nat] ~ dbeta(1, 1)            # first winter at sea: to become SWA1
   mu_phi_O1_O2[o_nat] ~ dbeta(1, 1)            # second winter at sea: to become SWA2
   mu_phi_O2_O3[o_nat] <- mu_phi_O1_O2[o_nat]   # third winter at sea: to become SW3
-  sig_Lphi_M_O1[o_nat] ~ dunif(0, 5)
+  sig_Lphi_O0_O1[o_nat] ~ dunif(0, 5)
   sig_Lphi_O1_O2[o_nat] ~ dunif(0, 5)
   sig_Lphi_O2_O3[o_nat] <- sig_Lphi_O1_O2[o_nat]
   
   # hatchery origin: use a scaler that adjusts natural origin survival to get hatchery survival
   O_phi_scaler_nat_hat ~ dt(0, 1/1.566^2, 7.763)
-  logit(mu_phi_M_O1[o_hat]) <- logit(mu_phi_M_O1[o_nat]) + O_phi_scaler_nat_hat
+  logit(mu_phi_O0_O1[o_hat]) <- logit(mu_phi_O0_O1[o_nat]) + O_phi_scaler_nat_hat
   logit(mu_phi_O1_O2[o_hat]) <- logit(mu_phi_O1_O2[o_nat]) + O_phi_scaler_nat_hat
   logit(mu_phi_O2_O3[o_hat]) <- logit(mu_phi_O1_O2[o_nat]) + O_phi_scaler_nat_hat
   
   ### PRIORS: AR(1) COEFFICIENTS AND YEAR-0 RESIDUALS
-  kappa_phi_M_O1 ~ dunif(-0.99,0.99)          # overwinter survival for first winter at sea
+  kappa_phi_O0_O1 ~ dunif(-0.99,0.99)          # overwinter survival for first winter at sea
   
   ### PRIORS: YEAR-0 RESIDUALS FOR ALL TERMS THAT USE AR(1) PROCESS
-  Lphi_M_O1_resid[kmax] ~ dnorm(0, (1/sig_Lphi_M_O1[o_nat]^2) * (1 - kappa_phi_M_O1^2))
+  Lphi_O0_O1_resid[kmax] ~ dnorm(0, (1/sig_Lphi_O0_O1[o_nat]^2) * (1 - kappa_phi_O0_O1^2))
   
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in (kmax+1):ny) {
@@ -118,8 +118,8 @@ jags_model_code = function() {
     # movement survival: LGD to estuary
     # separate for each origin type
     for (o in 1:no) {
-      Lphi_Ma_M[y,o] ~ dnorm(logit(mu_phi_Ma_M[o]), 1/sig_Lphi_Ma_M[o]^2)
-      phi_Ma_M[y,o] <- ilogit(Lphi_Ma_M[y,o])
+      Lphi_Ma_O0[y,o] ~ dnorm(logit(mu_phi_Ma_O0[o]), 1/sig_Lphi_Ma_O0[o]^2)
+      phi_Ma_O0[y,o] <- ilogit(Lphi_Ma_O0[y,o])
     }
     
     # probability of returning as female or male by origin
@@ -146,8 +146,8 @@ jags_model_code = function() {
     }
     
     # natural origin ocean survival SWA0 -> SWA1 (uses AR(1) on process noise)
-    Lphi_M_O1[y,o_nat] ~ dnorm(logit(mu_phi_M_O1[o_nat]) + Lphi_M_O1_resid[y-1] * kappa_phi_M_O1, 1/sig_Lphi_M_O1[o_nat]^2)
-    phi_M_O1[y,o_nat] <- ilogit(Lphi_M_O1[y,o_nat])
+    Lphi_O0_O1[y,o_nat] ~ dnorm(logit(mu_phi_O0_O1[o_nat]) + Lphi_O0_O1_resid[y-1] * kappa_phi_O0_O1, 1/sig_Lphi_O0_O1[o_nat]^2)
+    phi_O0_O1[y,o_nat] <- ilogit(Lphi_O0_O1[y,o_nat])
     
     # natural origin ocean survival SWA1 -> SWA2
     Lphi_O1_O2[y,o_nat] ~ dnorm(logit(mu_phi_O1_O2[o_nat]), 1/sig_Lphi_O1_O2[o_nat]^2)
@@ -157,7 +157,7 @@ jags_model_code = function() {
     phi_O2_O3[y-1,o_nat] <- phi_O1_O2[y,o_nat]
     
     # hatchery origin ocean survival: use scaler
-    logit(phi_M_O1[y,o_hat]) <- logit(phi_M_O1[y,o_nat]) + O_phi_scaler_nat_hat
+    logit(phi_O0_O1[y,o_hat]) <- logit(phi_O0_O1[y,o_nat]) + O_phi_scaler_nat_hat
     logit(phi_O1_O2[y,o_hat]) <- logit(phi_O1_O2[y,o_nat]) + O_phi_scaler_nat_hat
     logit(phi_O2_O3[y-1,o_hat]) <- logit(phi_O2_O3[y-1,o_nat]) + O_phi_scaler_nat_hat
     
@@ -206,12 +206,6 @@ jags_model_code = function() {
   # z[2] <- -0.01
   # z[3] <- -0.28
   
-  # if fitting MIN, use this instead of the priors above
-  # params not estimable for MIN alone
-  # z[1] <- -0.76
-  # z[2] <- -0.01
-  # z[3] <- -0.28
-  
   # calculate correction factor
   for (k in 1:3) {
     for (s in 1:2) {
@@ -232,9 +226,9 @@ jags_model_code = function() {
   # obtain expected probability of adult recruits returning at age for each sex
   # natural origin fish only
   for (s in 1:ns) {
-    p_init_prime[1,s] <- mu_phi_M_O1[o_nat] * mu_psi_O1_Rb[s,o_nat]
-    p_init_prime[2,s] <- mu_phi_M_O1[o_nat] * (1 - mu_psi_O1_Rb[s,o_nat]) * mu_phi_O1_O2[o_nat] * mu_psi_O2_Rb[s,o_nat]
-    p_init_prime[3,s] <- mu_phi_M_O1[o_nat] * (1 - mu_psi_O1_Rb[s,o_nat]) * mu_phi_O1_O2[o_nat] * (1 - mu_psi_O2_Rb[s,o_nat]) * mu_phi_O2_O3[o_nat] * mu_psi_O3_Rb[s,o_nat]
+    p_init_prime[1,s] <- mu_phi_O0_O1[o_nat] * mu_psi_O1_Rb[s,o_nat]
+    p_init_prime[2,s] <- mu_phi_O0_O1[o_nat] * (1 - mu_psi_O1_Rb[s,o_nat]) * mu_phi_O1_O2[o_nat] * mu_psi_O2_Rb[s,o_nat]
+    p_init_prime[3,s] <- mu_phi_O0_O1[o_nat] * (1 - mu_psi_O1_Rb[s,o_nat]) * mu_phi_O1_O2[o_nat] * (1 - mu_psi_O2_Rb[s,o_nat]) * mu_phi_O2_O3[o_nat] * mu_psi_O3_Rb[s,o_nat]
     for (k in 1:nk) {
       p_init[k,s] <- p_init_prime[k,s]/sum(p_init_prime[1:nk,s])
     }
@@ -306,11 +300,11 @@ jags_model_code = function() {
     # sex/origin-specific processes
     for (s in 1:ns) {
       for (o in 1:no) {
-        # move origin-specific smolts from LGD to estuary and assign to sex
-        M[y,s,o] <- sum(Ma[y,1:ni,o]) * phi_Ma_M[y,o] * omega[y,s,o]
+        # move origin-specific smolts from LGD to estuary (ocean age 0) and assign to sex
+        O0[y,s,o] <- sum(Ma[y,1:ni,o]) * phi_Ma_O0[y,o] * omega[y,s,o]
         
         # move juveniles through ocean ages and survivals
-        O[y,1,s,o] <- M[y,s,o] * phi_M_O1[y,o] # survive first winter at sea. now SWA1, TA3
+        O[y,1,s,o] <- O0[y,s,o] * phi_O0_O1[y,o] # survive first winter at sea. now SWA1, TA3
         O[y,2,s,o] <- O[y,1,s,o] * (1 - psi_O1_Rb[y,s,o]) * phi_O1_O2[y,o] # don't mature at SWA1 and survive second winter at sea. now SWA2, TA4
         O[y,3,s,o] <- O[y,2,s,o] * (1 - psi_O2_Rb[y,s,o]) * phi_O2_O3[y,o] # don't mature at SWA2 and survive third winter at sea. now SWA3, TA5
         
@@ -413,8 +407,8 @@ jags_model_code = function() {
   }
   
   # hydrosystem survival
-  for (d in 1:nfit_Lphi_Ma_M) {
-    Lphi_obs_Ma_M[fit_Lphi_Ma_M[d,1],fit_Lphi_Ma_M[d,2]] ~ dnorm(logit(phi_Ma_M[fit_Lphi_Ma_M[d,1],fit_Lphi_Ma_M[d,2]]), 1/sig_Lphi_obs_Ma_M[fit_Lphi_Ma_M[d,1],fit_Lphi_Ma_M[d,2]]^2)
+  for (d in 1:nfit_Lphi_Ma_O0) {
+    Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] ~ dnorm(logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]), 1/sig_Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]^2)
   }
   
   # pre-spawn survival
@@ -443,7 +437,7 @@ jags_model_code = function() {
       Lphi_Mb_Ma_resid[y,o] <- Lphi_Mb_Ma[y,i_spring,o] - logit(mu_phi_Mb_Ma[i_spring,o])
       
       # movement survival from LGR thru BON
-      Lphi_Ma_M_resid[y,o] <- Lphi_Ma_M[y,o] - logit(mu_phi_Ma_M[o])
+      Lphi_Ma_O0_resid[y,o] <- Lphi_Ma_O0[y,o] - logit(mu_phi_Ma_O0[o])
       
       # probability of returning as female
       Lomega_resid[y,o] <- Lomega1[y,o] - logit(mu_omega[s_female,o])
@@ -459,7 +453,7 @@ jags_model_code = function() {
     }
     
     # natural origin ocean survival SWA0 -> SWA1
-    Lphi_M_O1_resid[y] <- Lphi_M_O1[y,o_nat] - logit(mu_phi_M_O1[o_nat])
+    Lphi_O0_O1_resid[y] <- Lphi_O0_O1[y,o_nat] - logit(mu_phi_O0_O1[o_nat])
     
     # natural origin ocean survival SWA1 -> SWA2
     Lphi_O1_O2_resid[y] <- Lphi_O1_O2[y,o_nat] - logit(mu_phi_O1_O2[o_nat])

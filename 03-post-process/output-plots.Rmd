@@ -95,7 +95,7 @@ diag_params = list(
   "^Pb[", 
   "init_recruits", 
   "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]",
-  "^phi_M_O1", "^phi_O1_O2", "^phi_O2_O3",
+  "^phi_O0_O1", "^phi_O1_O2", "^phi_O2_O3",
   "^psi_O1_Rb", "^psi_O2_Rb", "O_phi_scaler_nat_hat"
 )
 
@@ -202,8 +202,8 @@ plot_tseries(post_summ(post, "^phi_Pb_Ma["), expit(jags_data$Lphi_obs_Pb_Ma[obse
 plot_tseries(post_summ(post, "^phi_Pa_Ma[.+,1]$"), expit(jags_data$Lphi_obs_Pa_Ma[observable,1]), main = TeX("$Fall\\,Parr \\rightarrow LGR"))
 plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2,1]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2,1]), main = TeX("$Spring\\,Smolt \\rightarrow LGR\\,(NOR)"))
 plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2,2]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2,2]), main = TeX("$Spring\\,Smolt \\rightarrow LGR\\,(HOR)"))
-plot_tseries(post_summ(post, "^phi_Ma_M[.+,1]$"), expit(jags_data$Lphi_obs_Ma_M[observable,1]), main = TeX("$LGR\\,Smolt \\rightarrow BON\\,(NOR)"))
-plot_tseries(post_summ(post, "^phi_Ma_M[.+,2]$"), expit(jags_data$Lphi_obs_Ma_M[observable,2]), main = TeX("$LGR\\,Smolt \\rightarrow BON\\,(HOR)"))
+plot_tseries(post_summ(post, "^phi_Ma_O0[.+,1]$"), expit(jags_data$Lphi_obs_Ma_O0[observable,1]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,(NOR)"))
+plot_tseries(post_summ(post, "^phi_Ma_O0[.+,2]$"), expit(jags_data$Lphi_obs_Ma_O0[observable,2]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,(HOR)"))
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -439,7 +439,7 @@ get_SAR_post = function(post, jags_data) {
     Ma = array_format(Ma_post[i,])
     
     # give names
-    dimnames(Ra) = dimnames(jags_data$n_broodstock)
+    dimnames(Ra) = dimnames(jags_data$n_remove)
     dimnames(Ma) = dimnames(jags_data$Mb_obs)
     
     # drop sex structure from Ra
@@ -531,8 +531,8 @@ mtext(side = 2, outer = T, line = 0, "Number of Strays")
 
 ```{r ocean-surv-plots, fig.width = 6, fig.height = 5}
 par(mfrow = c(3,2), oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, "phi_M_O1[.+,1]$"), main = TeX("$O_0 \\rightarrow O_1\\,(NOR)$"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "phi_M_O1[.+,2]$"), main = TeX("$O_0 \\rightarrow O_1\\,(HOR)$"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O0_O1[.+,1]$"), main = TeX("$O_0 \\rightarrow O_1\\,(NOR)$"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "phi_O0_O1[.+,2]$"), main = TeX("$O_0 \\rightarrow O_1\\,(HOR)$"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
 plot_tseries(post_summ(post, "phi_O1_O2[.+,1]$"), main = TeX("$O_1 \\rightarrow O_2\\,(NOR)$"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
 plot_tseries(post_summ(post, "phi_O1_O2[.+,2]$"), main = TeX("$O_1 \\rightarrow O_2\\,(HOR)$"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
 plot_tseries(post_summ(post, "phi_O2_O3[.+,1]$")[,2:(length(observable)+1)], main = TeX("$O_2 \\rightarrow O_3\\,(NOR)$"), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
@@ -545,7 +545,8 @@ mtext(side = 2, outer = T, line = 0, "Survival")
 
 ```{r sex-plots, fig.width = 7, fig.height = 4}
 par(mfrow = c(1,2), oma = c(1,1,0,0))
-plot_tseries(post_summ(post, "^omega[.+,1,1]$"), main = "Natural Origin", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
+plot_tseries(post_summ(post, "^omega[.+,1,1]$"), main = "Natural Origin", yrs = as.numeric(rownames
+                                                                                           (jags_data$Pa_obs)[observable]), ylim = c(0,1))
 plot_tseries(post_summ(post, "^omega[.+,1,2]$"), main = "Hatchery Origin", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
 mtext(side = 1, outer = T, line = -0.5, "Brood Year")
 mtext(side = 2, outer = T, line = 0, "Female Proportion of Esutary Smolts")
@@ -575,7 +576,7 @@ mtext(side = 2, outer = T, line = 0, "Pr(Mature-at-Age|Alive in Ocean)")
 _In alphabetical order, as displayed in figures_
 
 * `mu_omega[1]`: mean probability of being a female at ocean entry
-* `mu_phi_Ma_M`: mean probability of surviving from LGD to ocean entry
+* `mu_phi_Ma_O0`: mean probability of surviving from LGD to ocean entry
 * `mu_phi_Mb_Ma`: mean probability of surviving movement from tributary to LGD (same for both LH types, different for origin types)
 * `mu_phi_Pa_Mb`: mean probability of surviving overwinter in tributary (`[1]`: fall migrants, `[2]`: spring migrants)
 * `mu_pi[1]`: mean probability of becoming a fall migrant LH type at end of summer
