@@ -142,19 +142,19 @@ jags_params = c(
   "gamma0", "gamma1",
   
   # hyperparameters: central tendency
-  "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_M",
+  "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_O0",
   "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
-  "mu_phi_M_O1", "mu_phi_O1_O2", "mu_phi_O2_O3",
+  "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3",
   
   # hyperparameters: inter-annual sd
-  "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_M",
+  "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_O0",
   "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
-  "sig_Lphi_M_O1", "sig_Lphi_O1_O2", "sig_Lphi_O2_O3",
+  "sig_Lphi_O0_O1", "sig_Lphi_O1_O2", "sig_Lphi_O2_O3",
   
   # year-specific parameters
-  "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_M", "omega", 
+  "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", "omega", 
   "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
-  "phi_M_O1", "phi_O1_O2", "phi_O2_O3",
+  "phi_O0_O1", "phi_O1_O2", "phi_O2_O3",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",
@@ -163,7 +163,7 @@ jags_params = c(
   "p_init", "mu_init_recruits", "sig_init_lrecruits", "init_recruits",
   
   # states
-  "Pb", "Pa", "Mb", "Ma", "M", "O", "Rb",
+  "Pb", "Pa", "Mb", "Ma", "O0", "O", "Rb",
   "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot",
   
   # carcass vs. weir correction
@@ -174,12 +174,12 @@ jags_params = c(
   
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
-  "Lphi_Ma_M_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
-  "Lpsi_O2_Rb_resid", "Lphi_M_O1_resid", "Lphi_O1_O2_resid",
+  "Lphi_Ma_O0_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
+  "Lpsi_O2_Rb_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
   "Lphi_Sb_Sa_resid", "lPb_resid",
   
   # AR(1) coefficients
-  "kappa_phi_M_O1"
+  "kappa_phi_O0_O1"
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
