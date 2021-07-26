@@ -1,6 +1,6 @@
 ---
 title: "Output Summary"
-subtitle: "`r c('CAT' = 'Catherine Creek', 'LOS' = 'Lostine', 'UGR' = 'Upper Grande Ronde')[params$pop]`"
+subtitle: "`r c('CAT' = 'Catherine Creek', 'LOS' = 'Lostine', 'MIN' = 'Minam', 'UGR' = 'Upper Grande Ronde')[params$pop]`"
 output: 
   html_document:
     toc: true
@@ -56,6 +56,16 @@ The code used to render this output relies heavily on Staton's 'postpack' packag
 
 # MCMC Information {.tabset .tabset-pills}
 
+## Time Stamps
+
+```{r}
+df = data.frame(Value = model_info$jags_time)
+rownames(df) = c("Time Started", "Time Ended", "Time Elapsed")
+kable(df) %>%
+  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
+  column_spec(1, bold = TRUE)
+```
+
 ## Attributes
 
 This table shows some dimensions of the MCMC run.
@@ -94,7 +104,7 @@ diag_params = list(
   c("^sig_Lomega", "^sig_Lpi"),
   "^Pb[", 
   "init_recruits", 
-  "^phi_Ma_M", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]",
+  "^phi_Ma_O0", "^phi_Mb_Ma[.+,2]", "^phi_Pa_Mb[.+,1]", "^phi_Pa_Mb[.+,2]",
   "^phi_O0_O1", "^phi_O1_O2", "^phi_O2_O3",
   "^psi_O1_Rb", "^psi_O2_Rb", "O_phi_scaler_nat_hat"
 )
@@ -284,7 +294,7 @@ All red components are posterior summaries (medians and 95% credible intervals).
 bh_params = post_subset(post, c("alpha", "beta"), matrix = T)
 
 # extract posterior summaries of total spawners by brood year
-Sa_tot = post_summ(post, "Sa_tot")
+Sa_tot = post_summ(post, "^Sa_tot[")
 
 # extract posterior summaries of total parr recruits by brood year
 Pb = post_summ(post, "^Pb[")
@@ -409,7 +419,9 @@ mtext(side = 1, line = 1, outer = T, "LH-Specific Parr/PEU", cex = 1.2)
 mtext(side = 2, line = 1, outer = T, "Overwinter Survival", cex = 1.2)
 ```
 
-# Smolt-to-Adult Rates
+# Equivilency Rates
+
+## Smolt-to-Adult Rates
 
 This is survival from $Ma$ (smolts at the top of LGD) to $Ra$ (adults returning to tributary, vulnerable to being counted at weir).
 
@@ -516,6 +528,42 @@ lines(SAR_mean[,2] ~ SAR_yrs, col = "red", lwd = 2)
 # draw a legend
 legend("topright", legend = c("Natural", "Hatchery"), title = "Origin",
        pch = 22, col = c("blue", "red"), pt.cex = 2, pt.bg = alpha(c("skyblue2", "salmon"), 0.5), bty = "n")
+```
+
+## Parr per Spawner
+
+"Spawner" means total spawners that survive pre-spawn mortality.
+
+```{r}
+par(oma = c(1,1,0,0))
+plot_tseries(est = post_summ(post, "Pb_per_Sa_tot["), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]))
+mtext(side = 1, outer = T, line = -0.5, "Brood Year")
+mtext(side = 2, outer = T, line = 0, "Parr/Spawner")
+```
+
+## Smolt per Spawner
+
+"Smolt" means total NOR smolt that survive their second winter, immediately prior to migration out of basin.
+
+```{r}
+par(oma = c(1,1,0,0))
+plot_tseries(est = post_summ(post, "Mb_per_Sa_tot["), yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]))
+mtext(side = 1, outer = T, line = -0.5, "Brood Year")
+mtext(side = 2, outer = T, line = 0, "Smolt/Spawner")
+```
+
+## Spawners per Spawner
+
+This is the sum of all spawners that were produced by the spawners in a given brood year (i.e., accounts for adult recruits returning across multiple ages/years). "Brood year" refers to the year the returning production was spawned. 
+
+```{r}
+all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
+
+par(oma = c(1,1,0,0))
+plot_tseries(est = post_summ(post, "Sa_tot_per_Sa_tot["), yrs = all_yrs[(jags_data$kmax+1):(jags_data$ny - jags_data$kmax)])
+mtext(side = 1, outer = T, line = -0.5, "Brood Year")
+mtext(side = 2, outer = T, line = 0, "Spawners/Spawner")
+abline(h = 1, lty = 2)
 ```
 
 # Number of Strays
@@ -644,12 +692,13 @@ bxp(bp, ylim = c(0,max(post_summaries)), outline = F, las = 2, boxcol = "red", m
 ```{r}
 # extract posterior summaries
 alpha_summ = post_summ(post, "alpha", digits = 0)
-beta_summ = post_summ(post, "beta", digits = -3)
+beta_summ = post_summ(post, "^beta$", digits = -3)
+beta_per_peu_summ = post_summ(post, "beta_per_peu", digits = -1)
 sigma_summ = post_summ(post, "sigma_Pb", digits = 2)
 
 # create/format the table
-tab = cbind(alpha_summ, beta_summ, sigma_summ)
-colnames(tab) = c("$\\alpha$", "$\\beta$", "$\\sigma_{Pb}$")
+tab = cbind(alpha_summ, beta_summ, beta_per_peu_summ, sigma_summ)
+colnames(tab) = c("$\\alpha$", "$\\beta$", "$\\beta/\\mathrm{PEU}$", "$\\sigma_{Pb}$")
 
 # produce html table
 kable(tab, format.args = list(big.mark = ","), escape = F) %>%

@@ -7,6 +7,7 @@ jags_model_code = function() {
   log_beta ~ dnorm(0, 0.001) %_% T(,15)   # log capacity. bound to prevent nonsensically large draws
   beta <- exp(log_beta)
   sigma_Pb ~ dunif(0, 5)
+  beta_per_peu <- beta/peu
   
   ### PRIORS: FRESHWATER PARAMETERS ###
   # aggregate parr to LH-specific parr
@@ -362,6 +363,19 @@ jags_model_code = function() {
       q_Ra[y,kso] <- Ra_2d[y,kso]/sum(Ra_2d[y,1:nkso])
       q_Sa_adj[y,kso] <- Sa_adj_2d[y,kso]/sum(Sa_adj_2d[y,1:nkso])
     }
+    
+    # calculate misc derived quantities
+    Pb_per_Sa_tot[y] <- Pb[y]/Sa_tot[y]                  # parr per spawner
+    Mb_per_Sa_tot[y] <- sum(Mb[y,1:ns,o_nat])/Sa_tot[y]  # smolt per spawner
+  }
+  
+  # spawners per spawner -- can't be calculated for all brood years in model
+  for (y in (kmax+1):(ny-kmax)) {
+    Sa_tot_per_Sa_tot[y] <- (
+      sum(Sa[y+kmin+1-1,1,1:ns,1:no]) +     # age 3 adults produced by spawners in brood year y
+      sum(Sa[y+kmin+2-1,2,1:ns,1:no]) +     # age 4 adults produced by spawners in brood year y
+      sum(Sa[y+kmin+3-1,3,1:ns,1:no]))/     # age 5 adults produced by spawners in brood year y
+      Sa_tot[y]                             # total spawners in brood year y
   }
 
   ### OBSERVATION MODEL ###
