@@ -2,8 +2,9 @@ jags_model_code = function() {
   
   ### PRIORS: RECRUITMENT FUNCTION ###
   # spawner to aggregate parr recruitment function
-  log_alpha ~ dnorm(0, 0.001) %_% T(,9.2) # log productivity. bound to prevent nonsensically large draws
-  alpha <- exp(log_alpha)
+  # log_alpha ~ dnorm(0, 0.001) %_% T(,9.2) # log productivity. bound to prevent nonsensically large draws
+  # alpha <- exp(log_alpha)
+  alpha ~ dbeta(1, 1)
   log_beta ~ dnorm(0, 0.001) %_% T(,15)   # log capacity. bound to prevent nonsensically large draws
   beta <- exp(log_beta)
   sigma_Pb ~ dunif(0, 5)
@@ -267,7 +268,7 @@ jags_model_code = function() {
   for (y in (kmax+1):ny) {
     
     # reproductive link: total summer parr
-    Pb_pred[y] <- Sa_tot[y]/(1/alpha + Sa_tot[y]/beta)
+    Pb_pred[y] <- f_tot[y]/(1/alpha + f_tot[y]/beta)
     Pb[y] ~ dlnorm(log(Pb_pred[y]), 1/sigma_Pb^2)
     
     # natural origin tributary-to-LGD dynamics
@@ -335,6 +336,9 @@ jags_model_code = function() {
           
           # calculate "adjusted carcasses": accounts for sampling bias relative to weir
           Sa_adj[y,k,s,o] <- Sa[y,k,s,o] * carc_adj[k,s]
+          
+          # calculate egg production
+          eggs[y,k,s,o] <- Sa[y,k,s,o] * f[k,s]
         }
       }
     }
@@ -342,9 +346,11 @@ jags_model_code = function() {
     # total adults returned to trib
     Ra_tot[y] <- sum(Ra[y,1:nk,1:ns,1:no])
     
-    # total spawning adults: used as spawning stock
-    # assumes all spawners contribute equally to progeny
+    # total spawning adults
     Sa_tot[y] <- sum(Sa[y,1:nk,1:ns,1:no])
+    
+    # total egg production: used as spawning stock
+    f_tot[y] <- sum(eggs[y,1:nk,1:ns,1:no])
     
     # reformat returner by age/sex/origin for fitting to weir comp data
     Ra_2d[y,1:nk] <- Ra[y,1:nk,s_female,o_nat]            # nat. females, all ages
@@ -366,6 +372,7 @@ jags_model_code = function() {
     
     # calculate misc derived quantities
     Pb_per_Sa_tot[y] <- Pb[y]/Sa_tot[y]                  # parr per spawner
+    Pb_per_f_tot[y] <- Pb[y]/f_tot[y]                   # parr per egg
     Mb_per_Sa_tot[y] <- sum(Mb[y,1:ns,o_nat])/Sa_tot[y]  # smolt per spawner
   }
   
