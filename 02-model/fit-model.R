@@ -165,7 +165,7 @@ jags_params = c(
   
   # states
   "Pb", "Pa", "Mb", "Ma", "O0", "O", "Rb",
-  "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot",
+  "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot", "f_tot",
   
   # carcass vs. weir correction
   "z", "carc_adj", "n_stray_tot", "stray_comp",
@@ -174,7 +174,7 @@ jags_params = c(
   "O_phi_scaler_nat_hat",
   
   # misc derived quantities
-  "beta_per_peu", "Pb_per_Sa_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot",
+  "beta_per_peu", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot",
   
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
