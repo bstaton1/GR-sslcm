@@ -70,7 +70,8 @@ add_jags_data = list(
   phi_D1_D4 = 0.85,  # survival of adults following harvest between dams 1 and 4 (BON -> MCN)
   phi_D4_D5 = 0.90,  # survival of adults due to all sources between dams 4 and 5 (MCN -> ICH)
   phi_D5_D8 = 0.90,  # survival of adults due to all sources between dams 5 and 8 (ICH -> LGR)
-  phi_D8_Ra = 0.95   # survival of adults due to all sources between dam 8 and trib (LGR -> trib)
+  phi_D8_Ra = 0.95,   # survival of adults due to all sources between dam 8 and trib (LGR -> trib),
+  f = matrix(c(1904, 3971, 4846, 0, 0, 0), nrow = 3, ncol = 2)  # fecundity [age,sex]
 )
 
 # calculate a metric for overall survival from estuary to tributary
