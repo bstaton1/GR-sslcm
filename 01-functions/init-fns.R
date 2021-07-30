@@ -46,20 +46,20 @@ fit_basic_BH = function(jags_data, plot = FALSE) {
 }
 
 # function to fit a basic egg to parr BH function
-fit_fecund_BH = function(jags_data, plot = FALSE) {
+fit_fecund_BH = function(jags_data, pop, plot = FALSE) {
   out = with(jags_data, {
     # get "observed" smolt at LGD
-    Ma_obs = Pa_obs[,"fall-mig"] * expit(Lphi_obs_Pa_Ma[,"fall-mig"]) + 
-      Mb_obs[,"spring-mig",1] * expit(Lphi_obs_Mb_Ma[,"spring-mig",1])
+    Ma_obs = Pa_obs[,"fall-mig",pop] * expit(Lphi_obs_Pa_Ma[,"fall-mig",pop]) + 
+      Mb_obs[,"spring-mig",1,pop] * expit(Lphi_obs_Mb_Ma[,"spring-mig",1,pop])
     
     # get "observed" summer parr
-    Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma)
+    Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma[,pop])
     
     # get "observed" pre-spawn mortality
-    mu_phi_Sb_Sa = mean(carcs_spawned/carcs_sampled, na.rm = T)
+    mu_phi_Sb_Sa = mean(carcs_spawned[,pop]/carcs_sampled[,pop], na.rm = TRUE)
     
     # get "observed" spawners
-    Sa_obs = Ra_obs * mu_phi_Sb_Sa
+    Sa_obs = Ra_obs[,pop] * mu_phi_Sb_Sa
     
     # set approximate [age,sex] composition
     q = matrix(c(0, 0.4, 0.05, 0.2, 0.3, 0.05), nrow = 3, ncol = 2)
@@ -93,8 +93,6 @@ fit_fecund_BH = function(jags_data, plot = FALSE) {
   # return output
   return(out)
 }
-  
-
 
 ##### GENERATE SOME INITIAL VALUES FOR MCMC #####
 
