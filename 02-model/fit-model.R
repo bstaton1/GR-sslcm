@@ -86,36 +86,16 @@ add_jags_data2 = list(
 )
 add_jags_data = append(add_jags_data, add_jags_data2)
 
-# the years in which strays will be needed
-if (pop != "MIN") {
-  yrs = as.numeric(names(jags_data$Mb_obs[,2,2]))
-  first_brood_release = min(yrs[jags_data$Mb_obs[,2,2] > 0], na.rm = T)
-  first_adult_return = first_brood_release + jags_data$kmax
-  stray_yrs = 6:(which(yrs == (first_adult_return - 1)))
-  not_stray_yrs = max(stray_yrs+1):jags_data$ny
-} else {
-  stray_yrs = 6:jags_data$ny
-  not_stray_yrs = numeric(0)
-}
-
-add_jags_data3 = list(
-  stray_yrs = stray_yrs,
-  not_stray_yrs = not_stray_yrs,
-  n_stray_yrs = length(stray_yrs),
-  n_not_stray_yrs = length(not_stray_yrs)
-)
-add_jags_data = append(add_jags_data, add_jags_data3)
-
 # create index names, for when it would help improve readibility of the JAGS code
-add_jags_data4 = list(
+add_jags_data3 = list(
   i_fall = 1,     # fall migrants are i = 1
   i_spring = 2,   # spring migrants are i = 2,
   o_nat = 1,      # natural origin are o = 1,
   o_hat = 2,      # hatchery origin are o = 2,
   s_female = 1,   # females are s = 1,
-  s_male = 2     # males are s = 2
+  s_male = 2      # males are s = 2
 )
-add_jags_data = append(add_jags_data, add_jags_data4)
+add_jags_data = append(add_jags_data, add_jags_data3)
 
 # calculate the upper bound on initial adult recruits and add to data
 add_jags_data = append(add_jags_data, list(max_init_recruits = max(jags_data$Ra_obs/(overall_phi_Rb_Ra) * 1.5, na.rm = T)))

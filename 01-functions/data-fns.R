@@ -228,6 +228,19 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   carcs_spawned[y_names %in% sub$brood_year] = sub$carcs_status_spawned
   carcs_sampled[y_names %in% sub$brood_year] = sub$carcs_samp_for_status
   
+  ### INFORMATION ABOUT WHICH YEARS NEED STRAYING ###
+  # the years in which strays will be needed
+  if (pop != "MIN") {
+    yrs = as.numeric(names(Mb_obs[,2,2]))
+    first_brood_release = min(yrs[Mb_obs[,2,2] > 0], na.rm = T)
+    first_adult_return = first_brood_release + kmax
+    stray_yrs = (kmax+1):(which(yrs == (first_adult_return - 1)))
+    not_stray_yrs = max(stray_yrs+1):ny
+  } else {
+    stray_yrs = (kmax+1):ny
+    not_stray_yrs = numeric(0)
+  }
+  
   ### BUILD LIST TO RETURN ###
   
   out = list(
@@ -299,7 +312,13 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     carcs_spawned = carcs_spawned,
     
     # pool equivalent units
-    peu = PEU[pop]
+    peu = PEU[pop],
+    
+    # info about which years need straying
+    stray_yrs = stray_yrs,
+    not_stray_yrs = not_stray_yrs,
+    n_stray_yrs = length(stray_yrs),
+    n_not_stray_yrs = length(not_stray_yrs)
   )
   
   # return output
@@ -325,7 +344,7 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
   names(main_list) = pops
   
   # extract the dimension variables from one of the populations
-  dims_list = main_list[[1]][c("ny", "nk", "ns", "nks", "ni", "no", "kmin", "kmax")]
+  dims_list = main_list[[1]][c("ny", "nk", "ns", "nks", "nkso", "ni", "no", "kmin", "kmax")]
   
   # add on nj to dimensions: number of populations
   dims_list = append(dims_list, list(nj = length(pops)))
@@ -385,8 +404,23 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     peu = abind(lapply(main_list, function(x) x$peu), along = 1)
   )
   
-  # append dimension and observation lists together
-  out_list = append(dims_list, obs_list)
+  # list containing information about years needing straying
+  stray_yrs = lapply(main_list, function(x) x$stray_yrs); nmax_stray = max(sapply(stray_yrs, length))
+  stray_yrs = abind(lapply(stray_yrs, function(x) c(x, rep(NA, nmax_stray - length(x)))), along = 2)
+  n_stray_yrs = apply(stray_yrs, 2, function(x) sum(!is.na(x)))
+  not_stray_yrs = lapply(main_list, function(x) x$not_stray_yrs); nmax_not_stray = max(sapply(not_stray_yrs, length))
+  not_stray_yrs = abind(lapply(not_stray_yrs, function(x) c(x, rep(NA, nmax_not_stray - length(x)))), along = 2)
+  n_not_stray_yrs = apply(not_stray_yrs, 2, function(x) sum(!is.na(x)))
+  
+  stray_yrs_list = list(
+    stray_yrs = stray_yrs,
+    n_stray_yrs = n_stray_yrs,
+    not_stray_yrs = not_stray_yrs,
+    n_not_stray_yrs = n_not_stray_yrs
+  )
+  
+  # append dimension, observation, and stray years into lists together
+  out_list = append(append(dims_list, obs_list), stray_yrs_list)
   
   # return the output
   return(out_list)
