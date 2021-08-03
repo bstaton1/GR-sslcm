@@ -50,11 +50,39 @@ The code used to render this output relies heavily on Staton's 'postpack' packag
 
 # MCMC Information {.tabset .tabset-pills}
 
-## Time Stamps
+## Time Information
 
 ```{r}
-df = data.frame(Value = model_info$jags_time)
-rownames(df) = c("Time Started", "Time Ended", "Time Elapsed")
+# Calculate hours per 10,000 iterations
+hrs_per_ten_thousand_iters = with(model_info$jags_dims, {
+  # calculation of total iters differs if parallel or not
+  if (parallel) {
+    total_iters = n_adapt + n_post + n_burn
+  } else {
+    total_iters = (n_adapt + n_post + n_burn) * n_chains
+  }
+  ten_thousands_of_total_iters = total_iters/10000
+  
+  # calculate hours elapsed
+  time_diff = as.POSIXct.default(model_info$jags_time["stoptime"]) - as.POSIXct.default(model_info$jags_time["starttime"])
+  time_number = as.numeric(time_diff)
+  time_units = attributes(time_diff)$units
+  hour_convert = switch(time_units,
+                        "secs" = 3600,
+                        "mins" = 60,
+                        "hours" = 1,
+                        "days" = 1/24)
+  hours_diff = time_number/hour_convert
+  
+  # calculate/round rate
+  round(hours_diff/ten_thousands_of_total_iters, 2)
+})
+
+# combine relevant info into a data frame
+df = data.frame(Value = c(model_info$jags_time, ifelse(model_info$jags_dims$parallel, "Yes", "No"), hrs_per_ten_thousand_iters))
+rownames(df) = c("Time Started", "Time Ended", "Time Elapsed", "Chains Ran in Parallel?", "Hours Per 10,000 Iterations")
+
+# make a kable for printing in output
 kable(df) %>%
   kable_styling(full_width = F, bootstrap_options = "condensed") %>%
   column_spec(1, bold = TRUE)
@@ -73,7 +101,8 @@ df = data.frame(Quantity = c("Burn-in + Adapt Iters", "Post Burn-in Iters", "Thi
 
 # render the table
 kable(df, format.args = list(big.mark = ",")) %>%
-  kable_styling(full_width = F, bootstrap_options = "condensed")
+  kable_styling(full_width = F, bootstrap_options = c("striped", "condensed")) %>%
+  column_spec(1, bold = TRUE)
 ```
 
 ## Diagnostic Summaries
