@@ -382,115 +382,103 @@ kable(kable_table, row.names = FALSE, align = c("lllcccccccccc")) %>%
   collapse_rows(columns = 1:2)
 ```
 
+# Fit to Data
 
+In all figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
 
+## Abundance Data {.tabset .tabset-pills}
 
+### Fall Parr Abundance
 
+```{r fall-trap-N-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^Pa[.+,LH_type,pop]$", LH_type = i_fall, pop = j)), jags_data$Pa_obs[observable,i_fall,j], main = pops[j])
+}
 
-```
-
-
-```
-
-
-
-```
-
-# Fit to Data {.tabset .tabset-pills}
-
-In the figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
-
-## Abundance Data
-
-```{r abundance-data-fits, fig.width = 3, fig.height = 5}
-par(mfcol = c(3,1), oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, "^Pa[.+,1]$"), jags_data$Pa_obs[observable,1], main = TeX("$Fall\\,Parr\\,Abundance\\,(At\\,Trap)$"))
-plot_tseries(post_summ(post, "^Mb[.+,2,1]$"), jags_data$Mb_obs[observable,2,1], main = TeX("$Spring\\,Smolt\\,Abundance\\,(At\\,Trap)$"))
-plot_tseries(post_summ(post, "^Ra_tot["), jags_data$Ra_obs[observable], main = TeX("$Adult\\,Return\\,Abundance$"))
-
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Abundance")
+mtext(side = 2, outer = T, line = 0.25, "Fall Parr Abundance")
 ```
 
-## Survival Data
+### Spring Smolt Abundance
 
-```{r survival-data-fits, fig.width = 5, fig.height = 6}
-par(mfcol = c(3,2), oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, "^phi_Pb_Ma["), expit(jags_data$Lphi_obs_Pb_Ma[observable]), main = TeX("$Summer\\,Parr \\rightarrow LGR"))
-plot_tseries(post_summ(post, "^phi_Pa_Ma[.+,1]$"), expit(jags_data$Lphi_obs_Pa_Ma[observable,1]), main = TeX("$Fall\\,Parr \\rightarrow LGR"))
-plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2,1]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2,1]), main = TeX("$Spring\\,Smolt \\rightarrow LGR\\,(NOR)"))
-plot_tseries(post_summ(post, "^phi_Mb_Ma[.+,2,2]$"), expit(jags_data$Lphi_obs_Mb_Ma[observable,2,2]), main = TeX("$Spring\\,Smolt \\rightarrow LGR\\,(HOR)"))
-plot_tseries(post_summ(post, "^phi_Ma_O0[.+,1]$"), expit(jags_data$Lphi_obs_Ma_O0[observable,1]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,(NOR)"))
-plot_tseries(post_summ(post, "^phi_Ma_O0[.+,2]$"), expit(jags_data$Lphi_obs_Ma_O0[observable,2]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,(HOR)"))
+```{r spring-trap-N-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^Mb[.+,LH_type,origin,pop]$", origin = o_nor, LH_type = i_spring, pop = j)), jags_data$Mb_obs[observable,i_spring,o_nor,j], main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Survival")
+mtext(side = 2, outer = T, line = 0.25, "Spring Smolt Abundance")
 ```
 
-## Composition Data {.tabset .tabset-pills .tabset-fade}
+### Adult Return Abundance
 
-Within a single year, the values across all panels sum to one.
+```{r adult-N-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^Ra_tot[.+,pop]$", pop = j)), jags_data$Ra_obs[observable,j], main = pops[j])
+}
 
-### Weir Sampling
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Return Year")
+mtext(side = 2, outer = T, line = 0.25, "Adult Return Abundance")
+```
 
-```{r weir-comp-data-fits, fig.width = 8, fig.height = 5}
-# calculate observed q
-q_obs = t(apply(jags_data$weir_x_obs, 1, function(y) y/sum(y)))
+## Survival Data {.tabset .tabset-pills}
 
-par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
-plot_tseries(post_summ(post, "^q_Ra[.+,1]$"), q_obs[observable,1], main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,2]$"), q_obs[observable,2], main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,3]$"), q_obs[observable,3], main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,4]$"), q_obs[observable,4], main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,5]$"), q_obs[observable,5], main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,6]$"), q_obs[observable,6], main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,7]$"), q_obs[observable,7], main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,8]$"), q_obs[observable,8], main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,9]$"), q_obs[observable,9], main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,10]$"), q_obs[observable,10], main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,11]$"), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Ra[.+,12]$"), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
+### Summer Parr $\rightarrow$ LGR
+
+```{r summer-surv-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_Pb_Ma[.+,pop]", pop = j)), expit(jags_data$Lphi_obs_Pb_Ma[observable,j]), main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow LGR\\,Survival$"))
 ```
 
-### Carcass Sampling
+### Fall Parr $\rightarrow$ LGR
 
-```{r carc-comp-data-fits, fig.width = 8, fig.height = 5}
-# calculate observed q
-q_obs = t(apply(jags_data$carc_x_obs, 1, function(y) y/sum(y)))
+```{r fall-surv-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[.+,LH_type,pop]$", LH_type = i_fall, pop = j)), expit(jags_data$Lphi_obs_Pa_Ma[observable,i_fall,j]), main = pops[j])
+}
 
-par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,1]$"), q_obs[observable,1], main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,2]$"), q_obs[observable,2], main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,3]$"), q_obs[observable,3], main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,4]$"), q_obs[observable,4], main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,5]$"), q_obs[observable,5], main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,6]$"), q_obs[observable,6], main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,7]$"), q_obs[observable,7], main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,8]$"), q_obs[observable,8], main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,9]$"), q_obs[observable,9], main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,10]$"), q_obs[observable,10], main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,11]$"), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
-plot_tseries(post_summ(post, "^q_Sa_adj[.+,12]$"), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+mtext(side = 2, outer = T, line = 0.25, TeX("$Fall\\,Parr \\rightarrow LGR\\,Survival$"))
 ```
 
-## Spawn Status Data
+### Spring Smolt $\rightarrow$ LGR (NOR)
 
-```{r spawn-status-fits, fig.width = 3.5, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
-layout(matrix(c(1,2), 2, 1), heights = c(1, 0.65))
-plot_tseries(post_summ(post, "^phi_Sb_Sa["), with(jags_data, carcs_spawned/carcs_sampled)[observable], main = "Successful Spawning")
-mtext(side = 2, "Survival Probability", line = 1.5)
+```{r spring-surv-fit-nor, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$",LH_type = i_spring, origin = o_nor, pop = j)), expit(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j]), main = pops[j])
+}
 
-at_x = seq(1, length(observable), 4)
-par(mar = c(2,2,0,1), yaxs = "i")
-mp = barplot(jags_data$carcs_sampled[observable], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
-axis(side = 1, at = mp[at_x], labels = substr( names(jags_data$carcs_sampled[observable]), 3, 4)[at_x])
-box()
-mtext(side = 2, "Carcasses Sampled", line = 1.5)
-mtext(side = 1, "Brood Year", line = 1.5)
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,Survival\\,(NOR)$"))
+```
+
+### Spring Smolt $\rightarrow$ LGR (HOR)
+
+```{r spring-surv-fit-hor, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$", LH_type = i_spring, origin = o_hor, pop = j)), expit(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j]), main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,Survival\\,(HOR)"))
 ```
 
 # Spawner-to-Parr Relationship {.tabset .tabset-pills}
@@ -502,49 +490,102 @@ All red components are posterior summaries (medians and 95% credible intervals).
 ```{r eggs-to-parr, fig.width = 6, fig.height = 4}
 # extract posterior samples of the BH productivity and capacity parameters
 bh_params = post_subset(post, c("alpha", "^beta$"), matrix = T)
+### LGR Smolt $\rightarrow O_0$ (NOR)
 
 # extract posterior summaries of total spawners by brood year
 Sa_tot = post_summ(post, "^Sa_tot[")
+```{r hydro-nor-surv-fit, fig.width = 6, fig.height = 5}
+par(oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)), expit(jags_data$Lphi_obs_Ma_O0[observable,o_nor]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Survival")
+```
 
 # extract posterior summaries of total egg production by brood year
 f_tot = post_summ(post, "^f_tot[")
+### LGR Smolt $\rightarrow O_0$ (HOR)
 
 # extract posterior summaries of total parr recruits by brood year
 Pb = post_summ(post, "^Pb[")
+```{r hydro-hor-surv-fit, fig.width = 6, fig.height = 5}
+par(oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)), expit(jags_data$Lphi_obs_Ma_O0[observable,o_hor]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Survival")
+```
 
 # predict parr recruits along a sequence of spawner abundances
 Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
 f_pred = seq(0, max(f_tot[5,]), length = 30)
+## Composition Data {.tabset .tabset-pills .tabset-fade}
 
 Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(f_pred, bh_params[i,1], bh_params[i,2])))
 colnames(Pb_pred) = paste0("Pb_pred[", 1:length(Sa_pred), "]")
 Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
 Pb_pred = post_summ(Pb_pred, "Pb_pred")
+Within a single year, the values across all panels sum to one.
 
 # fit ordinary least squares version
 ols_fit = fit_fecund_BH(jags_data)$BH_fit
+### Weir Sampling {.tabset .tabset-pills}
+
+```{r weir-comp-fit-func}
+weir_comp_fit_plot = function(j) {
+  # calculate observed q
+  q_obs = t(apply(jags_data$weir_x_obs[,,j], 1, function(y) y/sum(y)))
+
+  par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,1,pop]$", pop = j)), q_obs[observable,1], main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,2,pop]$", pop = j)), q_obs[observable,2], main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,3,pop]$", pop = j)), q_obs[observable,3], main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,4,pop]$", pop = j)), q_obs[observable,4], main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,5,pop]$", pop = j)), q_obs[observable,5], main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,6,pop]$", pop = j)), q_obs[observable,6], main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,7,pop]$", pop = j)), q_obs[observable,7], main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,8,pop]$", pop = j)), q_obs[observable,8], main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,9,pop]$", pop = j)), q_obs[observable,9], main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,10,pop]$", pop = j)), q_obs[observable,10], main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,11,pop]$", pop = j)), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,12,pop]$", pop = j)), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
+  
+  mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+}
+```
 
 # draw 1000 random parameters
 ols_params = exp(rmvnorm(1000, coef(ols_fit), vcov(ols_fit)))
+#### CAT
 
 # calculate predicted curve at each pair/summarize
 ols_R_pred = t(sapply(1:1000, function(i) BH(f_pred, ols_params[i,1], ols_params[i,2])))
 ols_R_pred = apply(ols_R_pred, 2, function(x) quantile(x, c(0.5, 0.025, 0.975)))
+```{r cat-weir-comp-fit, fig.width = 8, fig.height = 5}
+weir_comp_fit_plot(1)
+```
 
 # graphical parameters
 par(mar = c(3,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
+#### LOS
 
 # empty plot
 plot(1, 1, type = "n", xlim = range(0, f_tot[5,]), ylim = range(0, Pb[5,], Pb_pred[5,]),
      xlab = "Total Egg Production (millions)", ylab = "Parr Recruits", xaxt = "n")
+```{r lost-weir-comp-fit, fig.width = 8, fig.height = 5}
+weir_comp_fit_plot(2)
+```
 
 x_ticks = axisTicks(par("usr")[1:2], log = F)
 axis(side = 1, at = x_ticks, labels = x_ticks/1e6)
+#### MIN
 
 # draw fitted relationship: Bayesian
 polygon(c(f_pred, rev(f_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
 lines(Pb_pred[4,] ~ f_pred, col = "red", lty = 2)
 lines(Pb_pred[5,] ~ f_pred, col = "red", lty = 2)
+```{r min-weir-comp-fit, fig.width = 8, fig.height = 5}
+weir_comp_fit_plot(3)
+```
 
 # draw fitted relationship: OLS
 polygon(c(f_pred, rev(f_pred)), c(ols_R_pred[2,], rev(ols_R_pred[3,])), col = alpha("grey", 0.5), border = NA)
@@ -552,23 +593,54 @@ lines(ols_R_pred[1,] ~ f_pred, lwd = 2)
 lines(ols_R_pred[2,] ~ f_pred, lty = 2)
 lines(ols_R_pred[3,] ~ f_pred, lty = 2)
 lines(Pb_pred[3,] ~ f_pred, col = "red", lwd = 2)
+#### UGR
 
 # draw state pairs + uncertainty
 segments(f_tot[4,], Pb[3,], f_tot[5,], Pb[3,], col = "red")
 segments(f_tot[3,], Pb[4,], f_tot[3,], Pb[5,], col = "red")
 points(Pb[3,] ~ f_tot[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5))
+```{r ugr-weir-comp-fit, fig.width = 8, fig.height = 5}
+weir_comp_fit_plot(4)
 ```
 
 ## Total Eggs vs. Total Spawners
+### Carcass Sampling {.tabset .tabset-pills}
 
 This figure illustrates that total spawners is a reasonable index of total egg production. The three lines illustrate the relationship if each spawner (regardless of age/sex) had a fixed number of eggs.
+```{r carc-comp-fit-func}
+carc_comp_fit_plot = function(j) {
+  
+  # calculate observed q
+  q_obs = t(apply(jags_data$carc_x_obs[,,j], 1, function(y) y/sum(y)))
+
+  par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,1,pop]$", pop = j)), q_obs[observable,1], main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,2,pop]$", pop = j)), q_obs[observable,2], main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,3,pop]$", pop = j)), q_obs[observable,3], main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,4,pop]$", pop = j)), q_obs[observable,4], main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,5,pop]$", pop = j)), q_obs[observable,5], main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,6,pop]$", pop = j)), q_obs[observable,6], main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,7,pop]$", pop = j)), q_obs[observable,7], main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,8,pop]$", pop = j)), q_obs[observable,8], main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,9,pop]$", pop = j)), q_obs[observable,9], main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,10,pop]$",pop = j)), q_obs[observable,10], main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,11,pop]$",pop = j)), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,12,pop]$",pop = j)), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
+  mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Carcasses")
+}
+```
 
 ```{r, fig.width = 6, fig.height = 4}
 # extract posterior summaries of total egg production by brood year
 f_tot = post_summ(post, "^f_tot[")
+#### CAT
 
 # extract posterior summaries of total spawners by brood year
 Sa_tot = post_summ(post, "^Sa_tot[")
+```{r cat-carc-comp-fit, fig.width = 8, fig.height = 5}
+carc_comp_fit_plot(1)
+```
 
 par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(3,3,1,1))
 plot(f_tot["mean",] ~ Sa_tot["mean",],
@@ -577,6 +649,7 @@ plot(f_tot["mean",] ~ Sa_tot["mean",],
      ylab = "Total Egg Production (Millions)", xlab = "Total Spawners", las = 1, yaxt = "n")
 y_ticks = axisTicks(par("usr")[3:4], log = F)
 axis(side = 2, at = y_ticks, labels = y_ticks/1e6, las = 2)
+#### LOS
 
 segments(Sa_tot["2.5%",], f_tot["mean",], Sa_tot["97.5%",], f_tot["mean",], col = alpha("red", 0.5))
 segments(Sa_tot["mean",], f_tot["2.5%",], Sa_tot["mean",], f_tot["97.5%",], col = alpha("red", 0.5))
@@ -587,24 +660,35 @@ abline(c(0, 3600), lty = 3)
 legend("bottomright", title = "If Each Spawner Had:",
        legend = c("1000 Eggs", "1800 Eggs", "3600 Eggs"),
        lty = c(1,2,3), bty = "n")
+```{r lost-carc-comp-fit, fig.width = 8, fig.height = 5}
+carc_comp_fit_plot(2)
 ```
 
 ## Parr per Egg
 
 This figure shows the inherent density dependence built in to the Beverton-Holt recruitment function: with increasing egg density, survival per egg decreases. The horizontal line/region shows the theoretical maximum ($\alpha$) in the absence of density dependence.
+#### MIN
 
 ```{r, fig.width = 6, fig.height = 4}
 # extract posterior summaries of total egg production by brood year
 f_tot = post_summ(post, "^f_tot[")
+```{r min-carc-comp-fit, fig.width = 8, fig.height = 5}
+carc_comp_fit_plot(3)
+```
 
 # extract posterior summaries of total parr recruits by brood year
 Pb = post_summ(post, "^Pb[")
+#### UGR
 
 # conversion rates
 Pb_per_f_tot = post_summ(post, "^Pb_per_f_tot[")
+```{r ugr-carc-comp-fit, fig.width = 8, fig.height = 5}
+carc_comp_fit_plot(4)
+```
 
 # max survival
 alpha = post_summ(post, "^alpha")
+## Spawn Status Data
 
 par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(3,3,1,1))
 plot(Pb_per_f_tot["mean",] ~ f_tot["mean",],
@@ -613,14 +697,30 @@ plot(Pb_per_f_tot["mean",] ~ f_tot["mean",],
      ylab = "Parr per Egg", xlab = "Total Egg Production (Millions)", las = 1, xaxt = "n")
 x_ticks = axisTicks(par("usr")[1:2], log = F)
 axis(side = 1, at = x_ticks, labels = x_ticks/1e6)
+```{r spawn-status-fits, fig.width = 8, fig.height = 5}
+par(oma = c(2,2,0,0))
+layout(matrix(1:(jags_data$nj * 2), 2, jags_data$nj), heights = c(1, 0.65))
 
 segments(f_tot["2.5%",], Pb_per_f_tot["mean",], f_tot["97.5%",], Pb_per_f_tot["mean",], col = alpha("red", 0.5))
 segments(f_tot["mean",], Pb_per_f_tot["2.5%",], f_tot["mean",], Pb_per_f_tot["97.5%",], col = alpha("red", 0.5))
 points(Pb_per_f_tot["mean",] ~ f_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[.+,pop]", pop = j)), with(jags_data, carcs_spawned[,j]/carcs_sampled[,j])[observable], main = pops[j], ylim = c(0,1))
+  par(mar = c(1.5,1.5,2,0.5), yaxs = "i")
+  
+  if (j == 1) mtext(side = 2, "Survival Probability", line = 2)
+mp = barplot(jags_data$carcs_sampled[observable,j], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
+  at_x = seq(1, length(observable), 4)
+  axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$carcs_sampled[observable,j]), 3, 4)[at_x])
+  box()
+  
+  if (j == 1) mtext(side = 2, "Carcasses Sampled", line = 2)
+}
 
 rect(par("usr")[1], alpha["2.5%",], par("usr")[2], alpha["97.5%",], border = alpha("red", 0.5), col = alpha("salmon", 0.5))
 abline(h = alpha["mean",], lwd = 2, col = "red")
 box()
+junk = sapply(1:jags_data$nj, plot_f)
 ```
 
 ## Parr per Spawner
