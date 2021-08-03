@@ -1,24 +1,15 @@
 ---
 title: "Output Summary"
-subtitle: "`r c('CAT' = 'Catherine Creek', 'LOS' = 'Lostine', 'MIN' = 'Minam', 'UGR' = 'Upper Grande Ronde')[params$pop]`"
+subtitle: "Multi-Population Model"
 output: 
   html_document:
     toc: true
     toc_float: true
 params:
-  pop:
-    label: "Population"
-    value: CAT
-    input: select
-    choices: [CAT, LOS, UGR]
   scenario:
     label: "Scenario"
     value: "base"
     input: text
-  mcmc_plots:
-    label: "Make MCMC Plots"
-    input: checkbox
-    value: FALSE
 editor_options: 
   chunk_output_type: console
 ---
@@ -42,13 +33,16 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 in_dir = "02-model/model-output"
 
 # read information from this model
-model_info = readRDS(file.path(in_dir, paste0(params$pop, "-output-", params$scenario, ".rds")))
+model_info = readRDS(file.path(in_dir, paste0(params$pop, "output-", params$scenario, ".rds")))
 
 # extract the two key structures from this object
 post = model_info$post
 jags_data = model_info$jags_data
 
-# which years are "observable"?
+# the years included by the model
+all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
+
+# which years are "observable" for at least some quantities?
 observable = (jags_data$kmax+1):jags_data$ny
 ```
 
