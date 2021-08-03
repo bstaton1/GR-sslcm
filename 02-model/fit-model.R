@@ -1,6 +1,6 @@
-# ::::::::::::::::::::::::::::::::::::::::::::::: #
-# SCRIPT TO RUN THE JAGS MODEL FOR ONE POPULATION #
-# ::::::::::::::::::::::::::::::::::::::::::::::: #
+# :::::::::::::::::::::::::::::::::::::::::::::::: #
+# SCRIPT TO RUN THE JAGS MODEL FOR ALL POPULATIONS #
+# :::::::::::::::::::::::::::::::::::::::::::::::: #
 
 ##### STEP 0: SET UP WORKSPACE #####
 
@@ -23,35 +23,23 @@ scenario = "base"
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
 # or if in interactive session, uncomment the pop you wish to fit
 args = commandArgs(trailingOnly = T)
-pop = args[1]
-rmd = as.logical(args[2])
-mcmc_length = args[3]
-rmd_mcmc_plots = T
-
-# if pop not supplied, set a value and warn
-if (is.na(pop)) {
-  pop = "CAT"
-  # pop = "LOS"
-  # pop = "MIN" # don't do this one yet, the data prep steps (for age comp mostly) aren't correct for MIN
-  # pop = "UGR"
-  cat("\n\n'pop' was not supplied as a command line argument.", pop, " will be used.")
-}
+rmd = as.logical(args[1])
+mcmc_length = args[2]
 
 if (is.na(rmd)) {
-  rmd = T
-  # rmd = F
-  cat("\n\n'rmd' was not supplied as a command line argument.", rmd, " will be used.")
+  rmd = FALSE
+  cat("\n\n'rmd' was not supplied as a command line argument.", rmd, "will be used.")
 }
 
 if (is.na(mcmc_length)) {
   mcmc_length = "short"
-  cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, " will be used.")
+  cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, "will be used.")
 }
 
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
-jags_data = create_jags_data_one(pop)
+jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"))
 jags_data = append_no_na_indices(jags_data)
 
 # some parameters we are assuming known (for now)
@@ -98,7 +86,9 @@ add_jags_data3 = list(
 add_jags_data = append(add_jags_data, add_jags_data3)
 
 # calculate the upper bound on initial adult recruits and add to data
-add_jags_data = append(add_jags_data, list(max_init_recruits = max(jags_data$Ra_obs/(overall_phi_Rb_Ra) * 1.5, na.rm = T)))
+add_jags_data = append(add_jags_data, list(max_init_recruits = apply((jags_data$Ra_obs/overall_phi_Rb_Ra) * 1.5, 2, max, na.rm = TRUE)))
+
+# append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
 
 ##### STEP 2: SPECIFY JAGS MODEL #####
@@ -154,7 +144,7 @@ jags_params = c(
   "O_phi_scaler_nat_hat",
   
   # misc derived quantities
-  "beta_per_peu", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot",
+  "beta_per_peu", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma",
   
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
@@ -174,7 +164,7 @@ jags_dims = list(
   n_thin = switch(mcmc_length,  "short" = 1,    "medium" = 8,      "long" = 20),
   n_chain = switch(mcmc_length, "short" = 3,    "medium" = 3,      "long" = 3),
   n_adapt = switch(mcmc_length, "short" = 100,  "medium" = 1000,   "long" = 1000),
-  parallel = T
+  parallel = TRUE
 )
 
 ##### STEP 5: GENERATE INITIAL VALUES #####
@@ -184,7 +174,7 @@ jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data)
 ##### STEP 6: CALL THE JAGS SAMPLER #####
 
 # print a start message
-cat("\n\nRunning JAGS on Population:", pop)
+cat("\n\nRunning JAGS on Multi-Population Model")
 starttime = Sys.time()
 cat("\nMCMC started:", format(starttime))
 
@@ -200,7 +190,7 @@ post = jags.basic(
   n.burnin = jags_dims$n_burn, 
   n.thin = jags_dims$n_thin,
   parallel = jags_dims$parallel,
-  verbose = F
+  verbose = FALSE
 )
 
 # print a stop message
@@ -224,12 +214,11 @@ out_obj = list(
   jags_dims = jags_dims,
   jags_time = c(starttime = format(starttime), stoptime = format(stoptime), elapsed = format(round(stoptime - starttime,2))),
   post = post,
-  pop = pop,
   scenario = scenario
 )
 
 # create the output file name
-out_file = paste0(pop, "-output-", scenario, ".rds")
+out_file = paste0("output-", scenario, ".rds")
 
 # save the file
 cat("\nSaving rds Output")
@@ -242,13 +231,13 @@ if (rmd) {
   setwd("03-post-process")
 
   # file name of rendered output
-  rmd_out_file = paste0(pop, "-output-plots-", scenario, ".html")
+  rmd_out_file = paste0("output-plots-", scenario, ".html")
 
   # render the output
   render(input = "output-plots.Rmd",
          output_file = rmd_out_file,
-         params = list(pop = pop, scenario = scenario, mcmc_plots = rmd_mcmc_plots),
-         quiet = T
+         params = list(scenario = scenario),
+         quiet = TRUE
   )
 
   # open the rendered file when complete
