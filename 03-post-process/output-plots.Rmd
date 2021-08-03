@@ -1042,158 +1042,239 @@ mtext(side = 2, outer = T, line = 0, "Survival")
 
 # Sex Apportionment
 
-```{r sex-plots, fig.width = 7, fig.height = 4}
-par(mfrow = c(1,2), oma = c(1,1,0,0))
-plot_tseries(post_summ(post, "^omega[.+,1,1]$"), main = "Natural Origin", yrs = as.numeric(rownames
-                                                                                           (jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^omega[.+,1,2]$"), main = "Hatchery Origin", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-mtext(side = 1, outer = T, line = -0.5, "Brood Year")
-mtext(side = 2, outer = T, line = 0, "Female Proportion of Esutary Smolts")
+```{r sex-plots, fig.width = 8, fig.height = 5}
+plot_fn = function(j) {
+    par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  plot_tseries(post_summ(post, sub_index("^omega[.+,sex,origin,pop]$", sex = s_female, origin = o_nor, pop = j)), main = pops[j], yrs = as.numeric(rownames(jags_data$Pa_obs[observable,,j])), ylim = c(0,1)); if (j == 1) mtext(side = 2, line = 1.5, "NOR")
+
+  plot_tseries(post_summ(post, sub_index("^omega[.+,sex,origin,pop]$", sex = s_female, origin = o_hor, pop = j)), main = NULL, yrs = as.numeric(rownames(jags_data$Pa_obs[observable,,j])), ylim = c(0,1)); if (j == 1) mtext(side = 2, line = 1.5, "HOR")
+}
+
+par(mfcol = c(jags_data$ni,jags_data$nj), oma = c(2.5,3.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 1, line = 1.5, outer = T, "Brood Year", cex = 1.2)
+mtext(side = 2, line = 2, outer = T, "Proportion Female", cex = 1.2)
 ```
 
-# Maturity
+# Maturity {.tabset .tabset-pills}
 
-```{r maturity-plots, fig.width = 4, fig.height = 7}
-par(mfrow = c(4,2), oma = c(1,1,0,0))
-plot_tseries(post_summ(post, "^psi_O1_Rb[.+,1,1]$"), main = "Age 3 Females (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^psi_O1_Rb[.+,1,2]$"), main = "Age 3 Females (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^psi_O1_Rb[.+,2,1]$"), main = "Age 3 Males (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^psi_O1_Rb[.+,2,2]$"), main = "Age 3 Males (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^psi_O2_Rb[.+,1,1]$"), main = "Age 4 Females (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^psi_O2_Rb[.+,1,2]$"), main = "Age 4 Females (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^psi_O2_Rb[.+,2,1]$"), main = "Age 4 Males (Nat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-plot_tseries(post_summ(post, "^psi_O2_Rb[.+,2,2]$"), main = "Age 4 Males (Hat)", yrs = as.numeric(rownames(jags_data$Pa_obs)[observable]), ylim = c(0,1))
-
-mtext(side = 1, outer = T, line = -0.5, "Brood Year")
-mtext(side = 2, outer = T, line = 0, "Pr(Mature-at-Age|Alive in Ocean)")
-
+```{r maturity-plot-fn}
+maturity_plot = function(j) {
+  par(mfrow = c(4,2), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[.+,sex,origin,pop]$", sex = s_female, origin = o_nor, pop = j)), main = "Age 3 Females (NOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[.+,sex,origin,pop]$", sex = s_female, origin = o_hor, pop = j)), main = "Age 3 Females (HOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[.+,sex,origin,pop]$", sex = s_male, origin = o_nor, pop = j)), main = "Age 3 Males (NOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[.+,sex,origin,pop]$", sex = s_male, origin = o_hor, pop = j)), main = "Age 3 Males (HOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[.+,sex,origin,pop]$", sex = s_female, origin = o_nor, pop = j)), main = "Age 4 Females (NOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[.+,sex,origin,pop]$", sex = s_female, origin = o_hor, pop = j)), main = "Age 4 Females (HOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[.+,sex,origin,pop]$", sex = s_male, origin = o_nor, pop = j)), main = "Age 4 Males (NOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[.+,sex,origin,pop]$", sex = s_male, origin = o_hor, pop = j)), main = "Age 4 Males (HOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  
+  mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+  mtext(side = 2, outer = T, line = 0.25, "Pr(Mature-at-Age|Alive in Ocean)")
+}
 ```
 
-# Parameter Estimates {.tabset .tabset-pills}
+## CAT
 
-**Quick refresher on parameter names**
-_In alphabetical order, as displayed in figures_
-
-* `mu_omega[1]`: mean probability of being a female at ocean entry
-* `mu_phi_Ma_O0`: mean probability of surviving from LGD to ocean entry
-* `mu_phi_Mb_Ma`: mean probability of surviving movement from tributary to LGD (same for both LH types, different for origin types)
-* `mu_phi_Pa_Mb`: mean probability of surviving overwinter in tributary (`[1]`: fall migrants, `[2]`: spring migrants)
-* `mu_pi[1]`: mean probability of becoming a fall migrant LH type at end of summer
-* `mu_psi_O1_Rb`: mean probability of maturing at age 3 given survived to that point (`[1]`: females, `[2]`: males)
-* `mu_psi_O2_Rb`: mean probability of maturing at age 4 given did not mature at age 3 and survived to that point (`[1]`: females, `[2]`: males)
-
-`sig_L*` are the among-year logit-normal standard deviations of these quantities. `sigma_Pb` is lognormal standard deviation of parr recruitment.
-
-## Means
-
-```{r mu-boxplots, fig.width = 6, fig.height = 6}
-# parameters to display
-keep = match_params(post, "mu")
-
-# remove redundant elements
-keep = keep[-which(keep %in% c("mu_init_recruits", "mu_omega[2]", "mu_phi_Mb_Ma[2]", "mu_pi[2]"))]
-
-# extract posterior samples of these parameters: for drawing initial box plot
-post_samples = post_subset(post, keep, T)
-
-# calculate custom summaries of these parameters: for drawing actual box plot
-post_summaries = post_summ(post, keep, probs = c(0.025, 0.25, 0.5, 0.75, 0.975))[-c(1:2),]
-
-# graphical parameters
-par(mar = c(8,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
-
-# set up a box plot and replace the stats with the custom stats
-bp = boxplot(post_samples, plot = F)
-bp$stats = post_summaries
-
-# draw the box plot
-bxp(bp, ylim = c(0,1), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```{r, fig.width = 4, fig.height = 7}
+maturity_plot(1)
 ```
 
-## Standard Deviations
+## LOS
 
-```{r sig-boxplots, fig.width = 6, fig.height = 6}
-# parameters to display
-keep = match_params(post, "sig")
-
-# remove redundant elements
-keep = keep[-which(keep %in% c("sig_init_lrecruits", "sig_Lphi_Mb_Ma[2]"))]
-
-# extract posterior samples of these parameters: for drawing initial box plot
-post_samples = post_subset(post, keep, T)
-
-# calculate custom summaries of these parameters: for drawing actual box plot
-post_summaries = post_summ(post, keep, probs = c(0.025, 0.25, 0.5, 0.75, 0.975))[-c(1:2),]
-
-# graphical parameters
-par(mar = c(8,3,1,1), mgp = c(2,0.3,0), tcl = -0.2)
-
-# set up a box plot and replace the stats with the custom stats
-bp = boxplot(post_samples, plot = F)
-bp$stats = post_summaries
-
-# draw the box plot
-bxp(bp, ylim = c(0,max(post_summaries)), outline = F, las = 2, boxcol = "red", medcol = "red", whiskcol = "red", staplecol = "red", boxfill = alpha("salmon", 0.5))
+```{r, fig.width = 4, fig.height = 7}
+maturity_plot(2)
 ```
 
-# Numerical Summaries
+## MIN
 
-## Recruitment Function
-
-```{r}
-# extract posterior summaries
-alpha_summ = post_summ(post, "alpha", digits = 3)
-beta_summ = post_summ(post, "^beta$", digits = -3)
-beta_per_peu_summ = post_summ(post, "beta_per_peu", digits = -1)
-sigma_summ = post_summ(post, "sigma_Pb", digits = 3)
-
-# create/format the table
-tab = cbind(alpha_summ, beta_summ, beta_per_peu_summ, sigma_summ)
-colnames(tab) = c("$\\alpha$", "$\\beta$", "$\\beta/\\mathrm{PEU}$", "$\\sigma_{Pb}$")
-
-# produce html table
-kable(tab, format.args = list(big.mark = ","), escape = F) %>%
-  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
-  column_spec(1, bold = T)
+```{r maturity-min, fig.width = 4, fig.height = 7}
+maturity_plot(3)
 ```
 
-## Carcass Correction Factors
+## UGR
 
-```{r}
-# extract posterior summaries
-carc_adj = post_summ(post, "carc_adj", digits = 1)
-
-# create/format table
-x = paste0(carc_adj["mean",], " (", carc_adj["2.5%",], " -- ", carc_adj["97.5%",], ")")
-names(x) = colnames(carc_adj)
-tab = array_format(x)
-colnames(tab) = c("Female", "Male")
-rownames(tab) = c("Age 3", "Age 4", "Age 5")
-
-# produce html table
-kable(tab) %>%
-  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
-  column_spec(1, bold = T)
+```{r maturity-ugr, fig.width = 4, fig.height = 7}
+maturity_plot(4)
 ```
 
-## AR(1) Coefficients
+# Parameter Summaries {.tabset .tabset-dropdown}
 
-```{r}
-post_summ(post, "kappa", Rhat = TRUE, neff = TRUE, digits = 3)
+```{r my-boxplot-function}
+my_boxplot = function(params, ylab = NULL, ticklabs = pops, ylim = NULL, boxfill = alpha("salmon", 0.5), border = alpha("red", 0.5), ...) {
+  # extract posterior samples and rename them
+  post_sub = post_subset(post, params, matrix = TRUE)
+  
+  if (ncol(post_sub) >= 2) {
+    colnames(post_sub) = ticklabs
+  }
+
+  # initialize a boxplot object
+  bp = boxplot(post_sub, plot = FALSE)
+  
+  # replace the summary stats with my preferred quantiles
+  par(mar = c(2,3,1,1), mgp = c(2,0.35,0), tcl = -0.15)
+  bp$stats = apply(post_sub, 2, function(x) quantile(x, c(0.025, 0.25, 0.5, 0.75, 0.975)))
+  bxp(bp, ylab = ylab, xlab = "", outline = FALSE, ylim = ylim, ...,
+      staplelty = 0, whisklty = 1, boxfill = boxfill, boxcol = border, medcol = border, whiskcol = border)
+} 
+```
+
+## Parr Recruitment
+
+```{r recruit-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,3))
+my_boxplot("^alpha[.]$", "Productivity")
+my_boxplot("^beta[.]$", "Capacity")
+my_boxplot("^sigma_Pb[.]$", "Process SD")
+```
+
+## Life History Apportionment
+
+```{r LH-type-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot("^mu_pi[1,.]$", "Mean Proportion Fall Migrants")
+my_boxplot("^sig_Lpi[.]$", "Process SD")
+```
+
+## Overwinter Survival {.tabset .tabset-pills}
+
+### Logistic Function Parameters
+
+```{r overwinter-survival-bxp1, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,3))
+my_boxplot(sub_index("gamma0[LH_type,pop]", LH_type = i_fall, pop = "."), "Intercept (Fall)")
+my_boxplot(sub_index("gamma0[LH_type,pop]", LH_type = i_spring, pop = "."), "Intercept (Spring)")
+my_boxplot(sub_index("gamma1[LH_type,pop]", LH_type = i_spring, pop = "."), "Slope")
+```
+
+### Process SD
+
+```{r overwinter-survival-bxp2, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,3))
+my_boxplot(sub_index("sig_Lphi_Pa_Mb[LH_type,pop]", LH_type = i_fall, pop = "."), "Process SD (Fall)")
+my_boxplot(sub_index("sig_Lphi_Pa_Mb[LH_type,pop]", LH_type = i_spring, pop = "."), "Process SD (Spring)")
+```
+
+## Movement Survival to LGR {.tabset .tabset-pills}
+
+### Mean
+
+```{r trib-to-lgr-bxp1, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_phi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_nor, pop = "."), "Average Migration Survival", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_phi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_hor, pop = "."), "Average Migration Survival", main = "HOR", ylim = c(0,1))
+```
+
+### Process SD
+
+```{r trib-to-lgr-bxp2, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("sig_Lphi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_nor, pop = "."), "Process SD", main = "NOR")
+my_boxplot(sub_index("sig_Lphi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_hor, pop = "."), "Process SD", main = "HOR")
+```
+
+## Movement Survival to Ocean
+
+```{r lgr-to-ocean-bxp}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_phi_Ma_O0[origin]", origin = "."), "Average Migration Survival", ylim = c(0,1), ticklab = c("NOR", "HOR"))
+my_boxplot(sub_index("sig_Lphi_Ma_O0[origin]", origin = "."), "Process SD", ylim = c(0,1), ticklab = c("NOR", "HOR"))
+```
+
+## Sex Apportionment {.tabset .tabset-pills}
+
+### Mean
+
+```{r sex-bxp1, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_omega[sex,origin,pop]", sex = s_female, origin = o_nor, pop = "."), "Average Proportion Female", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_omega[sex,origin,pop]", sex = s_female, origin = o_hor, pop = "."), "Average Proportion Female", main = "HOR", ylim = c(0,1))
+```
+
+### Process SD
+
+```{r sex-bxp2, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("sig_Lomega[origin,pop]", origin = o_nor, pop = "."), "Process SD", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("sig_Lomega[origin,pop]", origin = o_hor, pop = "."), "Process SD", main = "HOR", ylim = c(0,1))
+```
+
+## Probability of Maturing at Age-3 {.tabset .tabset-pills}
+
+### Females
+
+```{r age3-female-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_psi_O1_Rb[sex,origin,pop]", sex = s_female, origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O1_Rb[sex,origin,pop]", sex = s_female, origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
+```
+
+### Males
+
+```{r age3-male-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_psi_O1_Rb[sex,origin,pop]", sex = s_male, origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O1_Rb[sex,origin,pop]", sex = s_male, origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
+```
+
+## Probability of Maturing at Age-4 {.tabset .tabset-pills}
+
+### Females
+
+```{r age-4-female-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_psi_O2_Rb[sex,origin,pop]", sex = s_female, origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O2_Rb[sex,origin,pop]", sex = s_female, origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
+```
+
+### Males
+
+```{r age-4-male-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_psi_O2_Rb[sex,origin,pop]", sex = s_male, origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O2_Rb[sex,origin,pop]", sex = s_male, origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
+```
+
+## Ocean Survival {.tabset .tabset-pills}
+
+### Year 1
+
+```{r yr1-ocean-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_phi_O0_O1[origin]", origin = "."), ticklabs = c("NOR", "HOR"), ylim = c(0,1), ylab = "Average Survival")
+my_boxplot("sig_Lphi_O0_O1", ylab = "Process SD")
+```
+
+### Year 2
+
+```{r yr2-ocean-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_phi_O1_O2[origin]", origin = "."), ticklabs = c("NOR", "HOR"), ylim = c(0,1), ylab = "Average Survival")
+my_boxplot("sig_Lphi_O1_O2", ylab = "Process SD")
+```
+
+## Pre-spawn Survival
+
+```{r prespawn-surv-bxp}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_phi_Sb_Sa[pop]", pop = "."), "Average Survival", ylim = c(0,1))
+my_boxplot(sub_index("sig_Lphi_Sb_Sa[pop]", pop = "."), "Process SD")
 ```
 
 # JAGS Model and Data {.tabset .tabset-pills}
 
 ## JAGS Model Code
 
-```{r, comment = NA}
+```{r jags-model, comment = NA}
 # print the JAGS model code
 cat(model_info$jags_model_code, sep = "\n")
 ```
 
 ## JAGS Model Data
 
-```{r, comment = NA}
+```{r jags-data, comment = NA}
 # print the JAGS model data
 model_info$jags_data
 ```
