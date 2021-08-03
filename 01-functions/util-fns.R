@@ -136,3 +136,41 @@ find_no_na_indices = function(x) {
 BH = function(x, alpha, beta) {
   x/((1/alpha) + (x/beta))
 }
+
+##### REPLACE PLACEHOLDER INDEX #####
+# x: a string like "psi_O1_Rb[year,sex,origin,pop]
+# other arguments: a number to replace
+# e.g., sub_index("psi_O1_Rb[year,sex,origin,pop]", year = ".+", sex = 1, origin = 2, pop = ".")
+# returns "psi_O1_Rb[.+,1,2,.]"
+# this reduces how much hardcoding is required in generating output summaries
+
+sub_index = function(x, year = NULL, LH_type = NULL, age = NULL, sex = NULL, origin = NULL, pop = NULL) {
+  # create a duplicate object
+  newx = x
+  
+  # if one of the dimensions was specified, perform replacement
+  if (!is.null(year)) newx = stringr::str_replace(newx, "year", as.character(year))
+  if (!is.null(age)) newx = stringr::str_replace(newx, "age", as.character(age))
+  if (!is.null(LH_type)) newx = stringr::str_replace(newx, "LH_type", as.character(LH_type))
+  if (!is.null(sex)) newx = stringr::str_replace(newx, "sex", as.character(sex))
+  if (!is.null(origin)) newx = stringr::str_replace(newx, "origin", as.character(origin))
+  if (!is.null(pop)) newx = stringr::str_replace(newx, "pop", as.character(pop))
+  
+  # return the version with placeholders replaced by index values
+  newx
+}
+
+##### COMBINE A LIST OF DATA FRAMES #####
+# list: a list with data frames to be rbind-ed stored as elements
+
+unlist_dfs = function(list) {
+  # empty object
+  output = NULL
+  
+  # loop through list elements, combining the data frame in each with all previous
+  for (i in 1:length(list)) output = rbind(output, list[[i]])
+  
+  # return the output
+  return(output)
+}
+

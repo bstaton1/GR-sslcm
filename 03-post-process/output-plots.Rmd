@@ -46,6 +46,26 @@ all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
 observable = (jags_data$kmax+1):jags_data$ny
 ```
 
+```{r dimension-ids}
+# population names
+pops = colnames(jags_data$Ra_obs)
+
+# dimension IDs
+i_fall   = 1  # fall migrants are i = 1
+i_spring = 2  # spring migrants are i = 2,
+o_nor    = 1  # natural origin are o = 1,
+o_hor    = 2  # hatchery origin are o = 2,
+s_female = 1  # females are s = 1,
+s_male   = 2  # males are s = 2
+j_cat    = 1  # Catherine Creek is j = 1
+j_los    = 2  # Lostine River is j = 2
+j_min    = 3  # Minam River is j = 3
+j_ugr    = 4  # Upper Grande Ronde River is j = 4
+k_3      = 1  # age 3 is k = 1
+k_4      = 2  # age 4 is k = 2
+k_5      = 3  # age 5 is k = 3
+```
+
 The code used to render this output relies heavily on Staton's 'postpack' package (now available on CRAN). Take a look at [this vignette](https://bstaton1.github.io/postpack/articles/feature-overview.html) for a primer on how to use it.
 
 # MCMC Information {.tabset .tabset-pills}
