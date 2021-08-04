@@ -747,7 +747,7 @@ mtext(side = 2, outer = T, line = 0.25, "Total Egg Production (Millions)")
 
 ## Parr per Egg
 
-This figure shows the inherent density dependence built in to the Beverton-Holt recruitment function: with increasing egg density, survival per egg decreases. The horizontal line/region shows the theoretical maximum ($\alpha_j$) in the absence of density dependence.
+This figure shows the density dependence built in to the Beverton-Holt recruitment function: with increasing egg density, survival per egg decreases. The horizontal line/region shows the theoretical maximum ($\alpha_j$) in the absence of density dependence.
 
 ```{r parr-per-egg-v-eggs, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
@@ -786,7 +786,7 @@ plot_f = function(j) {
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Total Egg Production (Millions)")
-mtext(side = 1, outer = T, line = 0.25, "Parr per Egg")
+mtext(side = 2, outer = T, line = 0.25, "Parr per Egg")
 ```
 
 ## Parr per Spawner
@@ -818,7 +818,7 @@ plot_f = function(j) {
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Total Spawners")
-mtext(side = 1, outer = T, line = 0.25, "Parr per Spawner")
+mtext(side = 2, outer = T, line = 0.25, "Parr per Spawner")
 ```
 
 # Overwinter Survival Relationships
