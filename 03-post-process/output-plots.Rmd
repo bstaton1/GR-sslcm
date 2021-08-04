@@ -33,10 +33,11 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 in_dir = "02-model/model-output"
 
 # read information from this model
-model_info = readRDS(file.path(in_dir, paste0(params$pop, "output-", params$scenario, ".rds")))
+model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds")))
 
 # extract the two key structures from this object
 post = model_info$post
+# post = post_thin(model_info$post, keep_percent = 0.1)  # uncomment this to run document with 10% of the retained MCMC samples
 jags_data = model_info$jags_data
 
 # the years included by the model
@@ -64,9 +65,27 @@ j_ugr    = 4  # Upper Grande Ronde River is j = 4
 k_3      = 1  # age 3 is k = 1
 k_4      = 2  # age 4 is k = 2
 k_5      = 3  # age 5 is k = 3
-```
 
-The code used to render this output relies heavily on Staton's 'postpack' package (now available on CRAN). Take a look at [this vignette](https://bstaton1.github.io/postpack/articles/feature-overview.html) for a primer on how to use it.
+# kso represents "age/sex/origin" combo
+# e.g., kso = 1 is age 3 female NORs
+# e.g., kso = 12 is age 5 male HORs
+# these objects specify which elements of kso are for different aggregations of these
+kso_age = list(
+  kso_3 = c(1, 4, 7, 10),
+  kso_4 = c(2, 5, 8, 11),
+  kso_5 = c(3, 6, 9, 12)
+)
+
+kso_sex = list(
+  kso_female = c(1,2,3,7,8,9),
+  kso_male = c(4,5,6,10,11,12)
+)
+
+kso_origin = list(
+  kso_nor = 1:6,
+  kso_hor = 7:12
+)
+```
 
 # MCMC Information {.tabset .tabset-pills}
 
@@ -501,11 +520,173 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 
 ## Composition Data {.tabset .tabset-pills .tabset-fade}
 
+```{r calculate-aggregated-comps-model}
+# extract the full posteriors of the two composition sets
+q_Ra_full = post_subset(post, "q_Ra", matrix = TRUE)
+q_Sa_adj_full = post_subset(post, "q_Sa", matrix = TRUE)
+
+# primary containers: will store final recalculated output
+q_Ra_age = q_Sa_adj_age = q_Ra_sex = q_Sa_adj_sex = q_Ra_origin = q_Sa_adj_origin = NULL
+
+# number of posterior samples
+n = post_dim(post, "saved")
+
+# loop through posterior samples, calculate various aggregates of composition by type
+for (i in 1:n) {
+  
+  # format the posterior draw as arrays -- easier to subset
+  q_Ra = array_format(q_Ra_full[i,])
+  q_Sa_adj = array_format(q_Sa_adj_full[i,])
+  
+  ## BY AGE, AGGREGATED ACROSS SEX AND ORIGIN
+  
+  # containers
+  q_Ra_age_tmp = q_Sa_adj_age_tmp = array(NA, dim = c(jags_data$ny, jags_data$nk, jags_data$nj))
+  inds_1_age = inds_2_age = inds_3_age = q_Ra_age_tmp
+  for (j in 1:jags_data$nj) {
+    for (k in 1:jags_data$nk) {
+      # calculate aggregate proportions for each age
+      q_Ra_age_tmp[,k,j] = rowSums(q_Ra[,kso_age[[k]],j])
+      q_Sa_adj_age_tmp[,k,j] = rowSums(q_Sa_adj[,kso_age[[k]],j])
+      
+      # build the element identifiers - for building names later
+      inds_1_age[,k,j] = 1:jags_data$ny
+      inds_2_age[,k,j] = k
+      inds_3_age[,k,j] = j
+    }
+  }
+  
+  # vectorize, add names, and remove NAs
+  q_Ra_age_v = as.numeric(q_Ra_age_tmp)
+  q_Sa_adj_age_v = as.numeric(q_Sa_adj_age_tmp)
+  names(q_Ra_age_v) = paste0("q_Ra_age[", as.numeric(inds_1_age), ",", as.numeric(inds_2_age), ",", as.numeric(inds_3_age), "]")
+  names(q_Sa_adj_age_v) = paste0("q_Sa_adj_age[", as.numeric(inds_1_age), ",", as.numeric(inds_2_age), ",", as.numeric(inds_3_age), "]")
+  q_Ra_age_v = q_Ra_age_v[!is.na(q_Ra_age_v)]
+  q_Sa_adj_age_v = q_Sa_adj_age_v[!is.na(q_Sa_adj_age_v)]
+  
+  ## BY SEX, AGGREGATED ACROSS AGE AND ORIGIN
+  
+  # containers
+  q_Ra_sex_tmp = q_Sa_adj_sex_tmp = array(NA, dim = c(jags_data$ny, jags_data$ns, jags_data$nj))
+  inds_1_sex = inds_2_sex = inds_3_sex = q_Ra_sex_tmp
+  for (j in 1:jags_data$nj) {
+    for (s in 1:jags_data$ns) {
+      # calculate aggregate proportions for each sex
+      q_Ra_sex_tmp[,s,j] = rowSums(q_Ra[,kso_sex[[s]],j])
+      q_Sa_adj_sex_tmp[,s,j] = rowSums(q_Sa_adj[,kso_sex[[s]],j])
+      
+      # build the element identifiers - for building names later
+      inds_1_sex[,s,j] = 1:jags_data$ny
+      inds_2_sex[,s,j] = s
+      inds_3_sex[,s,j] = j
+    }
+  }
+  
+  # vectorize, add names, and remove NAs
+  q_Ra_sex_v = as.numeric(q_Ra_sex_tmp)
+  q_Sa_adj_sex_v = as.numeric(q_Sa_adj_sex_tmp)
+  names(q_Ra_sex_v) = paste0("q_Ra_sex[", as.numeric(inds_1_sex), ",", as.numeric(inds_2_sex), ",", as.numeric(inds_3_sex), "]")
+  names(q_Sa_adj_sex_v) = paste0("q_Sa_adj_sex[", as.numeric(inds_1_sex), ",", as.numeric(inds_2_sex), ",", as.numeric(inds_3_sex), "]")
+  q_Ra_sex_v = q_Ra_sex_v[!is.na(q_Ra_sex_v)]
+  q_Sa_adj_sex_v = q_Sa_adj_sex_v[!is.na(q_Sa_adj_sex_v)]
+  
+  ## BY ORIGIN, AGGREGATED ACROSS AGE AND SEX
+  
+  # containers
+  q_Ra_origin_tmp = q_Sa_adj_origin_tmp = array(NA, dim = c(jags_data$ny, jags_data$no, jags_data$nj))
+  inds_1_origin = inds_2_origin = inds_3_origin = q_Ra_origin_tmp
+  for (j in 1:jags_data$nj) {
+    for (o in 1:jags_data$no) {
+      # calculate aggregate proportions for each origin
+      q_Ra_origin_tmp[,o,j] = rowSums(q_Ra[,kso_origin[[o]],j])
+      q_Sa_adj_origin_tmp[,o,j] = rowSums(q_Sa_adj[,kso_origin[[o]],j])
+      
+      # build the element identifiers - for building names later
+      inds_1_origin[,o,j] = 1:jags_data$ny
+      inds_2_origin[,o,j] = o
+      inds_3_origin[,o,j] = j
+    }
+  }
+  
+  # vectorize, add names, and remove NAs
+  q_Ra_origin_v = as.numeric(q_Ra_origin_tmp)
+  q_Sa_adj_origin_v = as.numeric(q_Sa_adj_origin_tmp)
+  names(q_Ra_origin_v) = paste0("q_Ra_origin[", as.numeric(inds_1_origin), ",", as.numeric(inds_2_origin), ",", as.numeric(inds_3_origin), "]")
+  names(q_Sa_adj_origin_v) = paste0("q_Sa_adj_origin[", as.numeric(inds_1_origin), ",", as.numeric(inds_2_origin), ",", as.numeric(inds_3_origin), "]")
+  q_Ra_origin_v = q_Ra_origin_v[!is.na(q_Ra_origin_v)]
+  q_Sa_adj_origin_v = q_Sa_adj_origin_v[!is.na(q_Sa_adj_origin_v)]
+  
+  ## COMBINE NEW CALCULATED QUANTITIES ACROSS POSTERIOR SAMPLES
+  
+  q_Ra_age = rbind(q_Ra_age, q_Ra_age_v)
+  q_Sa_adj_age = rbind(q_Sa_adj_age, q_Sa_adj_age_v)
+  q_Ra_sex = rbind(q_Ra_sex, q_Ra_sex_v)
+  q_Sa_adj_sex = rbind(q_Sa_adj_sex, q_Sa_adj_sex_v)
+  q_Ra_origin = rbind(q_Ra_origin, q_Ra_origin_v)
+  q_Sa_adj_origin = rbind(q_Sa_adj_origin, q_Sa_adj_origin_v)
+  
+}
+
+# combine new calculated quantites into a big matrix
+q_new = cbind(q_Ra_age, q_Sa_adj_age, q_Ra_sex, q_Sa_adj_sex, q_Ra_origin, q_Sa_adj_origin)
+
+# combine with the rest of the posterior samples
+post = post_bind(post, q_new)
+
+```
+
+```{r calculate-aggregated-comps-data}
+
+# these are the observed proportions by age (aggregated across sex and origin), sex (aggregated across age and origin), and origin (aggregated across age and sex)
+
+# containers
+q_weir_age_obs = q_carc_age_obs = array(NA, dim = c(jags_data$ny, jags_data$nk, jags_data$nj))
+q_weir_sex_obs = q_carc_sex_obs = array(NA, dim = c(jags_data$ny, jags_data$ns, jags_data$nj))
+q_weir_origin_obs = q_carc_origin_obs = array(NA, dim = c(jags_data$ny, jags_data$no, jags_data$nj))
+
+for (j in 1:jags_data$nj) {
+  # calculate aggregate proportions for each age
+  for (k in 1:jags_data$nk) {
+    q_weir_age_obs[,k,j] = rowSums(jags_data$weir_x_obs[,kso_age[[k]],j])/jags_data$weir_nx_obs[,j]
+    q_carc_age_obs[,k,j] = rowSums(jags_data$carc_x_obs[,kso_age[[k]],j])/jags_data$carc_nx_obs[,j]
+  }
+  
+  # calculate aggregate proportions for each sex
+  for (s in 1:jags_data$ns) {
+    q_weir_sex_obs[,s,j] = rowSums(jags_data$weir_x_obs[,kso_sex[[s]],j])/jags_data$weir_nx_obs[,j]
+    q_carc_sex_obs[,s,j] = rowSums(jags_data$carc_x_obs[,kso_sex[[s]],j])/jags_data$carc_nx_obs[,j]
+  }
+  
+  # calculate aggregate proportions for each origin
+  for (o in 1:jags_data$no) {
+    q_weir_origin_obs[,o,j] = rowSums(jags_data$weir_x_obs[,kso_origin[[o]],j])/jags_data$weir_nx_obs[,j]
+    q_carc_origin_obs[,o,j] = rowSums(jags_data$carc_x_obs[,kso_origin[[o]],j])/jags_data$carc_nx_obs[,j]
+  }
+}
+
+dimnames(q_weir_age_obs)[[1]] = dimnames(q_weir_sex_obs)[[1]] = dimnames(q_weir_origin_obs)[[1]] = dimnames(q_carc_age_obs)[[1]] = dimnames(q_carc_sex_obs)[[1]] = dimnames(q_carc_origin_obs)[[1]] = dimnames(jags_data$weir_x_obs)[[1]]
+
+q_weir_new_obs = list(
+  q_weir_age_obs = q_weir_age_obs,
+  q_weir_sex_obs = q_weir_sex_obs,
+  q_weir_origin_obs = q_weir_origin_obs
+)
+
+q_carc_new_obs = list(
+  q_carc_age_obs = q_carc_age_obs,
+  q_carc_sex_obs = q_carc_sex_obs,
+  q_carc_origin_obs = q_carc_origin_obs
+)
+
+```
+
 Within a single year, the values across all panels sum to one.
 
 ### Weir Sampling {.tabset .tabset-pills}
 
-```{r weir-comp-fit-func}
+```{r weir-comp-fit-funcs}
+
+# for completely disaggregated fits
 weir_comp_fit_plot = function(j) {
   # calculate observed q
   q_obs = t(apply(jags_data$weir_x_obs[,,j], 1, function(y) y/sum(y)))
@@ -524,38 +705,156 @@ weir_comp_fit_plot = function(j) {
   plot_tseries(post_summ(post, sub_index("^q_Ra[.+,11,pop]$", pop = j)), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
   plot_tseries(post_summ(post, sub_index("^q_Ra[.+,12,pop]$", pop = j)), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
   
-  mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+}
+
+# for fits to each age, aggregated across sexes and origins
+weir_comp_fit_plot_age = function(j) {
+  par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,1,pop]$", pop = j)), q_weir_new_obs$q_weir_age_obs[observable,1,j], main = TeX("$Age\\,3$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,2,pop]$", pop = j)), q_weir_new_obs$q_weir_age_obs[observable,2,j], main = TeX("$Age\\,4$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,3,pop]$", pop = j)), q_weir_new_obs$q_weir_age_obs[observable,3,j], main = TeX("$Age\\,5$"), ylim = c(0,1))
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+}
+
+# for fits to each sex, aggregated across ages and origins
+weir_comp_fit_plot_sex = function(j) {
+  par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_sex[.+,1,pop]$", pop = j)), q_weir_new_obs$q_weir_sex_obs[observable,1,j], main = TeX("$Females$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_sex[.+,2,pop]$", pop = j)), q_weir_new_obs$q_weir_sex_obs[observable,2,j], main = TeX("$Males$"), ylim = c(0,1))
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+}
+
+# for fits to each origin, aggregated across ages and sexes
+weir_comp_fit_plot_origin = function(j) {
+  par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,1,pop]$", pop = j)), q_weir_new_obs$q_weir_origin_obs[observable,1,j], main = TeX("$NOR$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,2,pop]$", pop = j)), q_weir_new_obs$q_weir_origin_obs[observable,2,j], main = TeX("$HOR$"), ylim = c(0,1))
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
 ```
 
-#### CAT
+#### By Age/Sex/Origin {.tabset .tabset-pills}
+
+This is the resolution the model fits to: each year slice is treated as a 12-element multinomial vector.
+
+##### CAT
 
 ```{r cat-weir-comp-fit, fig.width = 8, fig.height = 5}
-weir_comp_fit_plot(1)
+weir_comp_fit_plot(j_cat)
 ```
 
-#### LOS
+##### LOS
 
-```{r lost-weir-comp-fit, fig.width = 8, fig.height = 5}
-weir_comp_fit_plot(2)
+```{r los-weir-comp-fit, fig.width = 8, fig.height = 5}
+weir_comp_fit_plot(j_los)
 ```
 
-#### MIN
+##### MIN
 
 ```{r min-weir-comp-fit, fig.width = 8, fig.height = 5}
-weir_comp_fit_plot(3)
+weir_comp_fit_plot(j_min)
 ```
 
-#### UGR
+##### UGR
 
 ```{r ugr-weir-comp-fit, fig.width = 8, fig.height = 5}
-weir_comp_fit_plot(4)
+weir_comp_fit_plot(j_ugr)
+```
+
+#### By Age {.tabset .tabset-pills}
+
+These figures show the agreement of the model with the weir composition data by age, aggregated by sex and origin.
+
+##### CAT
+
+```{r cat-weir-comp-fit-age, fig.width = 8, fig.height = 3.5}
+weir_comp_fit_plot_age(j_cat)
+```
+
+##### LOS
+
+```{r los-weir-comp-fit-age, fig.width = 8, fig.height = 3.5}
+weir_comp_fit_plot_age(j_los)
+```
+
+##### MIN
+
+```{r min-weir-comp-fit-age, fig.width = 8, fig.height = 3.5}
+weir_comp_fit_plot_age(j_min)
+```
+
+##### UGR
+
+```{r ugr-weir-comp-fit-age, fig.width = 8, fig.height = 3.5}
+weir_comp_fit_plot_age(j_ugr)
+```
+
+#### By Sex {.tabset .tabset-pills}
+
+These figures show the agreement of the model with the weir composition data by sex, aggregated by age and origin.
+
+##### CAT
+
+```{r cat-weir-comp-fit-sex, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_sex(j_cat)
+```
+
+##### LOS
+
+```{r los-weir-comp-fit-sex, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_sex(j_los)
+```
+
+##### MIN
+
+```{r min-weir-comp-fit-sex, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_sex(j_min)
+```
+
+##### UGR
+
+```{r ugr-weir-comp-fit-sex, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_sex(j_ugr)
+```
+
+#### By Origin {.tabset .tabset-pills}
+
+These figures show the agreement of the model with the weir composition data by origin, aggregated by age and sex.
+
+##### CAT
+
+```{r cat-weir-comp-fit-origin, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_origin(j_cat)
+```
+
+##### LOS
+
+```{r los-weir-comp-fit-origin, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_origin(j_los)
+```
+
+##### MIN
+
+```{r min-weir-comp-fit-origin, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_origin(j_min)
+```
+
+##### UGR
+
+```{r ugr-weir-comp-fit-origin, fig.width = 8, fig.height = 4}
+weir_comp_fit_plot_origin(j_ugr)
 ```
 
 ### Carcass Sampling {.tabset .tabset-pills}
 
-```{r carc-comp-fit-func}
+```{r carc-comp-fit-funcs}
+
+# for completely disaggregated fits
 carc_comp_fit_plot = function(j) {
   
   # calculate observed q
@@ -574,33 +873,150 @@ carc_comp_fit_plot = function(j) {
   plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,10,pop]$",pop = j)), q_obs[observable,10], main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
   plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,11,pop]$",pop = j)), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
   plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,12,pop]$",pop = j)), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
-  mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Carcasses")
 }
+
+# for fits to each age, aggregated across sexes and origins
+carc_comp_fit_plot_age = function(j) {
+  par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,1,pop]$", pop = j)), q_carc_new_obs$q_carc_age_obs[observable,1,j], main = TeX("$Age\\,3$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,2,pop]$", pop = j)), q_carc_new_obs$q_carc_age_obs[observable,2,j], main = TeX("$Age\\,4$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,3,pop]$", pop = j)), q_carc_new_obs$q_carc_age_obs[observable,3,j], main = TeX("$Age\\,5$"))
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+}
+
+# for fits to each sex, aggregated across ages and origins
+carc_comp_fit_plot_sex = function(j) {
+  par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_sex[.+,1,pop]$", pop = j)), q_carc_new_obs$q_carc_sex_obs[observable,1,j], main = TeX("$Females$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_sex[.+,2,pop]$", pop = j)), q_carc_new_obs$q_carc_sex_obs[observable,2,j], main = TeX("$Males$"))
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+}
+
+# for fits to each origin, aggregated across ages and sexes
+carc_comp_fit_plot_origin = function(j) {
+  par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,1,pop]$", pop = j)), q_carc_new_obs$q_carc_origin_obs[observable,1,j], main = TeX("$NOR$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,2,pop]$", pop = j)), q_carc_new_obs$q_carc_origin_obs[observable,2,j], main = TeX("$HOR$"))
+  mtext(side = 1, outer = T, line = 0.25, "Return Year")
+  mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
+}
+
 ```
 
-#### CAT
+#### By Age/Sex/Origin {.tabset .tabset-pills}
+
+This is the resolution the model fits to: each year slice is treated as a 12-element multinomial vector.
+
+##### CAT
 
 ```{r cat-carc-comp-fit, fig.width = 8, fig.height = 5}
-carc_comp_fit_plot(1)
+carc_comp_fit_plot(j_cat)
 ```
 
-#### LOS
+##### LOS
 
-```{r lost-carc-comp-fit, fig.width = 8, fig.height = 5}
-carc_comp_fit_plot(2)
+```{r los-carc-comp-fit, fig.width = 8, fig.height = 5}
+carc_comp_fit_plot(j_los)
 ```
 
-#### MIN
+##### MIN
 
 ```{r min-carc-comp-fit, fig.width = 8, fig.height = 5}
-carc_comp_fit_plot(3)
+carc_comp_fit_plot(j_min)
 ```
 
-#### UGR
+##### UGR
 
 ```{r ugr-carc-comp-fit, fig.width = 8, fig.height = 5}
-carc_comp_fit_plot(4)
+carc_comp_fit_plot(j_ugr)
+```
+
+#### By Age {.tabset .tabset-pills}
+
+These figures show the agreement of the model with the carcass composition data by age, aggregated by sex and origin.
+
+##### CAT
+
+```{r cat-carc-comp-fit-age, fig.width = 8, fig.height = 3.5}
+carc_comp_fit_plot_age(j_cat)
+```
+
+##### LOS
+
+```{r los-carc-comp-fit-age, fig.width = 8, fig.height = 3.5}
+carc_comp_fit_plot_age(j_los)
+```
+
+##### MIN
+
+```{r min-carc-comp-fit-age, fig.width = 8, fig.height = 3.5}
+carc_comp_fit_plot_age(j_min)
+```
+
+##### UGR
+
+```{r ugr-carc-comp-fit-age, fig.width = 8, fig.height = 3.5}
+carc_comp_fit_plot_age(j_ugr)
+```
+
+#### By Sex {.tabset .tabset-pills}
+
+These figures show the agreement of the model with the carcass composition data by sex, aggregated by age and origin.
+
+##### CAT
+
+```{r cat-carc-comp-fit-sex, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_sex(j_cat)
+```
+
+##### LOS
+
+```{r los-carc-comp-fit-sex, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_sex(j_los)
+```
+
+##### MIN
+
+```{r min-carc-comp-fit-sex, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_sex(j_min)
+```
+
+##### UGR
+
+```{r ugr-carc-comp-fit-sex, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_sex(j_ugr)
+```
+
+#### By Origin {.tabset .tabset-pills}
+
+These figures show the agreement of the model with the carcass composition data by origin, aggregated by age and sex.
+
+##### CAT
+
+```{r cat-carc-comp-fit-origin, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_origin(j_cat)
+```
+
+##### LOS
+
+```{r los-carc-comp-fit-origin, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_origin(j_los)
+```
+
+##### MIN
+
+```{r min-carc-comp-fit-origin, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_origin(j_min)
+```
+
+##### UGR
+
+```{r ugr-carc-comp-fit-origin, fig.width = 8, fig.height = 4}
+carc_comp_fit_plot_origin(j_ugr)
 ```
 
 ## Spawn Status Data
