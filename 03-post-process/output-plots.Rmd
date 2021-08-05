@@ -686,6 +686,18 @@ Within a single year, the values across all panels sum to one.
 
 ```{r weir-comp-fit-funcs}
 
+# for multinomial sample size
+weir_sample_size = function(j) {
+  par(mar = c(3,3,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+  mp = barplot(jags_data$weir_nx_obs[observable,j], xaxt = "n", col = alpha("skyblue2", 0.5), border = "blue",
+               ylim = c(0, max(jags_data$weir_nx_obs[observable,j], na.rm = TRUE)),
+               xlab = "Return Year", ylab = "Adults at Weir Sampled for Composition")
+  usr = par("usr")
+  at_x = seq(1, length(observable), 4)
+  axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$weir_nx_obs[observable,j]), 3, 4)[at_x])
+  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
+}
+
 # for completely disaggregated fits
 weir_comp_fit_plot = function(j) {
   # calculate observed q
@@ -850,9 +862,49 @@ weir_comp_fit_plot_origin(j_min)
 weir_comp_fit_plot_origin(j_ugr)
 ```
 
+#### Total Sample Size {.tabset .tabset-pills}
+
+These figures show the number of samples gathered for age/sex/origin composition information during carcass surveys. The model will fit more closely to years with more samples.
+
+##### CAT
+
+```{r cat-weir-ss, fig.width = 6, fig.height = 4}
+weir_sample_size(j_cat)
+```
+
+##### LOS
+
+```{r los-weir-ss, fig.width = 6, fig.height = 4}
+weir_sample_size(j_los)
+```
+
+##### MIN
+
+```{r min-weir-ss, fig.width = 6, fig.height = 4}
+weir_sample_size(j_min)
+```
+
+##### UGR
+
+```{r ugr-weir-ss, fig.width = 6, fig.height = 4}
+weir_sample_size(j_ugr)
+```
+
 ### Carcass Sampling {.tabset .tabset-pills}
 
 ```{r carc-comp-fit-funcs}
+
+# for multinomial sample size
+carc_sample_size = function(j) {
+  par(mar = c(3,3,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+  mp = barplot(jags_data$carc_nx_obs[observable,j], xaxt = "n", col = alpha("skyblue2", 0.5), border = "blue",
+               ylim = c(0, max(jags_data$carc_nx_obs[observable,j], na.rm = TRUE)),
+               xlab = "Return Year", ylab = "Carcasses Sampled for Composition")
+  usr = par("usr")
+  at_x = seq(1, length(observable), 4)
+  axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$carc_nx_obs[observable,j]), 3, 4)[at_x])
+  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
+}
 
 # for completely disaggregated fits
 carc_comp_fit_plot = function(j) {
@@ -1019,6 +1071,34 @@ carc_comp_fit_plot_origin(j_min)
 carc_comp_fit_plot_origin(j_ugr)
 ```
 
+#### Total Sample Size {.tabset .tabset-pills}
+
+These figures show the number of samples gathered for age/sex/origin composition information during carcass surveys. The model will fit more closely to years with more samples.
+
+##### CAT
+
+```{r cat-carc-ss, fig.width = 6, fig.height = 4}
+carc_sample_size(j_cat)
+```
+
+##### LOS
+
+```{r los-carc-ss, fig.width = 6, fig.height = 4}
+carc_sample_size(j_los)
+```
+
+##### MIN
+
+```{r min-carc-ss, fig.width = 6, fig.height = 4}
+carc_sample_size(j_min)
+```
+
+##### UGR
+
+```{r ugr-carc-ss, fig.width = 6, fig.height = 4}
+carc_sample_size(j_ugr)
+```
+
 ## Spawn Status Data
 
 ```{r spawn-status-fits, fig.width = 8, fig.height = 5}
@@ -1026,6 +1106,7 @@ par(oma = c(2,2,0,0))
 layout(matrix(1:(jags_data$nj * 2), 2, jags_data$nj), heights = c(1, 0.65))
 
 plot_f = function(j) {
+  par(yaxs = "r")
   plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[.+,pop]", pop = j)), with(jags_data, carcs_spawned[,j]/carcs_sampled[,j])[observable], main = pops[j], ylim = c(0,1))
   par(mar = c(1.5,1.5,2,0.5), yaxs = "i")
   
