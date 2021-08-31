@@ -411,7 +411,9 @@ In all figures below, the thick red line is the posterior median value each year
 
 ```{r fall-trap-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Pa[.+,LH_type,pop]$", LH_type = i_fall, pop = j)), jags_data$Pa_obs[observable,i_fall,j], main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^Pa[.+,LH_type,pop]$", LH_type = i_fall, pop = j)),
+               get_obs_ests_log_normal(log(jags_data$Pa_obs[observable,i_fall,j]), jags_data$sig_Pa_obs[observable,i_fall,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -424,7 +426,9 @@ mtext(side = 2, outer = T, line = 0.25, "Fall Parr Abundance")
 
 ```{r spring-trap-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Mb[.+,LH_type,origin,pop]$", origin = o_nor, LH_type = i_spring, pop = j)), jags_data$Mb_obs[observable,i_spring,o_nor,j], main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^Mb[.+,LH_type,origin,pop]$", origin = o_nor, LH_type = i_spring, pop = j)), 
+               get_obs_ests_log_normal(log(jags_data$Mb_obs[observable,i_spring,o_nor,j]), jags_data$sig_Mb_obs[observable,i_spring,o_nor,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -437,7 +441,9 @@ mtext(side = 2, outer = T, line = 0.25, "Spring Smolt Abundance")
 
 ```{r adult-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Ra_tot[.+,pop]$", pop = j)), jags_data$Ra_obs[observable,j], main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^Ra_tot[.+,pop]$", pop = j)),
+               get_obs_ests_log_normal(log(jags_data$Ra_obs[observable,j]), jags_data$sig_Ra_obs[observable,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
