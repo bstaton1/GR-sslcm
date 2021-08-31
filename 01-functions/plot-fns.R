@@ -91,14 +91,15 @@ plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2,
   
   # draw data if provided
   if (!is.null(obs)) {
-    segments(yrs, obs[,"lwr95"], yrs, obs[,"upr95"], col = "blue")
-    points(obs[,"mean"] ~ yrs, pch = 21, col = "blue", bg = alpha("skyblue2", 0.5), cex = 1.2)
+    segments(yrs, obs[,"lwr95"], yrs, obs[,"upr95"], col = alpha("blue", 0.75))
+    points(obs[,"mean"] ~ yrs, pch = 21, col = alpha("blue", 0.75), bg = alpha("skyblue2", 0.5), cex = 1.2)
   } 
   
   # draw axes/labels
   if (xaxis) {
     at_yrs = c(seq(min(yrs), max(yrs), 4), max(yrs))
-    axis(side = 1, at = at_yrs, labels = paste0("", substr(at_yrs, 3, 4)))
+    axis(side = 1, at = yrs, labels = FALSE)
+    axis(side = 1, at = at_yrs, labels = paste0("", substr(at_yrs, 3, 4)), tcl = -0.3)
   } 
   if (!is.null(yaxis_side)) axis(side = yaxis_side)
 }
