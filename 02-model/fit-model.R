@@ -153,7 +153,15 @@ jags_params = c(
   "Lphi_Sb_Sa_resid", "lPb_resid",
   
   # AR(1) coefficients
-  "kappa_phi_O0_O1"
+  "kappa_phi_O0_O1",
+  
+  # fit statistics for posterior predictive checks
+  "weir_x_obs_dev", "weir_x_obs_new_dev", "carc_x_obs_dev", "carc_x_obs_new_dev",
+  "Pa_obs_dev", "Pa_obs_new_dev", "Mb_obs_dev", "Mb_obs_new_dev", 
+  "Ra_obs_dev", "Ra_obs_new_dev", "Lphi_obs_Pb_Ma_dev", "Lphi_obs_new_Pb_Ma_dev",
+  "Lphi_obs_Pa_Ma_dev", "Lphi_obs_new_Pa_Ma_dev", "Lphi_obs_Mb_Ma_dev", "Lphi_obs_new_Mb_Ma_dev",
+  "Lphi_obs_Ma_O0_dev", "Lphi_obs_new_Ma_O0_dev", "carcs_spawned_dev", "carcs_spawned_new_dev"
+  
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
