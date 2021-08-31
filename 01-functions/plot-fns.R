@@ -65,12 +65,12 @@ plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2,
   
   # extract year labels
   if (is.null(yrs)) {
-    yrs = as.numeric(names(obs))
+    yrs = as.numeric(rownames(obs))
   }
   
   # set y limits
   if (is.null(ylim)) {
-    ylim = range(rbind(est[c("2.5%", "97.5%"),], obs), na.rm = T)
+    ylim = range(cbind(t(est[c("2.5%", "97.5%"),]), obs), na.rm = T)
   }
   
   # set the graphics device parameters
@@ -90,7 +90,10 @@ plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2,
   lines(est["50%",] ~ yrs, col = "red", lwd = 2)
   
   # draw data if provided
-  if (!is.null(obs)) points(obs ~ yrs, pch = 21, col = "blue", bg = alpha("skyblue2", 0.5), cex = 1.2)
+  if (!is.null(obs)) {
+    segments(yrs, obs[,"lwr95"], yrs, obs[,"upr95"], col = "blue")
+    points(obs[,"mean"] ~ yrs, pch = 21, col = "blue", bg = alpha("skyblue2", 0.5), cex = 1.2)
+  } 
   
   # draw axes/labels
   if (xaxis) {
