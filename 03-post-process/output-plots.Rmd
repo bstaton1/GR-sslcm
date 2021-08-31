@@ -411,7 +411,9 @@ In all figures below, the thick red line is the posterior median value each year
 
 ```{r fall-trap-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Pa[.+,LH_type,pop]$", LH_type = i_fall, pop = j)), jags_data$Pa_obs[observable,i_fall,j], main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^Pa[.+,LH_type,pop]$", LH_type = i_fall, pop = j)),
+               get_obs_ests_log_normal(log(jags_data$Pa_obs[observable,i_fall,j]), jags_data$sig_Pa_obs[observable,i_fall,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -424,7 +426,9 @@ mtext(side = 2, outer = T, line = 0.25, "Fall Parr Abundance")
 
 ```{r spring-trap-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Mb[.+,LH_type,origin,pop]$", origin = o_nor, LH_type = i_spring, pop = j)), jags_data$Mb_obs[observable,i_spring,o_nor,j], main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^Mb[.+,LH_type,origin,pop]$", origin = o_nor, LH_type = i_spring, pop = j)), 
+               get_obs_ests_log_normal(log(jags_data$Mb_obs[observable,i_spring,o_nor,j]), jags_data$sig_Mb_obs[observable,i_spring,o_nor,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -437,7 +441,9 @@ mtext(side = 2, outer = T, line = 0.25, "Spring Smolt Abundance")
 
 ```{r adult-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Ra_tot[.+,pop]$", pop = j)), jags_data$Ra_obs[observable,j], main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^Ra_tot[.+,pop]$", pop = j)),
+               get_obs_ests_log_normal(log(jags_data$Ra_obs[observable,j]), jags_data$sig_Ra_obs[observable,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -452,7 +458,9 @@ mtext(side = 2, outer = T, line = 0.25, "Adult Return Abundance")
 
 ```{r summer-surv-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Pb_Ma[.+,pop]", pop = j)), expit(jags_data$Lphi_obs_Pb_Ma[observable,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Pb_Ma[.+,pop]", pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Pb_Ma[observable,j], jags_data$sig_Lphi_obs_Pb_Ma[observable,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -465,7 +473,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow LGR\\,S
 
 ```{r fall-surv-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[.+,LH_type,pop]$", LH_type = i_fall, pop = j)), expit(jags_data$Lphi_obs_Pa_Ma[observable,i_fall,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[.+,LH_type,pop]$", LH_type = i_fall, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Pa_Ma[observable,i_fall,j], jags_data$sig_Lphi_obs_Pa_Ma[observable,i_fall,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -478,7 +488,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Fall\\,Parr \\rightarrow LGR\\,Sur
 
 ```{r spring-surv-fit-nor, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$",LH_type = i_spring, origin = o_nor, pop = j)), expit(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$",LH_type = i_spring, origin = o_nor, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j], jags_data$sig_Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -491,7 +503,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 
 ```{r spring-surv-fit-hor, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$", LH_type = i_spring, origin = o_hor, pop = j)), expit(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$", LH_type = i_spring, origin = o_hor, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j], jags_data$sig_Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -504,7 +518,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 
 ```{r hydro-nor-surv-fit, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)), expit(jags_data$Lphi_obs_Ma_O0[observable,o_nor]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)),
+             get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_nor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_nor]),
+             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -513,7 +529,9 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 
 ```{r hydro-hor-surv-fit, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)), expit(jags_data$Lphi_obs_Ma_O0[observable,o_hor]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)),
+             get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_hor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_hor]),
+             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -640,42 +658,42 @@ post = post_bind(post, q_new)
 # these are the observed proportions by age (aggregated across sex and origin), sex (aggregated across age and origin), and origin (aggregated across age and sex)
 
 # containers
-q_weir_age_obs = q_carc_age_obs = array(NA, dim = c(jags_data$ny, jags_data$nk, jags_data$nj))
-q_weir_sex_obs = q_carc_sex_obs = array(NA, dim = c(jags_data$ny, jags_data$ns, jags_data$nj))
-q_weir_origin_obs = q_carc_origin_obs = array(NA, dim = c(jags_data$ny, jags_data$no, jags_data$nj))
+x_weir_age_obs = x_carc_age_obs = array(NA, dim = c(jags_data$ny, jags_data$nk, jags_data$nj))
+x_weir_sex_obs = x_carc_sex_obs = array(NA, dim = c(jags_data$ny, jags_data$ns, jags_data$nj))
+x_weir_origin_obs = x_carc_origin_obs = array(NA, dim = c(jags_data$ny, jags_data$no, jags_data$nj))
 
 for (j in 1:jags_data$nj) {
   # calculate aggregate proportions for each age
   for (k in 1:jags_data$nk) {
-    q_weir_age_obs[,k,j] = rowSums(jags_data$weir_x_obs[,kso_age[[k]],j])/jags_data$weir_nx_obs[,j]
-    q_carc_age_obs[,k,j] = rowSums(jags_data$carc_x_obs[,kso_age[[k]],j])/jags_data$carc_nx_obs[,j]
+    x_weir_age_obs[,k,j] = rowSums(jags_data$weir_x_obs[,kso_age[[k]],j])
+    x_carc_age_obs[,k,j] = rowSums(jags_data$carc_x_obs[,kso_age[[k]],j])
   }
   
   # calculate aggregate proportions for each sex
   for (s in 1:jags_data$ns) {
-    q_weir_sex_obs[,s,j] = rowSums(jags_data$weir_x_obs[,kso_sex[[s]],j])/jags_data$weir_nx_obs[,j]
-    q_carc_sex_obs[,s,j] = rowSums(jags_data$carc_x_obs[,kso_sex[[s]],j])/jags_data$carc_nx_obs[,j]
+    x_weir_sex_obs[,s,j] = rowSums(jags_data$weir_x_obs[,kso_sex[[s]],j])
+    x_carc_sex_obs[,s,j] = rowSums(jags_data$carc_x_obs[,kso_sex[[s]],j])
   }
   
   # calculate aggregate proportions for each origin
   for (o in 1:jags_data$no) {
-    q_weir_origin_obs[,o,j] = rowSums(jags_data$weir_x_obs[,kso_origin[[o]],j])/jags_data$weir_nx_obs[,j]
-    q_carc_origin_obs[,o,j] = rowSums(jags_data$carc_x_obs[,kso_origin[[o]],j])/jags_data$carc_nx_obs[,j]
+    x_weir_origin_obs[,o,j] = rowSums(jags_data$weir_x_obs[,kso_origin[[o]],j])
+    x_carc_origin_obs[,o,j] = rowSums(jags_data$carc_x_obs[,kso_origin[[o]],j])
   }
 }
 
-dimnames(q_weir_age_obs)[[1]] = dimnames(q_weir_sex_obs)[[1]] = dimnames(q_weir_origin_obs)[[1]] = dimnames(q_carc_age_obs)[[1]] = dimnames(q_carc_sex_obs)[[1]] = dimnames(q_carc_origin_obs)[[1]] = dimnames(jags_data$weir_x_obs)[[1]]
+dimnames(x_weir_age_obs)[[1]] = dimnames(x_weir_sex_obs)[[1]] = dimnames(x_weir_origin_obs)[[1]] = dimnames(x_carc_age_obs)[[1]] = dimnames(x_carc_sex_obs)[[1]] = dimnames(x_carc_origin_obs)[[1]] = dimnames(jags_data$weir_x_obs)[[1]]
 
-q_weir_new_obs = list(
-  q_weir_age_obs = q_weir_age_obs,
-  q_weir_sex_obs = q_weir_sex_obs,
-  q_weir_origin_obs = q_weir_origin_obs
+x_weir_new_obs = list(
+  x_weir_age_obs = x_weir_age_obs,
+  x_weir_sex_obs = x_weir_sex_obs,
+  x_weir_origin_obs = x_weir_origin_obs
 )
 
-q_carc_new_obs = list(
-  q_carc_age_obs = q_carc_age_obs,
-  q_carc_sex_obs = q_carc_sex_obs,
-  q_carc_origin_obs = q_carc_origin_obs
+x_carc_new_obs = list(
+  x_carc_age_obs = x_carc_age_obs,
+  x_carc_sex_obs = x_carc_sex_obs,
+  x_carc_origin_obs = x_carc_origin_obs
 )
 
 ```
@@ -700,22 +718,20 @@ weir_sample_size = function(j) {
 
 # for completely disaggregated fits
 weir_comp_fit_plot = function(j) {
-  # calculate observed q
-  q_obs = t(apply(jags_data$weir_x_obs[,,j], 1, function(y) y/sum(y)))
 
   par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,1,pop]$", pop = j)), q_obs[observable,1], main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,2,pop]$", pop = j)), q_obs[observable,2], main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,3,pop]$", pop = j)), q_obs[observable,3], main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,4,pop]$", pop = j)), q_obs[observable,4], main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,5,pop]$", pop = j)), q_obs[observable,5], main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,6,pop]$", pop = j)), q_obs[observable,6], main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,7,pop]$", pop = j)), q_obs[observable,7], main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,8,pop]$", pop = j)), q_obs[observable,8], main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,9,pop]$", pop = j)), q_obs[observable,9], main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,10,pop]$", pop = j)), q_obs[observable,10], main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,11,pop]$", pop = j)), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,12,pop]$", pop = j)), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 1), main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 2), main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 3), main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,4,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 4), main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,5,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 5), main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,6,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 6), main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,7,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 7), main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,8,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 8), main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,9,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 9), main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,10,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 10), main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,11,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 11), main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,12,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 12), main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
   
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
@@ -724,9 +740,9 @@ weir_comp_fit_plot = function(j) {
 # for fits to each age, aggregated across sexes and origins
 weir_comp_fit_plot_age = function(j) {
   par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,1,pop]$", pop = j)), q_weir_new_obs$q_weir_age_obs[observable,1,j], main = TeX("$Age\\,3$"), ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,2,pop]$", pop = j)), q_weir_new_obs$q_weir_age_obs[observable,2,j], main = TeX("$Age\\,4$"), ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,3,pop]$", pop = j)), q_weir_new_obs$q_weir_age_obs[observable,3,j], main = TeX("$Age\\,5$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), ylim = c(0,1))
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -734,8 +750,9 @@ weir_comp_fit_plot_age = function(j) {
 # for fits to each sex, aggregated across ages and origins
 weir_comp_fit_plot_sex = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_sex[.+,1,pop]$", pop = j)), q_weir_new_obs$q_weir_sex_obs[observable,1,j], main = TeX("$Females$"), ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_sex[.+,2,pop]$", pop = j)), q_weir_new_obs$q_weir_sex_obs[observable,2,j], main = TeX("$Males$"), ylim = c(0,1))
+  
+  plot_tseries(post_summ(post, sub_index("^q_Ra_sex[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_sex_obs[observable,,j], 1), main = TeX("$Females$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_sex[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_sex_obs[observable,,j], 2), main = TeX("$Males$"), ylim = c(0,1))
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -743,8 +760,9 @@ weir_comp_fit_plot_sex = function(j) {
 # for fits to each origin, aggregated across ages and sexes
 weir_comp_fit_plot_origin = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,1,pop]$", pop = j)), q_weir_new_obs$q_weir_origin_obs[observable,1,j], main = TeX("$NOR$"), ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,2,pop]$", pop = j)), q_weir_new_obs$q_weir_origin_obs[observable,2,j], main = TeX("$HOR$"), ylim = c(0,1))
+  
+  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 1), main = TeX("$NOR$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 2), main = TeX("$HOR$"), ylim = c(0,1))
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -909,22 +927,19 @@ carc_sample_size = function(j) {
 # for completely disaggregated fits
 carc_comp_fit_plot = function(j) {
   
-  # calculate observed q
-  q_obs = t(apply(jags_data$carc_x_obs[,,j], 1, function(y) y/sum(y)))
-
   par(mfcol = c(3,4), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,1,pop]$", pop = j)), q_obs[observable,1], main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,2,pop]$", pop = j)), q_obs[observable,2], main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,3,pop]$", pop = j)), q_obs[observable,3], main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,4,pop]$", pop = j)), q_obs[observable,4], main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,5,pop]$", pop = j)), q_obs[observable,5], main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,6,pop]$", pop = j)), q_obs[observable,6], main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,7,pop]$", pop = j)), q_obs[observable,7], main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,8,pop]$", pop = j)), q_obs[observable,8], main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,9,pop]$", pop = j)), q_obs[observable,9], main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,10,pop]$",pop = j)), q_obs[observable,10], main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,11,pop]$",pop = j)), q_obs[observable,11], main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,12,pop]$",pop = j)), q_obs[observable,12], main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 1), main = TeX("$Female\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 2), main = TeX("$Female\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 3), main = TeX("$Female\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,4,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 4), main = TeX("$Male\\,Age\\,3\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,5,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 5), main = TeX("$Male\\,Age\\,4\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,6,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 6), main = TeX("$Male\\,Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,7,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 7), main = TeX("$Female\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,8,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 8), main = TeX("$Female\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,9,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 9), main = TeX("$Female\\,Age\\,5\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,10,pop]$",pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 10), main = TeX("$Male\\,Age\\,3\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,11,pop]$",pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 11), main = TeX("$Male\\,Age\\,4\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,12,pop]$",pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 12), main = TeX("$Male\\,Age\\,5\\,(HOR)$"))
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Carcasses")
 }
@@ -932,9 +947,9 @@ carc_comp_fit_plot = function(j) {
 # for fits to each age, aggregated across sexes and origins
 carc_comp_fit_plot_age = function(j) {
   par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,1,pop]$", pop = j)), q_carc_new_obs$q_carc_age_obs[observable,1,j], main = TeX("$Age\\,3$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,2,pop]$", pop = j)), q_carc_new_obs$q_carc_age_obs[observable,2,j], main = TeX("$Age\\,4$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,3,pop]$", pop = j)), q_carc_new_obs$q_carc_age_obs[observable,3,j], main = TeX("$Age\\,5$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"))
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -942,8 +957,8 @@ carc_comp_fit_plot_age = function(j) {
 # for fits to each sex, aggregated across ages and origins
 carc_comp_fit_plot_sex = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_sex[.+,1,pop]$", pop = j)), q_carc_new_obs$q_carc_sex_obs[observable,1,j], main = TeX("$Females$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_sex[.+,2,pop]$", pop = j)), q_carc_new_obs$q_carc_sex_obs[observable,2,j], main = TeX("$Males$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_sex[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_sex_obs[observable,,j], 1), main = TeX("$Females$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_sex[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_sex_obs[observable,,j], 2), main = TeX("$Males$"))
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -951,8 +966,8 @@ carc_comp_fit_plot_sex = function(j) {
 # for fits to each origin, aggregated across ages and sexes
 carc_comp_fit_plot_origin = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,1,pop]$", pop = j)), q_carc_new_obs$q_carc_origin_obs[observable,1,j], main = TeX("$NOR$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,2,pop]$", pop = j)), q_carc_new_obs$q_carc_origin_obs[observable,2,j], main = TeX("$HOR$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 1), main = TeX("$NOR$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 2), main = TeX("$HOR$"))
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1107,11 +1122,13 @@ layout(matrix(1:(jags_data$nj * 2), 2, jags_data$nj), heights = c(1, 0.65))
 
 plot_f = function(j) {
   par(yaxs = "r")
-  plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[.+,pop]", pop = j)), with(jags_data, carcs_spawned[,j]/carcs_sampled[,j])[observable], main = pops[j], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[.+,pop]", pop = j)),
+               get_obs_ests_multinomial(cbind(jags_data$carcs_spawned[,j], jags_data$carcs_sampled[,j] - jags_data$carcs_spawned[,j])[observable,], 1),
+               main = pops[j], ylim = c(0,1))
   par(mar = c(1.5,1.5,2,0.5), yaxs = "i")
   
   if (j == 1) mtext(side = 2, "Survival Probability", line = 2)
-mp = barplot(jags_data$carcs_sampled[observable,j], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
+  mp = barplot(jags_data$carcs_sampled[observable,j], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
   at_x = seq(1, length(observable), 4)
   axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$carcs_sampled[observable,j]), 3, 4)[at_x])
   box()
