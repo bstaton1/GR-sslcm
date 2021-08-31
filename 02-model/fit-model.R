@@ -159,11 +159,11 @@ jags_params = c(
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "short" = 1000, "medium" = 24000,  "long" = 60000),
-  n_burn = switch(mcmc_length,  "short" = 500,  "medium" = 20000,  "long" = 60000),
-  n_thin = switch(mcmc_length,  "short" = 1,    "medium" = 8,      "long" = 20),
-  n_chain = switch(mcmc_length, "short" = 3,    "medium" = 3,      "long" = 3),
-  n_adapt = switch(mcmc_length, "short" = 100,  "medium" = 1000,   "long" = 1000),
+  n_post = switch(mcmc_length,  "short" = 2000,  "medium" = 24000,  "long" = 60000),
+  n_burn = switch(mcmc_length,  "short" = 1000,  "medium" = 20000,  "long" = 60000),
+  n_thin = switch(mcmc_length,  "short" = 3,     "medium" = 8,      "long" = 20),
+  n_chain = switch(mcmc_length, "short" = 3,     "medium" = 3,      "long" = 3),
+  n_adapt = switch(mcmc_length, "short" = 1000,  "medium" = 1000,   "long" = 1000),
   parallel = TRUE
 )
 
