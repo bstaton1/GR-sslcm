@@ -2,6 +2,56 @@
 # SCRIPT TO HOUSE FUNCTIONS FOR PLOTTING INFORMATION #
 # :::::::::::::::::::::::::::::::::::::::::::::::::: #
 
+##### FUNCTIONS TO GET UNCERTAINTY IN DATA FOR PLOTTING #####
+
+## FOR A DATASET OF MULTINOMIAL RANDOM VARIABLES
+# x is the matrix of counts (rows = years; columns = group), i is the group id
+get_obs_ests_multinomial = function(x, i) {
+  
+  # calculate the proportion point estimate
+  p_ests = t(apply(x, 1, function(y) y/sum(y)))
+  p_ests[p_ests == "NaN"] = NA
+  
+  # calculate number of trials
+  N_tot = rowSums(x)
+  
+  # calculate standard error of proportion point estimate
+  se_p_ests = apply((p_ests * (1 - p_ests)), 2, function(x) sqrt(x/N_tot))
+  
+  # calculate confidence intervals; impose boundaries
+  lwr = p_ests - 1.96 * se_p_ests; lwr[lwr < 0] = 0.001
+  upr = p_ests + 1.96 * se_p_ests; upr[upr > 1] = 0.999
+  
+  out = cbind(
+    mean = p_ests[,i],
+    lwr95 = lwr[,i],
+    upr95 = upr[,i]
+  )
+  return(out)
+}
+
+## FOR A DATASET OF LOGIT-NORMAL RANDOM VARIABLES
+# Lmean is the logit-scale point estimate; Lsig is the logit-normal standard error
+get_obs_ests_logit_normal = function(Lmean, Lsig) {
+  out = cbind(
+    mean = expit(Lmean),
+    lwr95 = expit(qnorm(0.025, Lmean, Lsig)),
+    upr95 = expit(qnorm(0.975, Lmean, Lsig))
+  )
+  return(out)
+}
+
+## FOR A DATASET OF LOGNORMAL RANDOM VARIABLES
+# lmean is the log-scale point estiamte; lsig is the log-normal standard error
+get_obs_ests_log_normal = function(lmean, lsig) {
+  out = cbind(
+    mean = exp(lmean),
+    lwr95 = qlnorm(0.025, lmean, lsig),
+    upr95 = qlnorm(0.975, lmean, lsig)
+  )
+  return(out)
+}
+
 ##### PLOT A TIME SERIES OF ESTIMATES, WITH DATA IF AVAILABLE #####
 
 # est: output from postpack::post_summ()
