@@ -1122,11 +1122,13 @@ layout(matrix(1:(jags_data$nj * 2), 2, jags_data$nj), heights = c(1, 0.65))
 
 plot_f = function(j) {
   par(yaxs = "r")
-  plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[.+,pop]", pop = j)), with(jags_data, carcs_spawned[,j]/carcs_sampled[,j])[observable], main = pops[j], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[.+,pop]", pop = j)),
+               get_obs_ests_multinomial(cbind(jags_data$carcs_spawned[,j], jags_data$carcs_sampled[,j] - jags_data$carcs_spawned[,j])[observable,], 1),
+               main = pops[j], ylim = c(0,1))
   par(mar = c(1.5,1.5,2,0.5), yaxs = "i")
   
   if (j == 1) mtext(side = 2, "Survival Probability", line = 2)
-mp = barplot(jags_data$carcs_sampled[observable,j], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
+  mp = barplot(jags_data$carcs_sampled[observable,j], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
   at_x = seq(1, length(observable), 4)
   axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$carcs_sampled[observable,j]), 3, 4)[at_x])
   box()
