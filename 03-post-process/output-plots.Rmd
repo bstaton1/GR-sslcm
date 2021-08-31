@@ -458,7 +458,9 @@ mtext(side = 2, outer = T, line = 0.25, "Adult Return Abundance")
 
 ```{r summer-surv-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Pb_Ma[.+,pop]", pop = j)), expit(jags_data$Lphi_obs_Pb_Ma[observable,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Pb_Ma[.+,pop]", pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Pb_Ma[observable,j], jags_data$sig_Lphi_obs_Pb_Ma[observable,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -471,7 +473,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow LGR\\,S
 
 ```{r fall-surv-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[.+,LH_type,pop]$", LH_type = i_fall, pop = j)), expit(jags_data$Lphi_obs_Pa_Ma[observable,i_fall,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[.+,LH_type,pop]$", LH_type = i_fall, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Pa_Ma[observable,i_fall,j], jags_data$sig_Lphi_obs_Pa_Ma[observable,i_fall,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -484,7 +488,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Fall\\,Parr \\rightarrow LGR\\,Sur
 
 ```{r spring-surv-fit-nor, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$",LH_type = i_spring, origin = o_nor, pop = j)), expit(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$",LH_type = i_spring, origin = o_nor, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j], jags_data$sig_Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -497,7 +503,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 
 ```{r spring-surv-fit-hor, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$", LH_type = i_spring, origin = o_hor, pop = j)), expit(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j]), main = pops[j])
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$", LH_type = i_spring, origin = o_hor, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j], jags_data$sig_Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j]),
+               main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -510,7 +518,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 
 ```{r hydro-nor-surv-fit, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)), expit(jags_data$Lphi_obs_Ma_O0[observable,o_nor]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)),
+             get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_nor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_nor]),
+             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -519,7 +529,9 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 
 ```{r hydro-hor-surv-fit, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0))
-plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)), expit(jags_data$Lphi_obs_Ma_O0[observable,o_hor]), main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)),
+             get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_hor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_hor]),
+             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
