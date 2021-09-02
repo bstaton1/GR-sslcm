@@ -229,7 +229,7 @@ jags_model_code = function() {
     
     # hyperparameters for initialization
     mu_init_recruits[j] ~ dunif(0, max_init_recruits[j])
-    sig_init_lrecruits[j] ~ dunif(0,10)
+    sig_init_lrecruits[j] <- 0.3
     
     # for natural origin
     for (y in 1:kmax) {
