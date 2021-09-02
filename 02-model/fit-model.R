@@ -153,7 +153,20 @@ jags_params = c(
   "Lphi_Sb_Sa_resid", "lPb_resid",
   
   # AR(1) coefficients
-  "kappa_phi_O0_O1"
+  "kappa_phi_O0_O1",
+  
+  # fit statistics for posterior predictive checks
+  "weir_x_obs_dev", "weir_x_obs_new_dev", "carc_x_obs_dev", "carc_x_obs_new_dev",
+  "Pa_obs_dev", "Pa_obs_new_dev", "Mb_obs_dev", "Mb_obs_new_dev", 
+  "Ra_obs_dev", "Ra_obs_new_dev", "Lphi_obs_Pb_Ma_dev", "Lphi_obs_new_Pb_Ma_dev",
+  "Lphi_obs_Pa_Ma_dev", "Lphi_obs_new_Pa_Ma_dev", "Lphi_obs_Mb_Ma_dev", "Lphi_obs_new_Mb_Ma_dev",
+  "Lphi_obs_Ma_O0_dev", "Lphi_obs_new_Ma_O0_dev", "carcs_spawned_dev", "carcs_spawned_new_dev",
+  
+  # log posterior predictive density
+  "weir_x_obs_lppd", "carc_x_obs_lppd", "Pa_obs_lppd", "Mb_obs_lppd", "Ra_obs_lppd",
+  "Lphi_obs_Pb_Ma_lppd", "Lphi_obs_Pa_Ma_lppd", "Lphi_obs_Mb_Ma_lppd",
+  "Lphi_obs_Ma_O0_lppd", "carcs_spawned_lppd"
+  
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
@@ -229,20 +242,20 @@ if (rmd) {
   cat("\nRendering Rmd Output")
   # set working dir to post-processing directory
   setwd("03-post-process")
-
+  
   # file name of rendered output
   rmd_out_file = paste0("output-plots-", scenario, ".html")
-
+  
   # render the output
   render(input = "output-plots.Rmd",
          output_file = rmd_out_file,
          params = list(scenario = scenario),
          quiet = TRUE
   )
-
+  
   # open the rendered file when complete
   file.show(rmd_out_file)
-
+  
   # set the working dir back
   setwd("../")
   cat("\n\nDone.")
