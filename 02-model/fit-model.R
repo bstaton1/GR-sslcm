@@ -86,7 +86,8 @@ add_jags_data3 = list(
 add_jags_data = append(add_jags_data, add_jags_data3)
 
 # calculate the upper bound on initial adult recruits and add to data
-add_jags_data = append(add_jags_data, list(max_init_recruits = apply((jags_data$Ra_obs/overall_phi_Rb_Ra) * 1.5, 2, max, na.rm = TRUE)))
+p_NOR = apply(jags_data$carc_x_obs, 3, function(y) {rowSums(t(apply(y, 1, function(z) z/sum(z)))[,1:6])})
+add_jags_data = append(add_jags_data, list(max_init_recruits = apply(((jags_data$Ra_obs * p_NOR)/overall_phi_Rb_Ra * 1.5), 2, max, na.rm = TRUE)))
 
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
