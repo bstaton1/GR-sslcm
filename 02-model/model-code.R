@@ -377,6 +377,14 @@ jags_model_code = function() {
   
   ### OBSERVATION MODEL ###
   
+  # the content under the "data likelihood" header is the only portion needed to fit the model
+  # the other content is for evaluating model fit and parsimony
+  # objects labeled "new" pertain to simulated data, for evaluating model fit to the observed data compared to "perfect data"
+  # objects labeled "dev" represent measure of the deviation of the data from the model
+  # objects labeled "lppd" represent log posterior predictive density; used in calculating WAIC
+  
+  # the long form index notation enables skipping over missing data while keeping all object dimensions identical
+  
   # age/sex composition
   for (j in 1:nj) {
     for (y in (kmax+1):ny) {
@@ -394,6 +402,9 @@ jags_model_code = function() {
       weir_x_obs_dev[y,j] <- sum(((weir_x_obs[y,1:nkso,j] - expected_weir_x_obs[y,1:nkso,j])^2)/expected_weir_x_obs[y,1:nkso,j])
       weir_x_obs_new_dev[y,j] <- sum(((weir_x_obs_new[y,1:nkso,j] - expected_weir_x_obs[y,1:nkso,j])^2)/expected_weir_x_obs[y,1:nkso,j])
       
+      # calculate log posterior predictive density
+      weir_x_obs_lppd[y,j] <- logdensity.multi(weir_x_obs[y,1:nkso,j], q_Ra[y,1:nkso,j], weir_nx_obs[y,j])
+      
       # FOR CARCASSES
       # data likelihood
       carc_x_obs[y,1:nkso,j] ~ dmulti(q_Sa_adj[y,1:nkso,j], carc_nx_obs[y,j])
@@ -407,6 +418,9 @@ jags_model_code = function() {
       # calculate fit statistic: chi-squared statistic
       carc_x_obs_dev[y,j] <- sum(((carc_x_obs[y,1:nkso,j] - expected_carc_x_obs[y,1:nkso,j])^2)/expected_carc_x_obs[y,1:nkso,j])
       carc_x_obs_new_dev[y,j] <- sum(((carc_x_obs_new[y,1:nkso,j] - expected_carc_x_obs[y,1:nkso,j])^2)/expected_carc_x_obs[y,1:nkso,j])
+      
+      # calculate log posterior predictive density
+      carc_x_obs_lppd[y,j] <- logdensity.multi(carc_x_obs[y,1:nkso,j], q_Ra[y,1:nkso,j], carc_nx_obs[y,j])
     }
   }
   
@@ -422,6 +436,9 @@ jags_model_code = function() {
     # calculate fit statistic: squared log deviates
     Pa_obs_dev[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]] <- (log(Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]) - log(Pa[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]))^2
     Pa_obs_new_dev[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]] <- (log(Pa_obs_new[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]) - log(Pa[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]))^2
+    
+    # calculate log posterior predictive density
+    Pa_obs_lppd[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]] <- logdensity.lnorm(Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]], log(Pa[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]), 1/sig_Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]^2)
   }
   
   # spring trap abundance
@@ -435,6 +452,9 @@ jags_model_code = function() {
     # calculate fit statistic: squared log deviates
     Mb_obs_dev[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]] <- (log(Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]) - log(Mb[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]))^2
     Mb_obs_new_dev[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]] <- (log(Mb_obs_new[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]) - log(Mb[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]))^2
+    
+    # calculate log posterior predictive density
+    Mb_obs_lppd[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]] <- logdensity.lnorm(Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]], log(Mb[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]), 1/sig_Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]^2)
   }
   
   # adult abundance
@@ -448,6 +468,9 @@ jags_model_code = function() {
     # calculate fit statistic: squared log deviates
     Ra_obs_dev[fit_Ra[d,1],fit_Ra[d,2]] <- (log(Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]) - log(Ra_tot[fit_Ra[d,1],fit_Ra[d,2]]))^2
     Ra_obs_new_dev[fit_Ra[d,1],fit_Ra[d,2]] <- (log(Ra_obs_new[fit_Ra[d,1],fit_Ra[d,2]]) - log(Ra_tot[fit_Ra[d,1],fit_Ra[d,2]]))^2
+    
+    # calculate log posterior predictive density
+    Ra_obs_lppd[fit_Ra[d,1],fit_Ra[d,2]] <- logdensity.lnorm(Ra_obs[fit_Ra[d,1],fit_Ra[d,2]], log(Ra_tot[fit_Ra[d,1],fit_Ra[d,2]]), 1/sig_Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]^2)
   }
   
   # summer tagging to LGD
@@ -461,6 +484,9 @@ jags_model_code = function() {
     # calculate fit statistic: squared logit deviates
     Lphi_obs_Pb_Ma_dev[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] <- (Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] - logit(phi_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]))^2
     Lphi_obs_new_Pb_Ma_dev[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] <- (Lphi_obs_new_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] - logit(phi_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]))^2
+    
+    # calculate log posterior predictive density
+    Lphi_obs_Pb_Ma_lppd[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] <- logdensity.norm(Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]], logit(phi_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]), 1/sig_Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]^2)
   }
   
   # fall tagging to LGD
@@ -474,6 +500,9 @@ jags_model_code = function() {
     # calculate fit statistic: squared logit deviates
     Lphi_obs_Pa_Ma_dev[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] <- (Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] - logit(phi_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]))^2
     Lphi_obs_new_Pa_Ma_dev[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] <- (Lphi_obs_new_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] - logit(phi_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]))^2
+    
+    # calculate log posterior predictive density
+    Lphi_obs_Pa_Ma_lppd[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] <- logdensity.norm(Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]], logit(phi_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]), 1/sig_Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]^2)
   }
   
   # spring tagging/smolt releases to LGD
@@ -487,6 +516,9 @@ jags_model_code = function() {
     # calculate fit statistic: squared logit deviates
     Lphi_obs_Mb_Ma_dev[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] <- (Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] - logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]))^2
     Lphi_obs_new_Mb_Ma_dev[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] <- (Lphi_obs_new_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] - logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]))^2
+    
+    # calculate log posterior predictive density
+    Lphi_obs_Mb_Ma_lppd[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] <- logdensity.norm(Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]], logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]), 1/sig_Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]^2)
   }
   
   # hydrosystem survival
@@ -500,6 +532,9 @@ jags_model_code = function() {
     # calculate fit statistic: squared logit deviates
     Lphi_obs_Ma_O0_dev[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] <- (Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] - logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]))^2
     Lphi_obs_new_Ma_O0_dev[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] <- (Lphi_obs_new_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] - logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]))^2
+    
+    # calculate log posterior predictive density
+    Lphi_obs_Ma_O0_lppd[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] <- logdensity.norm(Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]], logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]), 1/sig_Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]^2)
   }
   
   # pre-spawn survival
@@ -516,6 +551,9 @@ jags_model_code = function() {
     # calculate fit statistic: chi-squared statistic
     carcs_spawned_dev[fit_spawned[d,1],fit_spawned[d,2]] <- ((carcs_spawned[fit_spawned[d,1],fit_spawned[d,2]] - expected_carcs_spawned[fit_spawned[d,1],fit_spawned[d,2]])^2)/expected_carcs_spawned[fit_spawned[d,1],fit_spawned[d,2]]
     carcs_spawned_new_dev[fit_spawned[d,1],fit_spawned[d,2]] <- ((carcs_spawned_new[fit_spawned[d,1],fit_spawned[d,2]] - expected_carcs_spawned[fit_spawned[d,1],fit_spawned[d,2]])^2)/expected_carcs_spawned[fit_spawned[d,1],fit_spawned[d,2]]
+    
+    # calculate log posterior predictive density
+    carcs_spawned_lppd[fit_spawned[d,1],fit_spawned[d,2]] <- logdensity.bin(carcs_spawned[fit_spawned[d,1],fit_spawned[d,2]], phi_Sb_Sa[fit_spawned[d,1],fit_spawned[d,2]], carcs_sampled[fit_spawned[d,1],fit_spawned[d,2]])
   }
   
   ### CALCULATE ALL PROCESS MODEL RESIDUALS ###
