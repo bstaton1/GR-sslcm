@@ -46,19 +46,11 @@ jags_data = append_no_na_indices(jags_data)
 # harvest rates Below and Above BON by year, age, origin
 Ub_45_nat = with(jags_data, c(rep(NA, kmax), rep(0.02, ny - kmax)))
 Ub_45_hat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
-Ua_45_nat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
-Ua_45_hat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
 Ub = abind(list(cbind(Ub_45_nat * 0.25, Ub_45_nat, Ub_45_nat), cbind(Ub_45_hat * 0.75, Ub_45_hat, Ub_45_hat)), along = 3)
-Ua = abind(list(cbind(Ua_45_nat * 0.25, Ua_45_nat, Ub_45_nat), cbind(Ua_45_hat * 0.75, Ua_45_hat, Ua_45_hat)), along = 3)
-dimnames(Ub) = dimnames(Ua) = with(jags_data, list(names(Ra_obs), kmin:kmax, c("Nat", "Hat")))
+dimnames(Ub) = with(jags_data, list(names(Ra_obs), kmin:kmax, c("Nat", "Hat")))
 
 add_jags_data = list(
   Ub = Ub,           # harvest rate after sea lion mortality below BON
-  Ua = Ua,           # harvest rate above BON in zone 6 (BON -> MCN)
-  phi_D1_D4 = 0.85,  # survival of adults following harvest between dams 1 and 4 (BON -> MCN)
-  phi_D4_D5 = 0.90,  # survival of adults due to all sources between dams 4 and 5 (MCN -> ICH)
-  phi_D5_D8 = 0.90,  # survival of adults due to all sources between dams 5 and 8 (ICH -> LGR)
-  phi_D8_Ra = 0.95,   # survival of adults due to all sources between dam 8 and trib (LGR -> trib),
   f = matrix(c(1904, 3971, 4846, 0, 0, 0), nrow = 3, ncol = 2)  # fecundity [age,sex]
 )
 
@@ -117,17 +109,18 @@ jags_params = c(
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_O0",
   "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
-  "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3",
+  "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
   
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_O0",
   "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
-  "sig_Lphi_O0_O1", "sig_Lphi_O1_O2", "sig_Lphi_O2_O3",
+  "sig_Lphi_O0_O1", "sig_Lphi_O1_O2", "sig_Lphi_O2_O3", "sig_Lphi_Rb_Ra",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", "omega", 
   "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
   "phi_O0_O1", "phi_O1_O2", "phi_O2_O3",
+  "phi_Rb_Ra",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",
@@ -152,7 +145,7 @@ jags_params = c(
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_O0_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
   "Lpsi_O2_Rb_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
-  "Lphi_Sb_Sa_resid", "lPb_resid",
+  "Lphi_Sb_Sa_resid", "lPb_resid", "Lphi_Rb_Ra_resid",
   
   # AR(1) coefficients
   "kappa_phi_O0_O1",
@@ -163,11 +156,12 @@ jags_params = c(
   "Ra_obs_dev", "Ra_obs_new_dev", "Lphi_obs_Pb_Ma_dev", "Lphi_obs_new_Pb_Ma_dev",
   "Lphi_obs_Pa_Ma_dev", "Lphi_obs_new_Pa_Ma_dev", "Lphi_obs_Mb_Ma_dev", "Lphi_obs_new_Mb_Ma_dev",
   "Lphi_obs_Ma_O0_dev", "Lphi_obs_new_Ma_O0_dev", "carcs_spawned_dev", "carcs_spawned_new_dev",
+  "LGR_adults_dev", "LGR_adults_new_dev",
   
   # log posterior predictive density
   "weir_x_obs_lppd", "carc_x_obs_lppd", "Pa_obs_lppd", "Mb_obs_lppd", "Ra_obs_lppd",
   "Lphi_obs_Pb_Ma_lppd", "Lphi_obs_Pa_Ma_lppd", "Lphi_obs_Mb_Ma_lppd",
-  "Lphi_obs_Ma_O0_lppd", "carcs_spawned_lppd"
+  "Lphi_obs_Ma_O0_lppd", "carcs_spawned_lppd", "LGR_adults_lppd"
   
 )
 
