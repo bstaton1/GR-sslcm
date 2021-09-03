@@ -296,6 +296,16 @@ L2 = c("NOR:HOR Scaler", "Year 0 Residual", "AR(1) Coefficient")
 match = c("O_phi_scaler_nat_hat", "Lphi_O0_O1_resid[5]", "kappa_phi_O0_O1")
 misc_ocean_surv_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
+# Migration survival: BON to LGR
+L1 = "Migration Survival (BON to LGR)"
+L2 = c("Mean", "Process SD", "Realized")
+base = c("mu_phi_Rb_Ra[origin]", "sig_Lphi_Rb_Ra[origin]", "phi_Rb_Ra[year,origin]")
+match = sub_index(base, year = ".+", origin = o_nor)
+tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
+match = sub_index(base, year = ".+", origin = o_hor)
+tmp2 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "HOR")))
+phi_Rb_Ra_diags = rbind(tmp1, tmp2)
+
 # Pre-spawn Survival
 L1 = "Pre-spawn Survival"
 L2 = c("Mean", "Process SD", "Realized")
@@ -330,12 +340,17 @@ diags_table = rbind(
   psi_O2_Rb_diags,
   phi_O0_O1_diags,
   phi_O1_O2_diags,
+  phi_Rb_Ra_diags,
   phi_Sb_Sa_diags,
   misc_ocean_surv_diags,
   z_diags,
   init_diags,
   stray_diags
 )
+
+# remove any summaries for nodes that don't have diagnostics
+# e.g., if that "parameter" takes on a fixed value in the model
+diags_table = diags_table[diags_table$n_params > 0,]
 ```
 
 This table displays summaries of MCMC diagnostics for all unobserved stochastic nodes in the model. Values in cells represent the percentage of parameters of a given type that fail a diagnostic check. E.g., 50% in the "Rhat > 1.05" column means that half of the parameters of that type had Rhat values greater than 1.05. Cells with no color indicate no offense and darker reds indicate greater frequency of an offense.
@@ -585,11 +600,23 @@ carcs_spawned_bp = data.frame(
 )
 rownames(carcs_spawned_bp) = NULL
 
+# movement survival from BON to LGR
+new = post_subset(post, "LGR_adults_new_dev", TRUE)
+obs = post_subset(post, "LGR_adults_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("NOR", "HOR"))
+LGR_adults_bp = data.frame(
+  name = rep("Hydrosystem (Upstream)", 2), pop = rep("Combined", 2),
+  origin = c("NOR", "HOR"), LH_type = rep("Combined", 2),
+  summarize_bp(bp)
+)
+rownames(LGR_adults_bp) = NULL
+
 ### COMBINE INTO ONE TABLE ###
 bp_tab = rbind(
   Pa_bp, Mb_bp, Ra_bp,
   phi_Pb_Ma_bp, phi_Pa_Ma_bp, phi_Mb_Ma_bp,
-  phi_Ma_O0_bp, weir_x_bp, carc_x_bp, carcs_spawned_bp
+  phi_Ma_O0_bp, weir_x_bp, carc_x_bp, carcs_spawned_bp, LGR_adults_bp
 )
 
 # add a main data category variable
@@ -770,6 +797,28 @@ plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)
              get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_hor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_hor]),
              main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Survival")
+```
+
+### BON Adults $\rightarrow$ LGR (NOR)
+
+```{r BON-LGR-surv-fit-nor, fig.width = 6, fig.height = 5}
+par(oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_nor)),
+             get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_nor], jags_data$BON_adults[observable,o_nor] - jags_data$LGR_adults[observable,o_nor]), 1),
+             main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(NOR)"))
+mtext(side = 1, outer = T, line = 0.25, "Return Year")
+mtext(side = 2, outer = T, line = 0.25, "Survival")
+```
+
+### BON Adults $\rightarrow$ LGR (HOR)
+
+```{r BON-LGR-surv-fit-hor, fig.width = 6, fig.height = 5}
+par(oma = c(1.5,1.5,0,0))
+plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_hor)),
+             get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_hor], jags_data$BON_adults[observable,o_hor] - jags_data$LGR_adults[observable,o_hor]), 1),
+             main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(HOR)"))
+mtext(side = 1, outer = T, line = 0.25, "Return Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
 
@@ -2006,6 +2055,14 @@ my_boxplot("sig_Lphi_O0_O1", ylab = "Process SD")
 par(mfrow = c(1,2))
 my_boxplot(sub_index("mu_phi_O1_O2[origin]", origin = "."), ticklabs = c("NOR", "HOR"), ylim = c(0,1), ylab = "Average Survival")
 my_boxplot("sig_Lphi_O1_O2", ylab = "Process SD")
+```
+
+## Movement Survival BON to LGR
+
+```{r bon-to-lgr-bxp}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("mu_phi_Rb_Ra[origin]", origin = "."), "Average Migration Survival", ylim = c(0,1), ticklab = c("NOR", "HOR"))
+my_boxplot(sub_index("sig_Lphi_Rb_Ra[origin]", origin = "."), "Process SD", ticklab = c("NOR", "HOR"))
 ```
 
 ## Pre-spawn Survival
