@@ -64,7 +64,7 @@ add_jags_data = list(
 
 # calculate a metric for overall survival from estuary to tributary
 # used in obtaining an upper bound for initial adult recruits
-overall_phi_Rb_Ra = with(append(jags_data, add_jags_data), mean(phi_SL, na.rm = T) * (1 - mean(Ub, na.rm = T)) * (1 - mean(Ua, na.rm = T)) * phi_D1_D4 * phi_D4_D5 * phi_D5_D8 * phi_D8_Ra)
+overall_phi_Rb_Ra = with(append(jags_data, add_jags_data), mean(phi_SL, na.rm = T) * mean(LGR_adults[,"Nat"]/BON_adults[,"Nat"], na.rm = TRUE))
 
 # some dummy variables for performing weir vs. carcass composition correction
 add_jags_data2 = list(
@@ -87,7 +87,8 @@ add_jags_data = append(add_jags_data, add_jags_data3)
 
 # calculate the upper bound on initial adult recruits and add to data
 p_NOR = apply(jags_data$carc_x_obs, 3, function(y) {rowSums(t(apply(y, 1, function(z) z/sum(z)))[,1:6])})
-add_jags_data = append(add_jags_data, list(max_init_recruits = apply(((jags_data$Ra_obs * p_NOR)/overall_phi_Rb_Ra * 1.5), 2, max, na.rm = TRUE)))
+add_jags_data = append(add_jags_data, list(max_init_recruits = apply(((jags_data$Ra_obs * p_NOR)/overall_phi_Rb_Ra * 1.5), 2, max, na.rm = TRUE),
+                                           first_LGR_adults = min(which(!is.na(jags_data$LGR_adults[,1])))))
 
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)

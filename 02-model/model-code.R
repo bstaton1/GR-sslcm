@@ -208,7 +208,8 @@ jags_model_code = function() {
     
     # movement survival: adults from BON to LGR
     for (o in 1:no) {
-      Lphi_Rb_Ra[y,o] ~ dnorm(logit(mu_phi_Rb_Ra[o]), 1/sig_Lphi_Rb_Ra[o]^2)
+      Lphi_Rb_Ra_random[y,o] ~ dnorm(logit(mu_phi_Rb_Ra[o]), 1/sig_Lphi_Rb_Ra[o]^2)
+      Lphi_Rb_Ra[y,o] <- ifelse(y < first_LGR_adults, logit(mu_phi_Rb_Ra[o]), Lphi_Rb_Ra_random[y,o])
       phi_Rb_Ra[y,o] <- ilogit(Lphi_Rb_Ra[y,o])
     }
   }
