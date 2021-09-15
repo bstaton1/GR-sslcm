@@ -308,8 +308,8 @@ z_diags = diag_fn("z", L1 = L1)
 
 # Initial adult recruitment
 L1 = "Initial Adult Recruitment"
-L2 = c("Mean", "Process SD", "Realized")
-match = c("mu_init_recruits[.]", "sig_init_lrecruits[.]", "^init_recruits[.+,.]")
+L2 = c("Mean", "Realized")
+match = c("mu_init_recruits[.]", "^init_recruits[.+,.]")
 init_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Straying
