@@ -126,15 +126,15 @@ jags_model_code = function() {
   for (i in 1:nj) {
     for (j in 1:nj) {
       # covariance matrix of white noise portion of yr1 ocean survival
-      Sigma_Lphi_O0_O1[i,j] <- sig_Lphi_O0_O1 * sig_Lphi_O0_O1 * ifelse(i == j, 1, rho_Lphi_O0_O1)
+      Sig_Lphi_O0_O1[i,j] <- sig_Lphi_O0_O1 * sig_Lphi_O0_O1 * ifelse(i == j, 1, rho_Lphi_O0_O1)
       
       # covariance matrix of total process noise in yr1 ocean survival
-      Sigma_Lphi_O0_O1_init[i,j] <- sig_Lphi_O0_O1_init[i] * sig_Lphi_O0_O1_init[j] * ifelse(i == j, 1, rho_Lphi_O0_O1)
+      Sig_Lphi_O0_O1_init[i,j] <- sig_Lphi_O0_O1_init[i] * sig_Lphi_O0_O1_init[j] * ifelse(i == j, 1, rho_Lphi_O0_O1)
     }
   }
   
   # year 0 residuals for yr1 ocean survival (needed for AR(1) process)
-  Lphi_O0_O1_resid[kmax,o_nat,1:nj] ~ dmnorm.vcov(rep(0, nj), Sigma_Lphi_O0_O1_init[1:nj,1:nj])
+  Lphi_O0_O1_resid[kmax,o_nat,1:nj] ~ dmnorm.vcov(rep(0, nj), Sig_Lphi_O0_O1_init[1:nj,1:nj])
 
   # migration survival adults from BON to LGR
   for (o in 1:no) {
@@ -212,7 +212,7 @@ jags_model_code = function() {
     }
     
     # yr1 ocean survival for natural origin: multivariate logit-normal error on white noise portion of AR(1) process
-    Lphi_O0_O1[y,o_nat,1:nj] ~ dmnorm.vcov(logit(mu_phi_O0_O1[o_nat,1:nj]) + Lphi_O0_O1_resid[y-1,o_nat,1:nj] * kappa_phi_O0_O1[1:nj], Sigma_Lphi_O0_O1[1:nj,1:nj])
+    Lphi_O0_O1[y,o_nat,1:nj] ~ dmnorm.vcov(logit(mu_phi_O0_O1[o_nat,1:nj]) + Lphi_O0_O1_resid[y-1,o_nat,1:nj] * kappa_phi_O0_O1[1:nj], Sig_Lphi_O0_O1[1:nj,1:nj])
     
     # yr2/yr2 ocean survival for natural origin: time constant
     Lphi_O1_O2[y,o_nat,1:nj] <- logit(mu_phi_O1_O2[o_nat,1:nj])
