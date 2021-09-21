@@ -8,7 +8,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base"
+    value: "complex-ocean-survival-with-prior"
     input: text
 editor_options: 
   chunk_output_type: console
@@ -39,15 +39,15 @@ model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds"
 post = model_info$post
 # post = post_thin(model_info$post, keep_percent = 0.1)  # uncomment this to run document with 10% of the retained MCMC samples
 jags_data = model_info$jags_data
+```
 
+```{r dimension-ids}
 # the years included by the model
 all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
 
 # which years are "observable" for at least some quantities?
 observable = (jags_data$kmax+1):jags_data$ny
-```
 
-```{r dimension-ids}
 # population names
 pops = colnames(jags_data$Ra_obs)
 
@@ -85,6 +85,28 @@ kso_origin = list(
   kso_nor = 1:6,
   kso_hor = 7:12
 )
+```
+
+```{r vcov-decomp, message = FALSE}
+# Convert the precision matrices monitored by JAGS into the marginal SD and correlation matrix terms
+# postpack::vcov_decomp() does this for all posterior samples
+
+Sig_Lphi_O0_O1_post = suppressMessages(vcov_decomp(post, "Sig_Lphi_O0_O1", invert = FALSE, sigma_base_name = "sig_Lphi_O0_O1", rho_base_name = "rho_Lphi_O0_O1"))
+
+# make the labels/indices for which elements of the vcov matrices contain unique covariances
+# no point in summarizing/displaying both off-diagonal triangles
+dummy_cols = matrix(rep(1:jags_data$nj, each = jags_data$nj), jags_data$nj, jags_data$nj)
+dummy_rows = matrix(rep(1:jags_data$nj, jags_data$nj), jags_data$nj, jags_data$nj)
+vcov_cols = dummy_cols[lower.tri(dummy_cols)]
+vcov_rows = dummy_rows[lower.tri(dummy_rows)]
+vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
+vcov_indices = paste0("[", vcov_rows, ",", vcov_cols, "]")
+
+# subset out only the unique elements
+Sig_Lphi_O0_O1_post = post_subset(Sig_Lphi_O0_O1_post, c("sig", paste0("rho.+", vcov_indices)))
+
+# combine these derived posterior samples with the main object
+post = post_bind(post, Sig_Lphi_O0_O1_post)
 ```
 
 # MCMC Information {.tabset .tabset-pills}
