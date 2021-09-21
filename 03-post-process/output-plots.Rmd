@@ -1740,7 +1740,9 @@ mtext(side = 2, line = 2, outer = T, "Overwinter Survival", cex = 1.2)
 
 # Equivilency Rates {.tabset .tabset-pills}
 
-## Smolt-to-Adult Rates
+## Smolt-to-Adult Rates {.tabset .tabset-pills}
+
+### LGR to Tributary
 
 This is survival from $Ma$ (smolts at the top of LGD) to $Ra$ (adults returning to tributary, vulnerable to being counted at weir).
 
@@ -1779,6 +1781,45 @@ par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_fn)
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Adults per 100 Smolt")
+```
+
+### BON to BON
+
+```{r bon-to-bon, fig.width = 6, fig.height = 5}
+sar_yrs = all_yrs[(jags_data$kmax+1):(jags_data$ny - jags_data$kmax)]
+
+plot_fn = function(j) {
+  # which years had zero hatchery smolt released
+  zero_hor_smolt = post_summ(post, sub_index("Mb[year,LH_type,origin,pop]", year = c(6:29), LH_type = i_spring, origin = o_hor, pop = j))["mean",] == 0
+  
+  # summarize rates
+  phi_nor = post_summ(post, sub_index("phi_O0_Rb_BON[.+,origin,pop]", origin = o_nor, pop = j))
+  phi_hor = post_summ(post, sub_index("phi_O0_Rb_BON[.+,origin,pop]", origin = o_hor, pop = j))
+  
+  # get a max value for ylim
+  ymax = max(post_summ(post, sub_index("phi_O0_Rb_BON[.+,origin,pop]", origin = o_nor, pop = "."))["97.5%",])
+
+  # make hatchery values NA in year with no smolt
+  phi_hor[,zero_hor_smolt] = NA
+
+  # plot natural origin time series
+  plot_tseries(est = phi_nor, yrs = sar_yrs, main = pops[j], ylim = c(0, ymax))
+  
+  # add hatchery origin time series
+  polygon(x = c(sar_yrs, rev(sar_yrs)), y = c(phi_hor["2.5%",], rev(phi_hor["97.5%",])), col = alpha("skyblue2", 0.5), border = NA)
+  lines(phi_hor["2.5%",] ~ sar_yrs, col = "blue", lty = 2)
+  lines(phi_hor["97.5%",] ~ sar_yrs, col = "blue", lty = 2)
+  lines(phi_hor["mean",] ~ sar_yrs, col = "blue", lwd = 2)
+
+  if (j == 1) {
+    legend("topright", legend = c("NOR", "HOR"), title = "Origin",
+         pch = 22, col = c("red", "blue"), pt.cex = 2, pt.bg = alpha(c("salmon", "skyblue2"), 0.5), bty = "n")
+  }
+}
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "BON -> BON Survival")
 ```
 
 ## Parr per Spawner
