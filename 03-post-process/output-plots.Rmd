@@ -300,22 +300,30 @@ psi_O2_Rb_diags = rbind(tmp1, tmp2, tmp3, tmp4)
 
 # Year 1 ocean survival
 L1 = "Year 1 Ocean Survival"
-L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_phi_O0_O1[origin]", "sig_Lphi_O0_O1", "phi_O0_O1[year,origin]")
-match = sub_index(base, year = ".+", origin = o_nor)
+L2 = c("Mean", "Process SD", "Among Pop. Correlation", "Realized")
+base = c("mu_phi_O0_O1[origin,pop]", "sig_Lphi_O0_O1[pop]", "rho_Lphi_O0_O1", "phi_O0_O1[year,origin,pop]")
+match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
 phi_O0_O1_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Year 2 ocean survival
 L1 = "Year 2 Ocean Survival"
-L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_phi_O1_O2[origin]", "sig_Lphi_O1_O2", "phi_O1_O2[year,origin]")
-match = sub_index(base, year = ".+", origin = o_nor)
+L2 = c("Mean")
+base = c("mu_phi_O1_O2[origin,pop]")
+match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
 phi_O1_O2_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
+
+# Year 3 ocean survival
+L1 = "Year 3 Ocean Survival"
+L2 = c("Mean")
+base = c("mu_phi_O2_O3[origin,pop]")
+match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+phi_O2_O3_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Misc ocean survival
 L1 = "Misc Ocean Survival"
 L2 = c("NOR:HOR Scaler", "Year 0 Residual", "AR(1) Coefficient")
-match = c("O_phi_scaler_nat_hat", "Lphi_O0_O1_resid[5]", "kappa_phi_O0_O1")
+base = c("O_phi_scaler_nat_hat[pop]", "Lphi_O0_O1_resid[5,1,pop]", "kappa_phi_O0_O1[pop]")
+match = sub_index(base, pop = ".")
 misc_ocean_surv_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Migration survival: BON to LGR
@@ -362,6 +370,7 @@ diags_table = rbind(
   psi_O2_Rb_diags,
   phi_O0_O1_diags,
   phi_O1_O2_diags,
+  phi_O2_O3_diags,
   phi_Rb_Ra_diags,
   phi_Sb_Sa_diags,
   misc_ocean_surv_diags,
