@@ -69,7 +69,7 @@ jags_model_code = function() {
     ### PRIORS: OCEAN SURVIVAL ###
     # mean survival by ocean year transition for natural origin
     mu_phi_O0_O1[o_nat,j] ~ dbeta(1,1)               # first winter at sea: to become SWA1
-    mu_phi_O1_O2[o_nat,j] ~ dbeta(40,10)             # second winter at sea: to become SWA2
+    mu_phi_O1_O2[o_nat,j] ~ dbeta(60,15)             # second winter at sea: to become SWA2
     mu_phi_O2_O3[o_nat,j] <- mu_phi_O1_O2[o_nat,j]   # third winter at sea: to become SW3
     
     # log odds ratio between natural and hatchery origin
