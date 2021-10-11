@@ -136,10 +136,10 @@ gen_initials = function(c, jags_data) {
     mu_phi_Mb_Ma[i_spring,1:no,1:nj] = runif(no*nj, 0.4, 0.6)
     
     # first year ocean survival
-    mu_phi_O0_O1 = c(runif(1, 0.05, 0.15), NA)
+    mu_phi_O0_O1 = matrix(c(runif(nj, 0.05, 0.15), rep(NA, nj)), no, nj, byrow = TRUE)
     
     # second year ocean survival
-    mu_phi_O1_O2 = c(runif(1, 0.6, 0.8), NA)
+    mu_phi_O1_O2 = matrix(c(runif(nj, 0.6, 0.8), rep(NA, nj)), no, nj, byrow = TRUE)
     
     # pre-spawn survival
     mu_phi_Sb_Sa = runif(nj, 0.8, 1)

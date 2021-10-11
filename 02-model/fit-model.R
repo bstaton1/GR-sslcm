@@ -17,7 +17,7 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 out_dir = "02-model/model-output"
 
 # specify a scenario name
-scenario = "add-upstream-survival-data"
+scenario = "base"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -114,7 +114,7 @@ jags_params = c(
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_O0",
   "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
-  "sig_Lphi_O0_O1", "sig_Lphi_O1_O2", "sig_Lphi_O2_O3", "sig_Lphi_Rb_Ra",
+  "Sig_Lphi_O0_O1", "sig_Lphi_Rb_Ra",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", "omega", 
@@ -139,7 +139,7 @@ jags_params = c(
   "O_phi_scaler_nat_hat",
   
   # misc derived quantities
-  "beta_per_peu", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma",
+  "beta_per_peu", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
   
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
@@ -235,7 +235,12 @@ saveRDS(out_obj, file.path(out_dir, out_file))
 
 # render the output plots if requested
 if (rmd) {
+  # start a timer, this can take a while
+  starttime = Sys.time()
+  
+  # print a progress message
   cat("\nRendering Rmd Output")
+  
   # set working dir to post-processing directory
   setwd("03-post-process")
   
@@ -251,6 +256,10 @@ if (rmd) {
   
   # open the rendered file when complete
   file.show(rmd_out_file)
+  
+  # stop the timer
+  stoptime = Sys.time()
+  cat("\nRmd elapsed:", format(round(stoptime - starttime, 2)))
   
   # set the working dir back
   setwd("../")
