@@ -8,7 +8,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "complex-ocean-survival-with-prior"
+    value: "base"
     input: text
 editor_options: 
   chunk_output_type: console
