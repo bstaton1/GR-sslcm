@@ -254,7 +254,7 @@ adult_prespawn = tmp; rm(tmp)
 ##### ADULT SURVIVAL PAST SEA LIONS #####
 
 # read the data
-tmp = read.csv("00-data/sea-lion-surv.csv")
+tmp = read.csv(file.path(data_dir, "07-sea-lion-survival.csv"))
 
 # reformat to long format
 tmp = melt(tmp, id.vars = "year", value.name = "surv_est_sea_lions", variable.name = "population")
@@ -271,7 +271,7 @@ sea_lion_survival = tmp; rm(tmp)
 ##### ADULT SURVIVAL BON -> LGR #####
 
 # read the data
-tmp = read.csv("00-data/BON-LGR-adult-PIT-detections.csv")
+tmp = read.csv(file.path(data_dir, "08-BON-LGR-adult-PIT-detections.csv"))
 
 # reformat BON detection counts
 tmp_BON = dcast(tmp[,c("year", "origin", "BON_adult_detections")], year ~ origin, value.var = "BON_adult_detections")
