@@ -115,6 +115,12 @@ jags_model_code = function() {
   kappa_phi_O0_O1 ~ dunif(-0.99,0.99)
   Lphi_O0_O1_resid[kmax] ~ dnorm(0, (1/sig_Lphi_O0_O1[o_nat]^2) * (1 - kappa_phi_O0_O1^2))
   
+  # migration survival adults from BON to LGR
+  for (o in 1:no) {
+    mu_phi_Rb_Ra[o] ~ dbeta(1, 1)
+    sig_Lphi_Rb_Ra[o] ~ dunif(0, 5)
+  }
+  
   # carcass vs. weir composition correction factor coefficients
   for (i in 1:3) {
     z[i] ~ dunif(-10,10)
@@ -199,6 +205,13 @@ jags_model_code = function() {
     logit(phi_O0_O1[y,o_hat]) <- logit(phi_O0_O1[y,o_nat]) + O_phi_scaler_nat_hat
     logit(phi_O1_O2[y,o_hat]) <- logit(phi_O1_O2[y,o_nat]) + O_phi_scaler_nat_hat
     logit(phi_O2_O3[y-1,o_hat]) <- logit(phi_O2_O3[y-1,o_nat]) + O_phi_scaler_nat_hat
+    
+    # movement survival: adults from BON to LGR
+    for (o in 1:no) {
+      Lphi_Rb_Ra_random[y,o] ~ dnorm(logit(mu_phi_Rb_Ra[o]), 1/sig_Lphi_Rb_Ra[o]^2)
+      Lphi_Rb_Ra[y,o] <- ifelse(y < first_LGR_adults, logit(mu_phi_Rb_Ra[o]), Lphi_Rb_Ra_random[y,o])
+      phi_Rb_Ra[y,o] <- ilogit(Lphi_Rb_Ra[y,o])
+    }
   }
   
   # populate the last year/age of ocean survival with the mean across years
@@ -304,7 +317,7 @@ jags_model_code = function() {
           # for these adult stages, y represents the brood year fish returned in
           for (k in 1:nk) {
             # survive upstream migration (survive sea lions * survive fisheries * survive through dams and to tributary) and add strays
-            Ra[y,k,s,o,j] <- Rb[y,k,s,o,j] * phi_SL[y,j] * (1 - Ub[y,k,o]) * (1 - Ua[y,k,o]) * phi_D1_D4 * phi_D4_D5 * phi_D5_D8 * phi_D8_Ra + n_stray_tot[y,j] * stray_comp[k,s,o,j]
+            Ra[y,k,s,o,j] <- Rb[y,k,s,o,j] * phi_SL[y,j] * (1 - Ub[y,k,o]) * phi_Rb_Ra[y,o] + n_stray_tot[y,j] * stray_comp[k,s,o,j]
             
             # remove fish at weir: use max() to ensure that fewer fish were removed than existed
             Sb[y,k,s,o,j] <- max(Ra[y,k,s,o,j] - n_remove[y,k,s,o,j], 1)
@@ -537,6 +550,25 @@ jags_model_code = function() {
     Lphi_obs_Ma_O0_lppd[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] <- logdensity.norm(Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]], logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]), 1/sig_Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]^2)
   }
   
+  # movement survival from BON to LGR
+  for (d in 1:nfit_LGR_adults) {
+    # data likelihood
+    LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] ~ dbin(phi_Rb_Ra[fit_LGR_adults[d,1],fit_LGR_adults[d,2]], BON_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]])
+    
+    # simulate new data
+    LGR_adults_new[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] ~ dbin(phi_Rb_Ra[fit_LGR_adults[d,1],fit_LGR_adults[d,2]], BON_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]])
+    
+    # calculate expected count
+    expected_LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] <- phi_Rb_Ra[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] * BON_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]]
+    
+    # calculate fit statistic: chi-squared statistic
+    LGR_adults_dev[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] <- ((LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] - expected_LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]])^2)/expected_LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]]
+    LGR_adults_new_dev[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] <- ((LGR_adults_new[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] - expected_LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]])^2)/expected_LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]]
+    
+    # calculate log posterior predictive density
+    LGR_adults_lppd[fit_LGR_adults[d,1],fit_LGR_adults[d,2]] <- logdensity.bin(LGR_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]], phi_Rb_Ra[fit_LGR_adults[d,1],fit_LGR_adults[d,2]], BON_adults[fit_LGR_adults[d,1],fit_LGR_adults[d,2]])
+  }
+  
   # pre-spawn survival
   for (d in 1:nfit_spawned) {
     # data likelihood
@@ -597,6 +629,9 @@ jags_model_code = function() {
     for (o in 1:no) {
       # movement survival from LGR thru BON
       Lphi_Ma_O0_resid[y,o] <- Lphi_Ma_O0[y,o] - logit(mu_phi_Ma_O0[o])
+      
+      # movement survival from BON thru LGR
+      Lphi_Rb_Ra_resid[y,o] <- Lphi_Rb_Ra[y,o] - logit(mu_phi_Rb_Ra[o])
     }
     
     # natural origin ocean survival SWA0 -> SWA1

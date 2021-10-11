@@ -211,6 +211,16 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   phi_SL = rep(NA, ny); names(phi_SL) = y_names
   phi_SL[y_names %in% sub$brood_year] = sub$surv_est_sea_lions
   
+  ### COUNTS OF ADULT PIT TAG DETECTIONS AT BON ###
+  BON_adults = matrix(NA, ny, no); dimnames(BON_adults) = list(y_names, o_names)
+  BON_adults[y_names %in% all$brood_year,o_names[1]] = all$NOR_BON_adults
+  BON_adults[y_names %in% all$brood_year,o_names[2]] = all$HOR_BON_adults
+  
+  ### COUNTS OF ADULT PIT TAG DETECTIONS AT LGR ###
+  LGR_adults = matrix(NA, ny, no); dimnames(LGR_adults) = list(y_names, o_names)
+  LGR_adults[y_names %in% all$brood_year,o_names[1]] = all$NOR_LGR_adults
+  LGR_adults[y_names %in% all$brood_year,o_names[2]] = all$HOR_LGR_adults
+  
   ### ADULT ABUNDANCE ###
 
   # total returning adults, nat + hat
@@ -287,6 +297,12 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     ### ADULT SURVIVAL ###
     # adult survival past sea lions (not fitted; assumed known w/o error)
     phi_SL = phi_SL,
+    
+    # counts of PIT tag detections at BON by origin
+    BON_adults = BON_adults,
+    
+    # counts of PIT tag detections at LGR by origin
+    LGR_adults = LGR_adults,
     
     ### ADULT ABUNDANCE ###
     # total adults arriving at "weir"
@@ -379,6 +395,12 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     # adult survival past sea lions (not fitted; assumed known w/o error)
     phi_SL = abind(lapply(main_list, function(x) x$phi_SL), along = 2),
     
+    # adult PIT tag counts at BON
+    BON_adults = main_list[[1]]$BON_adults,
+    
+    # adult PIT tag counts at LGR
+    LGR_adults = main_list[[1]]$LGR_adults,
+    
     # adult returns to tributary
     Ra_obs = abind(lapply(main_list, function(x) x$Ra_obs), along = 2),
     sig_Ra_obs = abind(lapply(main_list, function(x) x$sig_Ra_obs), along = 2),
@@ -445,6 +467,7 @@ append_no_na_indices = function(jags_data) {
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
       fit_Lphi_Ma_O0 = find_no_na_indices(Lphi_obs_Ma_O0),
+      fit_LGR_adults = find_no_na_indices(LGR_adults),
       fit_Ra = find_no_na_indices(Ra_obs),
       fit_spawned = find_no_na_indices(carcs_spawned)
     )

@@ -268,6 +268,32 @@ colnames(tmp)[1] = "brood_year"
 # rename object and remove "tmp" object
 sea_lion_survival = tmp; rm(tmp)
 
+##### ADULT SURVIVAL BON -> LGR #####
+
+# read the data
+tmp = read.csv("00-data/BON-LGR-adult-PIT-detections.csv")
+
+# reformat BON detection counts
+tmp_BON = dcast(tmp[,c("year", "origin", "BON_adult_detections")], year ~ origin, value.var = "BON_adult_detections")
+colnames(tmp_BON) = c("year", "HOR_BON_adults", "NOR_BON_adults")
+tmp_LGR = dcast(tmp[,c("year", "origin", "LGR_adult_detections")], year ~ origin, value.var = "LGR_adult_detections")
+colnames(tmp_LGR) = c("year", "HOR_LGR_adults", "NOR_LGR_adults")
+
+# merge into one data set
+tmp = merge(tmp_BON, tmp_LGR, by = "year")
+
+# add a population column
+tmp = cbind(population = "ALL", tmp)
+
+# update column names
+# note: year renamed to "brood_year" to allow merging with other data sets
+# and for consistent indexing in model.
+# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
+colnames(tmp)[2] = "brood_year"
+
+# rename the object and remove "tmp" object
+dam_adult_counts = tmp; rm(tmp)
+
 ##### JUVENILE ABUNDANCE #####
 
 # read the data
@@ -431,6 +457,7 @@ bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all
 bio_dat = merge(bio_dat, sea_lion_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hydro_surv, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, dam_adult_counts, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year
