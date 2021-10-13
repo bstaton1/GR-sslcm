@@ -40,31 +40,22 @@ jags_model_code = function() {
     mu_phi_Sb_Sa[j] ~ dbeta(1, 1)
     sig_Lphi_Sb_Sa[j] ~ dunif(0, 5)
     
-    ### PRIORS: SEX-ASSIGNMENT ###
-    for (o in 1:no) {
-      mu_omega[s_female,o,j] ~ dbeta(1, 1)
-      mu_omega[s_male,o,j] <- 1 - mu_omega[s_female,o,j]
-      sig_Lomega[o,j] ~ dunif(0, 5)
-    }
-    
     ### PRIORS: MATURATION ###
-    # sex/origin-specific maturation probabilities
+    # age/origin-specific maturation probabilities
     for (o in 1:no) {
-      for (s in 1:ns) {
-        # pr(return at SWA1)
-        mu_psi_O1_Rb[s,o,j] ~ dbeta(1, 1)
-        sig_Lpsi_O1_Rb[s,o,j] ~ dunif(0, 5)
-
-        # pr(return at SWA2|not returned at SWA1)
-        mu_psi_O2_Rb[s,o,j] ~ dbeta(1, 1)
-        sig_Lpsi_O2_Rb[s,o,j] ~ dunif(0, 5)
-
-        # pr(return at SWA3|not returned at SWA1 or SWA2)
-        mu_psi_O3_Rb[s,o,j] <- 1
-        sig_Lpsi_O3_Rb[s,o,j] <- 0
-      }
+      
+      # pr(return at SWA1)
+      mu_psi_O1_Rb[o,j] ~ dbeta(1, 1)
+      sig_Lpsi_O1_Rb[o,j] ~ dunif(0, 5)
+      
+      # pr(return at SWA2|not returned at SWA1)
+      mu_psi_O2_Rb[o,j] ~ dbeta(1, 1)
+      sig_Lpsi_O2_Rb[o,j] ~ dunif(0, 5)
+      
+      # pr(return at SWA3|not returned at SWA1 or SWA2)
+      mu_psi_O3_Rb[o,j] <- 1
+      sig_Lpsi_O3_Rb[o,j] <- 0
     }
-    
     
     ### PRIORS: OCEAN SURVIVAL ###
     # mean survival by ocean year transition for natural origin
@@ -95,18 +86,16 @@ jags_model_code = function() {
       n_stray_tot[not_stray_yrs[i,j],j] <- 0
     }
     
-    # when n_stray_tot > 0, what age/sex are they? (assume all hatchery fish)
-    stray_comp_2d[1:nks,j] ~ ddirich(rep(1, nks))
+    # when n_stray_tot > 0, what age are they? (assume all hatchery fish)
+    stray_comp_2d[1:nk,j] ~ ddirich(rep(1, nk))
     
     # put stray_comp_2d into array format for looping in process model
     for (k in 1:nk) {
-      for (s in 1:ns) {
-        # assume no strays for natural fish
-        stray_comp[k,s,o_nat,j] <- 0
-        
-        # place stray_comp_2d in the right index locations
-        stray_comp[k,s,o_hat,j] <- stray_comp_2d[k+nk*(s-1),j]
-      }
+      # assume no strays for natural fish
+      stray_comp[k,o_nat,j] <- 0
+      
+      # place stray_comp_2d in the right index locations
+      stray_comp[k,o_hat,j] <- stray_comp_2d[k,j]
     }
   }
   
@@ -143,15 +132,13 @@ jags_model_code = function() {
   }
   
   # carcass vs. weir composition correction factor coefficients
-  for (i in 1:3) {
+  for (i in 1:2) {
     z[i] ~ dunif(-10,10)
   }
   
   # calculate correction factor
   for (k in 1:3) {
-    for (s in 1:2) {
-      log(carc_adj[k,s]) <- z[1] * age3[k] + z[2] * age5[k] + z[3] * male[s]
-    }
+    log(carc_adj[k]) <- z[1] * age3[k] + z[2] * age5[k]
   }
   
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
@@ -180,26 +167,18 @@ jags_model_code = function() {
       phi_Mb_Ma[y,i_spring,o_hat,j] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_hat,j])
       
       for (o in 1:no) {
-        # probability of returning as female or male by origin
-        Lomega1[y,o,j] ~ dnorm(logit(mu_omega[s_female,o,j]), 1/sig_Lomega[o,j]^2)
-        omega[y,s_female,o,j] <- ilogit(Lomega1[y,o,j])
-        omega[y,s_male,o,j] <- 1 - omega[y,s_female,o,j]
+
+        # pr(return at SWA1)
+        Lpsi_O1_Rb[y,o,j] ~ dnorm(logit(mu_psi_O1_Rb[o,j]), 1/sig_Lpsi_O1_Rb[o,j]^2)
+        psi_O1_Rb[y,o,j] <- ilogit(Lpsi_O1_Rb[y,o,j])
         
-        for (s in 1:ns) {
-          # pr(return at SWA1)
-          Lpsi_O1_Rb[y,s,o,j] ~ dnorm(logit(mu_psi_O1_Rb[s,o,j]), 1/sig_Lpsi_O1_Rb[s,o,j]^2)
-          # Lpsi_O1_Rb[y,s,o,j] <- logit(mu_psi_O1_Rb[s,o,j])
-          psi_O1_Rb[y,s,o,j] <- ilogit(Lpsi_O1_Rb[y,s,o,j])
-          
-          # pr(return at SWA2|not returned at SWA1)
-          Lpsi_O2_Rb[y,s,o,j] ~ dnorm(logit(mu_psi_O2_Rb[s,o,j]), 1/sig_Lpsi_O2_Rb[s,o,j]^2)
-          # Lpsi_O2_Rb[y,s,o,j] <- logit(mu_psi_O2_Rb[s,o,j])
-          psi_O2_Rb[y,s,o,j] <- ilogit(Lpsi_O2_Rb[y,s,o,j])
-          
-          # pr(return at SWA3|not returned at SWA1 or SWA2)
-          psi_O3_Rb[y,s,o,j] <- 1
-        }
+        # pr(return at SWA2|not returned at SWA1)
+        Lpsi_O2_Rb[y,o,j] ~ dnorm(logit(mu_psi_O2_Rb[o,j]), 1/sig_Lpsi_O2_Rb[o,j]^2)
+        psi_O2_Rb[y,o,j] <- ilogit(Lpsi_O2_Rb[y,o,j])
         
+        # pr(return at SWA3|not returned at SWA1 or SWA2)
+        psi_O3_Rb[y,o,j] <- 1
+
         # transform ocean survival terms
         phi_O0_O1[y,o,j] <- ilogit(Lphi_O0_O1[y,o,j])
         phi_O1_O2[y,o,j] <- ilogit(Lphi_O1_O2[y,o,j])
@@ -214,7 +193,7 @@ jags_model_code = function() {
     # yr1 ocean survival for natural origin: multivariate logit-normal error on white noise portion of AR(1) process
     Lphi_O0_O1[y,o_nat,1:nj] ~ dmnorm.vcov(logit(mu_phi_O0_O1[o_nat,1:nj]) + Lphi_O0_O1_resid[y-1,o_nat,1:nj] * kappa_phi_O0_O1[1:nj], Sig_Lphi_O0_O1[1:nj,1:nj])
     
-    # yr2/yr2 ocean survival for natural origin: time constant
+    # yr2/yr3 ocean survival for natural origin: time constant
     Lphi_O1_O2[y,o_nat,1:nj] <- logit(mu_phi_O1_O2[o_nat,1:nj])
     Lphi_O2_O3[y,o_nat,1:nj] <- logit(mu_phi_O2_O3[o_nat,1:nj])
 
@@ -243,21 +222,19 @@ jags_model_code = function() {
   # to populate adult states for reproduction/observation in the first years with data
   # THIS APPROACH:
   #  Estimate the mean and year-specific TOTAL ADULT RECRUITS (arriving to mouth of river)
-  #  for the first kmax brood years. Then, based on the hyperparams of return-by-sex, return-by-age, and ocean survival
+  #  for the first kmax brood years. Then, based on the hyperparams of return-by-age and ocean survival
   #  (this is the p_init_prime and p_init stuff below)
-  #  derive the probability of returning at age for each sex that will apply equally to all kmax of the first brood years
-  #  Then place these adult recruits in the appropriate return year by age/sex
+  #  derive the probability of returning at age will apply equally to all kmax of the first brood years
+  #  Then place these adult recruits in the appropriate return year by age
   
-  # obtain expected probability of adult recruits returning at age for each sex
+  # obtain expected probability of adult recruits returning at age
   # natural origin fish only
   for (j in 1:nj) {
-    for (s in 1:ns) {
-      p_init_prime[1,s,j] <- mu_phi_O0_O1[o_nat,j] * mu_psi_O1_Rb[s,o_nat,j]
-      p_init_prime[2,s,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[s,o_nat,j]) * mu_phi_O1_O2[o_nat,j] * mu_psi_O2_Rb[s,o_nat,j]
-      p_init_prime[3,s,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[s,o_nat,j]) * mu_phi_O1_O2[o_nat,j] * (1 - mu_psi_O2_Rb[s,o_nat,j]) * mu_phi_O2_O3[o_nat,j] * mu_psi_O3_Rb[s,o_nat,j]
-      for (k in 1:nk) {
-        p_init[k,s,j] <- p_init_prime[k,s,j]/sum(p_init_prime[1:nk,s,j])
-      }
+    p_init_prime[1,j] <- mu_phi_O0_O1[o_nat,j] * mu_psi_O1_Rb[o_nat,j]
+    p_init_prime[2,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[o_nat,j]) * mu_phi_O1_O2[o_nat,j] * mu_psi_O2_Rb[o_nat,j]
+    p_init_prime[3,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[o_nat,j]) * mu_phi_O1_O2[o_nat,j] * (1 - mu_psi_O2_Rb[o_nat,j]) * mu_phi_O2_O3[o_nat,j] * mu_psi_O3_Rb[o_nat,j]
+    for (k in 1:nk) {
+      p_init[k,j] <- p_init_prime[k,j]/sum(p_init_prime[1:nk,j])
     }
     
     # hyperparameters for initialization
@@ -268,16 +245,13 @@ jags_model_code = function() {
     for (y in 1:kmax) {
       # random, constant-mean adult recruits for first kmax brood years
       init_recruits[y,j] ~ dlnorm(log(mu_init_recruits[j]), 1/sig_init_lrecruits[j]^2) %_% T(,max_init_recruits[j])
-      for (s in 1:ns) {
-        # apportion them to each sex
-        init_recruits_sex[y,s,j] <- init_recruits[y,j] * mu_omega[s,o_nat,j]
-        for (k in 1:nk) {
-          # apportion them to return year, age, and sex
-          Rb[y+kmin+k-1,k,s,o_nat,j] <- init_recruits_sex[y,s,j] * p_init[k,s,j]
-          
-          # for hatchery origin - no operations these years, but still need to populate with a number
-          Rb[y+kmin+k-1,k,s,o_hat,j] <- 0
-        }
+      
+      for (k in 1:nk) {
+        # apportion them to return year and age
+        Rb[y+kmin+k-1,k,o_nat,j] <- init_recruits[y,j] * p_init[k,j]
+        
+        # for hatchery origin - no operations these years, but still need to populate with a number
+        Rb[y+kmin+k-1,k,o_hat,j] <- 0
       }
     }
   }
@@ -317,77 +291,73 @@ jags_model_code = function() {
       # needed because we sum over this dimension below
       Ma[y,i_fall,o_hat,j] <- 0
       
-      # sex/origin-specific processes
-      for (s in 1:ns) {
-        for (o in 1:no) {
-          # move origin-specific smolts from LGD to estuary (ocean age 0) and assign to sex
-          O0[y,s,o,j] <- sum(Ma[y,1:ni,o,j]) * phi_Ma_O0[y,o] * omega[y,s,o,j]
+      ##### LEFT OFF HERE #####
+      # origin-specific processes
+      ##### LEFT OFF HERE #####
+      for (o in 1:no) {
+        # move origin-specific smolts from LGD to estuary (ocean age 0)
+        O0[y,o,j] <- sum(Ma[y,1:ni,o,j]) * phi_Ma_O0[y,o]
+        
+        # move juveniles through ocean ages and survivals
+        O[y,1,o,j] <- O0[y,o,j] * phi_O0_O1[y,o,j] # survive first winter at sea. now SWA1, TA3
+        O[y,2,o,j] <- O[y,1,o,j] * (1 - psi_O1_Rb[y,o,j]) * phi_O1_O2[y,o,j] # don't mature at SWA1 and survive second winter at sea. now SWA2, TA4
+        O[y,3,o,j] <- O[y,2,o,j] * (1 - psi_O2_Rb[y,o,j]) * phi_O2_O3[y,o,j] # don't mature at SWA2 and survive third winter at sea. now SWA3, TA5
+        
+        # mature and return to river in appropriate year at age
+        Rb[y+kmin+1-1,1,o,j] <- O[y,1,o,j] * psi_O1_Rb[y,o,j]
+        Rb[y+kmin+2-1,2,o,j] <- O[y,2,o,j] * psi_O2_Rb[y,o,j]
+        Rb[y+kmin+3-1,3,o,j] <- O[y,3,o,j] * psi_O3_Rb[y,o,j]
+        
+        # adult in-river processes: all age/origin specific
+        # for these adult stages, y represents the brood year fish returned in
+        for (k in 1:nk) {
+          # returning adults making it to BON (survive sea lions * survive fisheries downstream of BON)
+          Rb_BON[y,k,o,j] <- Rb[y,k,o,j] * phi_SL[y,j] * (1 - Ub[y,k,o])
           
-          # move juveniles through ocean ages and survivals
-          O[y,1,s,o,j] <- O0[y,s,o,j] * phi_O0_O1[y,o,j] # survive first winter at sea. now SWA1, TA3
-          O[y,2,s,o,j] <- O[y,1,s,o,j] * (1 - psi_O1_Rb[y,s,o,j]) * phi_O1_O2[y,o,j] # don't mature at SWA1 and survive second winter at sea. now SWA2, TA4
-          O[y,3,s,o,j] <- O[y,2,s,o,j] * (1 - psi_O2_Rb[y,s,o,j]) * phi_O2_O3[y,o,j] # don't mature at SWA2 and survive third winter at sea. now SWA3, TA5
+          # survive upstream migration from BON to LGR and add strays
+          Ra[y,k,o,j] <- Rb_BON[y,k,o,j] * phi_Rb_Ra[y,o] + n_stray_tot[y,j] * stray_comp[k,o,j]
           
-          # mature and return to river in appropriate year at age/sex
-          Rb[y+kmin+1-1,1,s,o,j] <- O[y,1,s,o,j] * psi_O1_Rb[y,s,o,j]
-          Rb[y+kmin+2-1,2,s,o,j] <- O[y,2,s,o,j] * psi_O2_Rb[y,s,o,j]
-          Rb[y+kmin+3-1,3,s,o,j] <- O[y,3,s,o,j] * psi_O3_Rb[y,s,o,j]
+          # remove fish at weir: use max() to ensure that fewer fish were removed than existed
+          Sb[y,k,o,j] <- max(Ra[y,k,o,j] - n_remove[y,k,o,j], 1)
           
-          # adult in-river processes: all age/origin/sex specific
-          # for these adult stages, y represents the brood year fish returned in
-          for (k in 1:nk) {
-            # returning adults making it to BON (survive sea lions * survive fisheries downstream of BON)
-            Rb_BON[y,k,s,o,j] <- Rb[y,k,s,o,j] * phi_SL[y,j] * (1 - Ub[y,k,o])
-            
-            # survive upstream migration from BON to LGR and add strays
-            Ra[y,k,s,o,j] <- Rb_BON[y,k,s,o,j] * phi_Rb_Ra[y,o] + n_stray_tot[y,j] * stray_comp[k,s,o,j]
-            
-            # remove fish at weir: use max() to ensure that fewer fish were removed than existed
-            Sb[y,k,s,o,j] <- max(Ra[y,k,s,o,j] - n_remove[y,k,s,o,j], 1)
-            
-            # survive pre-spawn mortality
-            Sa[y,k,s,o,j] <- Sb[y,k,s,o,j] * phi_Sb_Sa[y,j]
-            
-            # calculate egg production
-            eggs[y,k,s,o,j] <- Sa[y,k,s,o,j] * f[k,s]
-            
-            # calculate "adjusted carcasses": accounts for sampling bias relative to weir
-            Sa_adj[y,k,s,o,j] <- Sa[y,k,s,o,j] * carc_adj[k,s]
-          }
+          # survive pre-spawn mortality
+          Sa[y,k,o,j] <- Sb[y,k,o,j] * phi_Sb_Sa[y,j]
+          
+          # calculate egg production
+          eggs[y,k,o,j] <- Sa[y,k,o,j] * p_female[k,j] * f[k]
+          
+          # calculate "adjusted carcasses": accounts for sampling bias relative to weir
+          Sa_adj[y,k,o,j] <- Sa[y,k,o,j] * carc_adj[k]
         }
       }
       
       # total adults returned to trib
-      Ra_tot[y,j] <- sum(Ra[y,1:nk,1:ns,1:no,j])
+      Ra_tot[y,j] <- sum(Ra[y,1:nk,1:no,j])
       
       # total spawning adults
-      Sa_tot[y,j] <- sum(Sa[y,1:nk,1:ns,1:no,j])
+      Sa_tot[y,j] <- sum(Sa[y,1:nk,1:no,j])
       
       # total egg production: used as spawning stock
-      f_tot[y,j] <- sum(eggs[y,1:nk,1:ns,1:no,j])
+      f_tot[y,j] <- sum(eggs[y,1:nk,1:no,j])
       
-      # reformat returns by age/sex/origin for fitting to weir comp data
-      Ra_2d[y,1:nk,j] <- Ra[y,1:nk,s_female,o_nat,j]            # nat. females, all ages
-      Ra_2d[y,(nk+1):(2*nk),j] <- Ra[y,1:nk,s_male,o_nat,j]     # nat. males, all ages
-      Ra_2d[y,(2*nk+1):(3*nk),j] <- Ra[y,1:nk,s_female,o_hat,j] # hat. females, all ages
-      Ra_2d[y,(3*nk+1):(4*nk),j] <- Ra[y,1:nk,s_male,o_hat,j]   # hat. males, all ages
-      
-      # reformat "adjusted carcasses" by age/sex/origin for fitting to carcass comp data
-      Sa_adj_2d[y,1:nk,j] <- Sa_adj[y,1:nk,s_female,o_nat,j]            # nat. females, all ages
-      Sa_adj_2d[y,(nk+1):(2*nk),j] <- Sa_adj[y,1:nk,s_male,o_nat,j]     # nat. males, all ages
-      Sa_adj_2d[y,(2*nk+1):(3*nk),j] <- Sa_adj[y,1:nk,s_female,o_hat,j] # hat. females, all ages
-      Sa_adj_2d[y,(3*nk+1):(4*nk),j] <- Sa_adj[y,1:nk,s_male,o_hat,j]   # hat. males, all ages
-      
-      # calculate age/sex compositions
-      for (kso in 1:nkso) {
-        q_Ra[y,kso,j] <- Ra_2d[y,kso,j]/sum(Ra_2d[y,1:nkso,j])
-        q_Sa_adj[y,kso,j] <- Sa_adj_2d[y,kso,j]/sum(Sa_adj_2d[y,1:nkso,j])
+      # reformat returns by age/origin for fitting to weir comp data (basically cbind two array slices)
+      Ra_2d[y,1:nk,j] <- Ra[y,1:nk,o_nat,j]            # nat., all ages
+      Ra_2d[y,(nk+1):(2*nk),j] <- Ra[y,1:nk,o_hat,j]   # hat., all ages
+
+      # reformat "adjusted carcasses" by age/origin for fitting to carcass comp data (basically cbind two array slices)
+      Sa_adj_2d[y,1:nk,j] <- Sa_adj[y,1:nk,o_nat,j]            # nat., all ages
+      Sa_adj_2d[y,(nk+1):(2*nk),j] <- Sa_adj[y,1:nk,o_hat,j]   # hat., all ages
+
+      # calculate age compositions
+      for (ko in 1:nko) {
+        q_Ra[y,ko,j] <- Ra_2d[y,ko,j]/sum(Ra_2d[y,1:nko,j])
+        q_Sa_adj[y,ko,j] <- Sa_adj_2d[y,ko,j]/sum(Sa_adj_2d[y,1:nko,j])
       }
       
       # calculate misc derived quantities
       Pb_per_Sa_tot[y,j] <- Pb[y,j]/Sa_tot[y,j]                  # parr per spawner
       Pb_per_f_tot[y,j] <- Pb[y,j]/f_tot[y,j]                    # parr per egg
-      Mb_per_Sa_tot[y,j] <- sum(Mb[y,1:ns,o_nat,j])/Sa_tot[y,j]  # smolt per spawner
+      Mb_per_Sa_tot[y,j] <- sum(Mb[y,1:ni,o_nat,j])/Sa_tot[y,j]  # smolt per spawner
     }
     
     # BON -> BON survival -- can't be calculated for all brood years in model
@@ -395,19 +365,19 @@ jags_model_code = function() {
       for (o in 1:no) {
         # calculate year/origin/pop specific survival
         phi_O0_Rb_BON[y,o,j] <- (
-          sum(Rb_BON[y+kmin+1-1,1,1:ns,o,j]) + 
-            sum(Rb_BON[y+kmin+2-1,2,1:ns,o,j]) + 
-            sum(Rb_BON[y+kmin+3-1,3,1:ns,o,j]))/
-          ifelse(sum(O0[y,1:ns,o,j]) == 0, 1, sum(O0[y,1:ns,o,j]))
+          Rb_BON[y+kmin+1-1,1,o,j] + 
+            Rb_BON[y+kmin+2-1,2,o,j] + 
+            Rb_BON[y+kmin+3-1,3,o,j])/
+          ifelse(O0[y,o,j] == 0, 1, O0[y,o,j])
       }
     }
     
     # spawners per spawner -- can't be calculated for all brood years in model
     for (y in (kmax+1):(ny-kmax)) {
       Sa_tot_per_Sa_tot[y,j] <- (
-        sum(Sa[y+kmin+1-1,1,1:ns,1:no,j]) +       # age 3 adults produced by spawners in brood year y
-          sum(Sa[y+kmin+2-1,2,1:ns,1:no,j]) +     # age 4 adults produced by spawners in brood year y
-          sum(Sa[y+kmin+3-1,3,1:ns,1:no,j]))/     # age 5 adults produced by spawners in brood year y
+        sum(Sa[y+kmin+1-1,1,1:no,j]) +       # age 3 adults produced by spawners in brood year y
+          sum(Sa[y+kmin+2-1,2,1:no,j]) +     # age 4 adults produced by spawners in brood year y
+          sum(Sa[y+kmin+3-1,3,1:no,j]))/     # age 5 adults produced by spawners in brood year y
         Sa_tot[y,j]                               # total spawners in brood year y
     }
     
@@ -415,9 +385,9 @@ jags_model_code = function() {
     for (y in (kmax+1):(ny-kmax)) {
       for (o in 1:no) {
         Ra_per_Ma[y,o,j] <- (
-          sum(Ra[y+kmin+1-1,1,1:ns,o,j]) +       # age 3 adults back at trib that were once smolts from brood year y
-            sum(Ra[y+kmin+2-1,2,1:ns,o,j]) +     # age 4 adults back at trib that were once smolts from brood year y
-            sum(Ra[y+kmin+3-1,3,1:ns,o,j]))/     # age 5 adults back at trib that were once smolts from brood year y
+          Ra[y+kmin+1-1,1,o,j] +       # age 3 adults back at trib that were once smolts from brood year y
+            Ra[y+kmin+2-1,2,o,j] +     # age 4 adults back at trib that were once smolts from brood year y
+            Ra[y+kmin+3-1,3,o,j])/     # age 5 adults back at trib that were once smolts from brood year y
           ifelse(sum(Ma[y,1:ni,o,j]) == 0, 1, sum(Ma[y,1:ni,o,j]))                    # total smolts at LGR from brood year y
       }
     }
@@ -433,42 +403,42 @@ jags_model_code = function() {
   
   # the long form index notation (i.e., for(d in 1:n_fit){}) enables skipping over missing data while keeping all object dimensions identical
   
-  # age/sex composition
+  # age/origin composition
   for (j in 1:nj) {
     for (y in (kmax+1):ny) {
       # AT WEIR
       # data likelihood
-      weir_x_obs[y,1:nkso,j] ~ dmulti(q_Ra[y,1:nkso,j], weir_nx_obs[y,j])
+      weir_x_obs[y,1:nko,j] ~ dmulti(q_Ra[y,1:nko,j], weir_nx_obs[y,j])
       
       # simulate new data
-      weir_x_obs_new[y,1:nkso,j] ~ dmulti(q_Ra[y,1:nkso,j], weir_nx_obs[y,j])
+      weir_x_obs_new[y,1:nko,j] ~ dmulti(q_Ra[y,1:nko,j], weir_nx_obs[y,j])
       
       # calculate expected count add small number to avoid division by zero
-      expected_weir_x_obs[y,1:nkso,j] <- q_Ra[y,1:nkso,j] * weir_nx_obs[y,j] + 1e-6
+      expected_weir_x_obs[y,1:nko,j] <- q_Ra[y,1:nko,j] * weir_nx_obs[y,j] + 1e-6
       
       # calculate fit statistic: chi-squared statistic
-      weir_x_obs_dev[y,j] <- sum(((weir_x_obs[y,1:nkso,j] - expected_weir_x_obs[y,1:nkso,j])^2)/expected_weir_x_obs[y,1:nkso,j])
-      weir_x_obs_new_dev[y,j] <- sum(((weir_x_obs_new[y,1:nkso,j] - expected_weir_x_obs[y,1:nkso,j])^2)/expected_weir_x_obs[y,1:nkso,j])
+      weir_x_obs_dev[y,j] <- sum(((weir_x_obs[y,1:nko,j] - expected_weir_x_obs[y,1:nko,j])^2)/expected_weir_x_obs[y,1:nko,j])
+      weir_x_obs_new_dev[y,j] <- sum(((weir_x_obs_new[y,1:nko,j] - expected_weir_x_obs[y,1:nko,j])^2)/expected_weir_x_obs[y,1:nko,j])
       
       # calculate log posterior predictive density
-      weir_x_obs_lppd[y,j] <- logdensity.multi(weir_x_obs[y,1:nkso,j], q_Ra[y,1:nkso,j], weir_nx_obs[y,j])
+      weir_x_obs_lppd[y,j] <- logdensity.multi(weir_x_obs[y,1:nko,j], q_Ra[y,1:nko,j], weir_nx_obs[y,j])
       
       # FOR CARCASSES
       # data likelihood
-      carc_x_obs[y,1:nkso,j] ~ dmulti(q_Sa_adj[y,1:nkso,j], carc_nx_obs[y,j])
+      carc_x_obs[y,1:nko,j] ~ dmulti(q_Sa_adj[y,1:nko,j], carc_nx_obs[y,j])
       
       # simulate new data
-      carc_x_obs_new[y,1:nkso,j] ~ dmulti(q_Ra[y,1:nkso,j], carc_nx_obs[y,j])
+      carc_x_obs_new[y,1:nko,j] ~ dmulti(q_Ra[y,1:nko,j], carc_nx_obs[y,j])
       
       # calculate expected count add small number to avoid division by zero
-      expected_carc_x_obs[y,1:nkso,j] <- q_Ra[y,1:nkso,j] * carc_nx_obs[y,j] + 1e-6
+      expected_carc_x_obs[y,1:nko,j] <- q_Ra[y,1:nko,j] * carc_nx_obs[y,j] + 1e-6
       
       # calculate fit statistic: chi-squared statistic
-      carc_x_obs_dev[y,j] <- sum(((carc_x_obs[y,1:nkso,j] - expected_carc_x_obs[y,1:nkso,j])^2)/expected_carc_x_obs[y,1:nkso,j])
-      carc_x_obs_new_dev[y,j] <- sum(((carc_x_obs_new[y,1:nkso,j] - expected_carc_x_obs[y,1:nkso,j])^2)/expected_carc_x_obs[y,1:nkso,j])
+      carc_x_obs_dev[y,j] <- sum(((carc_x_obs[y,1:nko,j] - expected_carc_x_obs[y,1:nko,j])^2)/expected_carc_x_obs[y,1:nko,j])
+      carc_x_obs_new_dev[y,j] <- sum(((carc_x_obs_new[y,1:nko,j] - expected_carc_x_obs[y,1:nko,j])^2)/expected_carc_x_obs[y,1:nko,j])
       
       # calculate log posterior predictive density
-      carc_x_obs_lppd[y,j] <- logdensity.multi(carc_x_obs[y,1:nkso,j], q_Ra[y,1:nkso,j], carc_nx_obs[y,j])
+      carc_x_obs_lppd[y,j] <- logdensity.multi(carc_x_obs[y,1:nko,j], q_Ra[y,1:nko,j], carc_nx_obs[y,j])
     }
   }
   
@@ -644,17 +614,11 @@ jags_model_code = function() {
         # movement survival to LGR
         Lphi_Mb_Ma_resid[y,o,j] <- Lphi_Mb_Ma[y,i_spring,o,j] - logit(mu_phi_Mb_Ma[i_spring,o,j])
         
-        # probability of returning as female
-        Lomega_resid[y,o,j] <- Lomega1[y,o,j] - logit(mu_omega[s_female,o,j])
+        # pr(return at SWA1)
+        Lpsi_O1_Rb_resid[y,o,j] <- Lpsi_O1_Rb[y,o,j] - logit(mu_psi_O1_Rb[o,j])
         
-        # sex-specific quantities: maturity
-        for (s in 1:ns) {
-          # pr(return at SWA1)
-          Lpsi_O1_Rb_resid[y,s,o,j] <- Lpsi_O1_Rb[y,s,o,j] - logit(mu_psi_O1_Rb[s,o,j])
-          
-          # pr(return at SWA2|not returned at SWA1)
-          Lpsi_O2_Rb_resid[y,s,o,j] <- Lpsi_O2_Rb[y,s,o,j] - logit(mu_psi_O2_Rb[s,o,j])
-        }
+        # pr(return at SWA2|not returned at SWA1)
+        Lpsi_O2_Rb_resid[y,o,j] <- Lpsi_O2_Rb[y,o,j] - logit(mu_psi_O2_Rb[o,j])
       }
       
       # pre-spawn survival
