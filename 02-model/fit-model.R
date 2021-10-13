@@ -17,7 +17,7 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 out_dir = "02-model/model-output"
 
 # specify a scenario name
-scenario = "base"
+scenario = "no-sex"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -47,11 +47,21 @@ jags_data = append_no_na_indices(jags_data)
 Ub_45_nat = with(jags_data, c(rep(NA, kmax), rep(0.02, ny - kmax)))
 Ub_45_hat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
 Ub = abind(list(cbind(Ub_45_nat * 0.25, Ub_45_nat, Ub_45_nat), cbind(Ub_45_hat * 0.75, Ub_45_hat, Ub_45_hat)), along = 3)
-dimnames(Ub) = with(jags_data, list(names(Ra_obs), kmin:kmax, c("Nat", "Hat")))
+dimnames(Ub) = with(jags_data, list(rownames(Ra_obs), kmin:kmax, c("Nat", "Hat")))
+
+# proportion of spawners by age and population that are female
+p_female = array(NA, dim = c(jags_data$nk, jags_data$nj))
+dimnames(p_female) = list(jags_data$kmin:jags_data$kmax, colnames(jags_data$Ra_obs))
+p_female["3",] = 0
+p_female["4","CAT"] = 0.55; p_female["4","LOS"] = 0.53; p_female["4","UGR"] = 0.57 
+p_female["5","CAT"] = 0.43; p_female["5","LOS"] = 0.41; p_female["5","UGR"] = 0.48 
+p_female["4","MIN"] = round(mean(p_female["4",], na.rm = TRUE), 2)
+p_female["5","MIN"] = round(mean(p_female["5",], na.rm = TRUE), 2)
 
 add_jags_data = list(
-  Ub = Ub,           # harvest rate after sea lion mortality below BON
-  f = matrix(c(1904, 3971, 4846, 0, 0, 0), nrow = 3, ncol = 2)  # fecundity [age,sex]
+  Ub = Ub,                  # harvest rate after sea lion mortality below BON
+  f = c(1904, 3971, 4846),  # fecundity [female age]
+  p_female = p_female       # proportion of spawners by age and population that are female
 )
 
 # calculate a metric for overall survival from estuary to tributary
@@ -61,19 +71,16 @@ overall_phi_Rb_Ra = with(append(jags_data, add_jags_data), mean(phi_SL, na.rm = 
 # some dummy variables for performing weir vs. carcass composition correction
 add_jags_data2 = list(
   age3 = c(1,0,0),      # is each k age 3? 1 = yes; 0 = no
-  age5 = c(0,0,1),      # is each k age 5?
-  male = c(0,1)         # is each s male?
+  age5 = c(0,0,1)       # is each k age 5?
 )
 add_jags_data = append(add_jags_data, add_jags_data2)
 
-# create index names, for when it would help improve readibility of the JAGS code
+# create index names, for when it would help improve readability of the JAGS code
 add_jags_data3 = list(
   i_fall = 1,     # fall migrants are i = 1
   i_spring = 2,   # spring migrants are i = 2,
   o_nat = 1,      # natural origin are o = 1,
-  o_hat = 2,      # hatchery origin are o = 2,
-  s_female = 1,   # females are s = 1,
-  s_male = 2      # males are s = 2
+  o_hat = 2       # hatchery origin are o = 2,
 )
 add_jags_data = append(add_jags_data, add_jags_data3)
 
@@ -108,16 +115,16 @@ jags_params = c(
   
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_O0",
-  "mu_omega", "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
+  "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
   "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
   
   # hyperparameters: inter-annual sd
   "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_O0",
-  "sig_Lomega", "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
+  "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
   "Sig_Lphi_O0_O1", "sig_Lphi_Rb_Ra",
   
   # year-specific parameters
-  "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", "omega", 
+  "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
   "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
   "phi_O0_O1", "phi_O1_O2", "phi_O2_O3",
   "phi_Rb_Ra",
@@ -143,7 +150,7 @@ jags_params = c(
   
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
-  "Lphi_Ma_O0_resid", "Lomega_resid", "Lpsi_O1_Rb_resid",
+  "Lphi_Ma_O0_resid", "Lpsi_O1_Rb_resid",
   "Lpsi_O2_Rb_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
   "Lphi_Sb_Sa_resid", "lPb_resid", "Lphi_Rb_Ra_resid",
   
