@@ -59,21 +59,18 @@ tmp = tmp[!is.na(tmp$age_best2),]
 # discard records with age assigned as 2
 tmp = tmp[tmp$age_best2 > 2,]
 
-# discard records with unknown sex
-tmp = tmp[tmp$sex != "Unk",]
-
 # discard records with unknown origin
 tmp = tmp[tmp$origin != "Unk",]
 
 # keep only relevant columns
-tmp = tmp[,c("population", "year", "sex", "origin", "age_best2")]
+tmp = tmp[,c("population", "year", "origin", "age_best2")]
 tmp$count = 1
 
-# calculate the sum of the counts by population, year, sex, age, and origin
-tmp = aggregate(count ~ population + year + sex + origin + age_best2, data = tmp, FUN = sum)
+# calculate the sum of the counts by population, year, age, and origin
+tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN = sum)
 
 # reformat: to wide
-tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "count")
+tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
 
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets
@@ -110,9 +107,6 @@ tmp = tmp[!is.na(tmp$age_best2),]
 # discard records with age assigned as 2
 tmp = tmp[tmp$age_best2 > 2,]
 
-# discard records with unknown sex
-tmp = tmp[tmp$sex != "Unk",]
-
 # discard records with unknown origin
 tmp = tmp[tmp$origin != "Unk",]
 
@@ -123,13 +117,13 @@ tmp = tmp[-which(tmp$recapture),]
 colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
 
 # keep only relevant columns
-tmp = tmp[,c("population", "year", "sex", "origin", "age_best2", "count")]
+tmp = tmp[,c("population", "year", "origin", "age_best2", "count")]
 
-# calculate the sum of the counts by population, year, sex, age, and origin
-tmp = aggregate(count ~ population + year + sex + origin + age_best2, data = tmp, FUN = sum)
+# calculate the sum of the counts by population, year, age, and origin
+tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN = sum)
 
 # reformat: to wide
-tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "count")
+tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
 
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets
@@ -166,9 +160,6 @@ tmp = tmp[!is.na(tmp$age_best2),]
 # discard records with age assigned as 2
 tmp = tmp[tmp$age_best2 > 2,]
 
-# discard records with unknown sex
-tmp = tmp[tmp$sex != "Unk",]
-
 # discard records with unknown origin
 tmp = tmp[tmp$origin != "Unk",]
 
@@ -182,13 +173,13 @@ tmp = tmp[-which(tmp$recapture),]
 tmp = tmp[tmp$disposition == "removed",]
 
 # keep only relevant columns
-tmp = tmp[,c("population", "year", "sex", "origin", "age_best2", "count")]
+tmp = tmp[,c("population", "year", "origin", "age_best2", "count")]
 
-# calculate the sum of the counts by population, year, sex, age, and origin
-tmp = aggregate(count ~ population + year + sex + origin + age_best2, data = tmp, FUN = sum)
+# calculate the sum of the counts by population, year, age, and origin
+tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN = sum)
 
 # reformat: to wide
-tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "count")
+tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
 
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets
@@ -196,10 +187,6 @@ tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "coun
 # just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
 colnames(tmp)[2] = "brood_year"
 colnames(tmp)[3:ncol(tmp)] = paste("rm", colnames(tmp)[3:ncol(tmp)], sep = "_")
-
-# add a column for rm_Nat_F3: none found in data set so column is missing and resort column names
-tmp$rm_Nat_F_3 = NA
-tmp = tmp[,c("population", "brood_year", sort(colnames(tmp)[3:ncol(tmp)]))]
 
 # rename the data frame, and remove "tmp" objects
 adult_rm_composition = tmp; rm(tmp)
