@@ -8,7 +8,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "no-sex"
+    value: "base"
     input: text
 editor_options: 
   chunk_output_type: console
