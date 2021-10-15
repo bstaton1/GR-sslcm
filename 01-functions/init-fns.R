@@ -61,8 +61,8 @@ fit_fecund_BH = function(jags_data, pop, plot = FALSE) {
     # get "observed" spawners
     Sa_obs = Ra_obs[,pop] * mu_phi_Sb_Sa
     
-    # set approximate [age,sex] composition
-    q = matrix(c(0, 0.4, 0.05, 0.2, 0.3, 0.05), nrow = 3, ncol = 2)
+    # set approximate composition (proportion of all spawners that are females of age 3, 4, or 5)
+    q = c(0, 0.4, 0.05)
     
     # get approximate egg production
     f_tot = sapply(Sa_obs, function(x) {
@@ -114,7 +114,7 @@ gen_initials = function(c, jags_data) {
   n_stray_tot = sapply(1:jags_data$nj, function(j) {
     stray_yrs = as.numeric(na.omit(jags_data$stray_yrs[,j]))
     comp = t(apply(jags_data$carc_x_obs[stray_yrs,,j], 1, function(x) x/sum(x)))
-    p_nat = rowSums(comp[,1:(jags_data$ns * jags_data$nk)])
+    p_nat = rowSums(comp[,1:jags_data$nk])
     p_nat[is.na(p_nat)] = 1
     n_strays = jags_data$Ra_obs[stray_yrs,j] * (1 - p_nat)
     out = rep(NA, jags_data$ny)
@@ -124,10 +124,7 @@ gen_initials = function(c, jags_data) {
   })
   
   mu_list = with(jags_data, {
-    # sex apportionment
-    mu_omega = array(NA, dim = c(ns, no, nj))
-    mu_omega[1,1:no,1:nj] = runif(no*nj, 0.4, 0.6)
-    
+
     # hydropower survival
     mu_phi_Ma_O0 = runif(no, 0.4, 0.6)
     
@@ -149,17 +146,14 @@ gen_initials = function(c, jags_data) {
     mu_pi[i_fall,] = runif(nj, 0.2, 0.4)
     
     # maturity: at total age 3
-    mu_psi_O1_Rb = array(NA, dim = c(ns,no,nj))
-    mu_psi_O1_Rb[s_female,1:no,1:nj] = runif(no*nj, 0.02, 0.05)
-    mu_psi_O1_Rb[s_male,1:no,1:nj] = runif(no*nj, 0.1, 0.2)
-    
+    mu_psi_O1_Rb = array(NA, dim = c(no,nj))
+    mu_psi_O1_Rb[1:no,1:nj] = runif(no*nj, 0.2, 0.3)
+
     # maturity: at total age 4
-    mu_psi_O2_Rb = array(NA, dim = c(ns,no,nj))
-    mu_psi_O2_Rb[s_female,1:no,1:nj] = runif(no*nj, 0.7, 0.9)
-    mu_psi_O2_Rb[s_male,1:no,1:nj] = runif(no*nj, 0.7, 0.7)
-    
+    mu_psi_O2_Rb = array(NA, dim = c(no,nj))
+    mu_psi_O2_Rb[1:no,1:nj] = runif(no*nj, 0.7, 0.9)
+
     list(
-      mu_omega = mu_omega,
       mu_phi_Ma_O0 = mu_phi_Ma_O0,
       mu_phi_Mb_Ma = mu_phi_Mb_Ma, 
       mu_phi_O0_O1 = mu_phi_O0_O1,
@@ -181,7 +175,7 @@ gen_initials = function(c, jags_data) {
     log_beta = sapply(BH_ests, function(ests) rnorm(1, ests["log_beta","Estimate"], ests["log_beta","Std. Error"])),
     Pb = Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj),
     sigma_Pb = runif(jags_data$nj, 0.3, 0.4),
-    z = runif(3, c(-1, -0.05, -0.5), c(1, 0.05, 0.5)),
+    z = runif(2, c(-1, -0.05), c(1, 0.05)),
     n_stray_tot = n_stray_tot, 
     mu_init_recruits = mu_init_recruits
   )

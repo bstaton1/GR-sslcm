@@ -144,7 +144,7 @@ BH = function(x, alpha, beta) {
 # returns "psi_O1_Rb[.+,1,2,.]"
 # this reduces how much hardcoding is required in generating output summaries
 
-sub_index = function(x, year = NULL, LH_type = NULL, age = NULL, sex = NULL, origin = NULL, pop = NULL) {
+sub_index = function(x, year = NULL, LH_type = NULL, age = NULL, origin = NULL, pop = NULL) {
   # create a duplicate object
   newx = x
   
@@ -152,7 +152,6 @@ sub_index = function(x, year = NULL, LH_type = NULL, age = NULL, sex = NULL, ori
   if (!is.null(year)) newx = stringr::str_replace(newx, "year", as.character(year))
   if (!is.null(age)) newx = stringr::str_replace(newx, "age", as.character(age))
   if (!is.null(LH_type)) newx = stringr::str_replace(newx, "LH_type", as.character(LH_type))
-  if (!is.null(sex)) newx = stringr::str_replace(newx, "sex", as.character(sex))
   if (!is.null(origin)) newx = stringr::str_replace(newx, "origin", as.character(origin))
   if (!is.null(pop)) newx = stringr::str_replace(newx, "pop", as.character(pop))
   
