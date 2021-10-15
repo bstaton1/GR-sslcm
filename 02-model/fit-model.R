@@ -71,7 +71,9 @@ overall_phi_Rb_Ra = with(append(jags_data, add_jags_data), mean(phi_SL, na.rm = 
 # some dummy variables for performing weir vs. carcass composition correction
 add_jags_data2 = list(
   age3 = c(1,0,0),      # is each k age 3? 1 = yes; 0 = no
-  age5 = c(0,0,1)       # is each k age 5?
+  age5 = c(0,0,1),      # is each k age 5?
+  j_z = c(1,2,4),       # which j elements will have z estimated (must have both carcass and weir composition data)?
+  nj_z = 3              # how many j elements will have z estimated?
 )
 add_jags_data = append(add_jags_data, add_jags_data2)
 
