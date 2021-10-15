@@ -175,7 +175,6 @@ gen_initials = function(c, jags_data) {
     log_beta = sapply(BH_ests, function(ests) rnorm(1, ests["log_beta","Estimate"], ests["log_beta","Std. Error"])),
     Pb = Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj),
     sigma_Pb = runif(jags_data$nj, 0.3, 0.4),
-    z = runif(2, c(-1, -0.05), c(1, 0.05)),
     n_stray_tot = n_stray_tot, 
     mu_init_recruits = mu_init_recruits
   )

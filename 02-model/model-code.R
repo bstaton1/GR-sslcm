@@ -132,14 +132,30 @@ jags_model_code = function() {
   }
   
   # carcass vs. weir composition correction factor coefficients
+  # age/population-specific coefficients of correction factor
+  # only for populations with both weir and carcass data (j_z)
   for (i in 1:2) {
-    z[i] ~ dunif(-10,10)
+    # hyper-params
+    mu_z[i] ~ dunif(-10,10)
+    sig_z[i] ~ dunif(0, 5)
+    
+    # pop-specific effects
+    for (j in 1:nj_z) {
+      z[i,j_z[j]] ~ dnorm(mu_z[i], 1/sig_z[i]^2)
+    }
   }
   
-  # calculate correction factor
-  for (k in 1:3) {
-    log(carc_adj[k]) <- z[1] * age3[k] + z[2] * age5[k]
+  # calculate correction factor for populations with both weir and carcass data
+  for (j in 1:nj_z) {
+    for (k in 1:3) {
+      log(carc_adj[k,j_z[j]]) <- z[1,j_z[j]] * age3[k] + z[2,j_z[j]] * age5[k]
+    }
   }
+  
+  # calculate correction factor for population(s) without both weir and carcass data (Minam)
+  carc_adj[1,3] <- (carc_adj[1,1] + carc_adj[1,2] + carc_adj[1,4])/3
+  carc_adj[2,3] <- (carc_adj[2,1] + carc_adj[2,2] + carc_adj[2,4])/3
+  carc_adj[3,3] <- (carc_adj[3,1] + carc_adj[3,2] + carc_adj[3,4])/3
   
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in (kmax+1):ny) {
@@ -327,7 +343,7 @@ jags_model_code = function() {
           eggs[y,k,o,j] <- Sa[y,k,o,j] * p_female[k,j] * f[k]
           
           # calculate "adjusted carcasses": accounts for sampling bias relative to weir
-          Sa_adj[y,k,o,j] <- Sa[y,k,o,j] * carc_adj[k]
+          Sa_adj[y,k,o,j] <- Sa[y,k,o,j] * carc_adj[k,j]
         }
       }
       

@@ -8,7 +8,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "no-sex"
+    value: "base"
     input: text
 editor_options: 
   chunk_output_type: console
@@ -312,7 +312,9 @@ phi_Sb_Sa_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i
 
 # Carcass Correction
 L1 = "Carcass Correction Factor"
-z_diags = diag_fn("z", L1 = L1)
+L2 = c("Among-Pop Mean", "Among-Pop SD", "Pop-Specific")
+match = c("mu_z[.]", "sig_z[.]", "^z[.,.]")
+z_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Initial adult recruitment
 L1 = "Initial Adult Recruitment"
