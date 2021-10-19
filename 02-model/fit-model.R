@@ -110,7 +110,7 @@ jags_model_contents[1] = "model {"
 
 jags_params = c(
   # reproduction
-  "alpha", "beta", "sigma_Pb",
+  "alpha", "beta", "sig_Pb",
   
   # overwinter survival coefficients
   "gamma0", "gamma1",

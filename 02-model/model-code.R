@@ -6,7 +6,7 @@ jags_model_code = function() {
     alpha[j] ~ dbeta(1, 1)
     log_beta[j] ~ dnorm(0, 0.001) %_% T(,15)   # log capacity. bound to prevent nonsensically large draws
     beta[j] <- exp(log_beta[j])
-    sigma_Pb[j] ~ dunif(0, 5)
+    sig_Pb[j] ~ dunif(0, 5)
     beta_per_peu[j] <- beta[j]/peu[j]
     
     ### PRIORS: FRESHWATER PARAMETERS ###
@@ -277,7 +277,7 @@ jags_model_code = function() {
     for (y in (kmax+1):ny) {
       # reproductive link: total summer parr
       Pb_pred[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j])
-      Pb[y,j] ~ dlnorm(log(Pb_pred[y,j]), 1/sigma_Pb[j]^2)
+      Pb[y,j] ~ dlnorm(log(Pb_pred[y,j]), 1/sig_Pb[j]^2)
       
       # natural origin tributary-to-LGD dynamics
       for (i in 1:ni) {
