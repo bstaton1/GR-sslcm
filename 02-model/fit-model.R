@@ -101,6 +101,11 @@ jags_source = "02-model/model-code.R"
 jags_file = "02-model/model.txt"
 write_model_code(jags_source, jags_file)
 
+# toggle on the estimation of various rho terms
+# this function alters the contents of jags_file to
+# replace the appropriate "rho <- 0" with "rho ~ dunif(-0.99, 0.99)
+# i.e., defines which components should have non-zero covariance
+toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival
 
 ##### STEP 3: SELECT NODES TO MONITOR #####
 
