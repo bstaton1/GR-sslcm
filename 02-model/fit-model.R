@@ -110,7 +110,7 @@ jags_model_contents[1] = "model {"
 
 jags_params = c(
   # reproduction
-  "alpha", "beta", "sig_Pb",
+  "alpha", "beta", "Sig_lPb",
   
   # overwinter survival coefficients
   "gamma0", "gamma1",
@@ -121,9 +121,9 @@ jags_params = c(
   "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
   
   # hyperparameters: inter-annual sd
-  "sig_Lpi", "sig_Lphi_Pa_Mb", "sig_Lphi_Mb_Ma", "sig_Lphi_Ma_O0",
-  "sig_Lpsi_O1_Rb", "sig_Lpsi_O2_Rb", "sig_Lphi_Sb_Sa",
-  "Sig_Lphi_O0_O1", "sig_Lphi_Rb_Ra",
+  "Sig_Lpi", "Sig_Lphi_Pa_Mb", "Sig_Lphi_Mb_Ma", "Sig_Lphi_Ma_O0",
+  "Sig_Lpsi_O1_Rb", "Sig_Lpsi_O2_Rb", "Sig_Lphi_Sb_Sa",
+  "Sig_Lphi_O0_O1", "Sig_Lphi_Rb_Ra",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
