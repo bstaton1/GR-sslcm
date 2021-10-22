@@ -96,15 +96,11 @@ jags_data = append(jags_data, add_jags_data)
 
 ##### STEP 2: SPECIFY JAGS MODEL #####
 
-# source the jags model code and write to a text file
-source("02-model/model-code.R")
+# write the jags model source code to a text file
+jags_source = "02-model/model-code.R"
 jags_file = "02-model/model.txt"
-write_model(jags_model_code, jags_file)
+write_model_code(jags_source, jags_file)
 
-# store the model code as an object, to be saved in the output object later
-# use this version rather than 'model.txt' because this one retains the comments
-jags_model_contents = readLines("02-model/model-code.R")
-jags_model_contents[1] = "model {"
 
 ##### STEP 3: SELECT NODES TO MONITOR #####
 
@@ -216,9 +212,6 @@ stoptime = Sys.time()
 cat("\nMCMC ended:", format(stoptime))
 cat("\nMCMC elapsed:", format(round(stoptime - starttime, 2)))
 
-# delete the text file that contains the JAGS code
-unlink(jags_file)
-
 ##### STEP 7: SAVE THE OUTPUT #####
 
 # create the output directory if it doesn't already exist
@@ -226,7 +219,7 @@ if (!dir.exists(out_dir)) dir.create(out_dir)
 
 # create the output object: stores data, posterior samples, and population name
 out_obj = list(
-  jags_model_code = jags_model_contents,
+  jags_model_code = readLines(jags_file),
   jags_data = jags_data,
   jags_inits = jags_inits,
   jags_dims = jags_dims,
@@ -241,6 +234,9 @@ out_file = paste0("output-", scenario, ".rds")
 # save the file
 cat("\nSaving rds Output")
 saveRDS(out_obj, file.path(out_dir, out_file))
+
+# delete the text file that contains the JAGS code
+unlink(jags_file)
 
 # render the output plots if requested
 if (rmd) {

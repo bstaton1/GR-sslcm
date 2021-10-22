@@ -173,3 +173,30 @@ unlist_dfs = function(list) {
   return(output)
 }
 
+
+##### CREATE A JAGS MODEL FILE FROM AN R FUNCTION #####
+
+# this function does the same thing as postpack::write_model or R2OpenBUGS::write.model
+# except that it retains the comments contained in the source function
+
+# function to write function to file
+write_model_code = function(fun_file, out_file) {
+  
+  # extract the function body, including comments
+  # code = attr(fun, "srcref")
+  # code = as.character(code)
+  code = readLines(fun_file)
+  
+  # replace the first line
+  code[1] = "model {"
+  
+  # replace the last line
+  code[length(code)] = "}  # END OF MODEL"
+  
+  # remove any instances of "%_%"
+  code = stringr::str_remove(code, "%_%\\s?")
+  
+  # write the code to a file
+  writeLines(code, out_file)
+}
+
