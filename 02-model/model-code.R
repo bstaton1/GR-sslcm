@@ -28,13 +28,12 @@ jags_model_code = function() {
     
     # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
     mu_phi_Mb_Ma[i_spring,o_nat,j] ~ dbeta(1, 1)
-    sig_Lphi_Mb_Ma[i_spring,o_nat,j] ~ dunif(0, 5)
+    sig_Lphi_Mb_Ma[o_nat,j] ~ dunif(0, 5)
     mu_phi_Mb_Ma[i_fall,o_nat,j] <- mu_phi_Mb_Ma[i_spring,o_nat,j]
-    sig_Lphi_Mb_Ma[i_fall,o_nat,j] <- sig_Lphi_Mb_Ma[i_spring,o_nat,j]
-    
+
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hat,j] ~ dbeta(1, 1)
-    sig_Lphi_Mb_Ma[i_spring,o_hat,j] ~ dunif(0, 5)
+    sig_Lphi_Mb_Ma[o_hat,j] ~ dunif(0, 5)
     
     # pre-spawn survival (after brood-stock removal to successful spawning)
     mu_phi_Sb_Sa[j] ~ dbeta(1, 1)
@@ -51,10 +50,6 @@ jags_model_code = function() {
       # pr(return at SWA2|not returned at SWA1)
       mu_psi_O2_Rb[o,j] ~ dbeta(1, 1)
       sig_Lpsi_O2_Rb[o,j] ~ dunif(0, 5)
-      
-      # pr(return at SWA3|not returned at SWA1 or SWA2)
-      mu_psi_O3_Rb[o,j] <- 1
-      sig_Lpsi_O3_Rb[o,j] <- 0
     }
     
     ### PRIORS: OCEAN SURVIVAL ###
@@ -69,8 +64,11 @@ jags_model_code = function() {
     # AR(1) coefficient for first year ocean survival
     kappa_phi_O0_O1[j] ~ dunif(-0.99,0.99)
     
+    # standard deviation of white noise residuals
+    sig_Lphi_O0_O1[j] ~ dunif(0, 5)
+    
     # standard deviation of total year 1 residual (i.e., includes autocorrelation)
-    sig_Lphi_O0_O1_init[j] <- sqrt(sig_Lphi_O0_O1^2/(1 - kappa_phi_O0_O1[j]^2))
+    sig_Lphi_O0_O1_init[j] <- sqrt(sig_Lphi_O0_O1[j]^2/(1 - kappa_phi_O0_O1[j]^2))
     
     # mean survival by ocean year transition for hatchery origin
     logit(mu_phi_O0_O1[o_hat,j]) <- logit(mu_phi_O0_O1[o_nat,j]) + O_phi_scaler_nat_hat[j]
@@ -107,18 +105,67 @@ jags_model_code = function() {
     sig_Lphi_Ma_O0[o] ~ dunif(0, 5)
   }
   
-  # SD and correlation of white noise portion of yr1 ocean survival
-  sig_Lphi_O0_O1 ~ dunif(0, 5)
-  rho_Lphi_O0_O1 ~ dunif(-0.99, 0.99)
+  # correlation parameters
+  # see toggle_rho_estimation() function; 01-functions/util-fns.R
+  rho_lPb <- 0
+  rho_Lpi <- 0
+  rho_Lphi_Pa_Mb[i_fall] <- 0
+  rho_Lphi_Pa_Mb[i_spring] <- 0
+  rho_Lphi_Mb_Ma[o_nat] <- 0
+  rho_Lphi_Mb_Ma[o_hat] <- 0
+  rho_Lphi_Ma_O0 <- 0
+  rho_Lphi_O0_O1 <- 0
+  rho_Lpsi_O1_Rb[o_nat] <- 0
+  rho_Lpsi_O1_Rb[o_hat] <- 0
+  rho_Lpsi_O2_Rb[o_nat] <- 0
+  rho_Lpsi_O2_Rb[o_hat] <- 0
+  rho_Lphi_Rb_Ra <- 0
+  rho_Lphi_Sb_Sa <- 0
   
-  # covariance matrices
+  # construct all population covariance matrices
   for (i in 1:nj) {
     for (j in 1:nj) {
+      # covariance matrix of parr recruitment
+      Sig_lPb[i,j] <- sig_Pb[i] * sig_Pb[j] * ifelse(i == j, 1, rho_lPb)
+      
+      # covariance matrix of LH apportionment
+      Sig_Lpi[i,j] <- sig_Lpi[i] * sig_Lpi[j] * ifelse(i == j, 1, rho_Lpi)
+      
+      # covariance matrices of LH-specific overwinter survival (g used for LH index)
+      for (g in 1:ni) {
+        Sig_Lphi_Pa_Mb[i,j,g] <- sig_Lphi_Pa_Mb[g,i] * sig_Lphi_Pa_Mb[g,j] * ifelse(i == j, 1, rho_Lphi_Pa_Mb[g])
+      }
+      
+      for (o in 1:no) {
+        # covariance matrices of movement survival to LGR
+        Sig_Lphi_Mb_Ma[i,j,o] <- sig_Lphi_Mb_Ma[o,i] * sig_Lphi_Mb_Ma[o,j] * ifelse(i == j, 1, rho_Lphi_Mb_Ma[o])
+        
+        # covariance matrices of pr(mature at SWA1)
+        Sig_Lpsi_O1_Rb[i,j,o] <- sig_Lpsi_O1_Rb[o,i] * sig_Lpsi_O1_Rb[o,j] * ifelse(i == j, 1, rho_Lpsi_O1_Rb[o])
+        
+        # covariance matrices of pr(mature at SWA1)
+        Sig_Lpsi_O2_Rb[i,j,o] <- sig_Lpsi_O2_Rb[o,i] * sig_Lpsi_O2_Rb[o,j] * ifelse(i == j, 1, rho_Lpsi_O2_Rb[o])
+      }
+      
       # covariance matrix of white noise portion of yr1 ocean survival
-      Sig_Lphi_O0_O1[i,j] <- sig_Lphi_O0_O1 * sig_Lphi_O0_O1 * ifelse(i == j, 1, rho_Lphi_O0_O1)
+      Sig_Lphi_O0_O1[i,j] <- sig_Lphi_O0_O1[i] * sig_Lphi_O0_O1[j] * ifelse(i == j, 1, rho_Lphi_O0_O1)
       
       # covariance matrix of total process noise in yr1 ocean survival
       Sig_Lphi_O0_O1_init[i,j] <- sig_Lphi_O0_O1_init[i] * sig_Lphi_O0_O1_init[j] * ifelse(i == j, 1, rho_Lphi_O0_O1)
+      
+      # covariance matrix of pre-spawn survival
+      Sig_Lphi_Sb_Sa[i,j] <- sig_Lphi_Sb_Sa[i] * sig_Lphi_Sb_Sa[j] * ifelse(i == j, 1, rho_Lphi_Sb_Sa)
+    }
+  }
+  
+  # construct all origin covariance matrices
+  for (i in 1:no) {
+    for (j in 1:no) {
+      # movement survival (juveniles LGR to BON)
+      Sig_Lphi_Ma_O0[i,j] <- sig_Lphi_Ma_O0[i] * sig_Lphi_Ma_O0[j] * ifelse(i == j, 1, rho_Lphi_Ma_O0)
+      
+      # movement survival (adults BON to LGR)
+      Sig_Lphi_Rb_Ra[i,j] <- sig_Lphi_Rb_Ra[i] * sig_Lphi_Rb_Ra[j] * ifelse(i == j, 1, rho_Lphi_Rb_Ra)
     }
   }
   
@@ -159,75 +206,93 @@ jags_model_code = function() {
   
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in (kmax+1):ny) {
+    
+    # parr recruitment
+    lPb[y,1:nj] ~ dmnorm.vcov(log(Pb_mean[y,1:nj]), Sig_lPb[1:nj,1:nj])
+
+    # LH apportionment
+    Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
+
+    # overwinter survival by LH type: density dependent
+    Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * (Pa[y,i_fall,1:nj]/peu[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
+    Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * (Pa[y,i_spring,1:nj]/peu[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
+
+    for (o in 1:no) {
+      # migration survival from trib to LGR by origin
+      Lphi_Mb_Ma[y,i_spring,o,1:nj] ~ dmnorm.vcov(logit(mu_phi_Mb_Ma[i_spring,o,1:nj]), Sig_Lphi_Mb_Ma[1:nj,1:nj,o])
+
+      # pr(return at SWA1)
+      Lpsi_O1_Rb[y,o,1:nj] ~ dmnorm.vcov(logit(mu_psi_O1_Rb[o,1:nj]), Sig_Lpsi_O1_Rb[1:nj,1:nj,o])
+
+      # pr(return at SWA2)
+      Lpsi_O2_Rb[y,o,1:nj] ~ dmnorm.vcov(logit(mu_psi_O2_Rb[o,1:nj]), Sig_Lpsi_O2_Rb[1:nj,1:nj,o])
+    }
+    
+    # yr1 NOR ocean survival: includes AR(1) process
+    Lphi_O0_O1[y,o_nat,1:nj] ~ dmnorm.vcov(logit(mu_phi_O0_O1[o_nat,1:nj]) + Lphi_O0_O1_resid[y-1,o_nat,1:nj] * kappa_phi_O0_O1[1:nj], Sig_Lphi_O0_O1[1:nj,1:nj])
+
+    # yr2/yr3 NOR ocean survival: time constant
+    Lphi_O1_O2[y,o_nat,1:nj] <- logit(mu_phi_O1_O2[o_nat,1:nj])
+    Lphi_O2_O3[y,o_nat,1:nj] <- logit(mu_phi_O2_O3[o_nat,1:nj])
+    
+    # yr1/yr2/yr3 HOR ocean survival: same as NOR but adjusted by a time-constant log odds ratio
+    Lphi_O0_O1[y,o_hat,1:nj] <- Lphi_O0_O1[y,o_nat,1:nj] + O_phi_scaler_nat_hat[1:nj]
+    Lphi_O1_O2[y,o_hat,1:nj] <- Lphi_O1_O2[y,o_nat,1:nj] + O_phi_scaler_nat_hat[1:nj]
+    Lphi_O2_O3[y,o_hat,1:nj] <- Lphi_O2_O3[y,o_nat,1:nj] + O_phi_scaler_nat_hat[1:nj]
+    
+    # pre-spawn survival
+    Lphi_Sb_Sa[y,1:nj] ~ dmnorm.vcov(logit(mu_phi_Sb_Sa[1:nj]), Sig_Lphi_Sb_Sa[1:nj,1:nj])
+
+    # movement survival (juveniles LGR to BON)
+    Lphi_Ma_O0[y,1:no] ~ dmnorm.vcov(logit(mu_phi_Ma_O0[1:no]), Sig_Lphi_Ma_O0[1:no,1:no])
+
+    # movement survival (adults BON to LGR)
+    Lphi_Rb_Ra_random[y,1:no] ~ dmnorm.vcov(logit(mu_phi_Rb_Ra[1:no]), Sig_Lphi_Rb_Ra[1:no,1:no])
+
+    # apply inverse logit-transformation to all of these brood year-specific parameters
+    # ilogit() and exp() cannot be applied to vectors unfortunately; must loop over population dimension
     for (j in 1:nj) {
-      # aggregate parr to LH-specific parr
-      Lpi1[y,j] ~ dnorm(logit(mu_pi[i_fall,j]), 1/sig_Lpi[j]^2)
+      
+      # transform parr recruitment
+      Pb[y,j] <- exp(lPb[y,j])
+      
+      # transform LH apportionment
       pi[y,i_fall,j] <- ilogit(Lpi1[y,j])
       pi[y,i_spring,j] <- 1 - pi[y,i_fall,j]
       
-      # overwinter survival: density-dependent
-      for (i in 1:ni) {
-        Lphi_Pa_Mb[y,i,j] ~ dnorm(gamma0[i,j] + gamma1[i,j] * (Pa[y,i,j]/peu[j]), 1/sig_Lphi_Pa_Mb[i,j]^2)
-        phi_Pa_Mb[y,i,j] <- ilogit(Lphi_Pa_Mb[y,i,j])
-      }
-      
-      # natural origin movement survival: trib to LGD
-      # assume equal between LH types
-      Lphi_Mb_Ma[y,i_spring,o_nat,j] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_nat,j]), 1/sig_Lphi_Mb_Ma[i_spring,o_nat,j]^2)
-      phi_Mb_Ma[y,i_spring,o_nat,j] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_nat,j])
-      phi_Mb_Ma[y,i_fall,o_nat,j] <- phi_Mb_Ma[y,i_spring,o_nat,j]
-      
-      # hatchery origin movement survival: trib to LGD
-      # spring migrants only
-      Lphi_Mb_Ma[y,i_spring,o_hat,j] ~ dnorm(logit(mu_phi_Mb_Ma[i_spring,o_hat,j]), 1/sig_Lphi_Mb_Ma[i_spring,o_hat,j]^2)
-      phi_Mb_Ma[y,i_spring,o_hat,j] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_hat,j])
-      
-      for (o in 1:no) {
+      # transform overwinter survival
+      phi_Pa_Mb[y,i_fall,j] <- ilogit(Lphi_Pa_Mb[y,i_fall,j])
+      phi_Pa_Mb[y,i_spring,j] <- ilogit(Lphi_Pa_Mb[y,i_spring,j])
 
-        # pr(return at SWA1)
-        Lpsi_O1_Rb[y,o,j] ~ dnorm(logit(mu_psi_O1_Rb[o,j]), 1/sig_Lpsi_O1_Rb[o,j]^2)
+      for (o in 1:no) {
+        # transform movement survival trib to LGR
+        phi_Mb_Ma[y,i_spring,o,j] <- ilogit(Lphi_Mb_Ma[y,i_spring,o,j])
+        
+        # transform pr(return at SWA1)
         psi_O1_Rb[y,o,j] <- ilogit(Lpsi_O1_Rb[y,o,j])
         
-        # pr(return at SWA2|not returned at SWA1)
-        Lpsi_O2_Rb[y,o,j] ~ dnorm(logit(mu_psi_O2_Rb[o,j]), 1/sig_Lpsi_O2_Rb[o,j]^2)
+        # transform pr(return at SWA2|not returned at SWA1)
         psi_O2_Rb[y,o,j] <- ilogit(Lpsi_O2_Rb[y,o,j])
         
-        # pr(return at SWA3|not returned at SWA1 or SWA2)
-        psi_O3_Rb[y,o,j] <- 1
-
         # transform ocean survival terms
         phi_O0_O1[y,o,j] <- ilogit(Lphi_O0_O1[y,o,j])
         phi_O1_O2[y,o,j] <- ilogit(Lphi_O1_O2[y,o,j])
         phi_O2_O3[y,o,j] <- ilogit(Lphi_O2_O3[y,o,j])
       }
       
+      # assume movement survival trib to LGR for NOR fish is equal between LH types
+      phi_Mb_Ma[y,i_fall,o_nat,j] <- phi_Mb_Ma[y,i_spring,o_nat,j]
+      
       # pre-spawn survival
-      Lphi_Sb_Sa[y,j] ~ dnorm(logit(mu_phi_Sb_Sa[j]), 1/sig_Lphi_Sb_Sa[j]^2)
       phi_Sb_Sa[y,j] <- ilogit(Lphi_Sb_Sa[y,j])
     }
     
-    # yr1 ocean survival for natural origin: multivariate logit-normal error on white noise portion of AR(1) process
-    Lphi_O0_O1[y,o_nat,1:nj] ~ dmnorm.vcov(logit(mu_phi_O0_O1[o_nat,1:nj]) + Lphi_O0_O1_resid[y-1,o_nat,1:nj] * kappa_phi_O0_O1[1:nj], Sig_Lphi_O0_O1[1:nj,1:nj])
-    
-    # yr2/yr3 ocean survival for natural origin: time constant
-    Lphi_O1_O2[y,o_nat,1:nj] <- logit(mu_phi_O1_O2[o_nat,1:nj])
-    Lphi_O2_O3[y,o_nat,1:nj] <- logit(mu_phi_O2_O3[o_nat,1:nj])
-
-    # ocean survival for hatchery origin: same as natural origin but adjusted by a constant log odds ratio
-    Lphi_O0_O1[y,o_hat,1:nj] <- Lphi_O0_O1[y,o_nat,1:nj] + O_phi_scaler_nat_hat[1:nj]
-    Lphi_O1_O2[y,o_hat,1:nj] <- Lphi_O1_O2[y,o_nat,1:nj] + O_phi_scaler_nat_hat[1:nj]
-    Lphi_O2_O3[y,o_hat,1:nj] <- Lphi_O2_O3[y,o_nat,1:nj] + O_phi_scaler_nat_hat[1:nj]
-    
-    # movement survival: LGD to estuary
-    # separate for each origin type
+    # transform quantities common to all pops but different by origin
     for (o in 1:no) {
-      Lphi_Ma_O0[y,o] ~ dnorm(logit(mu_phi_Ma_O0[o]), 1/sig_Lphi_Ma_O0[o]^2)
+      # transform movement survival (juveniles LGR to BON)
       phi_Ma_O0[y,o] <- ilogit(Lphi_Ma_O0[y,o])
-    }
-    
-    # movement survival: adults from BON to LGR
-    for (o in 1:no) {
-      Lphi_Rb_Ra_random[y,o] ~ dnorm(logit(mu_phi_Rb_Ra[o]), 1/sig_Lphi_Rb_Ra[o]^2)
+      
+      # transform movement survival (adults BON to LGR)
       Lphi_Rb_Ra[y,o] <- ifelse(y < first_LGR_adults, logit(mu_phi_Rb_Ra[o]), Lphi_Rb_Ra_random[y,o])
       phi_Rb_Ra[y,o] <- ilogit(Lphi_Rb_Ra[y,o])
     }
@@ -248,7 +313,7 @@ jags_model_code = function() {
   for (j in 1:nj) {
     p_init_prime[1,j] <- mu_phi_O0_O1[o_nat,j] * mu_psi_O1_Rb[o_nat,j]
     p_init_prime[2,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[o_nat,j]) * mu_phi_O1_O2[o_nat,j] * mu_psi_O2_Rb[o_nat,j]
-    p_init_prime[3,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[o_nat,j]) * mu_phi_O1_O2[o_nat,j] * (1 - mu_psi_O2_Rb[o_nat,j]) * mu_phi_O2_O3[o_nat,j] * mu_psi_O3_Rb[o_nat,j]
+    p_init_prime[3,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[o_nat,j]) * mu_phi_O1_O2[o_nat,j] * (1 - mu_psi_O2_Rb[o_nat,j]) * mu_phi_O2_O3[o_nat,j]
     for (k in 1:nk) {
       p_init[k,j] <- p_init_prime[k,j]/sum(p_init_prime[1:nk,j])
     }
@@ -276,8 +341,9 @@ jags_model_code = function() {
   for (j in 1:nj) {
     for (y in (kmax+1):ny) {
       # reproductive link: total summer parr
-      Pb_pred[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j])
-      Pb[y,j] ~ dlnorm(log(Pb_pred[y,j]), 1/sig_Pb[j]^2)
+      # Pb[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j]) * exp(lPb_resid[y,j])
+      Pb_mean[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j])
+      # Pb[y,j] ~ dlnorm(log(Pb_pred[y,j]), 1/sig_Pb[j]^2)
       
       # natural origin tributary-to-LGD dynamics
       for (i in 1:ni) {
@@ -307,9 +373,7 @@ jags_model_code = function() {
       # needed because we sum over this dimension below
       Ma[y,i_fall,o_hat,j] <- 0
       
-      ##### LEFT OFF HERE #####
       # origin-specific processes
-      ##### LEFT OFF HERE #####
       for (o in 1:no) {
         # move origin-specific smolts from LGD to estuary (ocean age 0)
         O0[y,o,j] <- sum(Ma[y,1:ni,o,j]) * phi_Ma_O0[y,o]
@@ -322,7 +386,7 @@ jags_model_code = function() {
         # mature and return to river in appropriate year at age
         Rb[y+kmin+1-1,1,o,j] <- O[y,1,o,j] * psi_O1_Rb[y,o,j]
         Rb[y+kmin+2-1,2,o,j] <- O[y,2,o,j] * psi_O2_Rb[y,o,j]
-        Rb[y+kmin+3-1,3,o,j] <- O[y,3,o,j] * psi_O3_Rb[y,o,j]
+        Rb[y+kmin+3-1,3,o,j] <- O[y,3,o,j]
         
         # adult in-river processes: all age/origin specific
         # for these adult stages, y represents the brood year fish returned in
@@ -615,7 +679,7 @@ jags_model_code = function() {
     for (j in 1:nj) {
       
       # total summer parr recruitment
-      lPb_resid[y,j] <- log(Pb[y,j]) - log(Pb_pred[y,j])
+      lPb_resid[y,j] <- log(Pb[y,j]) - log(Pb_mean[y,j])
       
       # proportion of summer parr that become fall migrants
       Lpi_resid[y,j] <- logit(pi[y,i_fall,j]) - logit(mu_pi[i_fall,j])
