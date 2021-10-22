@@ -179,5 +179,7 @@ gen_initials = function(c, jags_data) {
     mu_init_recruits = mu_init_recruits
   )
   
+  base_list$alpha = ifelse(base_list$alpha > 0.99, 0.99, base_list$alpha)
+  
   append(base_list, mu_list)
 }
