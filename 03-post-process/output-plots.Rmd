@@ -261,20 +261,20 @@ diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
 ```{r calculate-mcmc-diagnostics}
 # parr recruitment
 L1 = "Parr Recruitment"
-L2 = c("BH Productivity", "BH Capacity", "Process SD", "Parr States")
-match = c("alpha", "^beta[", "sig_Pb", "^Pb[")
+L2 = c("BH Productivity", "BH Capacity", "Process SD", "Among-pop Correlation", "Parr States")
+match = c("alpha", "^beta[", "sig_lPb", "rho_lPb", "^Pb[")
 parr_recruit_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # LH apportionment
 L1 = "Life History Apportionment"
-L2 = c("Mean", "Process SD", "Realized")
-match = c("mu_pi[1,.]", "sig_Lpi", "^pi[.+,1,.]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+match = c("mu_pi[1,.]", "sig_Lpi", "rho_Lpi", "^pi[.+,1,.]")
 pi_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Overwinter survival
 L1 = "Overwinter Survival"
-L2 = c("Intercept", "Slope", "Process SD", "Realized")
-base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[LH_type,pop]", "^phi_Pa_Mb[year,LH_type,pop]")
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[LH_type,pop]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
 match = sub_index(base, year = ".+", LH_type = i_fall, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "Fall Migrants")))
 match = sub_index(base, year = ".+", LH_type = i_spring, pop = ".")
@@ -283,8 +283,8 @@ phi_Pa_Mb_diags = rbind(tmp1, tmp2)
 
 # Migration survival: trib to LGR
 L1 = "Migration Survival (Trib to LGR)"
-L2 = c("Mean", "Process SD", "Realized")
-base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "sig_Lphi_Mb_Ma[LH_type,origin,pop]", "phi_Mb_Ma[year,LH_type,origin,pop]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "phi_Mb_Ma[year,LH_type,origin,pop]")
 match = sub_index(base, year = ".+", LH_type = i_spring, origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", LH_type = i_spring, origin = o_hor, pop = ".")
@@ -299,12 +299,13 @@ match = sub_index(base, year = ".+", origin = o_nor)
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor)
 tmp2 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "HOR")))
-phi_Ma_O0_diags = rbind(tmp1, tmp2)
+tmp3 = diag_fn("rho_Lphi_Ma_O0[2,1]", L1 = "Migration Survival (LGR to Ocean)", L2 = "Among-origin Correlation")
+phi_Ma_O0_diags = rbind(tmp1, tmp2, tmp3)
 
 # Probability of Maturing at Age-3
 L1 = "Pr(Mature at Age-3)"
-L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_psi_O1_Rb[origin,pop]", "sig_Lpsi_O1_Rb[origin,pop]", "psi_O1_Rb[.+,origin,pop]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O1_Rb[origin,pop]", "sig_Lpsi_O1_Rb[origin,pop]", "rho_Lpsi_O1_Rb[.,.,origin]", "psi_O1_Rb[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
@@ -313,8 +314,8 @@ psi_O1_Rb_diags = rbind(tmp1, tmp2)
 
 # Probability of Maturing at Age-4
 L1 = "Pr(Mature at Age-4)"
-L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_psi_O2_Rb[origin,pop]", "sig_Lpsi_O2_Rb[origin,pop]", "psi_O2_Rb[.+,origin,pop]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O2_Rb[origin,pop]", "sig_Lpsi_O2_Rb[origin,pop]", "rho_Lpsi_O1_Rb[.,.,origin]", "psi_O2_Rb[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
@@ -323,13 +324,13 @@ psi_O2_Rb_diags = rbind(tmp1, tmp2)
 
 # Year 1 ocean survival
 L1 = "Year 1 Ocean Survival"
-L2 = c("Mean", "Process SD", "Among Pop. Correlation", "Realized")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
 base = c("mu_phi_O0_O1[origin,pop]", "sig_Lphi_O0_O1[pop]", "rho_Lphi_O0_O1", "phi_O0_O1[year,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
 phi_O0_O1_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Year 2 ocean survival
-L1 = "Year 2 Ocean Survival"
+L1 = "Year 2&3 Ocean Survival"
 L2 = c("Mean")
 base = c("mu_phi_O1_O2[origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
@@ -350,12 +351,13 @@ match = sub_index(base, year = ".+", origin = o_nor)
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor)
 tmp2 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "HOR")))
+tmp3 = diag_fn("rho_Lphi_Rb_Ra[2,1]", L1 = "Migration Survival (BON to LGR)", L2 = "Among-origin Correlation")
 phi_Rb_Ra_diags = rbind(tmp1, tmp2)
 
 # Pre-spawn Survival
 L1 = "Pre-spawn Survival"
-L2 = c("Mean", "Process SD", "Realized")
-match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "phi_Sb_Sa[.+,.]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "rho_Lphi_Sb_Sa", "phi_Sb_Sa[.+,.]")
 phi_Sb_Sa_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Carcass Correction
