@@ -78,28 +78,13 @@ ko_origin = list(
   ko_nor = 1:3,
   ko_hor = 4:6
 )
-```
 
-```{r vcov-decomp, message = FALSE}
-# Convert the precision matrices monitored by JAGS into the marginal SD and correlation matrix terms
-# postpack::vcov_decomp() does this for all posterior samples
-
-Sig_Lphi_O0_O1_post = suppressMessages(vcov_decomp(post, "Sig_Lphi_O0_O1", invert = FALSE, sigma_base_name = "sig_Lphi_O0_O1", rho_base_name = "rho_Lphi_O0_O1"))
-
-# make the labels/indices for which elements of the vcov matrices contain unique covariances
-# no point in summarizing/displaying both off-diagonal triangles
+# make the labels for which elements of the rho matrices contain unique elements
 dummy_cols = matrix(rep(1:jags_data$nj, each = jags_data$nj), jags_data$nj, jags_data$nj)
 dummy_rows = matrix(rep(1:jags_data$nj, jags_data$nj), jags_data$nj, jags_data$nj)
 vcov_cols = dummy_cols[lower.tri(dummy_cols)]
 vcov_rows = dummy_rows[lower.tri(dummy_rows)]
 vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
-vcov_indices = paste0("[", vcov_rows, ",", vcov_cols, "]")
-
-# subset out only the unique elements
-Sig_Lphi_O0_O1_post = post_subset(Sig_Lphi_O0_O1_post, c("sig", paste0("rho.+", vcov_indices)))
-
-# combine these derived posterior samples with the main object
-post = post_bind(post, Sig_Lphi_O0_O1_post)
 ```
 
 # MCMC Information {.tabset .tabset-pills}
@@ -213,20 +198,20 @@ diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
 ```{r calculate-mcmc-diagnostics}
 # parr recruitment
 L1 = "Parr Recruitment"
-L2 = c("BH Productivity", "BH Capacity", "Process SD", "Parr States")
-match = c("alpha", "^beta[", "sigma_Pb", "^Pb[")
+L2 = c("BH Productivity", "BH Capacity", "Process SD", "Among-pop Correlation", "Parr States")
+match = c("alpha", "^beta[", "sig_lPb", "rho_lPb", "^Pb[")
 parr_recruit_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # LH apportionment
 L1 = "Life History Apportionment"
-L2 = c("Mean", "Process SD", "Realized")
-match = c("mu_pi[1,.]", "sig_Lpi", "^pi[.+,1,.]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+match = c("mu_pi[1,.]", "sig_Lpi", "rho_Lpi", "^pi[.+,1,.]")
 pi_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Overwinter survival
 L1 = "Overwinter Survival"
-L2 = c("Intercept", "Slope", "Process SD", "Realized")
-base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[LH_type,pop]", "^phi_Pa_Mb[year,LH_type,pop]")
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[LH_type,pop]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
 match = sub_index(base, year = ".+", LH_type = i_fall, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "Fall Migrants")))
 match = sub_index(base, year = ".+", LH_type = i_spring, pop = ".")
@@ -235,8 +220,8 @@ phi_Pa_Mb_diags = rbind(tmp1, tmp2)
 
 # Migration survival: trib to LGR
 L1 = "Migration Survival (Trib to LGR)"
-L2 = c("Mean", "Process SD", "Realized")
-base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "sig_Lphi_Mb_Ma[LH_type,origin,pop]", "phi_Mb_Ma[year,LH_type,origin,pop]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "phi_Mb_Ma[year,LH_type,origin,pop]")
 match = sub_index(base, year = ".+", LH_type = i_spring, origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", LH_type = i_spring, origin = o_hor, pop = ".")
@@ -251,12 +236,13 @@ match = sub_index(base, year = ".+", origin = o_nor)
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor)
 tmp2 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "HOR")))
-phi_Ma_O0_diags = rbind(tmp1, tmp2)
+tmp3 = diag_fn("rho_Lphi_Ma_O0[2,1]", L1 = "Migration Survival (LGR to Ocean)", L2 = "Among-origin Correlation")
+phi_Ma_O0_diags = rbind(tmp1, tmp2, tmp3)
 
 # Probability of Maturing at Age-3
 L1 = "Pr(Mature at Age-3)"
-L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_psi_O1_Rb[origin,pop]", "sig_Lpsi_O1_Rb[origin,pop]", "psi_O1_Rb[.+,origin,pop]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O1_Rb[origin,pop]", "sig_Lpsi_O1_Rb[origin,pop]", "rho_Lpsi_O1_Rb[.,.,origin]", "psi_O1_Rb[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
@@ -265,8 +251,8 @@ psi_O1_Rb_diags = rbind(tmp1, tmp2)
 
 # Probability of Maturing at Age-4
 L1 = "Pr(Mature at Age-4)"
-L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_psi_O2_Rb[origin,pop]", "sig_Lpsi_O2_Rb[origin,pop]", "psi_O2_Rb[.+,origin,pop]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O2_Rb[origin,pop]", "sig_Lpsi_O2_Rb[origin,pop]", "rho_Lpsi_O1_Rb[.,.,origin]", "psi_O2_Rb[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
@@ -275,13 +261,13 @@ psi_O2_Rb_diags = rbind(tmp1, tmp2)
 
 # Year 1 ocean survival
 L1 = "Year 1 Ocean Survival"
-L2 = c("Mean", "Process SD", "Among Pop. Correlation", "Realized")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
 base = c("mu_phi_O0_O1[origin,pop]", "sig_Lphi_O0_O1[pop]", "rho_Lphi_O0_O1", "phi_O0_O1[year,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
 phi_O0_O1_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Year 2 ocean survival
-L1 = "Year 2 Ocean Survival"
+L1 = "Year 2&3 Ocean Survival"
 L2 = c("Mean")
 base = c("mu_phi_O1_O2[origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
@@ -302,12 +288,13 @@ match = sub_index(base, year = ".+", origin = o_nor)
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor)
 tmp2 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "HOR")))
+tmp3 = diag_fn("rho_Lphi_Rb_Ra[2,1]", L1 = "Migration Survival (BON to LGR)", L2 = "Among-origin Correlation")
 phi_Rb_Ra_diags = rbind(tmp1, tmp2)
 
 # Pre-spawn Survival
 L1 = "Pre-spawn Survival"
-L2 = c("Mean", "Process SD", "Realized")
-match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "phi_Sb_Sa[.+,.]")
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "rho_Lphi_Sb_Sa", "phi_Sb_Sa[.+,.]")
 phi_Sb_Sa_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Carcass Correction
@@ -780,7 +767,7 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 ### LGR Smolt $\rightarrow O_0$ (NOR)
 
 ```{r hydro-nor-surv-fit, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)),
              get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_nor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_nor]),
              main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
@@ -791,7 +778,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ### LGR Smolt $\rightarrow O_0$ (HOR)
 
 ```{r hydro-hor-surv-fit, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)),
              get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_hor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_hor]),
              main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
@@ -802,7 +789,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ### BON Adults $\rightarrow$ LGR (NOR)
 
 ```{r BON-LGR-surv-fit-nor, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_nor)),
              get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_nor], jags_data$BON_adults[observable,o_nor] - jags_data$LGR_adults[observable,o_nor]), 1),
              main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(NOR)"))
@@ -813,7 +800,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ### BON Adults $\rightarrow$ LGR (HOR)
 
 ```{r BON-LGR-surv-fit-hor, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_hor)),
              get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_hor], jags_data$BON_adults[observable,o_hor] - jags_data$LGR_adults[observable,o_hor]), 1),
              main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(HOR)"))
@@ -1299,8 +1286,6 @@ plot_f = function(j) {
 
 junk = sapply(1:jags_data$nj, plot_f)
 ```
-
-
 
 # Spawner-to-Parr Relationship {.tabset .tabset-pills}
 
@@ -1852,18 +1837,20 @@ my_boxplot = function(params, ylab = NULL, ticklabs = pops, ylim = NULL, boxfill
 ## Parr Recruitment
 
 ```{r recruit-bxp, fig.width = 8, fig.height = 3.5}
-par(mfrow = c(1,3))
+par(mfrow = c(1,4))
 my_boxplot("^alpha[.]$", "Productivity")
 my_boxplot("^beta[.]$", "Capacity")
-my_boxplot("^sigma_Pb[.]$", "Process SD")
+my_boxplot("^sig_lPb[.]$", "Process SD")
+my_boxplot("^rho_lPb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Life History Apportionment
 
 ```{r LH-type-bxp, fig.width = 8, fig.height = 3.5}
-par(mfrow = c(1,2))
+par(mfrow = c(1,3))
 my_boxplot("^mu_pi[1,.]$", "Mean Proportion Fall Migrants")
 my_boxplot("^sig_Lpi[.]$", "Process SD")
+my_boxplot("^rho_Lpi", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Overwinter Survival {.tabset .tabset-pills}
@@ -1880,9 +1867,17 @@ my_boxplot(sub_index("gamma1[LH_type,pop]", LH_type = i_spring, pop = "."), "Slo
 ### Process SD
 
 ```{r overwinter-survival-bxp2, fig.width = 8, fig.height = 3.5}
-par(mfrow = c(1,3))
-my_boxplot(sub_index("sig_Lphi_Pa_Mb[LH_type,pop]", LH_type = i_fall, pop = "."), "Process SD (Fall)")
-my_boxplot(sub_index("sig_Lphi_Pa_Mb[LH_type,pop]", LH_type = i_spring, pop = "."), "Process SD (Spring)")
+par(mfrow = c(1,2))
+my_boxplot(sub_index("sig_Lphi_Pa_Mb[pop,LH_type]", LH_type = i_fall, pop = "."), "Process SD (Fall)")
+my_boxplot(sub_index("sig_Lphi_Pa_Mb[pop,LH_type]", LH_type = i_spring, pop = "."), "Process SD (Spring)")
+```
+
+### Among-pop Correlation
+
+```{r overwinter-survival-bxp3, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("rho_Lphi_Pa_Mb[.,.,LH_type]", LH_type = i_fall), "Among-pop Correlation (Fall)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lphi_Pa_Mb[.,.,LH_type]", LH_type = i_spring), "Among-pop Correlation (Spring)", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Movement Survival to LGR {.tabset .tabset-pills}
@@ -1899,16 +1894,25 @@ my_boxplot(sub_index("mu_phi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, ori
 
 ```{r trib-to-lgr-bxp2, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("sig_Lphi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_nor, pop = "."), "Process SD", main = "NOR")
-my_boxplot(sub_index("sig_Lphi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_hor, pop = "."), "Process SD", main = "HOR")
+my_boxplot(sub_index("sig_Lphi_Mb_Ma[pop,origin]", origin = o_nor, pop = "."), "Process SD", main = "NOR")
+my_boxplot(sub_index("sig_Lphi_Mb_Ma[pop,origin]", origin = o_hor, pop = "."), "Process SD", main = "HOR")
+```
+
+### Among-pop Correlation
+
+```{r trib-to-lgr-bxp3, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("rho_Lphi_Mb_Ma[.,.,origin]", origin = o_nor), "Among-pop Correlation (NOR)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lphi_Mb_Ma[.,.,origin]", origin = o_hor), "Among-pop Correlation (HOR)", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Movement Survival to Ocean
 
 ```{r lgr-to-ocean-bxp}
-par(mfrow = c(1,2))
+par(mfrow = c(1,3))
 my_boxplot(sub_index("mu_phi_Ma_O0[origin]", origin = "."), "Average Migration Survival", ylim = c(0,1), ticklab = c("NOR", "HOR"))
 my_boxplot(sub_index("sig_Lphi_Ma_O0[origin]", origin = "."), "Process SD", ylim = c(0,1), ticklab = c("NOR", "HOR"))
+my_boxplot(sub_index("rho_Lphi_Ma_O0[2,1]"), "Among-origin Correlation", ylim = c(-1,1), ticklab = c(""))
 ```
 
 ## Probability of Maturing at Age-3 {.tabset .tabset-pills}
@@ -1925,8 +1929,16 @@ my_boxplot(sub_index("mu_psi_O1_Rb[origin,pop]", origin = o_hor, pop = "."), "",
 
 ```{r age3-sd-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("sig_Lpsi_O1_Rb[origin,pop]", origin = o_nor, pop = "."), "", main = "NOR")
-my_boxplot(sub_index("sig_Lpsi_O1_Rb[origin,pop]", origin = o_hor, pop = "."), "", main = "HOR")
+my_boxplot(sub_index("sig_Lpsi_O1_Rb[pop,origin]", origin = o_nor, pop = "."), "", main = "NOR")
+my_boxplot(sub_index("sig_Lpsi_O1_Rb[pop,origin]", origin = o_hor, pop = "."), "", main = "HOR")
+```
+
+### Among-pop Correlation
+
+```{r age3-rho-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("rho_Lpsi_O1_Rb[.,.,origin]", origin = o_nor), "Among-pop Correlation (NOR)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lpsi_O1_Rb[.,.,origin]", origin = o_hor), "Among-pop Correlation (HOR)", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Probability of Maturing at Age-4 {.tabset .tabset-pills}
@@ -1943,8 +1955,16 @@ my_boxplot(sub_index("mu_psi_O2_Rb[origin,pop]", origin = o_hor, pop = "."), "",
 
 ```{r age4-sd-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("sig_Lpsi_O2_Rb[origin,pop]", origin = o_nor, pop = "."), "", main = "NOR")
-my_boxplot(sub_index("sig_Lpsi_O2_Rb[origin,pop]", origin = o_hor, pop = "."), "", main = "HOR")
+my_boxplot(sub_index("sig_Lpsi_O2_Rb[pop,origin]", origin = o_nor, pop = "."), "", main = "NOR")
+my_boxplot(sub_index("sig_Lpsi_O2_Rb[pop,origin]", origin = o_hor, pop = "."), "", main = "HOR")
+```
+
+### Among-pop Correlation
+
+```{r age4-rho-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,2))
+my_boxplot(sub_index("rho_Lpsi_O2_Rb[.,.,origin]", origin = o_nor), "Among-pop Correlation (NOR)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lpsi_O2_Rb[.,.,origin]", origin = o_hor), "Among-pop Correlation (HOR)", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Ocean Survival {.tabset .tabset-pills}
@@ -1965,7 +1985,7 @@ my_boxplot(sub_index("mu_phi_O0_O1[origin,pop]", origin = o_hor, pop = "."), mai
 par(mfrow = c(1,3))
 my_boxplot(sub_index("sig_Lphi_O0_O1[pop]", pop = "."), ylab = "Process SD")
 my_boxplot(sub_index("kappa_phi_O0_O1[pop]", pop = "."), ylab = "Autocorrelation")
-my_boxplot("rho_Lphi_O0_O1[", ticklabs = vcov_labels, ylab = "Among Population Correlation", ylim = c(-1,1), las = 2)
+my_boxplot("rho_Lphi_O0_O1[", ticklabs = vcov_labels, ylab = "Among-pop Correlation", ylim = c(-1,1), las = 2)
 ```
 
 ### Year 2 {.tabset .tabset-pills}
@@ -1995,17 +2015,19 @@ my_boxplot(sub_index("O_phi_scaler_nat_hat[pop]", pop = "."), ylab = "Log Odds R
 ## Movement Survival BON to LGR
 
 ```{r bon-to-lgr-bxp}
-par(mfrow = c(1,2))
+par(mfrow = c(1,3))
 my_boxplot(sub_index("mu_phi_Rb_Ra[origin]", origin = "."), "Average Migration Survival", ylim = c(0,1), ticklab = c("NOR", "HOR"))
 my_boxplot(sub_index("sig_Lphi_Rb_Ra[origin]", origin = "."), "Process SD", ticklab = c("NOR", "HOR"))
+my_boxplot(sub_index("rho_Lphi_Rb_Ra[2,1]"), "Among-origin Correlation", ylim = c(-1,1), ticklab = c(""))
 ```
 
 ## Pre-spawn Survival
 
 ```{r prespawn-surv-bxp}
-par(mfrow = c(1,2))
+par(mfrow = c(1,3))
 my_boxplot(sub_index("mu_phi_Sb_Sa[pop]", pop = "."), "Average Survival", ylim = c(0,1))
 my_boxplot(sub_index("sig_Lphi_Sb_Sa[pop]", pop = "."), "Process SD")
+my_boxplot("rho_Lphi_Sb_Sa", "Among-pop Correlation", ylim = c(-1,1), ticklab = vcov_labels)
 ```
 
 # JAGS Model and Data {.tabset .tabset-pills}

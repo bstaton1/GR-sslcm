@@ -173,3 +173,94 @@ unlist_dfs = function(list) {
   return(output)
 }
 
+##### ADD A NEW INDEX #####
+
+# changes the name of quantities (param) stored in mcmc.list object (post)
+# adds a new dimension and index value
+# e.g., add_index(post, "alpha[1]", 2)
+# turns "alpha[1]" node name to "alpha[1,2]"
+
+add_index = function(post, param, index_value) {
+  # extract the names of all quantities that match param
+  matches = match_params(post, param)
+  
+  # convert samples to matrix format while retaining the chain and iter ID
+  post_m = as.matrix(post, chains = TRUE, iters = TRUE)
+  
+  # determine which elements that match param
+  which_matches = which(colnames(post_m) %in% matches)
+  
+  # extract them in the order they are found in the object
+  name_matches = colnames(post_m)[which_matches]
+  
+  # append a new index dimension and value on the back of the quantity name
+  new_names = stringr::str_replace(name_matches, "\\]$", paste0(",", index_value, "]"))
+  
+  # replace the old names with new names
+  colnames(post_m)[which_matches] = new_names
+  
+  # convert back to mcmc.list format
+  post_convert(post_m)
+}
+
+##### DROP AN INDEX #####
+
+# changes the name of quantities (param) stored in mcmc.list object (post)
+# removes the last dimension and index value
+# e.g., rm_index(post, "Pb[1,1]")
+# turns "Pb[1,1]" node name to "Pb[1]", and returns only posterior samples that match "Pb[1,1]"
+# allows using vcov_decomp() on a covariance matrix stored as a >2d array
+
+rm_index = function(post, param) {
+  post_sub = post_subset(post, param, matrix = TRUE, chains = TRUE, iters = TRUE)
+  colnames(post_sub) = stringr::str_replace(colnames(post_sub), ",[:digit:]+\\]$", "]")
+  post_convert(post_sub)
+}
+
+##### CREATE A JAGS MODEL FILE FROM AN R FUNCTION #####
+
+# this function does the same thing as postpack::write_model or R2OpenBUGS::write.model
+# except that it retains the comments contained in the source function
+
+# function to write function to file
+write_model_code = function(fun_file, out_file) {
+  
+  # extract the function body, including comments
+  # code = attr(fun, "srcref")
+  # code = as.character(code)
+  code = readLines(fun_file)
+  
+  # replace the first line
+  code[1] = "model {"
+  
+  # replace the last line
+  code[length(code)] = "}  # END OF MODEL"
+  
+  # remove any instances of "%_%"
+  code = stringr::str_remove(code, "%_%\\s?")
+  
+  # write the code to a file
+  writeLines(code, out_file)
+}
+
+##### TOGGLE ON THE ESTIAMTION OF A CORRELATION PARAMETER #####
+
+# the default JAGS model code has all correlation parameters (i.e., as part of covariance terms)
+# fixed at zero. If the user wishes to estimate these with a dunif(-0.99, 0.99) prior, they should
+# use this function in the model fitting script rather than editing the JAGS model code by hand
+
+toggle_rho_estimation = function(rho_term, jags_file = "02-model/model.txt") {
+  # read in the existing jags model code
+  # has all rho terms <- 0
+  model_lines = readLines(jags_file)
+  
+  # find the line numbers where the rho term is defined
+  which_matches = stringr::str_which(model_lines, paste0("^[:space:]*", rho_term))
+  
+  # replace the "<- 0" with a prior to turn on the estimation of the rho term
+  model_lines[which_matches] = stringr::str_replace(model_lines[which_matches], "<- 0", "~ dunif(-0.99, 0.99)")
+  
+  # write over the old jags model code
+  writeLines(model_lines, jags_file)
+}
+

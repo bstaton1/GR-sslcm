@@ -173,11 +173,13 @@ gen_initials = function(c, jags_data) {
   base_list = list(
     alpha = sapply(BH_ests, function(ests) exp(rnorm(1, ests["log_alpha","Estimate"], ests["log_alpha","Std. Error"]))),
     log_beta = sapply(BH_ests, function(ests) rnorm(1, ests["log_beta","Estimate"], ests["log_beta","Std. Error"])),
-    Pb = Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj),
-    sigma_Pb = runif(jags_data$nj, 0.3, 0.4),
+    lPb = log(Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj)),
+    sig_Pb = runif(jags_data$nj, 0.3, 0.4),
     n_stray_tot = n_stray_tot, 
     mu_init_recruits = mu_init_recruits
   )
+  
+  base_list$alpha = ifelse(base_list$alpha > 0.99, 0.99, base_list$alpha)
   
   append(base_list, mu_list)
 }
