@@ -173,6 +173,49 @@ unlist_dfs = function(list) {
   return(output)
 }
 
+##### ADD A NEW INDEX #####
+
+# changes the name of quantities (param) stored in mcmc.list object (post)
+# adds a new dimension and index value
+# e.g., add_index(post, "alpha[1]", 2)
+# turns "alpha[1]" node name to "alpha[1,2]"
+
+add_index = function(post, param, index_value) {
+  # extract the names of all quantities that match param
+  matches = match_params(post, param)
+  
+  # convert samples to matrix format while retaining the chain and iter ID
+  post_m = as.matrix(post, chains = TRUE, iters = TRUE)
+  
+  # determine which elements that match param
+  which_matches = which(colnames(post_m) %in% matches)
+  
+  # extract them in the order they are found in the object
+  name_matches = colnames(post_m)[which_matches]
+  
+  # append a new index dimension and value on the back of the quantity name
+  new_names = stringr::str_replace(name_matches, "\\]$", paste0(",", index_value, "]"))
+  
+  # replace the old names with new names
+  colnames(post_m)[which_matches] = new_names
+  
+  # convert back to mcmc.list format
+  post_convert(post_m)
+}
+
+##### DROP AN INDEX #####
+
+# changes the name of quantities (param) stored in mcmc.list object (post)
+# removes the last dimension and index value
+# e.g., rm_index(post, "Pb[1,1]")
+# turns "Pb[1,1]" node name to "Pb[1]", and returns only posterior samples that match "Pb[1,1]"
+# allows using vcov_decomp() on a covariance matrix stored as a >2d array
+
+rm_index = function(post, param) {
+  post_sub = post_subset(post, param, matrix = TRUE, chains = TRUE, iters = TRUE)
+  colnames(post_sub) = stringr::str_replace(colnames(post_sub), ",[:digit:]+\\]$", "]")
+  post_convert(post_sub)
+}
 
 ##### CREATE A JAGS MODEL FILE FROM AN R FUNCTION #####
 
