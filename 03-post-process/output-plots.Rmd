@@ -78,6 +78,13 @@ ko_origin = list(
   ko_nor = 1:3,
   ko_hor = 4:6
 )
+
+# make the labels for which elements of the rho matrices contain unique elements
+dummy_cols = matrix(rep(1:jags_data$nj, each = jags_data$nj), jags_data$nj, jags_data$nj)
+dummy_rows = matrix(rep(1:jags_data$nj, jags_data$nj), jags_data$nj, jags_data$nj)
+vcov_cols = dummy_cols[lower.tri(dummy_cols)]
+vcov_rows = dummy_rows[lower.tri(dummy_rows)]
+vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
 ```
 
 # MCMC Information {.tabset .tabset-pills}
