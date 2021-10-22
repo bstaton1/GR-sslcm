@@ -217,7 +217,88 @@ stoptime = Sys.time()
 cat("\nMCMC ended:", format(stoptime))
 cat("\nMCMC elapsed:", format(round(stoptime - starttime, 2)))
 
-##### STEP 7: SAVE THE OUTPUT #####
+##### STEP 7: PROCESS COVARIANCE MATRICES #####
+
+# decompose all covariance matrices ("^Sig.+" nodes)
+# into an SD vector and a correlation matrix
+# postpack::vcov_decomp() does this for all posterior samples
+# do this here so these quantities can be easily compared across models
+
+cat("\nDecomposing all covariance matrices")
+
+# Convert the precision/covariance matrices monitored by JAGS into the marginal SD and correlation matrix terms
+suppressMessages({
+  Sig_lPb = vcov_decomp(post, "Sig_lPb", sigma_base_name = "sig_lPb", rho_base_name = "rho_lPb")
+  Sig_Lpi = vcov_decomp(post, "Sig_Lpi", sigma_base_name = "sig_Lpi", rho_base_name = "rho_Lpi")
+  Sig_Lphi_Pa_Mb1 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,1]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
+  Sig_Lphi_Pa_Mb2 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,2]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
+  Sig_Lphi_Mb_Ma1 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,1]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
+  Sig_Lphi_Mb_Ma2 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,2]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
+  Sig_Lphi_Ma_O0 = vcov_decomp(post, "Sig_Lphi_Ma_O0", sigma_base_name = "sig_Lphi_Ma_O0", rho_base_name = "rho_Lphi_Ma_O0")
+  Sig_Lphi_O0_O1 = vcov_decomp(post, "Sig_Lphi_O0_O1", sigma_base_name = "sig_Lphi_O0_O1", rho_base_name = "rho_Lphi_O0_O1")
+  Sig_Lpsi_O1_Rb1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1_Rb[.,.,1]"), "Sig_Lpsi_O1_Rb", sigma_base_name = "sig_Lpsi_O1_Rb", rho_base_name = "rho_Lpsi_O1_Rb")
+  Sig_Lpsi_O1_Rb2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1_Rb[.,.,2]"), "Sig_Lpsi_O1_Rb", sigma_base_name = "sig_Lpsi_O1_Rb", rho_base_name = "rho_Lpsi_O1_Rb")
+  Sig_Lpsi_O2_Rb1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2_Rb[.,.,1]"), "Sig_Lpsi_O2_Rb", sigma_base_name = "sig_Lpsi_O2_Rb", rho_base_name = "rho_Lpsi_O2_Rb")
+  Sig_Lpsi_O2_Rb2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2_Rb[.,.,2]"), "Sig_Lpsi_O2_Rb", sigma_base_name = "sig_Lpsi_O2_Rb", rho_base_name = "rho_Lpsi_O2_Rb")
+  Sig_Lphi_Rb_Ra = vcov_decomp(post, "Sig_Lphi_Rb_Ra", sigma_base_name = "sig_Lphi_Rb_Ra", rho_base_name = "rho_Lphi_Rb_Ra")
+  Sig_Lphi_Sb_Sa = vcov_decomp(post, "Sig_Lphi_Sb_Sa", sigma_base_name = "sig_Lphi_Sb_Sa", rho_base_name = "rho_Lphi_Sb_Sa")
+})
+
+# update node names for quantities that have a third dimension to the covariance matrix (origin or LH type)
+Sig_Lphi_Pa_Mb1 = add_index(Sig_Lphi_Pa_Mb1, c("sig", "rho"), 1)
+Sig_Lphi_Pa_Mb2 = add_index(Sig_Lphi_Pa_Mb2, c("sig", "rho"), 2)
+Sig_Lphi_Mb_Ma1 = add_index(Sig_Lphi_Mb_Ma1, c("sig", "rho"), 1)
+Sig_Lphi_Mb_Ma2 = add_index(Sig_Lphi_Mb_Ma2, c("sig", "rho"), 2)
+Sig_Lpsi_O1_Rb1 = add_index(Sig_Lpsi_O1_Rb1, c("sig", "rho"), 1)
+Sig_Lpsi_O1_Rb2 = add_index(Sig_Lpsi_O1_Rb2, c("sig", "rho"), 2)
+Sig_Lpsi_O2_Rb1 = add_index(Sig_Lpsi_O2_Rb1, c("sig", "rho"), 1)
+Sig_Lpsi_O2_Rb2 = add_index(Sig_Lpsi_O2_Rb2, c("sig", "rho"), 2)
+
+# make the labels/indices for which elements of the vcov matrices contain unique covariances
+# no point in summarizing/displaying both off-diagonal triangles
+dummy_cols = matrix(rep(1:jags_data$nj, each = jags_data$nj), jags_data$nj, jags_data$nj)
+dummy_rows = matrix(rep(1:jags_data$nj, jags_data$nj), jags_data$nj, jags_data$nj)
+vcov_cols = dummy_cols[lower.tri(dummy_cols)]
+vcov_rows = dummy_rows[lower.tri(dummy_rows)]
+vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
+vcov_indices = paste0("[", vcov_rows, ",", vcov_cols, "(,.)?]")
+
+# subset out only the unique elements
+Sig_lPb = post_subset(Sig_lPb, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpi = post_subset(Sig_Lpi, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lphi_Pa_Mb1 = post_subset(Sig_Lphi_Pa_Mb1, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lphi_Pa_Mb2 = post_subset(Sig_Lphi_Pa_Mb2, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lphi_Mb_Ma1 = post_subset(Sig_Lphi_Mb_Ma1, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lphi_Mb_Ma2 = post_subset(Sig_Lphi_Mb_Ma2, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lphi_Ma_O0 = post_subset(Sig_Lphi_Ma_O0, c("sig", "rho.+"))
+Sig_Lphi_O0_O1 = post_subset(Sig_Lphi_O0_O1, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O1_Rb1 = post_subset(Sig_Lpsi_O1_Rb1, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O1_Rb2 = post_subset(Sig_Lpsi_O1_Rb2, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O2_Rb1 = post_subset(Sig_Lpsi_O2_Rb1, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O2_Rb2 = post_subset(Sig_Lpsi_O2_Rb2, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lphi_Rb_Ra = post_subset(Sig_Lphi_Rb_Ra, c("sig", "rho.+"))
+Sig_Lphi_Sb_Sa = post_subset(Sig_Lphi_Sb_Sa, c("sig", paste0("rho.+", vcov_indices)))
+
+# combine these derived posterior samples with the main object
+post = post_bind(post, Sig_lPb)
+post = post_bind(post, Sig_Lpi)
+post = post_bind(post, Sig_Lphi_Pa_Mb1)
+post = post_bind(post, Sig_Lphi_Pa_Mb2)
+post = post_bind(post, Sig_Lphi_Mb_Ma1)
+post = post_bind(post, Sig_Lphi_Mb_Ma2)
+post = post_bind(post, Sig_Lphi_Ma_O0)
+post = post_bind(post, Sig_Lphi_O0_O1)
+post = post_bind(post, Sig_Lpsi_O1_Rb1)
+post = post_bind(post, Sig_Lpsi_O1_Rb2)
+post = post_bind(post, Sig_Lpsi_O2_Rb1)
+post = post_bind(post, Sig_Lpsi_O2_Rb2)
+post = post_bind(post, Sig_Lphi_Rb_Ra)
+post = post_bind(post, Sig_Lphi_Sb_Sa)
+
+# remove all covariance matrix nodes: no longer needed
+post = suppressMessages(post_remove(post, "^Sig", ask = FALSE))
+
+##### STEP 8: SAVE THE OUTPUT #####
 
 # create the output directory if it doesn't already exist
 if (!dir.exists(out_dir)) dir.create(out_dir)
@@ -242,6 +323,8 @@ saveRDS(out_obj, file.path(out_dir, out_file))
 
 # delete the text file that contains the JAGS code
 unlink(jags_file)
+
+##### STEP 9: RENDER RMD #####
 
 # render the output plots if requested
 if (rmd) {
