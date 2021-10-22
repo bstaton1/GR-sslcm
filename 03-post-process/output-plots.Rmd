@@ -830,7 +830,7 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 ### LGR Smolt $\rightarrow O_0$ (NOR)
 
 ```{r hydro-nor-surv-fit, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)),
              get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_nor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_nor]),
              main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
@@ -841,7 +841,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ### LGR Smolt $\rightarrow O_0$ (HOR)
 
 ```{r hydro-hor-surv-fit, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)),
              get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_hor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_hor]),
              main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
@@ -852,7 +852,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ### BON Adults $\rightarrow$ LGR (NOR)
 
 ```{r BON-LGR-surv-fit-nor, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_nor)),
              get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_nor], jags_data$BON_adults[observable,o_nor] - jags_data$LGR_adults[observable,o_nor]), 1),
              main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(NOR)"))
@@ -863,7 +863,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ### BON Adults $\rightarrow$ LGR (HOR)
 
 ```{r BON-LGR-surv-fit-hor, fig.width = 6, fig.height = 5}
-par(oma = c(1.5,1.5,0,0))
+par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_hor)),
              get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_hor], jags_data$BON_adults[observable,o_hor] - jags_data$LGR_adults[observable,o_hor]), 1),
              main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(HOR)"))
@@ -1349,8 +1349,6 @@ plot_f = function(j) {
 
 junk = sapply(1:jags_data$nj, plot_f)
 ```
-
-
 
 # Spawner-to-Parr Relationship {.tabset .tabset-pills}
 
