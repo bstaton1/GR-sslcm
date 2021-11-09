@@ -485,7 +485,7 @@ jags_model_code = function() {
   
   # age/origin composition
   for (j in 1:nj) {
-    for (y in (kmax+1):ny) {
+    for (y in (kmax+1):ny_obs) {
       # AT WEIR
       # data likelihood
       weir_x_obs[y,1:nko,j] ~ dmulti(q_Ra[y,1:nko,j], weir_nx_obs[y,j])
