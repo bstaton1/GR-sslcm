@@ -17,7 +17,7 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 out_dir = "02-model/model-output"
 
 # specify a scenario name
-scenario = "base-wul"
+scenario = "base"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -93,6 +93,82 @@ add_jags_data = append(add_jags_data, list(max_init_recruits = apply(((jags_data
 
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
+
+# specify the last year of simulation
+sim_end = 2100
+last_obs_yr = max(as.numeric(rownames(jags_data$Pa_obs)))
+ny_sim = sim_end - last_obs_yr
+
+jags_data$ny_obs = jags_data$ny
+jags_data$ny = jags_data$ny + ny_sim
+
+# append hypothetical future hatchery smolt releases (by population)
+parr_rel_yrs = as.character(2010:2017)
+Mb_obs_new = array(NA, dim = c(ny_sim, jags_data$ni, jags_data$no, jags_data$nj))
+dimnames(Mb_obs_new)[[1]] = 1:ny_sim + last_obs_yr
+dimnames(Mb_obs_new)[2:4] = dimnames(jags_data$Mb_obs)[2:4]
+for (j in 1:jags_data$nj) {
+  Mb_obs_new[,2,2,j] = round(mean(jags_data$Mb_obs[parr_rel_yrs,2,2,j]))
+}
+jags_data$Mb_obs = abind(jags_data$Mb_obs, Mb_obs_new, along = 1)
+
+# append hypothetical future weir removal numbers (by age/origin/population)
+weir_remove_yrs = as.character(2010:2019)
+n_remove_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
+dimnames(n_remove_new)[[1]] = 1:ny_sim + last_obs_yr
+dimnames(n_remove_new)[2:4] = dimnames(jags_data$n_remove)[2:4]
+for (j in 1:jags_data$nj) {
+  for (o in 1:jags_data$no) {
+    for (k in 1:jags_data$nk) {
+      n_remove_new[,k,o,j] = round(mean(jags_data$n_remove[weir_remove_yrs,k,o,j]))
+      
+    }
+  }
+}
+jags_data$n_remove = abind(jags_data$n_remove, n_remove_new, along = 1)
+
+# append years that do not need straying accounted for for future years (by population)
+# this results in no strays in simulated years
+not_stray_yrs_old = jags_data$not_stray_yrs
+not_stray_yrs_new = matrix(NA, ny_sim, jags_data$nj)
+not_stray_yrs_new = rbind(not_stray_yrs_old, not_stray_yrs_new)
+for (j in 1:jags_data$nj) {
+  
+  if (j %in% c(1,2,4)) {
+    last_i = which(is.na(not_stray_yrs_new[,j]))[1]
+    last_y = unname(not_stray_yrs_new[last_i - 1,j])
+    new_y = seq(last_y+1, jags_data$ny)
+    n_new_y = length(new_y)
+    not_stray_yrs_new[last_i:(last_i - 1 + n_new_y),j] = new_y
+  } else {
+    not_stray_yrs_new[1:ny_sim,j] = jags_data$ny_obs + (1:ny_sim)
+  }
+}
+
+jags_data$not_stray_yrs = not_stray_yrs_new
+jags_data$n_not_stray_yrs = colSums(!is.na(jags_data$not_stray_yrs))
+
+# append hypothetical future sea lion survival (by population)
+SL_yrs = as.character(2010:2019)
+phi_SL_new = array(NA, dim = c(ny_sim, jags_data$nj))
+dimnames(phi_SL_new)[[1]] = 1:ny_sim + last_obs_yr
+dimnames(phi_SL_new)[[2]] = dimnames(jags_data$phi_SL)[[2]]
+for (j in 1:jags_data$nj) {
+  phi_SL_new[,j] = round(mean(jags_data$phi_SL[SL_yrs,j]),2)
+}
+jags_data$phi_SL = abind(jags_data$phi_SL, phi_SL_new, along = 1)
+
+# append hypothetical below BON harvest rates (by age/origin)
+Ub_yrs = as.character(2010:2019)
+Ub_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no))
+dimnames(Ub_new)[[1]] = 1:ny_sim + last_obs_yr
+dimnames(Ub_new)[2:3] = dimnames(jags_data$Ub_new)[2:3]
+for (k in 1:jags_data$nk) {
+  for (o in 1:jags_data$no) {
+    Ub_new[,k,o] = mean(jags_data$Ub[Ub_yrs,k,o])
+  }
+}
+jags_data$Ub = abind(jags_data$Ub, Ub_new, along = 1)
 
 ##### STEP 2: SPECIFY JAGS MODEL #####
 
