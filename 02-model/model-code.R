@@ -7,7 +7,7 @@ jags_model_code = function() {
     log_beta[j] ~ dnorm(0, 0.001) %_% T(,15)   # log capacity. bound to prevent nonsensically large draws
     beta[j] <- exp(log_beta[j])
     sig_Pb[j] ~ dunif(0, 5)
-    beta_per_peu[j] <- beta[j]/peu[j]
+    beta_per_wul[j] <- beta[j]/wul[j]
     
     ### PRIORS: FRESHWATER PARAMETERS ###
     # aggregate parr to LH-specific parr
@@ -214,8 +214,8 @@ jags_model_code = function() {
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
 
     # overwinter survival by LH type: density dependent
-    Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * (Pa[y,i_fall,1:nj]/peu[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
-    Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * (Pa[y,i_spring,1:nj]/peu[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
+    Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * (Pa[y,i_fall,1:nj]/wul[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
+    Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * (Pa[y,i_spring,1:nj]/wul[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
 
     for (o in 1:no) {
       # migration survival from trib to LGR by origin
@@ -686,7 +686,7 @@ jags_model_code = function() {
       
       # LH-specific overwinter survival
       for (i in 1:ni) {
-        Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * (Pa[y,i,j]/peu[j]))
+        Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * (Pa[y,i,j]/wul[j]))
       }
       
       # origin-specific quantities
