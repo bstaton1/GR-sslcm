@@ -317,8 +317,8 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     # number of carcasses found to have spawned successfully
     carcs_spawned = carcs_spawned,
     
-    # pool equivalent units
-    peu = PEU[pop],
+    # weighted usable length
+    wul = WUL[pop],
     
     # info about which years need straying
     stray_yrs = stray_yrs,
@@ -412,8 +412,8 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     # number of carcasses sampled with successful spawning status
     carcs_spawned = abind(lapply(main_list, function(x) x$carcs_spawned), along = 2),
     
-    # pool equivalent units
-    peu = abind(lapply(main_list, function(x) x$peu), along = 1)
+    # weighted usable length
+    wul = abind(lapply(main_list, function(x) x$wul), along = 1)
   )
   
   # list containing information about years needing straying
