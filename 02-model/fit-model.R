@@ -94,8 +94,12 @@ add_jags_data = append(add_jags_data, list(max_init_recruits = apply(((jags_data
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
 
+### ADD ON QUANTITIES FOR FORWARD SIMULATION ###
+
+set.seed(1234) # for reproducibility; weir removals and hatchery inputs use sample() below
+
 # specify the last year of simulation
-sim_end = 2100
+sim_end = 2050
 last_obs_yr = max(as.numeric(rownames(jags_data$Pa_obs)))
 ny_sim = sim_end - last_obs_yr
 
@@ -103,25 +107,31 @@ jags_data$ny_obs = jags_data$ny
 jags_data$ny = jags_data$ny + ny_sim
 
 # append hypothetical future hatchery smolt releases (by population)
-parr_rel_yrs = as.character(2010:2017)
+parr_rel_yrs = as.character(2000:2017)
 Mb_obs_new = array(NA, dim = c(ny_sim, jags_data$ni, jags_data$no, jags_data$nj))
 dimnames(Mb_obs_new)[[1]] = 1:ny_sim + last_obs_yr
 dimnames(Mb_obs_new)[2:4] = dimnames(jags_data$Mb_obs)[2:4]
 for (j in 1:jags_data$nj) {
-  Mb_obs_new[,2,2,j] = round(mean(jags_data$Mb_obs[parr_rel_yrs,2,2,j]))
+  for (y in 1:ny_sim) {
+    Mb_obs_new[y,2,2,j] = sample(jags_data$Mb_obs[parr_rel_yrs,2,2,j], 1)
+  }
+  
+  # insert values for 2018 and 2019 since not known yet
+  jags_data$Mb_obs[c("2018", "2019"),2,2,j] = sample(jags_data$Mb_obs[parr_rel_yrs,2,2,j], 2)
 }
 jags_data$Mb_obs = abind(jags_data$Mb_obs, Mb_obs_new, along = 1)
 
 # append hypothetical future weir removal numbers (by age/origin/population)
-weir_remove_yrs = as.character(2010:2019)
+weir_remove_yrs = as.character(2000:2019)
 n_remove_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
 dimnames(n_remove_new)[[1]] = 1:ny_sim + last_obs_yr
 dimnames(n_remove_new)[2:4] = dimnames(jags_data$n_remove)[2:4]
 for (j in 1:jags_data$nj) {
   for (o in 1:jags_data$no) {
     for (k in 1:jags_data$nk) {
-      n_remove_new[,k,o,j] = round(mean(jags_data$n_remove[weir_remove_yrs,k,o,j]))
-      
+      for (y in 1:ny_sim) {
+        n_remove_new[y,k,o,j] = sample(jags_data$n_remove[weir_remove_yrs,k,o,j], 1)
+      }
     }
   }
 }
@@ -159,7 +169,7 @@ for (j in 1:jags_data$nj) {
 jags_data$phi_SL = abind(jags_data$phi_SL, phi_SL_new, along = 1)
 
 # append hypothetical below BON harvest rates (by age/origin)
-Ub_yrs = as.character(2010:2019)
+Ub_yrs = as.character(2000:2019)
 Ub_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no))
 dimnames(Ub_new)[[1]] = 1:ny_sim + last_obs_yr
 dimnames(Ub_new)[2:3] = dimnames(jags_data$Ub_new)[2:3]
