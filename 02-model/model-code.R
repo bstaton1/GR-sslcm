@@ -395,7 +395,10 @@ jags_model_code = function() {
           Rb_BON[y,k,o,j] <- Rb[y,k,o,j] * phi_SL[y,j] * (1 - Ub[y,k,o])
           
           # survive upstream migration from BON to LGR and add strays
-          Ra[y,k,o,j] <- Rb_BON[y,k,o,j] * phi_Rb_Ra[y,o] + n_stray_tot[y,j] * stray_comp[k,o,j]
+          Ra_LGR[y,k,o,j] <- Rb_BON[y,k,o,j] * phi_Rb_Ra[y,o]
+          
+          # add strays
+          Ra[y,k,o,j] <- Ra_LGR[y,k,o,j] + n_stray_tot[y,j] * stray_comp[k,o,j]
           
           # remove fish at weir: use max() to ensure that fewer fish were removed than existed
           Sb[y,k,o,j] <- max(Ra[y,k,o,j] - n_remove[y,k,o,j], 1)
@@ -465,9 +468,9 @@ jags_model_code = function() {
     for (y in (kmax+1):(ny-kmax)) {
       for (o in 1:no) {
         Ra_per_Ma[y,o,j] <- (
-          Ra[y+kmin+1-1,1,o,j] +       # age 3 adults back at trib that were once smolts from brood year y
-            Ra[y+kmin+2-1,2,o,j] +     # age 4 adults back at trib that were once smolts from brood year y
-            Ra[y+kmin+3-1,3,o,j])/     # age 5 adults back at trib that were once smolts from brood year y
+          Ra_LGR[y+kmin+1-1,1,o,j] +       # age 3 adults back at trib that were once smolts from brood year y
+            Ra_LGR[y+kmin+2-1,2,o,j] +     # age 4 adults back at trib that were once smolts from brood year y
+            Ra_LGR[y+kmin+3-1,3,o,j])/     # age 5 adults back at trib that were once smolts from brood year y
           ifelse(sum(Ma[y,1:ni,o,j]) == 0, 1, sum(Ma[y,1:ni,o,j]))                    # total smolts at LGR from brood year y
       }
     }
