@@ -1487,9 +1487,9 @@ mtext(side = 2, outer = T, line = 0.25, "Parr per Spawner")
 
 ```{r overwinter-survival-plots, fig.width = 8, fig.height = 5}
 plot_fn = function(j) {
-  # extract parr, scale it to PEU, and create new post object
+  # extract parr, scale it to WUL, and create new post object
   Pa = post_subset(post, sub_index("^Pa[.+,.,pop]", pop = j), matrix = TRUE)
-  Pa_scaled = Pa/jags_data$peu[j]
+  Pa_scaled = Pa/jags_data$wul[j]
   colnames(Pa_scaled) = gsub("Pa", "Pa_scaled", x = colnames(Pa_scaled))
   post_pa = post_convert(cbind(postpack:::id_mat(post), Pa_scaled))
   
@@ -1562,7 +1562,7 @@ plot_fn = function(j) {
 
 par(mfcol = c(jags_data$ni,jags_data$nj), oma = c(2.5,3.5,0,0))
 junk = sapply(1:jags_data$nj, plot_fn)
-mtext(side = 1, line = 1.5, outer = T, "LH-Specific Parr/PEU", cex = 1.2)
+mtext(side = 1, line = 1.5, outer = T, "LH-Specific Parr/WUL", cex = 1.2)
 mtext(side = 2, line = 2, outer = T, "Overwinter Survival", cex = 1.2)
 ```
 
