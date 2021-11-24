@@ -98,17 +98,17 @@ fit_fecund_BH = function(jags_data, pop, plot = FALSE) {
 
 gen_initials = function(c, jags_data) {
   # fit a simple BH model to each population
-  BH_ests = lapply(1:jags_data$nj, function(j) {
-    summary(fit_fecund_BH(jags_data, j)$BH_fit)$coef
-  })
-  
-  Pb_ests = sapply(1:jags_data$nj, function(j) {
-    Pb_ests = fit_fecund_BH(jags_data, j)$BH_dat$Pb_obs
-    mn_Pb = mean(Pb_ests, na.rm = TRUE)
-    fill_yrs = (jags_data$kmax+1):jags_data$ny
-    Pb_ests[fill_yrs][is.na(Pb_ests[fill_yrs])] = mn_Pb
-    Pb_ests
-  })
+  # BH_ests = lapply(1:jags_data$nj, function(j) {
+  #   summary(fit_fecund_BH(jags_data, j)$BH_fit)$coef
+  # })
+  # 
+  # Pb_ests = sapply(1:jags_data$nj, function(j) {
+  #   Pb_ests = fit_fecund_BH(jags_data, j)$BH_dat$Pb_obs
+  #   mn_Pb = mean(Pb_ests, na.rm = TRUE)
+  #   fill_yrs = (jags_data$kmax+1):jags_data$ny
+  #   Pb_ests[fill_yrs][is.na(Pb_ests[fill_yrs])] = mn_Pb
+  #   Pb_ests
+  # })
 
   # generate random initial values for all years where strays can be present
   n_stray_tot = sapply(1:jags_data$nj, function(j) {
@@ -171,15 +171,15 @@ gen_initials = function(c, jags_data) {
   
   # generate random initial values for one chain
   base_list = list(
-    alpha = sapply(BH_ests, function(ests) exp(rnorm(1, ests["log_alpha","Estimate"], ests["log_alpha","Std. Error"]))),
-    log_beta = sapply(BH_ests, function(ests) rnorm(1, ests["log_beta","Estimate"], ests["log_beta","Std. Error"])),
-    lPb = log(Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj)),
+    # alpha = sapply(BH_ests, function(ests) exp(rnorm(1, ests["log_alpha","Estimate"], ests["log_alpha","Std. Error"]))),
+    # log_beta = sapply(BH_ests, function(ests) rnorm(1, ests["log_beta","Estimate"], ests["log_beta","Std. Error"])),
+    # lPb = log(Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj)),
     sig_Pb = runif(jags_data$nj, 0.3, 0.4),
     n_stray_tot = n_stray_tot, 
     mu_init_recruits = mu_init_recruits
   )
   
-  base_list$alpha = ifelse(base_list$alpha > 0.99, 0.99, base_list$alpha)
+  # base_list$alpha = ifelse(base_list$alpha > 0.99, 0.99, base_list$alpha)
   
   append(base_list, mu_list)
 }
