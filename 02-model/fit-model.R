@@ -98,87 +98,89 @@ jags_data = append(jags_data, add_jags_data)
 
 set.seed(1234) # for reproducibility; weir removals and hatchery inputs use sample() below
 
-# specify the last year of simulation
-sim_end = 2050
+# specify the last year of model calculations
+last_yr = 2050
 last_obs_yr = max(as.numeric(rownames(jags_data$Pa_obs)))
-ny_sim = sim_end - last_obs_yr
+ny_sim = last_yr - last_obs_yr
 
 jags_data$ny_obs = jags_data$ny
 jags_data$ny = jags_data$ny + ny_sim
 
-# append hypothetical future hatchery smolt releases (by population)
-parr_rel_yrs = as.character(2000:2017)
-Mb_obs_new = array(NA, dim = c(ny_sim, jags_data$ni, jags_data$no, jags_data$nj))
-dimnames(Mb_obs_new)[[1]] = 1:ny_sim + last_obs_yr
-dimnames(Mb_obs_new)[2:4] = dimnames(jags_data$Mb_obs)[2:4]
-for (j in 1:jags_data$nj) {
-  for (y in 1:ny_sim) {
-    Mb_obs_new[y,2,2,j] = sample(jags_data$Mb_obs[parr_rel_yrs,2,2,j], 1)
+if (ny_sim > 0) {
+  # append hypothetical future hatchery smolt releases (by population)
+  parr_rel_yrs = as.character(2000:2017)
+  Mb_obs_new = array(NA, dim = c(ny_sim, jags_data$ni, jags_data$no, jags_data$nj))
+  dimnames(Mb_obs_new)[[1]] = 1:ny_sim + last_obs_yr
+  dimnames(Mb_obs_new)[2:4] = dimnames(jags_data$Mb_obs)[2:4]
+  for (j in 1:jags_data$nj) {
+    for (y in 1:ny_sim) {
+      Mb_obs_new[y,2,2,j] = sample(jags_data$Mb_obs[parr_rel_yrs,2,2,j], 1)
+    }
+    
+    # insert values for 2018 and 2019 since not known yet
+    jags_data$Mb_obs[c("2018", "2019"),2,2,j] = sample(jags_data$Mb_obs[parr_rel_yrs,2,2,j], 2)
   }
+  jags_data$Mb_obs = abind(jags_data$Mb_obs, Mb_obs_new, along = 1)
   
-  # insert values for 2018 and 2019 since not known yet
-  jags_data$Mb_obs[c("2018", "2019"),2,2,j] = sample(jags_data$Mb_obs[parr_rel_yrs,2,2,j], 2)
-}
-jags_data$Mb_obs = abind(jags_data$Mb_obs, Mb_obs_new, along = 1)
-
-# append hypothetical future weir removal numbers (by age/origin/population)
-weir_remove_yrs = as.character(2000:2019)
-n_remove_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
-dimnames(n_remove_new)[[1]] = 1:ny_sim + last_obs_yr
-dimnames(n_remove_new)[2:4] = dimnames(jags_data$n_remove)[2:4]
-for (j in 1:jags_data$nj) {
-  for (o in 1:jags_data$no) {
-    for (k in 1:jags_data$nk) {
-      for (y in 1:ny_sim) {
-        n_remove_new[y,k,o,j] = sample(jags_data$n_remove[weir_remove_yrs,k,o,j], 1)
+  # append hypothetical future weir removal numbers (by age/origin/population)
+  weir_remove_yrs = as.character(2000:2019)
+  n_remove_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
+  dimnames(n_remove_new)[[1]] = 1:ny_sim + last_obs_yr
+  dimnames(n_remove_new)[2:4] = dimnames(jags_data$n_remove)[2:4]
+  for (j in 1:jags_data$nj) {
+    for (o in 1:jags_data$no) {
+      for (k in 1:jags_data$nk) {
+        for (y in 1:ny_sim) {
+          n_remove_new[y,k,o,j] = sample(jags_data$n_remove[weir_remove_yrs,k,o,j], 1)
+        }
       }
     }
   }
-}
-jags_data$n_remove = abind(jags_data$n_remove, n_remove_new, along = 1)
-
-# append years that do not need straying accounted for for future years (by population)
-# this results in no strays in simulated years
-not_stray_yrs_old = jags_data$not_stray_yrs
-not_stray_yrs_new = matrix(NA, ny_sim, jags_data$nj)
-not_stray_yrs_new = rbind(not_stray_yrs_old, not_stray_yrs_new)
-for (j in 1:jags_data$nj) {
+  jags_data$n_remove = abind(jags_data$n_remove, n_remove_new, along = 1)
   
-  if (j %in% c(1,2,4)) {
-    last_i = which(is.na(not_stray_yrs_new[,j]))[1]
-    last_y = unname(not_stray_yrs_new[last_i - 1,j])
-    new_y = seq(last_y+1, jags_data$ny)
-    n_new_y = length(new_y)
-    not_stray_yrs_new[last_i:(last_i - 1 + n_new_y),j] = new_y
-  } else {
-    not_stray_yrs_new[1:ny_sim,j] = jags_data$ny_obs + (1:ny_sim)
+  # append years that do not need straying accounted for for future years (by population)
+  # this results in no strays in simulated years
+  not_stray_yrs_old = jags_data$not_stray_yrs
+  not_stray_yrs_new = matrix(NA, ny_sim, jags_data$nj)
+  not_stray_yrs_new = rbind(not_stray_yrs_old, not_stray_yrs_new)
+  for (j in 1:jags_data$nj) {
+    
+    if (j %in% c(1,2,4)) {
+      last_i = which(is.na(not_stray_yrs_new[,j]))[1]
+      last_y = unname(not_stray_yrs_new[last_i - 1,j])
+      new_y = seq(last_y+1, jags_data$ny)
+      n_new_y = length(new_y)
+      not_stray_yrs_new[last_i:(last_i - 1 + n_new_y),j] = new_y
+    } else {
+      not_stray_yrs_new[1:ny_sim,j] = jags_data$ny_obs + (1:ny_sim)
+    }
   }
-}
-
-jags_data$not_stray_yrs = not_stray_yrs_new
-jags_data$n_not_stray_yrs = colSums(!is.na(jags_data$not_stray_yrs))
-
-# append hypothetical future sea lion survival (by population)
-SL_yrs = as.character(2010:2019)
-phi_SL_new = array(NA, dim = c(ny_sim, jags_data$nj))
-dimnames(phi_SL_new)[[1]] = 1:ny_sim + last_obs_yr
-dimnames(phi_SL_new)[[2]] = dimnames(jags_data$phi_SL)[[2]]
-for (j in 1:jags_data$nj) {
-  phi_SL_new[,j] = round(mean(jags_data$phi_SL[SL_yrs,j]),2)
-}
-jags_data$phi_SL = abind(jags_data$phi_SL, phi_SL_new, along = 1)
-
-# append hypothetical below BON harvest rates (by age/origin)
-Ub_yrs = as.character(2000:2019)
-Ub_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no))
-dimnames(Ub_new)[[1]] = 1:ny_sim + last_obs_yr
-dimnames(Ub_new)[2:3] = dimnames(jags_data$Ub_new)[2:3]
-for (k in 1:jags_data$nk) {
-  for (o in 1:jags_data$no) {
-    Ub_new[,k,o] = mean(jags_data$Ub[Ub_yrs,k,o])
+  
+  jags_data$not_stray_yrs = not_stray_yrs_new
+  jags_data$n_not_stray_yrs = colSums(!is.na(jags_data$not_stray_yrs))
+  
+  # append hypothetical future sea lion survival (by population)
+  SL_yrs = as.character(2010:2019)
+  phi_SL_new = array(NA, dim = c(ny_sim, jags_data$nj))
+  dimnames(phi_SL_new)[[1]] = 1:ny_sim + last_obs_yr
+  dimnames(phi_SL_new)[[2]] = dimnames(jags_data$phi_SL)[[2]]
+  for (j in 1:jags_data$nj) {
+    phi_SL_new[,j] = round(mean(jags_data$phi_SL[SL_yrs,j]),2)
   }
+  jags_data$phi_SL = abind(jags_data$phi_SL, phi_SL_new, along = 1)
+  
+  # append hypothetical below BON harvest rates (by age/origin)
+  Ub_yrs = as.character(2000:2019)
+  Ub_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no))
+  dimnames(Ub_new)[[1]] = 1:ny_sim + last_obs_yr
+  dimnames(Ub_new)[2:3] = dimnames(jags_data$Ub_new)[2:3]
+  for (k in 1:jags_data$nk) {
+    for (o in 1:jags_data$no) {
+      Ub_new[,k,o] = mean(jags_data$Ub[Ub_yrs,k,o])
+    }
+  }
+  jags_data$Ub = abind(jags_data$Ub, Ub_new, along = 1)
 }
-jags_data$Ub = abind(jags_data$Ub, Ub_new, along = 1)
 
 ##### STEP 2: SPECIFY JAGS MODEL #####
 
