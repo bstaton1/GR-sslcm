@@ -8,9 +8,9 @@ jags_model_code = function() {
     ### PRIORS: RECRUITMENT FUNCTION ###
     # total egg production to aggregate parr recruitment function
     alpha[j] ~ dbeta(1, 1)
-    sig_Pb[j] ~ dunif(0, 5)
     lbeta[j] ~ dnorm(log(mu_beta_per_wul * wul[j]), 1/sig_lbeta^2) %_% T(,15) # log capacity. bound to prevent nonsensically large draws
     beta[j] <- exp(lbeta[j])
+    sig_Lphi_f_Pb[j] ~ dunif(0, 5)
     beta_per_wul[j] <- beta[j]/wul[j]
 
     ### PRIORS: FRESHWATER PARAMETERS ###
@@ -119,7 +119,7 @@ jags_model_code = function() {
   
   # correlation parameters
   # see toggle_rho_estimation() function; 01-functions/util-fns.R
-  rho_lPb <- 0
+  rho_Lphi_f_Pb <- 0
   rho_Lpi <- 0
   rho_Lphi_Pa_Mb[i_fall] <- 0
   rho_Lphi_Pa_Mb[i_spring] <- 0
@@ -138,7 +138,7 @@ jags_model_code = function() {
   for (i in 1:nj) {
     for (j in 1:nj) {
       # covariance matrix of parr recruitment
-      Sig_lPb[i,j] <- sig_Pb[i] * sig_Pb[j] * ifelse(i == j, 1, rho_lPb)
+      Sig_Lphi_f_Pb[i,j] <- sig_Lphi_f_Pb[i] * sig_Lphi_f_Pb[j] * ifelse(i == j, 1, rho_Lphi_f_Pb)
       
       # covariance matrix of LH apportionment
       Sig_Lpi[i,j] <- sig_Lpi[i] * sig_Lpi[j] * ifelse(i == j, 1, rho_Lpi)
@@ -219,8 +219,8 @@ jags_model_code = function() {
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in 2:ny) {
     
-    # parr recruitment
-    lPb[y,1:nj] ~ dmnorm.vcov(log(Pb_mean[y,1:nj]), Sig_lPb[1:nj,1:nj])
+    # egg to parr survival: Beverton-Holt relationship
+    Lphi_f_Pb[y,1:nj] ~ dmnorm.vcov(logit(phi_f_Pb_mean[y,1:nj]), Sig_Lphi_f_Pb[1:nj,1:nj])
 
     # LH apportionment
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
@@ -265,9 +265,9 @@ jags_model_code = function() {
     # ilogit() and exp() cannot be applied to vectors unfortunately; must loop over population dimension
     for (j in 1:nj) {
       
-      # transform parr recruitment
-      Pb[y,j] <- exp(lPb[y,j])
-      
+      # transform egg to parr survival
+      phi_f_Pb[y,j] <- ilogit(Lphi_f_Pb[y,j])
+
       # transform LH apportionment
       pi[y,i_fall,j] <- ilogit(Lpi1[y,j])
       pi[y,i_spring,j] <- 1 - pi[y,i_fall,j]
@@ -344,7 +344,9 @@ jags_model_code = function() {
     for (y in 2:ny) {
       # reproductive link: total summer parr
       # Pb[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j]) * exp(lPb_resid[y,j])
-      Pb_mean[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j])
+      # Pb_mean[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j])
+      phi_f_Pb_mean[y,j] <- 1/(1/alpha[j] + f_tot[y,j]/beta[j])
+      Pb[y,j] <- f_tot[y,j] * phi_f_Pb[y,j]
       # Pb[y,j] ~ dlnorm(log(Pb_pred[y,j]), 1/sig_Pb[j]^2)
       
       # natural origin tributary-to-LGD dynamics
@@ -689,7 +691,7 @@ jags_model_code = function() {
     for (j in 1:nj) {
       
       # total summer parr recruitment
-      lPb_resid[y,j] <- log(Pb[y,j]) - log(Pb_mean[y,j])
+      Lphi_f_Pb_resid[y,j] <- Lphi_f_Pb[y,j] - logit(phi_f_Pb_mean[y,j])
       
       # proportion of summer parr that become fall migrants
       Lpi_resid[y,j] <- logit(pi[y,i_fall,j]) - logit(mu_pi[i_fall,j])
