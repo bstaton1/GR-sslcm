@@ -8,7 +8,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base"
+    value: "new-BH"
     input: text
   include_sim_years:
     label: "Include Simulated Years on Plots?"
@@ -224,9 +224,9 @@ diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
 
 ```{r calculate-mcmc-diagnostics}
 # parr recruitment
-L1 = "Parr Recruitment"
-L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Parr States")
-match = c("alpha", "^beta[", "mu_beta_per_wul", "sig_lbeta", "sig_lPb", "rho_lPb", "^Pb[")
+L1 = "Egg-to-Parr Survival"
+L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Realized Survival", "Parr States")
+match = c("alpha", "^beta[", "mu_beta_per_wul", "sig_lbeta", "sig_Lphi_f_Pb", "rho_Lphi_f_Pb", "^phi_f_Pb[", "^Pb[")
 parr_recruit_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # LH apportionment
@@ -2030,8 +2030,8 @@ my_boxplot = function(params, ylab = NULL, ticklabs = pops, ylim = NULL, boxfill
 par(mfrow = c(1,4))
 my_boxplot("^alpha[.]$", "Productivity")
 my_boxplot("^beta[.]$", "Capacity")
-my_boxplot("^sig_lPb[.]$", "Process SD")
-my_boxplot("^rho_lPb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
+my_boxplot("^sig_Lphi_f_Pb[.]$", "Process SD")
+my_boxplot("^rho_Lphi_f_Pb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Life History Apportionment
