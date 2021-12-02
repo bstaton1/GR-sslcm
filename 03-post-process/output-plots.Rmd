@@ -651,6 +651,86 @@ bp_tab %>%
   collapse_rows(1:5) 
 ```
 
+## Process Noise Diagnostics
+
+The model assumes mean-zero process noise for all components. That is, the model has an expected value for each component in a given year, and it estimates deviations from this expected value to obtain the realized value in that year. Deviations from the expectation are assumed to be equally likely to be positive or negative for any given year. We can average the process noise components across years to check if it is close to zero. Large deviations from zero in the table below indicate a problem.
+
+```{r get-resids-fn}
+# a function to extract the posterior mean of all process model residuals for a single population
+get_resids = function(post, j) {
+  
+  out = list(
+    egg_to_parr_surv = post_summ(post, sub_index("^lPb_resid[.+,pop]", pop = j))["mean",],
+    p_fall_mig = post_summ(post, sub_index("^Lpi_resid[.+,pop]", pop = j))["mean",],
+    ow_surv_fall = post_summ(post, sub_index("^Lphi_Pa_Mb_resid[.+,LH_type,pop]", pop = j, LH_type = 1))["mean",],
+    ow_surv_spring = post_summ(post, sub_index("^Lphi_Pa_Mb_resid[.+,LH_type,pop]", pop = j, LH_type = 2))["mean",],
+    toLGR_surv_nor = post_summ(post, sub_index("^Lphi_Mb_Ma_resid[.+,origin,pop]", pop = j, LH_type = 2, origin = 1))["mean",],
+    toLGR_surv_hor = post_summ(post, sub_index("^Lphi_Mb_Ma_resid[.+,origin,pop]", pop = j, LH_type = 2, origin = 2))["mean",],
+    LGR_to_BON_surv_nor = post_summ(post, sub_index("^Lphi_Ma_O0_resid[.+,origin]", origin = 1))["mean",],
+    LGR_to_BON_surv_hor = post_summ(post, sub_index("^Lphi_Ma_O0_resid[.+,origin]", origin = 2))["mean",],
+    yr1_ocean_surv = post_summ(post, sub_index("^Lphi_O0_O1_resid[.+,1,pop]", pop = j))["mean",-1],
+    age3_mat_nor = post_summ(post, sub_index("^Lpsi_O1_Rb_resid[.+,origin,pop]", origin = 1, pop = j))["mean",],
+    age3_mat_hor = post_summ(post, sub_index("^Lpsi_O1_Rb_resid[.+,origin,pop]", origin = 2, pop = j))["mean",],
+    age4_mat_nor = post_summ(post, sub_index("^Lpsi_O2_Rb_resid[.+,origin,pop]", origin = 1, pop = j))["mean",],
+    age4_mat_hor = post_summ(post, sub_index("^Lpsi_O2_Rb_resid[.+,origin,pop]", origin = 2, pop = j))["mean",],
+    BON_to_LGR_surv_nor = post_summ(post, sub_index("^Lphi_Rb_Ra_resid[.+,origin]", origin = 1))["mean",],
+    BON_to_LGR_surv_hor = post_summ(post, sub_index("^Lphi_Rb_Ra_resid[.+,origin]", origin = 2))["mean",],
+    prespawn_surv = post_summ(post, sub_index("Lphi_Sb_Sa_resid[.+,pop]", pop = j))["mean",]
+  )
+  out = do.call(cbind, out)
+  rownames(out) = NULL
+  out
+}
+```
+
+```{r make-mean-zero-resid-table}
+# extract posterior mean residual time series for each population
+resids = lapply(1:4, get_resids, post = post)
+
+# convert to array format (list elements become matrix slices)
+resids = do.call(abind, append(resids, list(along = 3)))
+dimnames(resids)[[3]] = c("CAT", "LOS", "MIN", "UGR")
+
+# calculate the mean of each time series: these should be close to 0
+resid_means = t(sapply(1:dim(resids)[2], function(p) colMeans(resids[,p,])))
+rownames(resid_means) = dimnames(resids)[[2]]
+resid_means = round(resid_means, 3)
+
+# determine the phase of each process model component
+is_fw_juvn = rownames(resid_means) %in% c("egg_to_parr_surv", "p_fall_mig", "ow_surv_fall", "ow_surv_spring", "toLGR_surv_nor", "toLGR_surv_hor", "LGR_to_BON_surv_nor", "LGR_to_BON_surv_hor")
+is_sw_juvn = stringr::str_detect(rownames(resid_means), "ocean|mat")
+
+# determine the origin of each
+is_nor = stringr::str_detect(rownames(resid_means), "nor|egg_to_parr|p_fall|ow_surv")
+is_hor = stringr::str_detect(rownames(resid_means), "hor")
+
+# determine the process type: Life History (pi & psi) or Survival (phi)
+is_surv = stringr::str_detect(rownames(resid_means), "surv")
+
+# determine the migratory strategy: fall/spring/combined
+is_fall = stringr::str_detect(rownames(resid_means), "fall")
+is_spring = stringr::str_detect(rownames(resid_means), "spring")
+
+# build ID data frame
+resid_IDs = data.frame(
+  life_phase = ifelse(is_fw_juvn, "FW Juvenile", ifelse(is_sw_juvn, "SW Juvenile", "FW Adult")),
+  type = ifelse(is_surv, "Survival", "Life History"),
+  desc = c("Egg-to-Parr", "Strategy Apportionment", "Overwinter", "Overwinter", "Trib to LGR", "Trib to LGR",
+           "LGR to BON", "LGR to BON", "Yr1 Ocean", "Age-3 Maturity", "Age-3 Maturity", "Age-4 Maturity", "Age-4 Maturity",
+           "BON to LGR", "BON to LGR", "Pre-Spawn"),
+  origin = ifelse(is_nor, "NOR", ifelse(is_hor, "HOR", "Combined")), 
+  mig_type = ifelse(is_fall, "Fall Migrants", ifelse(is_spring, "Spring Migrants", "Combined"))
+)
+
+# combine IDs with mean residual values by population
+out = cbind(resid_IDs, resid_means)
+
+# build a kable
+kable(out, "html", row.names = FALSE, col.names = c("Life Phase", "Process Type", "Description", "Origin", "Migratory Strategy", colnames(resid_means))) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
+  collapse_rows(1:5)
+```
+
 # Fit to Data
 
 In all figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
