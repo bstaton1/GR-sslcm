@@ -159,6 +159,37 @@ sub_index = function(x, year = NULL, LH_type = NULL, age = NULL, origin = NULL, 
   newx
 }
 
+##### OBTAIN PARAMETER DIMENSION ID #####
+# E.G., dim_IDs("alpha[pop]", pop = 1) gives "CAT"
+# used for labeling in figures
+
+dim_IDs = function(param, ...) {
+  
+  # function to convert sub_index() output into named dimensions
+  dim_names = function(LH_type = NULL, age = NULL, origin = NULL, pop = NULL) {
+    
+    # empty list
+    out = list()
+    
+    # combine the dimention names for each type supplied
+    if (!is.null(LH_type)) out = append(out, list(LH_type = c("fall", "spring")[LH_type]))
+    if (!is.null(age)) out = append(out, list(age = c("age3", "age4", "age5")[age]))
+    if (!is.null(origin)) out = append(out, list(origin = c("NOR", "HOR")[origin]))
+    if (!is.null(pop)) out = append(out, list(pop = c("CAT", "LOS", "MIN", "UGR")[pop]))
+    
+    return(out)
+  }
+  
+  named_param = do.call(sub_index, append(list(x = param), dim_names(...)))
+  named_param = stringr::str_remove(named_param, "year,")
+  named_param = stringr::str_extract(named_param, "\\[.+\\]")
+  named_param = stringr::str_remove(named_param, "age[:digit:],")
+  named_param = stringr::str_remove(named_param, "\\[")
+  named_param = stringr::str_remove(named_param, "\\]")
+  return(named_param)
+}
+
+
 ##### COMBINE A LIST OF DATA FRAMES #####
 # list: a list with data frames to be rbind-ed stored as elements
 
