@@ -334,7 +334,7 @@ tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_
 tmp = tmp[tmp$population %in% c("CAT", "LOS", "MIN", "UGR"),]
 
 # exclude some survival estimates: only keep summer, fall, and spring tagging to LGR
-tmp = tmp[tmp$season %in% c("summer", "fall", "spring"),]
+tmp = tmp[tmp$season %in% c("summer", "fall", "spring", "winter"),]
 
 # add a brood_year column: two years prior to migration year
 tmp$brood_year = tmp$mig_year - 2
@@ -343,7 +343,7 @@ tmp$brood_year = tmp$mig_year - 2
 tmp = tmp[,c("population", "season", "brood_year", "surv_est", "logit_surv_se")]
 
 # give season levels: for ordering purposes only
-tmp$season = factor(tmp$season, levels = c("summer", "fall", "spring"))
+tmp$season = factor(tmp$season, levels = c("summer", "fall", "winter", "spring"))
 
 # create two data frames: one for the point ests and one for SEs
 tmp_est = tmp[,c("population", "season", "brood_year", "surv_est")]
@@ -354,8 +354,8 @@ tmp_est = dcast(tmp_est, population + brood_year ~ season, value.var = "surv_est
 tmp_se = dcast(tmp_se, population + brood_year ~ season, value.var = "logit_surv_se")
 
 # improve column names
-colnames(tmp_est)[3:5] = paste0(colnames(tmp_est)[3:5], "_surv_est")
-colnames(tmp_se)[3:5] = paste0(colnames(tmp_se)[3:5], "_surv_logit_se")
+colnames(tmp_est)[3:6] = paste0(colnames(tmp_est)[3:6], "_surv_est")
+colnames(tmp_se)[3:6] = paste0(colnames(tmp_se)[3:6], "_surv_logit_se")
 
 # combine back into one data set
 tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
