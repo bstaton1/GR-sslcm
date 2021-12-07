@@ -21,7 +21,7 @@ out_dir = "02-model/model-output"
 last_yr = 2019
 
 # specify a scenario name
-scenario = "base"
+scenario = "winter-surv-data"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -236,7 +236,7 @@ jags_params = c(
   "z", "carc_adj", "n_stray_tot", "stray_comp", "mu_z", "sig_z",
   
   # misc parameters
-  "O_phi_scaler_nat_hat",
+  "O_phi_scaler_nat_hat", "toLGR_scaler",
   
   # misc derived quantities
   "beta_per_wul", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
