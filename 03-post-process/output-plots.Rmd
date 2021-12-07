@@ -849,6 +849,21 @@ mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, TeX("$Fall\\,Parr \\rightarrow LGR\\,Survival$"))
 ```
 
+### Winter Parr $\rightarrow$ LGR
+
+```{r winter-surv-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]$", year = observable, LH_type = i_spring, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Pa_Ma[observable,i_spring,j], jags_data$sig_Lphi_obs_Pa_Ma[observable,i_spring,j]),
+               main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, TeX("$Winter\\,Parr \\rightarrow LGR\\,Survival$"))
+```
+
 ### Spring Smolt $\rightarrow$ LGR (NOR)
 
 ```{r spring-surv-fit-nor, fig.width = 6, fig.height = 5}
