@@ -70,7 +70,7 @@ plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2,
   
   # set y limits
   if (is.null(ylim)) {
-    ylim = range(cbind(t(est[c("2.5%", "97.5%"),]), obs), na.rm = T)
+    ylim = range(list(est[c("2.5%", "97.5%"),], obs), na.rm = T)
   }
   
   # set the graphics device parameters
@@ -91,8 +91,9 @@ plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2,
   
   # draw data if provided
   if (!is.null(obs)) {
-    segments(yrs, obs[,"lwr95"], yrs, obs[,"upr95"], col = alpha("blue", 0.75))
-    points(obs[,"mean"] ~ yrs, pch = 21, col = alpha("blue", 0.75), bg = alpha("skyblue2", 0.5), cex = 1.2)
+    obs_yrs = as.numeric(rownames(obs))
+    segments(obs_yrs, obs[,"lwr95"], obs_yrs, obs[,"upr95"], col = alpha("blue", 0.75))
+    points(obs[,"mean"] ~ obs_yrs, pch = 21, col = alpha("blue", 0.75), bg = alpha("skyblue2", 0.5), cex = 1.2)
   } 
   
   # draw axes/labels
