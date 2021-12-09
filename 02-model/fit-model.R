@@ -110,7 +110,7 @@ jags_data$ny = jags_data$ny + ny_sim
 
 if (ny_sim > 0) {
   # append hypothetical future hatchery smolt releases (by population)
-  parr_rel_yrs = as.character(2000:2017)
+  parr_rel_yrs = as.character(2001:2017)
   Mb_obs_new = array(NA, dim = c(ny_sim, jags_data$ni, jags_data$no, jags_data$nj))
   dimnames(Mb_obs_new)[[1]] = 1:ny_sim + last_obs_yr
   dimnames(Mb_obs_new)[2:4] = dimnames(jags_data$Mb_obs)[2:4]
@@ -125,7 +125,7 @@ if (ny_sim > 0) {
   jags_data$Mb_obs = abind(jags_data$Mb_obs, Mb_obs_new, along = 1)
   
   # append hypothetical future weir removal numbers (by age/origin/population)
-  weir_remove_yrs = as.character(2000:2019)
+  weir_remove_yrs = as.character(2001:2019)
   n_remove_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
   dimnames(n_remove_new)[[1]] = 1:ny_sim + last_obs_yr
   dimnames(n_remove_new)[2:4] = dimnames(jags_data$n_remove)[2:4]
@@ -162,7 +162,7 @@ if (ny_sim > 0) {
   jags_data$n_not_stray_yrs = colSums(!is.na(jags_data$not_stray_yrs))
   
   # append hypothetical future sea lion survival (by population)
-  SL_yrs = as.character(2010:2019)
+  SL_yrs = as.character(2001:2019)
   phi_SL_new = array(NA, dim = c(ny_sim, jags_data$nj))
   dimnames(phi_SL_new)[[1]] = 1:ny_sim + last_obs_yr
   dimnames(phi_SL_new)[[2]] = dimnames(jags_data$phi_SL)[[2]]
@@ -172,7 +172,7 @@ if (ny_sim > 0) {
   jags_data$phi_SL = abind(jags_data$phi_SL, phi_SL_new, along = 1)
   
   # append hypothetical below BON harvest rates (by age/origin)
-  Ub_yrs = as.character(2000:2019)
+  Ub_yrs = as.character(2001:2019)
   Ub_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no))
   dimnames(Ub_new)[[1]] = 1:ny_sim + last_obs_yr
   dimnames(Ub_new)[2:3] = dimnames(jags_data$Ub_new)[2:3]
