@@ -16,6 +16,10 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
+# specify the last year of model calculations
+# make later than 2019 to include simulated outcomes
+last_yr = 2019
+
 # specify a scenario name
 scenario = "base"
 
@@ -32,7 +36,7 @@ if (is.na(rmd)) {
 }
 
 if (is.na(mcmc_length)) {
-  mcmc_length = "short"
+  mcmc_length = "very_short"
   cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, "will be used.")
 }
 
@@ -98,8 +102,6 @@ jags_data = append(jags_data, add_jags_data)
 
 set.seed(1234) # for reproducibility; weir removals and hatchery inputs use sample() below
 
-# specify the last year of model calculations
-last_yr = 2050
 last_obs_yr = max(as.numeric(rownames(jags_data$Pa_obs)))
 ny_sim = last_yr - last_obs_yr
 
@@ -199,7 +201,7 @@ toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival
 
 jags_params = c(
   # reproduction
-  "alpha", "beta", "Sig_lPb",
+  "alpha", "beta", "Sig_lPb", "mu_beta_per_wul", "sig_lbeta",
   
   # overwinter survival coefficients
   "gamma0", "gamma1",
