@@ -198,8 +198,8 @@ diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
 ```{r calculate-mcmc-diagnostics}
 # parr recruitment
 L1 = "Parr Recruitment"
-L2 = c("BH Productivity", "BH Capacity", "Process SD", "Among-pop Correlation", "Parr States")
-match = c("alpha", "^beta[", "sig_lPb", "rho_lPb", "^Pb[")
+L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Parr States")
+match = c("alpha", "^beta[", "mu_beta_per_wul", "sig_lbeta", "sig_lPb", "rho_lPb", "^Pb[")
 parr_recruit_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # LH apportionment
