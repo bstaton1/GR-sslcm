@@ -198,8 +198,8 @@ diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
 ```{r calculate-mcmc-diagnostics}
 # parr recruitment
 L1 = "Parr Recruitment"
-L2 = c("BH Productivity", "BH Capacity", "Process SD", "Among-pop Correlation", "Parr States")
-match = c("alpha", "^beta[", "sig_lPb", "rho_lPb", "^Pb[")
+L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Parr States")
+match = c("alpha", "^beta[", "mu_beta_per_wul", "sig_lbeta", "sig_lPb", "rho_lPb", "^Pb[")
 parr_recruit_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # LH apportionment
@@ -1561,6 +1561,61 @@ par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Total Spawners")
 mtext(side = 2, outer = T, line = 0.25, "Parr per Spawner")
+```
+
+# Parr Capacity vs. Habitat Relationship {.tabset .tabset-pills}
+
+## Scatterplot
+
+Error bars represent the central 80% of the posterior. The many grey lines are individual posterior draws.
+
+```{r beta-v-habitat-relationship, fig.width = 5, fig.height = 5}
+# extract posterior summaries of the capacity parameters
+beta_ests = post_summ(post, "^beta[", probs = c(0.1, 0.5, 0.9))
+
+# extract posterior samples of the slope parameter
+beta_per = post_subset(post, "mu_beta_per_wul", TRUE)
+
+# create a sequence of WUL values to predict capacity at
+wul_seq = seq(0, max(jags_data$wul) * 1.05, length = 30)
+
+# obtain the regression line for each posterior sample
+pred_beta = t(sapply(beta_per, function(slope) wul_seq * slope))
+
+# select a subset of posterior samples at random to draw
+i = sample(1:post_dim(post, "saved"), 100, replace = FALSE)
+
+# empty plot with correct labeling/dimensions
+par(mar = c(3,3,1,1), mgp = c(2,0.35,0), tcl = -0.15)
+plot(1,1, type = "n", xlim = range(wul_seq),
+     ylim = c(0, max(beta_ests["90%",], beta_ests["90%",], pred_beta[i,])),
+     xlab = "Weighted Usable Length (km)",
+     ylab = "Parr Capacity (000s)", yaxt = "n")
+at_y = axisTicks(par("usr")[3:4], log = FALSE)
+axis(side = 2, at = at_y, labels = at_y/1000)
+
+# draw the random regression lines
+junk = sapply(i, function(k) lines(pred_beta[k,] ~ wul_seq, col = alpha("grey25", 0.15)))
+
+# draw the posterior mean regression line
+lines(apply(pred_beta, 2, mean) ~ wul_seq, lwd = 3, lty = 2)
+
+# draw the population-specific capacity estimates w/error bars and labels
+points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 16)
+segments(jags_data$wul, beta_ests["10%",], jags_data$wul, beta_ests["90%",])
+text(x = jags_data$wul, y = beta_ests["mean",], labels = c("CAT", "LOS", "MIN", "UGR"), pos = c(2,4,4,4), font = 2)
+```
+
+## Slope Parameter
+
+```{r}
+# extract posterior summary of slope
+est = post_summ(post, "mu_beta_per_wul")
+colnames(est) = "slope"
+
+# print a table 
+kable(t(est), digits = 0, format.args = list(big.mark = ",")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed", "striped"))
 ```
 
 # Overwinter Survival Relationships

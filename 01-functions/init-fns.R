@@ -161,7 +161,8 @@ gen_initials = function(c, jags_data) {
       mu_phi_Sb_Sa = mu_phi_Sb_Sa,
       mu_pi = mu_pi,
       mu_psi_O1_Rb = mu_psi_O1_Rb,
-      mu_psi_O2_Rb = mu_psi_O2_Rb
+      mu_psi_O2_Rb = mu_psi_O2_Rb,
+      mu_beta_per_wul = runif(1, 5000, 15000)
     )
   })
   

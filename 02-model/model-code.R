@@ -1,14 +1,18 @@
 jags_model_code = function() {
   
+  ### PRIORS: capacity vs. weighted usable habitat length relationship ###
+  mu_beta_per_wul ~ dnorm(0, 1e-8) %_% T(0,)
+  sig_lbeta ~ dunif(0, 5)
+  
   for (j in 1:nj) {
     ### PRIORS: RECRUITMENT FUNCTION ###
     # total egg production to aggregate parr recruitment function
     alpha[j] ~ dbeta(1, 1)
-    log_beta[j] ~ dnorm(0, 0.001) %_% T(,15)   # log capacity. bound to prevent nonsensically large draws
-    beta[j] <- exp(log_beta[j])
     sig_Pb[j] ~ dunif(0, 5)
+    lbeta[j] ~ dnorm(log(mu_beta_per_wul * wul[j]), 1/sig_lbeta^2) %_% T(,15) # log capacity. bound to prevent nonsensically large draws
+    beta[j] <- exp(lbeta[j])
     beta_per_wul[j] <- beta[j]/wul[j]
-    
+
     ### PRIORS: FRESHWATER PARAMETERS ###
     # aggregate parr to LH-specific parr
     mu_pi[i_fall,j] ~ dbeta(1, 1)
