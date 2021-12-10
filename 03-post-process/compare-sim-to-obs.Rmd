@@ -36,7 +36,11 @@ jags_data = model_info$jags_data
 ```
 
 ```{r select-years}
+# all of the years included in the model
 all_yrs = as.numeric(rownames(jags_data$phi_SL))
+
+# which is the first year of observation period?
+# may want to use 2001 to cut off years without hatchery supplementation
 fy_obs = which(all_yrs == 2001)
 
 # for non sar values, which years correspond to observed and simulated years?
@@ -84,7 +88,7 @@ Rb = post_subset(post, "^Rb[", matrix = TRUE)
 
 # for each posterior sample, calculate the fraction that are hatchery origin
 out = NULL
-for (i in 1:nrow(Ra)) {
+for (i in 1:nrow(Rb)) {
   Rb_i = array_format(Rb[i,])
   nor = Rb_i[,1,1,] + Rb_i[,2,1,] + Rb_i[,3,1,]
   hor = Rb_i[,1,2,] + Rb_i[,2,2,] + Rb_i[,3,2,]
@@ -115,10 +119,10 @@ Ma = post_subset(post, "^Ma[", matrix = TRUE)
 # for each posterior sample, calculate the number of NOR and HOR smolt at LGR
 out_nor = NULL
 out_hor = NULL
-for (i in 1:nrow(Ra)) {
+for (i in 1:nrow(Ma)) {
   Ma_i = array_format(Ma[i,])
   nor = Ma_i[,1,1,] + Ma_i[,2,1,]
-  hor = Ma_i[,1,2,] + Ma_i[,2,2,]
+  hor = Ma_i[,2,2,]
   out_nor = rbind(out_nor, as.numeric(nor))
   out_hor = rbind(out_hor, as.numeric(hor))
 }
