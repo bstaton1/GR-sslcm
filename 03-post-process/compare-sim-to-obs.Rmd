@@ -1,6 +1,6 @@
 ---
 title: "Observed vs. Simulated Year Comparison"
-subtitle: "`r paste0('Model Scenario:', params$scenario)`"
+subtitle: "`r paste0('Model Scenario: ', params$scenario)`"
 output: html_document
 params:
   scenario:
@@ -269,6 +269,69 @@ out = out[,na_ind]
 # combine this with the rest of the posterior samples
 post = post_bind(post, out)
 
+```
+
+```{r add-nor-lgr-smolt-aggregate}
+# extract smolt at LGR
+Ma = post_subset(post, "^Ma[", matrix = TRUE)
+
+# for each posterior sample, calculate the total aggregate return
+out_nor = out_hor = NULL
+for (i in 1:nrow(Ma)) {
+  Ma_i = array_format(Ma[i,])
+  nor = Ma_i[,1,1,] + Ra_i[,2,1,]
+  hor = Ra_i[,2,2,]
+
+  out_nor = rbind(out_nor, rowSums(nor))
+  out_hor = rbind(out_hor, rowSums(hor))
+}
+
+# build the indices for each element: the year
+r_ind = 1:nrow(nor)
+
+# make element names
+colnames(out_nor) = paste0("Ma_aggregate[", r_ind, ",", "1", "]")
+colnames(out_hor) = paste0("Ma_aggregate[", r_ind, ",", "2", "]")
+out = cbind(out_nor, out_hor)
+
+# drop out those that have NA values (first k_max years)
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
+```
+
+```{r add-Ra-aggregate}
+# extract spawners returning to tributary
+Ra = post_subset(post, "^Ra[", matrix = TRUE)
+
+# for each posterior sample, calculate the total aggregate return
+out_nor = out_hor = NULL
+for (i in 1:nrow(Ra)) {
+  Ra_i = array_format(Ra[i,])
+  nor = Ra_i[,1,1,] + Ra_i[,2,1,] + Ra_i[,3,1,]
+  hor = Ra_i[,1,2,] + Ra_i[,2,2,] + Ra_i[,3,2,]
+  tot = nor + hor
+  
+  out_nor = rbind(out_nor, rowSums(nor))
+  out_hor = rbind(out_hor, rowSums(hor))
+}
+
+# build the indices for each element: the year
+r_ind = 1:nrow(nor)
+
+# make element names
+colnames(out_nor) = paste0("Ra_aggregate[", r_ind, ",", "1", "]")
+colnames(out_hor) = paste0("Ra_aggregate[", r_ind, ",", "2", "]")
+out = cbind(out_nor, out_hor)
+
+# drop out those that have NA values (first k_max years)
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
 ```
 
 ```{r dim_names fn}
