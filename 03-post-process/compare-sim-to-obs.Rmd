@@ -1003,6 +1003,57 @@ vals_plots(x, "Proportion Age-5 Return: Estimates")
 ratio_plots(x, "Proportion Age-5 Return: Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-5 Return"))
 ```
+
+## Summary Tables {.tabset .tabset-pills}
+
+These tables summarize the mean ratio values shown in the plots above, and are intended to be a quick visual for identifying areas where the simulated outcomes are systematically different in some way (central tendency, interannual variability, or temporal autocorrelation) from the observed outcomes. The number in each cell represents the posterior mean value of:
+
+* **Across Year Mean** is the ratio `mean(simulated years)/mean(observed years)`. Values greater than 1 indicate the value in simulated years is larger in magnitude than in observed years.
+* **Across Year CV** is the ratio `cv(simulated years)/cv(observed years)`. Values greater than 1 indicate the variability from one year to the next is larger larger than in observed years.
+* **Lag-1 Autocorrelation** is the difference `acf(simulated years) - acf(observed years)`. Values greater than 0 indicate the quantity shows more autocorrelation in the simulated years than in observed years.
+
+Values close to 1 are ideal for the mean and CV ratios and cells are color-coded based on how far they fall from 1: less than 1 are blue and greater than 1 are red; values between 0.9 and 1.1 might be considered "good enough", and have been assigned no color.
+
+Values close to 0 are ideal for the autocorrelation differences and cells are color-coded based on how far they fall from zero: less than zero are blue and greater than zero are red; values between -0.1 and 0.1 might be considered "good enough", and have been assigned no color.
+
+### Estimated Quantities {.tabset .tabset-pills}
+
+#### Across Year Mean
+
+```{r est-mean-table}
+make_ratios_table(prep_est_ratios(est_ratios, "mean"), "mean")
+```
+
+#### Across Year CV
+
+```{r est-cv-table}
+make_ratios_table(prep_est_ratios(est_ratios, "cv"), "cv")
+```
+
+#### Lag-1 Autocorrelation
+
+```{r est-acf-table}
+make_ratios_table(prep_est_ratios(est_ratios, "acf"), "acf")
+```
+
+### Derived Quantities {.tabset .tabset-pills}
+
+#### Across Year Mean
+
+```{r derived-mean-table}
+make_ratios_table(prep_derived_ratios(derived_ratios, "mean"), "mean")
+```
+
+#### Across Year CV
+
+```{r derived-cv-table}
+make_ratios_table(prep_derived_ratios(derived_ratios, "cv"), "cv")
+```
+
+#### Lag-1 Autocorrelation
+
+```{r derived-acf-table}
+make_ratios_table(prep_derived_ratios(derived_ratios, "acf"), "acf")
 ```
 
 # Time Series Plots
@@ -1024,7 +1075,7 @@ sim_sar_y = (jags_data$ny_obs-jags_data$kmax+1):(jags_data$ny-jags_data$kmax)
 # origin = 1
 # main = "main"
 
-ts_plot = function(param, main, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
+ts_plot = function(param, main = NULL, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
   
   obs_vals = post_summ(post, sub_index(param, year = obs_y_use, ...))
   sim_vals = post_subset(post, sub_index(param, year = sim_y_use, ...), matrix = TRUE)
