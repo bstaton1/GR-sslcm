@@ -164,6 +164,16 @@ kable(df, format.args = list(big.mark = ",")) %>%
 
 ## Diagnostic Summaries
 
+```{r make-diag-post, message = FALSE}
+# make a reduced diagnostic posterior: drop out all quantities associated with simulated years
+# there is no point in calculating diagnostic summaries for future years
+if (length(simulated) > 0) {
+  diag_post = post_remove(post, paste0("[", simulated), ask = FALSE)
+} else {
+  diag_post = post
+}
+```
+
 ```{r mcmc-diag-function}
 # a function to get MCMC diagnoses for a group of parameters
 # params: a string to match with postpack::match_params()
@@ -171,11 +181,10 @@ kable(df, format.args = list(big.mark = ",")) %>%
 # L2: a "Level-2" group label; such as type of parameter (e.g., mean, sd, or year-specific value)
 # L3: a "Level-3" group label; such as NOR or HOR
 
-
 diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
   
   # extract the posteriors of interest and format for 'posterior' package
-  post_sub = as_draws_df(post_subset(post, params))
+  post_sub = as_draws_df(post_subset(diag_post, params))
 
   # summarize the posteriors
   diags = summarize_draws(post_sub, mean, ~quantile(.x, c(0.025, 0.975)), rhat, ess_mean, ~ess_quantile(.x, probs = c(0.025, 0.975)), mcse_mean, ~mcse_quantile(.x, probs = c(0.025, 0.975)))
