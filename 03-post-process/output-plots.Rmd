@@ -10,6 +10,10 @@ params:
     label: "Scenario"
     value: "base"
     input: text
+  include_sim_years:
+    label: "Include Simulated Years on Plots?"
+    value: FALSE
+    input: checkbox
 editor_options: 
   chunk_output_type: console
 ---
@@ -43,10 +47,24 @@ jags_data = model_info$jags_data
 
 ```{r dimension-ids}
 # the years included by the model
-all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
+all_yrs = as.numeric(dimnames(jags_data$phi_SL)[[1]])
 
 # which years are "observable" for at least some quantities?
-observable = (jags_data$kmax+1):jags_data$ny
+observable = (jags_data$kmax+1):jags_data$ny_obs
+
+# which years are simulated for at least some quantities?
+simulated = which(!(all_yrs %in% all_yrs[observable]) & all_yrs > min(all_yrs[observable]))
+
+# which years should be included in time series plots?
+if (params$include_sim_years) {
+  ts_yrs = c(observable, simulated)
+} else {
+  ts_yrs = observable
+}
+
+# which years can be plotted for SARs? Drop off last kmax years
+# since brood year adult returns not complete
+sar_yrs = ts_yrs[-((length(ts_yrs) - jags_data$kmax + 1):length(ts_yrs))]
 
 # population names
 pops = colnames(jags_data$Ra_obs)
