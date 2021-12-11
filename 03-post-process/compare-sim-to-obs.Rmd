@@ -635,6 +635,10 @@ For each quantity, two types of plots are shown:
 
 These summary statistics were calculated for each posterior sample. In all plots, the cross mark represents the posterior median, the thick bar represents the central 50% of posterior samples, and the thin bar represents the central 95% of posterior samples.
 
+```{r}
+est_ratios = NULL
+```
+
 ## Time Series Parameters {.tabset .tabset-pills}
 
 ### Freshwater Juvenile Phase {.tabset .tabset-pills}
@@ -646,6 +650,7 @@ x = lapply(1:4, function(j) get_ratio("^Pb_per_f_tot[year,pop]", obs_y, sim_y, p
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Egg to Parr Survival: Estimates")
 ratio_plots(x, "Egg to Parr Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Egg to Parr Survival"))
 ```
 
 #### Proportion Fall Migrants
@@ -655,6 +660,7 @@ x = lapply(1:4, function(j) get_ratio("^pi[year,LH_type,pop]", obs_y, sim_y, pop
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Proportion Fall Migrants: Estimates")
 ratio_plots(x, "Proportion Fall Migrants: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Proportion Fall Migrants"))
 ```
 
 #### Overwinter Survival
@@ -667,6 +673,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Overwinter Survival: Estimates")
 ratio_plots(x, "Overwinter Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Overwinter Survival"))
 ```
 
 #### Migration to LGR Survival
@@ -679,6 +686,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Migration to LGR Survival: Estimates")
 ratio_plots(x, "Migration to LGR Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Migration to LGR Survival"))
 ```
 
 #### LGR to Ocean Survival
@@ -691,6 +699,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "LGR to Ocean Survival: Estimates")
 ratio_plots(x, "LGR to Ocean Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "LGR to Ocean Survival"))
 ```
 
 ### Marine Juvenile Phase {.tabset .tabset-pills}
@@ -705,6 +714,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "First Year Ocean Survival: Estimates")
 ratio_plots(x, "First Year Ocean Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type = "First Year Ocean Survival"))
 ```
 
 #### Age-3 Maturity
@@ -717,6 +727,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Age-3 Maturity: Estimates")
 ratio_plots(x, "Age-3 Maturity: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type = "Age-3 Maturity"))
 ```
 
 #### Age-4 Maturity
@@ -729,6 +740,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Age-4 Maturity: Estimates")
 ratio_plots(x, "Age-4 Maturity: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type = "Age-4 Maturity"))
 ```
 
 ### Freshwater Adult Phase {.tabset .tabset-pills}
@@ -743,6 +755,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "BON to LGR Survival: Estimates")
 ratio_plots(x, "BON to LGR Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Adult", Type = "BON to LGR Survival"))
 ```
 
 #### Pre-Spawn Survival
@@ -752,6 +765,7 @@ x = lapply(1:4, function(j) get_ratio("^phi_Sb_Sa[year,pop]", obs_y, sim_y, pop 
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Pre-Spawn Survival: Estimates")
 ratio_plots(x, "Pre-Spawn Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Adult", Type = "Pre-Spawn Survival"))
 ```
 
 ## Emergent Properties {.tabset .tabset-pills}
