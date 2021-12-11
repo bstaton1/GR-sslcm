@@ -464,6 +464,145 @@ vals_plots = function(x, main) {
 }
 ```
 
+```{r summarize_ratios fn}
+summarize_ratios = function(x, Class, Type) {
+  xsumm = as.data.frame(t(apply(x[,"sim-v-obs",,], 3, colMeans)))
+  xsumm = cbind(Class = Class, Type = Type, ID = rownames(xsumm), xsumm); rownames(xsumm) = NULL
+  return(xsumm)
+}
+```
+
+```{r assign_color fns}
+# functions to assign a color based on a numeric value
+
+# values close to 1 will be closer to white; values closer to 0 will be blue; values closer to 2 will be red
+assign_color_1 = function(x) {
+  red_pal = colorRampPalette(c("white", "red"))
+  blue_pal = colorRampPalette(c("blue", "white"))
+  red_cols = red_pal(5)
+  blue_cols = blue_pal(5)
+  cols = c(blue_cols, red_cols)
+  
+  breaks = c(0, 0.25, 0.5, 0.75, 0.9, 1.1, 1.25, 1.5, 1.75, 3)
+  bin_names = levels(cut(runif(1e6, 0, 2), breaks = breaks, include.lowest = TRUE))
+  names(cols) = c(bin_names[1:5], bin_names[5:9])
+  bins = cut(x, breaks = breaks, include.lowest = TRUE)
+  cols_use = cols[as.character(bins)]
+  cols_use[is.na(cols_use)] = cols[5]
+  alpha(unname(cols_use), 0.5)
+}
+
+# values close to 0 will be closer to white; values closer to -1 will be blue; values closer to 1 will be red
+assign_color_0 = function(x) {
+  red_pal = colorRampPalette(c("white", "red"))
+  blue_pal = colorRampPalette(c("blue", "white"))
+  red_cols = red_pal(5)
+  blue_cols = blue_pal(5)
+  cols = c(blue_cols, red_cols)
+  
+  breaks = c(-1, -0.75, -0.5, -0.25, -0.1, 0.1, 0.25, 0.5, 0.75, 1)
+  bin_names = levels(cut(runif(1e6, -1, 1), breaks = breaks, include.lowest = TRUE))
+  names(cols) = c(bin_names[1:5], bin_names[5:9])
+  bins = cut(x, breaks = breaks, include.lowest = TRUE)
+  cols_use = cols[as.character(bins)]
+  cols_use[is.na(cols_use)] = cols[5]
+  alpha(unname(cols_use), 0.5)
+}
+```
+
+```{r prep_est_ratios fn}
+# function to prepare ratios for table-making
+prep_est_ratios = function(x, q) {
+  # add/format additional column IDs
+  x$origin = stringr::str_extract(x$ID, "NOR|HOR")
+  x$pop = stringr::str_extract(x$ID, "CAT|LOS|MIN|UGR")
+  x$LH_type = stringr::str_extract(x$ID, "fall|spring")
+  x$LH_type[x$LH_type == "spring"] = "Spring"
+  x$LH_type[x$LH_type == "fall"] = "Fall"
+  x$pop = ifelse(is.na(x$pop), "Combined", x$pop)
+  x$origin = ifelse(is.na(x$origin), "Combined", x$origin)
+  x$LH_type = ifelse(is.na(x$LH_type), "Combined", x$LH_type)
+  
+  # make populations separate columns
+  x = dcast(x, Class + Type + origin + LH_type ~ pop, value.var = q)
+  
+  # reorder columns
+  x = x[,c("Class", "Type", "LH_type", "origin", "CAT", "LOS", "MIN", "UGR", "Combined")]
+  
+  # reorder rows
+  x$Class = factor(x$Class, levels = c("FW Juvenile", "SW Juvenile", "FW Adult"))
+  x$Type = factor(x$Type, levels = c("Egg to Parr Survival", "Proportion Fall Migrants", "Overwinter Survival", "Migration to LGR Survival", "LGR to Ocean Survival", "First Year Ocean Survival", "Age-3 Maturity", "Age-4 Maturity", "BON to LGR Survival", "Pre-Spawn Survival"))
+  x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
+  x$origin = factor(x$origin, levels = c("Combined", "NOR", "HOR"))
+  x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
+  
+  colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
+  colnames(x)[which(colnames(x) == "Origin")] = "Origin"
+  
+  return(x)
+}
+```
+
+```{r prep_derived_ratios fn}
+# function to prepare ratios for table-making
+prep_derived_ratios = function(x, q) {
+  # add/format additional column IDs
+  x$origin = stringr::str_extract(x$ID, "NOR|HOR")
+  x$pop = stringr::str_extract(x$ID, "CAT|LOS|MIN|UGR")
+  x$LH_type = stringr::str_extract(x$ID, "fall|spring")
+  x$LH_type[x$LH_type == "spring"] = "Spring"
+  x$LH_type[x$LH_type == "fall"] = "Fall"
+  x$pop = ifelse(is.na(x$pop), "Combined", x$pop)
+  x$origin = ifelse(is.na(x$origin), "Combined", x$origin)
+  x$LH_type = ifelse(is.na(x$LH_type), "Combined", x$LH_type)
+  
+  # make populations separate columns
+  x = dcast(x, Class + Type + origin + LH_type ~ pop, value.var = q)
+  
+  # reorder columns
+  x = x[,c("Class", "Type", "LH_type", "origin", "CAT", "LOS", "MIN", "UGR", "Combined")]
+  
+  # reorder rows
+  x$Class = factor(x$Class, levels = c("Abundance", "Production Rates", "SAR", "Adult Composition"))
+  x$Type = factor(x$Type, levels = c("Total Adults (Estuary)", "Total Adults (To Tributary)", "Total Spawners", "Total Egg Production", "Total Parr Recruitment", "Total LGR Smolt", "Aggregate Total Adult Return (To Tributary)", "Aggregate Total Smolt (At LGR)", "Parr per Spawner", "Smolt in Tributary per Spawner", "Spawners per Spawner", "Smolt in Tributary per Parr", "Smolt at LGR per Parr", "BON to BON", "LGR to LGR", "Proportion Hatchery Return", "Proportion Age-3 Return", "Proportion Age-4 Return", "Proportion Age-5 Return"))
+  x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
+  x$origin = factor(x$origin, levels = c("Combined", "NOR", "HOR"))
+  x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
+  
+  colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
+  colnames(x)[which(colnames(x) == "Origin")] = "Origin"
+  
+  return(x)
+}
+```
+
+```{r make_ratios_table fn}
+# function to make the table
+make_ratios_table = function(ratios, q) {
+  
+  x = ratios
+  table_x = x
+  table_x[,5:9] = round(table_x[,5:9],2)
+  table_x[is.na(table_x)] = ""
+  
+  # select the correct color rule
+  if (q %in% c("mean", "cv")) {
+    assign_color = assign_color_1
+  } else {
+    assign_color = assign_color_0
+  }
+  
+  kable(table_x, "html", digits = 2, row.names = FALSE, align = "llllccccc") %>%
+    kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
+    column_spec(5, background = assign_color(x[,5])) %>%
+    column_spec(6, background = assign_color(x[,6])) %>%
+    column_spec(7, background = assign_color(x[,7])) %>%
+    column_spec(8, background = assign_color(x[,8])) %>%
+    column_spec(9, background = assign_color(x[,9])) %>%
+    collapse_rows(1:4)
+}
+```
+
 For us to use the state-space model as a simulation model, it would be desirable if several characteristics of the distribution of stochastic and derived quantities were similar between the time periods with and without observations.
 
 This document is intended to identify whether simulated outcomes are similar to observed outcomes. It looks at two primary types of quantities: stochastic time series parameters (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes (e.g., total adult return abundance, BON to BON SAR rates, etc.). Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
