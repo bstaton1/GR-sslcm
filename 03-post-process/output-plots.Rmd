@@ -10,6 +10,10 @@ params:
     label: "Scenario"
     value: "base"
     input: text
+  include_sim_years:
+    label: "Include Simulated Years on Plots?"
+    value: FALSE
+    input: checkbox
 editor_options: 
   chunk_output_type: console
 ---
@@ -43,10 +47,24 @@ jags_data = model_info$jags_data
 
 ```{r dimension-ids}
 # the years included by the model
-all_yrs = as.numeric(dimnames(jags_data$Pa_obs)[[1]])
+all_yrs = as.numeric(dimnames(jags_data$phi_SL)[[1]])
 
 # which years are "observable" for at least some quantities?
-observable = (jags_data$kmax+1):jags_data$ny
+observable = (jags_data$kmax+1):jags_data$ny_obs
+
+# which years are simulated for at least some quantities?
+simulated = which(!(all_yrs %in% all_yrs[observable]) & all_yrs > min(all_yrs[observable]))
+
+# which years should be included in time series plots?
+if (params$include_sim_years) {
+  ts_yrs = c(observable, simulated)
+} else {
+  ts_yrs = observable
+}
+
+# which years can be plotted for SARs? Drop off last kmax years
+# since brood year adult returns not complete
+sar_yrs = ts_yrs[-((length(ts_yrs) - jags_data$kmax + 1):length(ts_yrs))]
 
 # population names
 pops = colnames(jags_data$Ra_obs)
@@ -146,6 +164,16 @@ kable(df, format.args = list(big.mark = ",")) %>%
 
 ## Diagnostic Summaries
 
+```{r make-diag-post, message = FALSE}
+# make a reduced diagnostic posterior: drop out all quantities associated with simulated years
+# there is no point in calculating diagnostic summaries for future years
+if (length(simulated) > 0) {
+  diag_post = post_remove(post, paste0("[", simulated), ask = FALSE)
+} else {
+  diag_post = post
+}
+```
+
 ```{r mcmc-diag-function}
 # a function to get MCMC diagnoses for a group of parameters
 # params: a string to match with postpack::match_params()
@@ -153,11 +181,10 @@ kable(df, format.args = list(big.mark = ",")) %>%
 # L2: a "Level-2" group label; such as type of parameter (e.g., mean, sd, or year-specific value)
 # L3: a "Level-3" group label; such as NOR or HOR
 
-
 diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
   
   # extract the posteriors of interest and format for 'posterior' package
-  post_sub = as_draws_df(post_subset(post, params))
+  post_sub = as_draws_df(post_subset(diag_post, params))
 
   # summarize the posteriors
   diags = summarize_draws(post_sub, mean, ~quantile(.x, c(0.025, 0.975)), rhat, ess_mean, ~ess_quantile(.x, probs = c(0.025, 0.975)), mcse_mean, ~mcse_quantile(.x, probs = c(0.025, 0.975)))
@@ -741,8 +768,9 @@ In all figures below, the thick red line is the posterior median value each year
 
 ```{r fall-trap-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Pa[.+,LH_type,pop]$", LH_type = i_fall, pop = j)),
+  plot_tseries(post_summ(post, sub_index("^Pa[year,LH_type,pop]$", year = ts_yrs, LH_type = i_fall, pop = j)),
                get_obs_ests_log_normal(log(jags_data$Pa_obs[observable,i_fall,j]), jags_data$sig_Pa_obs[observable,i_fall,j]),
+               yrs = all_yrs[ts_yrs],
                main = pops[j])
 }
 
@@ -756,9 +784,10 @@ mtext(side = 2, outer = T, line = 0.25, "Fall Parr Abundance")
 
 ```{r spring-trap-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Mb[.+,LH_type,origin,pop]$", origin = o_nor, LH_type = i_spring, pop = j)), 
+  plot_tseries(post_summ(post, sub_index("^Mb[year,LH_type,origin,pop]$", year = ts_yrs, origin = o_nor, LH_type = i_spring, pop = j)), 
                get_obs_ests_log_normal(log(jags_data$Mb_obs[observable,i_spring,o_nor,j]), jags_data$sig_Mb_obs[observable,i_spring,o_nor,j]),
-               main = pops[j])
+               main = pops[j],
+               yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -771,9 +800,10 @@ mtext(side = 2, outer = T, line = 0.25, "Spring Smolt Abundance")
 
 ```{r adult-N-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Ra_tot[.+,pop]$", pop = j)),
+  plot_tseries(post_summ(post, sub_index("^Ra_tot[year,pop]$", year = ts_yrs, pop = j)),
                get_obs_ests_log_normal(log(jags_data$Ra_obs[observable,j]), jags_data$sig_Ra_obs[observable,j]),
-               main = pops[j])
+               main = pops[j],
+               yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -788,9 +818,10 @@ mtext(side = 2, outer = T, line = 0.25, "Adult Return Abundance")
 
 ```{r summer-surv-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Pb_Ma[.+,pop]", pop = j)),
+  plot_tseries(post_summ(post, sub_index("^phi_Pb_Ma[year,pop]", year = ts_yrs, pop = j)),
                get_obs_ests_logit_normal(jags_data$Lphi_obs_Pb_Ma[observable,j], jags_data$sig_Lphi_obs_Pb_Ma[observable,j]),
-               main = pops[j])
+               main = pops[j],
+               yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -803,9 +834,10 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow LGR\\,S
 
 ```{r fall-surv-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[.+,LH_type,pop]$", LH_type = i_fall, pop = j)),
+  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]$", year = ts_yrs, LH_type = i_fall, pop = j)),
                get_obs_ests_logit_normal(jags_data$Lphi_obs_Pa_Ma[observable,i_fall,j], jags_data$sig_Lphi_obs_Pa_Ma[observable,i_fall,j]),
-               main = pops[j])
+               main = pops[j],
+               yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -818,9 +850,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Fall\\,Parr \\rightarrow LGR\\,Sur
 
 ```{r spring-surv-fit-nor, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$",LH_type = i_spring, origin = o_nor, pop = j)),
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]$", year = ts_yrs, LH_type = i_spring, origin = o_nor, pop = j)),
                get_obs_ests_logit_normal(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j], jags_data$sig_Lphi_obs_Mb_Ma[observable,i_spring,o_nor,j]),
-               main = pops[j])
+               main = pops[j], yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -833,9 +865,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 
 ```{r spring-surv-fit-hor, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[.+,LH_type,origin,pop]$", LH_type = i_spring, origin = o_hor, pop = j)),
+  plot_tseries(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]$", year = ts_yrs, LH_type = i_spring, origin = o_hor, pop = j)),
                get_obs_ests_logit_normal(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j], jags_data$sig_Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j]),
-               main = pops[j])
+               main = pops[j], yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -848,9 +880,10 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Spring\\,Smolt \\rightarrow LGR\\,
 
 ```{r hydro-nor-surv-fit, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
-plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_nor)),
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[year,origin]$", year = ts_yrs, origin = o_nor)),
              get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_nor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_nor]),
-             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"))
+             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(NOR)"),
+             yrs = all_yrs[ts_yrs])
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -859,9 +892,10 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 
 ```{r hydro-hor-surv-fit, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
-plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[.+,origin]$", origin = o_hor)),
+plot_tseries(post_summ(post, sub_index("^phi_Ma_O0[year,origin]$", year = ts_yrs, origin = o_hor)),
              get_obs_ests_logit_normal(jags_data$Lphi_obs_Ma_O0[observable,o_hor], jags_data$sig_Lphi_obs_Ma_O0[observable,o_hor]),
-             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"))
+             main = TeX("$LGR\\,Smolt \\rightarrow O_0\\,Survival\\,(HOR)"),
+             yrs = all_yrs[ts_yrs])
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -870,9 +904,10 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 
 ```{r BON-LGR-surv-fit-nor, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
-plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_nor)),
+plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[year,origin]$", year = ts_yrs, origin = o_nor)),
              get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_nor], jags_data$BON_adults[observable,o_nor] - jags_data$LGR_adults[observable,o_nor]), 1),
-             main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(NOR)"))
+             main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(NOR)"),
+             yrs = all_yrs[ts_yrs])
 mtext(side = 1, outer = T, line = 0.25, "Return Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -881,9 +916,10 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 
 ```{r BON-LGR-surv-fit-hor, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
-plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[.+,origin]$", origin = o_hor)),
+plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[year,origin]$", year = ts_yrs, origin = o_hor)),
              get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_hor], jags_data$BON_adults[observable,o_hor] - jags_data$LGR_adults[observable,o_hor]), 1),
-             main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(HOR)"))
+             main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(HOR)"),
+             yrs = all_yrs[ts_yrs])
 mtext(side = 1, outer = T, line = 0.25, "Return Year")
 mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```
@@ -982,8 +1018,8 @@ post = post_bind(post, q_new)
 # these are the observed proportions by age (aggregated across origins) and origin (aggregated across ages)
 
 # containers
-x_weir_age_obs = x_carc_age_obs = array(NA, dim = c(jags_data$ny, jags_data$nk, jags_data$nj))
-x_weir_origin_obs = x_carc_origin_obs = array(NA, dim = c(jags_data$ny, jags_data$no, jags_data$nj))
+x_weir_age_obs = x_carc_age_obs = array(NA, dim = c(jags_data$ny_obs, jags_data$nk, jags_data$nj))
+x_weir_origin_obs = x_carc_origin_obs = array(NA, dim = c(jags_data$ny_obs, jags_data$no, jags_data$nj))
 
 for (j in 1:jags_data$nj) {
   # calculate aggregate proportions for each age
@@ -1035,12 +1071,12 @@ weir_sample_size = function(j) {
 weir_comp_fit_plot = function(j) {
 
   par(mfrow = c(2,3), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,4,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 4), main = TeX("$Age\\,3\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,5,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 5), main = TeX("$Age\\,4\\,(HOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[.+,6,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 6), main = TeX("$Age\\,5\\,(HOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Ra[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra[year,4,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 4), main = TeX("$Age\\,3\\,(HOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra[year,5,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 5), main = TeX("$Age\\,4\\,(HOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra[year,6,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 6), main = TeX("$Age\\,5\\,(HOR)$"), yrs = all_yrs[ts_yrs])
   
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
@@ -1049,9 +1085,9 @@ weir_comp_fit_plot = function(j) {
 # for fits to each age, aggregated across origins
 weir_comp_fit_plot_age = function(j) {
   par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra_age[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1060,8 +1096,8 @@ weir_comp_fit_plot_age = function(j) {
 weir_comp_fit_plot_origin = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
   
-  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 1), main = TeX("$NOR$"), ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 2), main = TeX("$HOR$"), ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 1), main = TeX("$NOR$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 2), main = TeX("$HOR$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1199,12 +1235,12 @@ carc_sample_size = function(j) {
 carc_comp_fit_plot = function(j) {
   
   par(mfrow = c(2,3), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,4,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 4), main = TeX("$Age\\,3\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,5,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 5), main = TeX("$Age\\,4\\,(NOR)$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[.+,6,pop]$", pop = j)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 6), main = TeX("$Age\\,5\\,(NOR)$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,4,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 4), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,5,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 5), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,6,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 6), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Carcasses")
 }
@@ -1212,9 +1248,9 @@ carc_comp_fit_plot = function(j) {
 # for fits to each age, aggregated across origins
 carc_comp_fit_plot_age = function(j) {
   par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[.+,3,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1222,8 +1258,8 @@ carc_comp_fit_plot_age = function(j) {
 # for fits to each origin, aggregated across ages
 carc_comp_fit_plot_origin = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,1,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 1), main = TeX("$NOR$"))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[.+,2,pop]$", pop = j)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 2), main = TeX("$HOR$"))
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 1), main = TeX("$NOR$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 2), main = TeX("$HOR$"), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1350,9 +1386,9 @@ layout(matrix(1:(jags_data$nj * 2), 2, jags_data$nj), heights = c(1, 0.65))
 
 plot_f = function(j) {
   par(yaxs = "r")
-  plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[.+,pop]", pop = j)),
+  plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[year,pop]", pop = j, year = ts_yrs)),
                get_obs_ests_multinomial(cbind(jags_data$carcs_spawned[,j], jags_data$carcs_sampled[,j] - jags_data$carcs_spawned[,j])[observable,], 1),
-               main = pops[j], ylim = c(0,1))
+               main = pops[j], ylim = c(0,1), yrs = all_yrs[ts_yrs])
   par(mar = c(1.5,1.5,2,0.5), yaxs = "i")
   
   if (j == 1) mtext(side = 2, "Survival Probability", line = 2)
@@ -1379,13 +1415,13 @@ plot_f = function(j) {
   bh_params = post_subset(post, sub_index(c("alpha[pop]", "^beta[pop]$"), pop = j), matrix = TRUE)
   
   # extract posterior summaries of total spawners by brood year
-  Sa_tot = post_summ(post, sub_index("^Sa_tot[.+,pop]", pop = j))
+  Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total egg production by brood year
-  f_tot = post_summ(post, sub_index("^f_tot[.+,pop]", pop = j))
+  f_tot = post_summ(post, sub_index("^f_tot[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total parr recruits by brood year
-  Pb = post_summ(post, sub_index("^Pb[.+,pop]", pop = j))
+  Pb = post_summ(post, sub_index("^Pb[year,pop]", pop = j, year = ts_yrs))
   
   # predict parr recruits along a sequence of spawner abundances
   Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
@@ -1395,16 +1431,6 @@ plot_f = function(j) {
   colnames(Pb_pred) = paste0("Pb_pred[", 1:length(Sa_pred), "]")
   Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
   Pb_pred = post_summ(Pb_pred, "Pb_pred")
-  
-  # fit ordinary least squares version
-  ols_fit = fit_fecund_BH(jags_data, pop = j)$BH_fit
-  
-  # draw 1000 random parameters
-  ols_params = exp(rmvnorm(1000, coef(ols_fit), vcov(ols_fit)))
-  
-  # calculate predicted curve at each pair/summarize
-  ols_R_pred = t(sapply(1:1000, function(i) BH(f_pred, ols_params[i,1], ols_params[i,2])))
-  ols_R_pred = apply(ols_R_pred, 2, function(x) quantile(x, c(0.5, 0.025, 0.975)))
   
   # graphical parameters
   par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
@@ -1422,12 +1448,6 @@ plot_f = function(j) {
   polygon(c(f_pred, rev(f_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
   lines(Pb_pred[4,] ~ f_pred, col = "red", lty = 2)
   lines(Pb_pred[5,] ~ f_pred, col = "red", lty = 2)
-  
-  # draw fitted relationship: OLS
-  polygon(c(f_pred, rev(f_pred)), c(ols_R_pred[2,], rev(ols_R_pred[3,])), col = alpha("grey", 0.5), border = NA)
-  lines(ols_R_pred[1,] ~ f_pred, lwd = 2)
-  lines(ols_R_pred[2,] ~ f_pred, lty = 2)
-  lines(ols_R_pred[3,] ~ f_pred, lty = 2)
   lines(Pb_pred[3,] ~ f_pred, col = "red", lwd = 2)
   
   # draw state pairs + uncertainty
@@ -1449,10 +1469,10 @@ This figure illustrates that total spawners is a reasonable index of total egg p
 ```{r eggs-vs-spawners, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
   # extract posterior summaries of total spawners by brood year
-  Sa_tot = post_summ(post, sub_index("^Sa_tot[.+,pop]", pop = j))
+  Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total egg production by brood year
-  f_tot = post_summ(post, sub_index("^f_tot[.+,pop]", pop = j))
+  f_tot = post_summ(post, sub_index("^f_tot[year,pop]", pop = j, year = ts_yrs))
 
   # graphical parameters
   par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
@@ -1494,10 +1514,10 @@ This figure shows the density dependence built in to the Beverton-Holt recruitme
 ```{r parr-per-egg-v-eggs, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
   # extract posterior summaries of total egg production by brood year
-  f_tot = post_summ(post, sub_index("^f_tot[.+,pop]", pop = j))
+  f_tot = post_summ(post, sub_index("^f_tot[year,pop]", pop = j, year = ts_yrs))
   
   # conversion rates
-  Pb_per_f_tot = post_summ(post, sub_index("^Pb_per_f_tot[.+,pop]", pop = j))
+  Pb_per_f_tot = post_summ(post, sub_index("^Pb_per_f_tot[year,pop]", pop = j, year = ts_yrs))
   
   # max survival
   alpha = post_summ(post, sub_index("^alpha[pop]", pop = j))
@@ -1538,10 +1558,10 @@ This figure is identical to above, but shows parr production per spawner instead
 ```{r parr-per-spawner-v-spawners, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
   # extract posterior summaries of total spawners by brood year
-  Sa_tot = post_summ(post, sub_index("^Sa_tot[.+,pop]", pop = j))
+  Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # conversion rates
-  Pb_per_Sa_tot = post_summ(post, sub_index("^Pb_per_Sa_tot[.+,pop]", pop = j))
+  Pb_per_Sa_tot = post_summ(post, sub_index("^Pb_per_Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # graphical parameters
   par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
@@ -1577,7 +1597,7 @@ beta_ests = post_summ(post, "^beta[", probs = c(0.1, 0.5, 0.9))
 beta_per = post_subset(post, "mu_beta_per_wul", TRUE)
 
 # create a sequence of WUL values to predict capacity at
-wul_seq = seq(0, max(jags_data$wul) * 1.05, length = 30)
+wul_seq = seq(0, max(jags_data$wul) * 1.1, length = 30)
 
 # obtain the regression line for each posterior sample
 pred_beta = t(sapply(beta_per, function(slope) wul_seq * slope))
@@ -1608,7 +1628,7 @@ text(x = jags_data$wul, y = beta_ests["mean",], labels = c("CAT", "LOS", "MIN", 
 
 ## Slope Parameter
 
-```{r}
+```{r beta-v-habitat-slope}
 # extract posterior summary of slope
 est = post_summ(post, "mu_beta_per_wul")
 colnames(est) = "slope"
@@ -1623,7 +1643,7 @@ kable(t(est), digits = 0, format.args = list(big.mark = ",")) %>%
 ```{r overwinter-survival-plots, fig.width = 8, fig.height = 5}
 plot_fn = function(j) {
   # extract parr, scale it to WUL, and create new post object
-  Pa = post_subset(post, sub_index("^Pa[.+,.,pop]", pop = j), matrix = TRUE)
+  Pa = post_subset(post, sub_index("^Pa[year,.,pop]", pop = j, year = ts_yrs), matrix = TRUE)
   Pa_scaled = Pa/jags_data$wul[j]
   colnames(Pa_scaled) = gsub("Pa", "Pa_scaled", x = colnames(Pa_scaled))
   post_pa = post_convert(cbind(postpack:::id_mat(post), Pa_scaled))
@@ -1643,9 +1663,9 @@ plot_fn = function(j) {
   gamma1 = post_subset(post, sub_index("gamma1[.,pop]", pop = j), matrix = TRUE)
   
   # extract/format posterior summaries of realized survivals
-  phi_Pa_Mb_mean = array_format(post_summ(post, sub_index("^phi_Pa_Mb[.+,.+,pop]", pop = j))["mean",])
-  phi_Pa_Mb_lwr = array_format(post_summ(post,  sub_index("^phi_Pa_Mb[.+,.+,pop]", pop = j))["2.5%",])
-  phi_Pa_Mb_upr = array_format(post_summ(post,  sub_index("^phi_Pa_Mb[.+,.+,pop]", pop = j))["97.5%",])
+  phi_Pa_Mb_mean = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,.+,pop]", pop = j, year = ts_yrs))["mean",])
+  phi_Pa_Mb_lwr = array_format(post_summ(post,  sub_index("^phi_Pa_Mb[year,.+,pop]", pop = j, year = ts_yrs))["2.5%",])
+  phi_Pa_Mb_upr = array_format(post_summ(post,  sub_index("^phi_Pa_Mb[year,.+,pop]", pop = j, year = ts_yrs))["97.5%",])
   
   # function to create predicted survival curves for one posterior sample
   pred_fn = function(i) {
@@ -1712,27 +1732,25 @@ This is survival from $Ma$ (smolts at the top of LGD) to $Ra$ (adults returning 
 The adult part is calculated across return years, by summing the number of adults of each age that return in the appropriate years. For example, the SAR for brood year 1991 uses smolt that were spawned in 1991, out-migrated in spring 1993, divided by the sum of age 3 adults in 1994, age 4 adults in 1995, and age 5 adults in 1996. The calculation is done for hatchery and natural origin fish separately. Only SARs through brood year 2014 are calculated, since this is the last year of complete adult returns.
 
 ```{r adults-per-smolt, fig.width = 6, fig.height = 5}
-sar_yrs = all_yrs[(jags_data$kmax+1):(jags_data$ny - jags_data$kmax)]
-
 plot_fn = function(j) {
   # which years had zero hatchery smolt released
-  zero_hor_smolt = post_summ(post, sub_index("Mb[year,LH_type,origin,pop]", year = c(6:29), LH_type = i_spring, origin = o_hor, pop = j))["mean",] == 0
+  zero_hor_smolt = post_summ(post, sub_index("Mb[year,LH_type,origin,pop]", year = sar_yrs, LH_type = i_spring, origin = o_hor, pop = j))["mean",] == 0
 
   # summarize rates
-  Ra_per_Ma_nor = post_summ(post, sub_index("Ra_per_Ma[.+,origin,pop]", origin = o_nor, pop = j)) * 100
-  Ra_per_Ma_hor = post_summ(post, sub_index("Ra_per_Ma[.+,origin,pop]", origin = o_hor, pop = j)) * 100
+  Ra_per_Ma_nor = post_summ(post, sub_index("Ra_per_Ma[year,origin,pop]", year = sar_yrs, origin = o_nor, pop = j)) * 100
+  Ra_per_Ma_hor = post_summ(post, sub_index("Ra_per_Ma[year,origin,pop]", year = sar_yrs, origin = o_hor, pop = j)) * 100
 
   # make hatchery values NA in year with no smolt
   Ra_per_Ma_hor[,zero_hor_smolt] = NA
 
   # plot natural origin time series
-  plot_tseries(est = Ra_per_Ma_nor, yrs = sar_yrs, main = pops[j], ylim = c(0, 10))
+  plot_tseries(est = Ra_per_Ma_nor, yrs = all_yrs[sar_yrs], main = pops[j], ylim = c(0, 10))
   
   # add hatchery origin time series
-  polygon(x = c(sar_yrs, rev(sar_yrs)), y = c(Ra_per_Ma_hor["2.5%",], rev(Ra_per_Ma_hor["97.5%",])), col = alpha("skyblue2", 0.5), border = NA)
-  lines(Ra_per_Ma_hor["2.5%",] ~ sar_yrs, col = "blue", lty = 2)
-  lines(Ra_per_Ma_hor["97.5%",] ~ sar_yrs, col = "blue", lty = 2)
-  lines(Ra_per_Ma_hor["mean",] ~ sar_yrs, col = "blue", lwd = 2)
+  polygon(x = c(all_yrs[sar_yrs], rev(all_yrs[sar_yrs])), y = c(Ra_per_Ma_hor["2.5%",], rev(Ra_per_Ma_hor["97.5%",])), col = alpha("skyblue2", 0.5), border = NA)
+  lines(Ra_per_Ma_hor["2.5%",] ~ all_yrs[sar_yrs], col = "blue", lty = 2)
+  lines(Ra_per_Ma_hor["97.5%",] ~ all_yrs[sar_yrs], col = "blue", lty = 2)
+  lines(Ra_per_Ma_hor["mean",] ~ all_yrs[sar_yrs], col = "blue", lwd = 2)
 
   if (j == 1) {
     legend("topright", legend = c("NOR", "HOR"), title = "Origin",
@@ -1748,30 +1766,28 @@ mtext(side = 2, outer = T, line = 0.25, "Adults per 100 Smolt")
 ### BON to BON
 
 ```{r bon-to-bon, fig.width = 6, fig.height = 5}
-sar_yrs = all_yrs[(jags_data$kmax+1):(jags_data$ny - jags_data$kmax)]
-
 plot_fn = function(j) {
   # which years had zero hatchery smolt released
-  zero_hor_smolt = post_summ(post, sub_index("Mb[year,LH_type,origin,pop]", year = c(6:29), LH_type = i_spring, origin = o_hor, pop = j))["mean",] == 0
+  zero_hor_smolt = post_summ(post, sub_index("Mb[year,LH_type,origin,pop]", year = sar_yrs, LH_type = i_spring, origin = o_hor, pop = j))["mean",] == 0
   
   # summarize rates
-  phi_nor = post_summ(post, sub_index("phi_O0_Rb_BON[.+,origin,pop]", origin = o_nor, pop = j))
-  phi_hor = post_summ(post, sub_index("phi_O0_Rb_BON[.+,origin,pop]", origin = o_hor, pop = j))
+  phi_nor = post_summ(post, sub_index("phi_O0_Rb_BON[year,origin,pop]", year = sar_yrs, origin = o_nor, pop = j))
+  phi_hor = post_summ(post, sub_index("phi_O0_Rb_BON[year,origin,pop]", year = sar_yrs, origin = o_hor, pop = j))
   
   # get a max value for ylim
-  ymax = max(post_summ(post, sub_index("phi_O0_Rb_BON[.+,origin,pop]", origin = o_nor, pop = "."))["97.5%",])
+  ymax = max(post_summ(post, sub_index("phi_O0_Rb_BON[year,origin,pop]", year = sar_yrs, origin = o_nor, pop = "."))["97.5%",])
 
   # make hatchery values NA in year with no smolt
   phi_hor[,zero_hor_smolt] = NA
 
   # plot natural origin time series
-  plot_tseries(est = phi_nor, yrs = sar_yrs, main = pops[j], ylim = c(0, ymax))
+  plot_tseries(est = phi_nor, yrs = all_yrs[sar_yrs], main = pops[j], ylim = c(0, ymax))
   
   # add hatchery origin time series
-  polygon(x = c(sar_yrs, rev(sar_yrs)), y = c(phi_hor["2.5%",], rev(phi_hor["97.5%",])), col = alpha("skyblue2", 0.5), border = NA)
-  lines(phi_hor["2.5%",] ~ sar_yrs, col = "blue", lty = 2)
-  lines(phi_hor["97.5%",] ~ sar_yrs, col = "blue", lty = 2)
-  lines(phi_hor["mean",] ~ sar_yrs, col = "blue", lwd = 2)
+  polygon(x = c(all_yrs[sar_yrs], rev(all_yrs[sar_yrs])), y = c(phi_hor["2.5%",], rev(phi_hor["97.5%",])), col = alpha("skyblue2", 0.5), border = NA)
+  lines(phi_hor["2.5%",] ~ all_yrs[sar_yrs], col = "blue", lty = 2)
+  lines(phi_hor["97.5%",] ~ all_yrs[sar_yrs], col = "blue", lty = 2)
+  lines(phi_hor["mean",] ~ all_yrs[sar_yrs], col = "blue", lwd = 2)
 
   if (j == 1) {
     legend("topright", legend = c("NOR", "HOR"), title = "Origin",
@@ -1790,7 +1806,7 @@ mtext(side = 2, outer = T, line = 0.25, "BON -> BON Survival")
 
 ```{r parr-per-spawner, fig.width = 6, fig.height = 5}
 plot_fn = function(j) {
-  plot_tseries(est = post_summ(post, sub_index("Pb_per_Sa_tot[.+,pop]", pop = j)), yrs = as.numeric(rownames(jags_data$Pa_obs[,,j])[observable]), main = pops[j])
+  plot_tseries(est = post_summ(post, sub_index("Pb_per_Sa_tot[year,pop]", pop = j, year = ts_yrs)), yrs = all_yrs[ts_yrs], main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -1805,13 +1821,13 @@ mtext(side = 2, outer = T, line = 0.25, "Parr per Spawner")
 
 ```{r smolt-per-spawner, fig.width = 6, fig.height = 5}
 plot_fn = function(j) {
-  plot_tseries(est = post_summ(post, sub_index("Mb_per_Sa_tot[.+,pop]", pop = j)), yrs = as.numeric(rownames(jags_data$Pa_obs[,,j])[observable]), main = pops[j])
+  plot_tseries(est = post_summ(post, sub_index("Mb_per_Sa_tot[year,pop]", pop = j, year = ts_yrs)), yrs = all_yrs[ts_yrs], main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_fn)
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Parr per Spawner")
+mtext(side = 2, outer = T, line = 0.25, "Smolt per Spawner")
 ```
 
 ## Spawners per Spawner
@@ -1820,7 +1836,7 @@ This is the sum of all spawners that were produced by the spawners in a given br
 
 ```{r spawners-per-spawner, fig.width = 6, fig.height = 5}
 plot_fn = function(j) {
-  plot_tseries(est = post_summ(post, sub_index("Sa_tot_per_Sa_tot[.+,pop]", pop = j)), yrs = all_yrs[(jags_data$kmax+1):(jags_data$ny - jags_data$kmax)], main = pops[j])
+  plot_tseries(est = post_summ(post, sub_index("Sa_tot_per_Sa_tot[year,pop]", pop = j, year = sar_yrs)), yrs = all_yrs[sar_yrs], main = pops[j])
  abline(h = 1, lty = 2)
 }
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -1835,7 +1851,7 @@ mtext(side = 2, outer = T, line = 0.25, "Spawner per Spawner")
 
 ```{r n-stray, fig.width = 6, fig.height = 5}
 plot_fn = function(j) {
-  plot_tseries(est = post_summ(post, sub_index("n_stray_tot[.+,pop]", pop = j)), yrs = as.numeric(rownames(jags_data$Pa_obs[,,j])[observable]), main = pops[j])
+  plot_tseries(est = post_summ(post, sub_index("n_stray_tot[year,pop]", pop = j, year = ts_yrs)), yrs = all_yrs[ts_yrs], main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -1867,18 +1883,18 @@ mtext(side = 2, outer = T, line = 0.25, "Proportion of Strays by Age")
 ```{r ocean-surv-plots, fig.width = 6, fig.height = 5}
 ocean_surv_plot = function(j) {
   par(mfrow = c(3,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^phi_O0_O1[.+,origin,pop]", origin = o_nor, pop = j)),
-               main = TeX("$O_0 \\rightarrow O_1\\,(NOR)$"), yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^phi_O0_O1[.+,origin,pop]", origin = o_hor, pop = j)),
-               main = TeX("$O_0 \\rightarrow O_1\\,(HOR)$"), yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^phi_O1_O2[.+,origin,pop]", origin = o_nor, pop = j)),
-               main = TeX("$O_1 \\rightarrow O_2\\,(NOR)$"), yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^phi_O1_O2[.+,origin,pop]", origin = o_hor, pop = j)),
-               main = TeX("$O_1 \\rightarrow O_2\\,(HOR)$"), yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^phi_O2_O3[.+,origin,pop]", origin = o_nor, pop = j)),
-               main = TeX("$O_2 \\rightarrow O_3\\,(NOR)$"), yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^phi_O2_O3[.+,origin,pop]", origin = o_hor, pop = j)),
-               main = TeX("$O_2 \\rightarrow O_3\\,(HOR)$"), yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)),
+               main = TeX("$O_0 \\rightarrow O_1\\,(NOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)),
+               main = TeX("$O_0 \\rightarrow O_1\\,(HOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)),
+               main = TeX("$O_1 \\rightarrow O_2\\,(NOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)),
+               main = TeX("$O_1 \\rightarrow O_2\\,(HOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)),
+               main = TeX("$O_2 \\rightarrow O_3\\,(NOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)),
+               main = TeX("$O_2 \\rightarrow O_3\\,(HOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
   mtext(side = 1, outer = T, line = 0.5, "Brood Year")
   mtext(side = 2, outer = T, line = 0, "Survival")
 }
@@ -1913,10 +1929,10 @@ ocean_surv_plot(j_ugr)
 ```{r maturity-plot-fn}
 maturity_plot = function(j) {
   par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[.+,origin,pop]$", origin = o_nor, pop = j)), main = "Age 3 (NOR)", yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[.+,origin,pop]$", origin = o_hor, pop = j)), main = "Age 3 (HOR)", yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[.+,origin,pop]$", origin = o_nor, pop = j)), main = "Age 4 (NOR)", yrs = all_yrs[observable], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[.+,origin,pop]$", origin = o_hor, pop = j)), main = "Age 4 (HOR)", yrs = all_yrs[observable], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 3 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 3 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 4 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 4 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
 
   mtext(side = 1, outer = T, line = 0.25, "Brood Year")
   mtext(side = 2, outer = T, line = 0.25, "Pr(Mature-at-Age|Alive in Ocean)")
