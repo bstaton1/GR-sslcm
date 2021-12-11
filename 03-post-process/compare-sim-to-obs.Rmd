@@ -605,9 +605,11 @@ make_ratios_table = function(ratios, q) {
 
 For us to use the state-space model as a simulation model, it would be desirable if several characteristics of the distribution of stochastic and derived quantities were similar between the time periods with and without observations.
 
-This document is intended to identify whether simulated outcomes are similar to observed outcomes. It looks at two primary types of quantities: stochastic time series parameters (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes (e.g., total adult return abundance, BON to BON SAR rates, etc.). Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
+This document is intended to identify whether simulated outcomes are similar to observed outcomes. It looks at two primary types of quantities: stochastic time series parameters that are directly estimated by the model (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes calculated as derived quantities from stochastic parameters (e.g., total adult return abundance, BON to BON SAR rates, etc.). Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
 
-The JAGS model was altered to carry out the life cycle processes through brood year 2050. This means for each posterior sample we have an observed and simulated time series. The simulated time series picks up where the observed on left off, and assumes the same random processes for all components as used in the observed time series. Several quantities are supplied to the model as known without error (weir removals, hatchery smolt releases, harvest rates below BON, etc.). These time series were extended to the future years external to the model using basic averages or resampling from historical outcomes as appropriate. This exercise is purely for model validation.
+The JAGS model was altered to carry out the life cycle processes through brood year `r max(all_yrs)`. This means for each posterior sample we have an observed and simulated time series. The simulated time series picks up where the observed one left off, and assumes the same random processes for all components as used in the observed time series.
+
+Several quantities are supplied to the model as known without error in the observed time series (weir removals, hatchery smolt releases, harvest rates below BON, etc.). These time series were extended to the future years external to the model using basic averages or resampling from historical outcomes as appropriate. This exercise is purely for model validation.
 
 Observed vs. simulated consistency is visualized in two ways: by comparing summary statistics of the inter-annual variation and central tendency and by directly comparing the historical time series with 5 random simulated futures.
 
@@ -770,6 +772,10 @@ est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Adult", Type = "P
 
 ## Emergent Properties {.tabset .tabset-pills}
 
+```{r}
+derived_ratios = NULL
+```
+
 ### Abundance Quantities {.tabset .tabset-pills}
 
 #### Total Adult Return (To Estuary)
@@ -779,6 +785,7 @@ x = lapply(1:4, function(j) get_ratio("^Rb_tot[year,pop]", obs_y, sim_y, pop = j
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Adults (Estuary): Estimates")
 ratio_plots(x, "Total Adults (Estuary): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (Estuary)"))
 ```
 
 #### Total Adult Return (To Tributary)
@@ -788,6 +795,7 @@ x = lapply(1:4, function(j) get_ratio("^Ra_tot[year,pop]", obs_y, sim_y, pop = j
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Adults (Tributary): Estimates")
 ratio_plots(x, "Total Adults (Tributary): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (To Tributary)"))
 ```
 
 #### Total Spawners
@@ -797,6 +805,7 @@ x = lapply(1:4, function(j) get_ratio("^Sa_tot[year,pop]", obs_y, sim_y, pop = j
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Spawners: Estimates")
 ratio_plots(x, "Total Spawners: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Spawners"))
 ```
 
 #### Total Egg Production
@@ -806,6 +815,7 @@ x = lapply(1:4, function(j) get_ratio("^f_tot[year,pop]", obs_y, sim_y, pop = j)
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Egg Production: Estimates")
 ratio_plots(x, "Total Egg Production: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Egg Production"))
 ```
 
 #### Total Parr Recruitment
@@ -815,6 +825,7 @@ x = lapply(1:4, function(j) get_ratio("^Pb[year,pop]", obs_y, sim_y, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Parr Recruitment: Estimates")
 ratio_plots(x, "Total Parr Recruitment: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Parr Recruitment"))
 ```
 
 #### Total LGR Smolt
@@ -827,6 +838,9 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total LGR Smolt: Estimates")
 ratio_plots(x, "Total LGR Smolt: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total LGR Smolt"))
+```
+
 #### Aggregate Total Adult Return (To Tributary)
 
 ```{r}
@@ -865,6 +879,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "BON to BON SAR: Estimates")
 ratio_plots(x, "BON to BON SAR: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "SAR", Type = "BON to BON"))
 ```
 
 #### LGR to LGR SAR
@@ -877,6 +892,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "LGR to LGR SAR: Estimates")
 ratio_plots(x, "LGR to LGR SAR: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "SAR", Type = "LGR to LGR"))
 ```
 
 ### Production Rates {.tabset .tabset-pills}
@@ -888,15 +904,17 @@ x = lapply(1:4, function(j) get_ratio("Pb_per_Sa_tot[year,pop]", obs_sar_y, sim_
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Parr per Spawner: Estimates")
 ratio_plots(x, "Parr per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Parr per Spawner"))
 ```
 
-#### Smolt per Spawner
+#### Smolt in Tributary per Spawner
 
 ```{r}
 x = lapply(1:4, function(j) get_ratio("Mb_per_Sa_tot[year,pop]", obs_sar_y, sim_sar_y, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Smolt per Spawner: Estimates")
 ratio_plots(x, "Smolt per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Smolt in Tributary per Spawner"))
 ```
 
 #### Smolt in Tributary per Parr
@@ -909,6 +927,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Smolt in Tributary per Parr: Estimates")
 ratio_plots(x, "Smolt in Tributary per Parr: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Smolt in Tributary per Parr"))
 ```
 
 #### Smolt at LGR per Parr
@@ -921,6 +940,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Smolt at LGR per Parr: Estimates")
 ratio_plots(x, "Smolt at LGR per Parr: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Smolt at LGR per Parr"))
 ```
 
 #### Spawners per Spawner
@@ -930,6 +950,7 @@ x = lapply(1:4, function(j) get_ratio("Sa_tot_per_Sa_tot[year,pop]", obs_sar_y, 
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Spawners per Spawner: Estimates")
 ratio_plots(x, "Spawners per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Spawners per Spawner"))
 ```
 
 ### Adult Composition {.tabset .tabset-pills}
@@ -941,6 +962,7 @@ x = lapply(1:4, function(j) get_ratio("p_hor[year,pop]", obs_y, sim_y, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Proportion Hatchery Return: Estimates")
 ratio_plots(x, "Proportion Hatchery Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return"))
 ```
 
 #### Proportion Age-3 Return
@@ -953,6 +975,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Proportion Age-3 Return: Estimates")
 ratio_plots(x, "Proportion Age-3 Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-3 Return"))
 ```
 
 #### Proportion Age-4 Return
@@ -965,6 +988,7 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Proportion Age-4 Return: Estimates")
 ratio_plots(x, "Proportion Age-4 Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-4 Return"))
 ```
 
 #### Proportion Age-5 Return
@@ -977,6 +1001,8 @@ x = append(
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Proportion Age-5 Return: Estimates")
 ratio_plots(x, "Proportion Age-5 Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-5 Return"))
+```
 ```
 
 # Time Series Plots
