@@ -323,28 +323,11 @@ jags_model_code = function() {
   # obtain expected probability of adult recruits returning at age
   # natural origin fish only
   for (j in 1:nj) {
-    p_init_prime[1,j] <- mu_phi_O0_O1[o_nat,j] * mu_psi_O1_Rb[o_nat,j]
-    p_init_prime[2,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[o_nat,j]) * mu_phi_O1_O2[o_nat,j] * mu_psi_O2_Rb[o_nat,j]
-    p_init_prime[3,j] <- mu_phi_O0_O1[o_nat,j] * (1 - mu_psi_O1_Rb[o_nat,j]) * mu_phi_O1_O2[o_nat,j] * (1 - mu_psi_O2_Rb[o_nat,j]) * mu_phi_O2_O3[o_nat,j]
     for (k in 1:nk) {
-      p_init[k,j] <- p_init_prime[k,j]/sum(p_init_prime[1:nk,j])
-    }
-    
-    # hyperparameters for initialization
-    mu_init_recruits[j] ~ dunif(0, max_init_recruits[j])
-    sig_init_lrecruits[j] <- 0.3
-    
-    # for natural origin
-    for (y in 1:kmax) {
-      # random, constant-mean adult recruits for first kmax brood years
-      init_recruits[y,j] ~ dlnorm(log(mu_init_recruits[j]), 1/sig_init_lrecruits[j]^2) %_% T(,max_init_recruits[j])
-      
-      for (k in 1:nk) {
-        # apportion them to return year and age
-        Rb[y+kmin+k-1,k,o_nat,j] <- init_recruits[y,j] * p_init[k,j]
-        
-        # for hatchery origin - no operations these years, but still need to populate with a number
-        Rb[y+kmin+k-1,k,o_hat,j] <- 0
+      for (y in (kmax+1):(kmax+kmin+k-1)) {
+        # Rb[y,k,o_nat,j] <- Rb_init[y,k,j] 
+        Rb[y,k,o_nat,j] ~ dunif(0, max_Rb_init[k])
+        Rb[y,k,o_hat,j] <- 0
       }
     }
   }
