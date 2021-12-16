@@ -236,7 +236,7 @@ jags_params = c(
   "z", "carc_adj", "n_stray_tot", "stray_comp", "mu_z", "sig_z",
   
   # misc parameters
-  "O_phi_scaler_nat_hat",
+  "O_phi_scaler_nat_hat", "phi_Pb_Pa", "bad_flag",
   
   # misc derived quantities
   "beta_per_wul", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",

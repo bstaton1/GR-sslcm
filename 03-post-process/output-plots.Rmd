@@ -235,6 +235,11 @@ L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
 match = c("mu_pi[1,.]", "sig_Lpi", "rho_Lpi", "^pi[.+,1,.]")
 pi_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
+# parr survival from summer to winter tagging
+L1 = "Survival From Summer to Winter"
+match = c("phi_Pb_Pa[2,.]")
+phi_Pb_Pa_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1)))
+
 # Overwinter survival
 L1 = "Overwinter Survival"
 L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
@@ -346,6 +351,7 @@ stray_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L
 diags_table = rbind(
   parr_recruit_diags,
   pi_diags,
+  phi_Pb_Pa_diags
   phi_Pa_Mb_diags,
   phi_Mb_Ma_diags,
   phi_Ma_O0_diags,
@@ -531,15 +537,18 @@ phi_Pb_Ma_bp = data.frame(
 )
 rownames(phi_Pb_Ma_bp) = NULL
 
-# fall trap survival
+# fall & winter trap survival
 new = post_subset(post, "Lphi_obs_new_Pa_Ma_dev", TRUE)
 obs = post_subset(post, "Lphi_obs_Pa_Ma_dev", TRUE)
 bp = array_format(colMeans(obs > new))
-dimnames(bp) = list(all_yrs[1:dim(bp)[1]], "fall-mig", pops)
-bp = bp[,"fall-mig",]
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("fall-mig", "spring-mig"), pops)
+bp = cbind(CAT_fall = bp[,"fall-mig","CAT"], CAT_spring = bp[,"spring-mig","CAT"],
+           LOS_fall = bp[,"fall-mig","LOS"], LOS_spring = bp[,"spring-mig","LOS"],
+           MIN_fall = bp[,"fall-mig","MIN"], MIN_spring = bp[,"spring-mig","MIN"],
+           UGR_fall = bp[,"fall-mig","UGR"], UGR_spring = bp[,"spring-mig","UGR"])
 phi_Pa_Ma_bp = data.frame(
-  name = rep("Fall Trap to LGR", 4), pop = pops,
-  origin = rep("NOR", 4),   LH_type = rep("Fall Migrants", 4),
+  name = rep(c("Fall Trap to LGR", "Winter Tagging"), each = 4), pop = rep(pops, 2),
+  origin = rep("NOR", 8),   LH_type = rep(c("Fall Migrants", "Spring Migrants"), each = 4),
   summarize_bp(bp)
 )
 rownames(phi_Pa_Ma_bp) = NULL
@@ -844,6 +853,21 @@ par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, TeX("$Fall\\,Parr \\rightarrow LGR\\,Survival$"))
+```
+
+### Winter Parr $\rightarrow$ LGR
+
+```{r winter-surv-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]$", year = observable, LH_type = i_spring, pop = j)),
+               get_obs_ests_logit_normal(jags_data$Lphi_obs_Pa_Ma[observable,i_spring,j], jags_data$sig_Lphi_obs_Pa_Ma[observable,i_spring,j]),
+               main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, TeX("$Winter\\,Parr \\rightarrow LGR\\,Survival$"))
 ```
 
 ### Spring Smolt $\rightarrow$ LGR (NOR)

@@ -33,7 +33,7 @@ jags_model_code = function() {
     # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
     mu_phi_Mb_Ma[i_spring,o_nat,j] ~ dbeta(1, 1)
     sig_Lphi_Mb_Ma[o_nat,j] ~ dunif(0, 5)
-    mu_phi_Mb_Ma[i_fall,o_nat,j] <- mu_phi_Mb_Ma[i_spring,o_nat,j]
+    mu_phi_Mb_Ma[i_fall,o_nat,j] <- ilogit(logit(mu_phi_Mb_Ma[i_spring,o_nat,j]) + toLGR_scaler[j])
 
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hat,j] ~ dbeta(1, 1)
@@ -100,6 +100,14 @@ jags_model_code = function() {
       stray_comp[k,o_hat,j] <- stray_comp_2d[k,j]
     }
   }
+  
+  # survival between summer tagging/LH apportionment and winter tagging for spring migrants
+  # parameter is needed to allow inclusion of winter tagging data, this is not a key pop dyn parameter
+  phi_Pb_Pa[i_fall,1:nj] <- rep(1, nj)  # doesn't apply to fall migrants, but loops over i dimension
+  phi_Pb_Pa[i_spring,1] ~ dunif(0, 1)
+  phi_Pb_Pa[i_spring,2] ~ dunif(0, 1)
+  phi_Pb_Pa[i_spring,3] <- 1            # don't estimate for MIN -- no winter tagging data
+  phi_Pb_Pa[i_spring,4] ~ dunif(0, 1)
   
   ### PRIORS: PARAMETERS THAT ARE CONSTANT ACROSS POPULATIONS ###
   
@@ -361,8 +369,13 @@ jags_model_code = function() {
         Ma[y,i,o_nat,j] <- Mb[y,i,o_nat,j] * phi_Mb_Ma[y,i,o_nat,j]
         
         # derived survival for fitting: fall trap to LGD
-        phi_Pa_Ma[y,i,j] <- Ma[y,i,o_nat,j]/Pa[y,i,j]
+        phi_Pa_Ma[y,i,j] <- Ma[y,i,o_nat,j]/max(Pa[y,i,j] * phi_Pb_Pa[i,j], Ma[y,i,o_nat,j])
       }
+      
+      # flag that tells us how often max constraint is violated
+      # will remove this eventually. the max constraint is needed for MCMC during early tuning (crashes w/o it)
+      # but none of the converged samples have this occur
+      bad_flag[y,j] <- ifelse(Pa[y,i_spring,j] * phi_Pb_Pa[i_spring,j] < Ma[y,i_spring,o_nat,j], 1, 0)
       
       # derived survival for fitting: summer tagging to LGD
       phi_Pb_Ma[y,j] <- sum(Ma[y,1:ni,o_nat,j])/Pb[y,j]

@@ -128,13 +128,15 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   sig_Lphi_obs_Pb_Ma = rep(NA, ny); names(sig_Lphi_obs_Pb_Ma) = y_names
   sig_Lphi_obs_Pb_Ma[y_names %in% sub$brood_year] = sub$summer_surv_logit_se
   
-  # fall logit(surv) to LGD
+  # fall & winter logit(surv) to LGD
   Lphi_obs_Pa_Ma = matrix(NA, ny, ni); dimnames(Lphi_obs_Pa_Ma) = list(y_names, i_names)
   Lphi_obs_Pa_Ma[y_names %in% sub$brood_year,i_names == "fall-mig"] = logit(sub$fall_surv_est)
+  Lphi_obs_Pa_Ma[y_names %in% sub$brood_year,i_names == "spring-mig"] = logit(sub$winter_surv_est)
   
-  # sd fall logit(surv) to LGD
+  # sd fall & winter logit(surv) to LGD
   sig_Lphi_obs_Pa_Ma = matrix(NA, ny, ni); dimnames(sig_Lphi_obs_Pa_Ma) = list(y_names, i_names)
   sig_Lphi_obs_Pa_Ma[y_names %in% sub$brood_year,i_names == "fall-mig"] = sub$fall_surv_logit_se
+  sig_Lphi_obs_Pa_Ma[y_names %in% sub$brood_year,i_names == "spring-mig"] = sub$winter_surv_logit_se
   
   # spring logit(surv) to LGD
   Lphi_obs_Mb_Ma = array(NA, dim = c(ny, ni, no)); dimnames(Lphi_obs_Mb_Ma) = list(y_names, i_names, o_names)
