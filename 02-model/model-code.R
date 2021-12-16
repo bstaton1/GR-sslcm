@@ -32,7 +32,6 @@ jags_model_code = function() {
     
     # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
     mu_phi_Mb_Ma[i_spring,o_nat,j] ~ dbeta(1, 1)
-    toLGR_scaler[j] ~ dt(0, 1/1.566^2, 7.763)
     sig_Lphi_Mb_Ma[o_nat,j] ~ dunif(0, 5)
     mu_phi_Mb_Ma[i_fall,o_nat,j] <- ilogit(logit(mu_phi_Mb_Ma[i_spring,o_nat,j]) + toLGR_scaler[j])
 
@@ -285,8 +284,8 @@ jags_model_code = function() {
         phi_O2_O3[y,o,j] <- ilogit(Lphi_O2_O3[y,o,j])
       }
       
-      # assume movement survival trib to LGR for NOR fish is equal between LH types adjusted by a scaler
-      phi_Mb_Ma[y,i_fall,o_nat,j] <- ilogit(Lphi_Mb_Ma[y,i_spring,o_nat,j] + toLGR_scaler[j])
+      # assume movement survival trib to LGR for NOR fish is equal between LH types
+      phi_Mb_Ma[y,i_fall,o_nat,j] <- phi_Mb_Ma[y,i_spring,o_nat,j]
       
       # pre-spawn survival
       phi_Sb_Sa[y,j] <- ilogit(Lphi_Sb_Sa[y,j])
