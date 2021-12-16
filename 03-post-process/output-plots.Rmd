@@ -235,6 +235,11 @@ L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
 match = c("mu_pi[1,.]", "sig_Lpi", "rho_Lpi", "^pi[.+,1,.]")
 pi_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
+# parr survival from summer to winter tagging
+L1 = "Survival From Summer to Winter"
+match = c("phi_Pb_Pa[2,.]")
+phi_Pb_Pa_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1)))
+
 # Overwinter survival
 L1 = "Overwinter Survival"
 L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
@@ -346,6 +351,7 @@ stray_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L
 diags_table = rbind(
   parr_recruit_diags,
   pi_diags,
+  phi_Pb_Pa_diags
   phi_Pa_Mb_diags,
   phi_Mb_Ma_diags,
   phi_Ma_O0_diags,
