@@ -33,7 +33,7 @@ jags_model_code = function() {
     # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
     mu_phi_Mb_Ma[i_spring,o_nat,j] ~ dbeta(1, 1)
     sig_Lphi_Mb_Ma[o_nat,j] ~ dunif(0, 5)
-    mu_phi_Mb_Ma[i_fall,o_nat,j] <- ilogit(logit(mu_phi_Mb_Ma[i_spring,o_nat,j]) + toLGR_scaler[j])
+    mu_phi_Mb_Ma[i_fall,o_nat,j] <- mu_phi_Mb_Ma[i_spring,o_nat,j]
 
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hat,j] ~ dbeta(1, 1)
