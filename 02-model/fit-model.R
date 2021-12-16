@@ -21,7 +21,7 @@ out_dir = "02-model/model-output"
 last_yr = 2019
 
 # specify a scenario name
-scenario = "winter-surv-data"
+scenario = "base"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
