@@ -182,7 +182,7 @@ jags_model_code = function() {
   }
   
   # year 0 residuals for yr1 ocean survival (needed for AR(1) process)
-  Lphi_O0_O1_resid[kmax,o_nat,1:nj] ~ dmnorm.vcov(rep(0, nj), Sig_Lphi_O0_O1_init[1:nj,1:nj])
+  Lphi_O0_O1_resid[1,o_nat,1:nj] ~ dmnorm.vcov(rep(0, nj), Sig_Lphi_O0_O1_init[1:nj,1:nj])
 
   # migration survival adults from BON to LGR
   for (o in 1:no) {
@@ -217,7 +217,7 @@ jags_model_code = function() {
   carc_adj[3,3] <- (carc_adj[3,1] + carc_adj[3,2] + carc_adj[3,4])/3
   
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
-  for (y in (kmax+1):ny) {
+  for (y in 2:ny) {
     
     # parr recruitment
     lPb[y,1:nj] ~ dmnorm.vcov(log(Pb_mean[y,1:nj]), Sig_lPb[1:nj,1:nj])
@@ -313,19 +313,26 @@ jags_model_code = function() {
   ### PROCESS MODEL: INITIALIZATION ###
   # need to do something special with first kmax brood years prior to data collection
   # to populate adult states for reproduction/observation in the first years with data
-  # THIS APPROACH:
-  #  Estimate the mean and year-specific TOTAL ADULT RECRUITS (arriving to mouth of river)
-  #  for the first kmax brood years. Then, based on the hyperparams of return-by-age and ocean survival
-  #  (this is the p_init_prime and p_init stuff below)
-  #  derive the probability of returning at age will apply equally to all kmax of the first brood years
-  #  Then place these adult recruits in the appropriate return year by age
-  
-  # obtain expected probability of adult recruits returning at age
-  # natural origin fish only
+  # THIS APPROACH: estimate year/age-specific NOR return to Columbia R. mouth
+  # there are 12 year/age-specific returns that are not linked to pop dyn in the model
+  # this approach estimates (with a fairly restrictive prior) the cells with "??"
+  # NA cells are a placeholder year for y = 0 residuals in AR(1) processes
+  # do NOR here only, HOR returns in these years handled by "straying" model
+  #
+  # ---------------------------
+  #   year    age3    age4 age5
+  # ---------------------------
+  #   1990      NA      NA   NA
+  #   1991      ??      ??   ??
+  #   1992      ??      ??   ??
+  #   1993      ??      ??   ??
+  #   1994 modeled      ??   ??
+  #   1995 modeled modeled   ??
+  # ---------------------------
+
   for (j in 1:nj) {
     for (k in 1:nk) {
-      for (y in (kmax+1):(kmax+kmin+k-1)) {
-        # Rb[y,k,o_nat,j] <- Rb_init[y,k,j] 
+      for (y in 2:(kmin+k)) {
         Rb[y,k,o_nat,j] ~ dunif(0, max_Rb_init[k])
         Rb[y,k,o_hat,j] <- 0
       }
@@ -334,7 +341,7 @@ jags_model_code = function() {
   
   ### PROCESS MODEL: COMPLETE LIFE CYCLE FOR REMAINING BROOD YEARS ###
   for (j in 1:nj) {
-    for (y in (kmax+1):ny) {
+    for (y in 2:ny) {
       # reproductive link: total summer parr
       # Pb[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j]) * exp(lPb_resid[y,j])
       Pb_mean[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j])
@@ -350,7 +357,7 @@ jags_model_code = function() {
         
         # move to LGD: smolt after spring migration, at top of LGD
         Ma[y,i,o_nat,j] <- Mb[y,i,o_nat,j] * phi_Mb_Ma[y,i,o_nat,j]
-        
+
         # derived survival for fitting: fall trap to LGD
         phi_Pa_Ma[y,i,j] <- Ma[y,i,o_nat,j]/max(Pa[y,i,j] * phi_Pb_Pa[i,j], Ma[y,i,o_nat,j])
       }
@@ -399,7 +406,7 @@ jags_model_code = function() {
           
           # add strays
           Ra[y,k,o,j] <- Ra_LGR[y,k,o,j] + n_stray_tot[y,j] * stray_comp[k,o,j]
-          
+
           # remove fish at weir: use max() to ensure that fewer fish were removed than existed
           Sb[y,k,o,j] <- max(Ra[y,k,o,j] - n_remove[y,k,o,j], 1)
           
@@ -444,7 +451,7 @@ jags_model_code = function() {
     }
     
     # BON -> BON survival -- can't be calculated for all brood years in model
-    for (y in (kmax+1):(ny-kmax)) {
+    for (y in 2:(ny-kmax)) {
       for (o in 1:no) {
         # calculate year/origin/pop specific survival
         phi_O0_Rb_BON[y,o,j] <- (
@@ -456,7 +463,7 @@ jags_model_code = function() {
     }
     
     # spawners per spawner -- can't be calculated for all brood years in model
-    for (y in (kmax+1):(ny-kmax)) {
+    for (y in 2:(ny-kmax)) {
       Sa_tot_per_Sa_tot[y,j] <- (
         sum(Sa[y+kmin+1-1,1,1:no,j]) +       # age 3 adults produced by spawners in brood year y
           sum(Sa[y+kmin+2-1,2,1:no,j]) +     # age 4 adults produced by spawners in brood year y
@@ -465,7 +472,7 @@ jags_model_code = function() {
     }
     
     # adults per smolt -- can't be calculated for all brood years in model
-    for (y in (kmax+1):(ny-kmax)) {
+    for (y in 2:(ny-kmax)) {
       for (o in 1:no) {
         Ra_per_Ma[y,o,j] <- (
           Ra_LGR[y+kmin+1-1,1,o,j] +       # age 3 adults back at trib that were once smolts from brood year y
@@ -488,7 +495,7 @@ jags_model_code = function() {
   
   # age/origin composition
   for (j in 1:nj) {
-    for (y in (kmax+1):ny_obs) {
+    for (y in 2:ny_obs) {
       # AT WEIR
       # data likelihood
       weir_x_obs[y,1:nko,j] ~ dmulti(q_Ra[y,1:nko,j], weir_nx_obs[y,j])
@@ -678,7 +685,7 @@ jags_model_code = function() {
   
   ### CALCULATE ALL PROCESS MODEL RESIDUALS ###
   
-  for (y in (kmax+1):ny) {
+  for (y in 2:ny) {
     for (j in 1:nj) {
       
       # total summer parr recruitment
