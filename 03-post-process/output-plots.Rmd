@@ -50,7 +50,7 @@ jags_data = model_info$jags_data
 all_yrs = as.numeric(dimnames(jags_data$phi_SL)[[1]])
 
 # which years are "observable" for at least some quantities?
-observable = (jags_data$kmax+1):jags_data$ny_obs
+observable = 2:jags_data$ny_obs
 
 # which years are simulated for at least some quantities?
 simulated = which(!(all_yrs %in% all_yrs[observable]) & all_yrs > min(all_yrs[observable]))
@@ -336,10 +336,10 @@ match = c("mu_z[.]", "sig_z[.]", "^z[.,.]")
 z_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # Initial adult recruitment
-L1 = "Initial Adult Recruitment"
-L2 = c("Mean", "Realized")
-match = c("mu_init_recruits[.]", "^init_recruits[.+,.]")
-init_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
+L1 = "Initial Adult Returns"
+L2 = c("Age-3", "Age-4", "Age-5")
+match = c("Rb\\[[2|3|4],1,1,.\\]", "Rb\\[[2|3|4|5],2,1,.\\]", "Rb\\[[2|3|4|5|6],3,1,.\\]")
+init_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[[i]], L1 = L1, L2 = L2[i])))
 
 # Straying
 L1 = "Strays"
@@ -351,7 +351,7 @@ stray_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L
 diags_table = rbind(
   parr_recruit_diags,
   pi_diags,
-  phi_Pb_Pa_diags
+  phi_Pb_Pa_diags,
   phi_Pa_Mb_diags,
   phi_Mb_Ma_diags,
   phi_Ma_O0_diags,
@@ -721,7 +721,7 @@ get_resids = function(post, j) {
 
 ```{r make-mean-zero-resid-table}
 # extract posterior mean residual time series for each population
-resids = lapply(1:4, get_resids, post = post)
+resids = lapply(1:4, get_resids, post = diag_post)
 
 # convert to array format (list elements become matrix slices)
 resids = do.call(abind, append(resids, list(along = 3)))
