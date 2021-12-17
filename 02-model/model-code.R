@@ -82,7 +82,7 @@ jags_model_code = function() {
     ### PRIORS: HATCHERY STRAYS RETURNING IN YEARS WITH NO ASSOCIATED SMOLT RELEASE ###
     # the number of hatchery strays: only estimate in years where no other mechanism for generating hatchery fish
     for (i in 1:n_stray_yrs[j]) {
-      n_stray_tot[stray_yrs[i,j],j] ~ dunif(0, 5000)
+      n_stray_tot[stray_yrs[i,j],j] ~ dunif(0, 500)
     }
     for (i in 1:n_not_stray_yrs[j]) {
       n_stray_tot[not_stray_yrs[i,j],j] <- 0
