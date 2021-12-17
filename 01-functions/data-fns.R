@@ -48,8 +48,8 @@ create_comp_names = function(type, o_names, k_names) {
 # to be used by a JAGS model, one population only
 
 # pop: "CAT", "LOS", "MIN", or "UGR"
-# first_y: the first return year to model
-# last_y: the last return year to model
+# first_y: the first return year with adult return data for any population
+# last_y: the last return year with adult return data for any population
 
 create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   
@@ -80,11 +80,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   ni = 2                # number of juvenile life history strategies
   no = 2                # number of origins
   nko = nk * no         # number of age/origin combinations
-  nt = nrow(sub)        # number of return years tracked
-  ny = nt + kmax        # number of brood years tracked
+  ny = nrow(sub) + 1    # number of brood years tracked (add 1 to leave empty spot for year = 0; for AR(1) processes which require a previous year's residual)
   
   # assign these names
-  y_names = (first_y - kmax):last_y
+  y_names = (first_y - 1):last_y
   k_names = kmin:kmax
   i_names = paste0(c("fall", "spring"), "-mig")
   o_names = c("Nat", "Hat")
@@ -238,10 +237,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     yrs = as.numeric(names(Mb_obs[,2,2]))
     first_brood_release = min(yrs[Mb_obs[,2,2] > 0], na.rm = T)
     first_adult_return = first_brood_release + kmax
-    stray_yrs = (kmax+1):(which(yrs == (first_adult_return - 1)))
+    stray_yrs = 2:(which(yrs == (first_adult_return - 1)))
     not_stray_yrs = max(stray_yrs+1):ny
   } else {
-    stray_yrs = (kmax+1):ny
+    stray_yrs = 2:ny
     not_stray_yrs = numeric(0)
   }
   
