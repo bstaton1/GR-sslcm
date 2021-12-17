@@ -48,8 +48,8 @@ jags_data = append_no_na_indices(jags_data)
 
 # some parameters we are assuming known (for now)
 # harvest rates Below and Above BON by year, age, origin
-Ub_45_nat = with(jags_data, c(rep(NA, kmax), rep(0.02, ny - kmax)))
-Ub_45_hat = with(jags_data, c(rep(NA, kmax), rep(0.08, ny - kmax)))
+Ub_45_nat = with(jags_data, c(NA, rep(0.02, ny - 1)))
+Ub_45_hat = with(jags_data, c(NA, rep(0.08, ny - 1)))
 Ub = abind(list(cbind(Ub_45_nat * 0.25, Ub_45_nat, Ub_45_nat), cbind(Ub_45_hat * 0.75, Ub_45_hat, Ub_45_hat)), along = 3)
 dimnames(Ub) = with(jags_data, list(rownames(Ra_obs), kmin:kmax, c("Nat", "Hat")))
 
@@ -67,10 +67,6 @@ add_jags_data = list(
   f = c(1904, 3971, 4846),  # fecundity [female age]
   p_female = p_female       # proportion of spawners by age and population that are female
 )
-
-# calculate a metric for overall survival from estuary to tributary
-# used in obtaining an upper bound for initial adult recruits
-overall_phi_Rb_Ra = with(append(jags_data, add_jags_data), mean(phi_SL, na.rm = T) * mean(LGR_adults[,"Nat"]/BON_adults[,"Nat"], na.rm = TRUE))
 
 # some dummy variables for performing weir vs. carcass composition correction
 add_jags_data2 = list(
@@ -90,10 +86,11 @@ add_jags_data3 = list(
 )
 add_jags_data = append(add_jags_data, add_jags_data3)
 
-# calculate the upper bound on initial adult recruits and add to data
-p_NOR = apply(jags_data$carc_x_obs, 3, function(y) {rowSums(t(apply(y, 1, function(z) z/sum(z)))[,1:6])})
-add_jags_data = append(add_jags_data, list(max_init_recruits = apply(((jags_data$Ra_obs * p_NOR)/overall_phi_Rb_Ra * 1.5), 2, max, na.rm = TRUE),
-                                           first_LGR_adults = min(which(!is.na(jags_data$LGR_adults[,1])))))
+# set first year adult PIT tag data exist to inform BON -> LGR survival
+add_jags_data = append(add_jags_data, list(first_LGR_adults = min(which(!is.na(jags_data$LGR_adults[,1])))))
+
+# set upper boundaries for early Rb states
+add_jags_data = append(add_jags_data, list(max_Rb_init = c(50, 200, 200)))
 
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
