@@ -226,7 +226,7 @@ diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
 # parr recruitment
 L1 = "Egg-to-Parr Survival"
 L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Realized Survival", "Parr States")
-match = c("alpha", "^beta[", "mu_beta_per_wul", "sig_lbeta", "sig_Lphi_f_Pb", "rho_Lphi_f_Pb", "^phi_f_Pb[", "^Pb[")
+match = c("alpha", "^beta[", "mu_beta_per_wul", "sig_lbeta", "sig_Lphi_E_Pb", "rho_Lphi_E_Pb", "^phi_E_Pb[", "^Pb[")
 parr_recruit_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # LH apportionment
@@ -696,7 +696,7 @@ The model assumes mean-zero process noise for all components. That is, the model
 get_resids = function(post, j) {
   
   out = list(
-    egg_to_parr_surv = post_summ(post, sub_index("^lPb_resid[.+,pop]", pop = j))["mean",],
+    egg_to_parr_surv = post_summ(post, sub_index("^Lphi_E_Pb_resid[.+,pop]", pop = j))["mean",],
     p_fall_mig = post_summ(post, sub_index("^Lpi_resid[.+,pop]", pop = j))["mean",],
     ow_surv_fall = post_summ(post, sub_index("^Lphi_Pa_Mb_resid[.+,LH_type,pop]", pop = j, LH_type = 1))["mean",],
     ow_surv_spring = post_summ(post, sub_index("^Lphi_Pa_Mb_resid[.+,LH_type,pop]", pop = j, LH_type = 2))["mean",],
@@ -1442,16 +1442,16 @@ plot_f = function(j) {
   Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total egg production by brood year
-  f_tot = post_summ(post, sub_index("^f_tot[year,pop]", pop = j, year = ts_yrs))
+  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total parr recruits by brood year
   Pb = post_summ(post, sub_index("^Pb[year,pop]", pop = j, year = ts_yrs))
   
   # predict parr recruits along a sequence of spawner abundances
   Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
-  f_pred = seq(0, max(f_tot[5,]), length = 30)
+  E_pred = seq(0, max(E[5,]), length = 30)
   
-  Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(f_pred, bh_params[i,1], bh_params[i,2])))
+  Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(E_pred, bh_params[i,1], bh_params[i,2])))
   colnames(Pb_pred) = paste0("Pb_pred[", 1:length(Sa_pred), "]")
   Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
   Pb_pred = post_summ(Pb_pred, "Pb_pred")
@@ -1460,7 +1460,7 @@ plot_f = function(j) {
   par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
   
   # empty plot
-  plot(1, 1, type = "n", xlim = range(0, f_tot[5,]), ylim = range(0, Pb[5,], Pb_pred[5,]),
+  plot(1, 1, type = "n", xlim = range(0, E[5,]), ylim = range(0, Pb[5,], Pb_pred[5,]),
        xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = pops[j])
   
   x_ticks = axisTicks(par("usr")[1:2], log = FALSE)
@@ -1469,15 +1469,15 @@ plot_f = function(j) {
   axis(side = 2, at = y_ticks, labels = y_ticks/1e3)
   
   # draw fitted relationship: Bayesian
-  polygon(c(f_pred, rev(f_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
-  lines(Pb_pred[4,] ~ f_pred, col = "red", lty = 2)
-  lines(Pb_pred[5,] ~ f_pred, col = "red", lty = 2)
-  lines(Pb_pred[3,] ~ f_pred, col = "red", lwd = 2)
+  polygon(c(E_pred, rev(E_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
+  lines(Pb_pred[4,] ~ E_pred, col = "red", lty = 2)
+  lines(Pb_pred[5,] ~ E_pred, col = "red", lty = 2)
+  lines(Pb_pred[3,] ~ E_pred, col = "red", lwd = 2)
   
   # draw state pairs + uncertainty
-  segments(f_tot[4,], Pb[3,], f_tot[5,], Pb[3,], col = alpha("red", 0.5))
-  segments(f_tot[3,], Pb[4,], f_tot[3,], Pb[5,], col = alpha("red", 0.5))
-  points(Pb[3,] ~ f_tot[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  segments(E[4,], Pb[3,], E[5,], Pb[3,], col = alpha("red", 0.5))
+  segments(E[3,], Pb[4,], E[3,], Pb[5,], col = alpha("red", 0.5))
+  points(Pb[3,] ~ E[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -1496,14 +1496,14 @@ plot_f = function(j) {
   Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total egg production by brood year
-  f_tot = post_summ(post, sub_index("^f_tot[year,pop]", pop = j, year = ts_yrs))
+  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
 
   # graphical parameters
   par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
   
   # empty plot
-  plot(f_tot["mean",] ~ Sa_tot["mean",],
-       ylim = c(0, max(f_tot["97.5%",])),
+  plot(E["mean",] ~ Sa_tot["mean",],
+       ylim = c(0, max(E["97.5%",])),
        xlim = c(0, max(Sa_tot["97.5%",])), type = "n",
        ylab = "", xlab = "", las = 1, yaxt = "n")
   
@@ -1511,9 +1511,9 @@ plot_f = function(j) {
   y_ticks = axisTicks(par("usr")[3:4], log = F)
   axis(side = 2, at = y_ticks, labels = y_ticks/1e6, las = 2)
   
-  segments(Sa_tot["2.5%",], f_tot["mean",], Sa_tot["97.5%",], f_tot["mean",], col = alpha("red", 0.5))
-  segments(Sa_tot["mean",], f_tot["2.5%",], Sa_tot["mean",], f_tot["97.5%",], col = alpha("red", 0.5))
-  points(f_tot["mean",] ~ Sa_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  segments(Sa_tot["2.5%",], E["mean",], Sa_tot["97.5%",], E["mean",], col = alpha("red", 0.5))
+  segments(Sa_tot["mean",], E["2.5%",], Sa_tot["mean",], E["97.5%",], col = alpha("red", 0.5))
+  points(E["mean",] ~ Sa_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
   abline(c(0, 1000), lty = 1)
   abline(c(0, 1800), lty = 2)
   abline(c(0, 3600), lty = 3)
@@ -1538,10 +1538,10 @@ This figure shows the density dependence built in to the Beverton-Holt recruitme
 ```{r parr-per-egg-v-eggs, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
   # extract posterior summaries of total egg production by brood year
-  f_tot = post_summ(post, sub_index("^f_tot[year,pop]", pop = j, year = ts_yrs))
+  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
   
   # conversion rates
-  Pb_per_f_tot = post_summ(post, sub_index("^Pb_per_f_tot[year,pop]", pop = j, year = ts_yrs))
+  Pb_per_E = post_summ(post, sub_index("^Pb_per_E[year,pop]", pop = j, year = ts_yrs))
   
   # max survival
   alpha = post_summ(post, sub_index("^alpha[pop]", pop = j))
@@ -1550,19 +1550,18 @@ plot_f = function(j) {
   par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
   
   # empty plot
-  plot(Pb_per_f_tot["mean",] ~ f_tot["mean",],
-       # ylim = c(0, max(Pb_per_f_tot["97.5%",], alpha["97.5%",])),
+  plot(Pb_per_E["mean",] ~ E["mean",],
        ylim = c(0, 1),
-       xlim = c(0, max(f_tot["97.5%",])), type = "n",
+       xlim = c(0, max(E["97.5%",])), type = "n",
        ylab = "", xlab = "", las = 1, xaxt = "n", main = pops[j])
   
   # x-axis
   x_ticks = axisTicks(par("usr")[1:2], log = F)
   axis(side = 1, at = x_ticks, labels = x_ticks/1e6)
   
-  segments(f_tot["2.5%",], Pb_per_f_tot["mean",], f_tot["97.5%",], Pb_per_f_tot["mean",], col = alpha("red", 0.5))
-  segments(f_tot["mean",], Pb_per_f_tot["2.5%",], f_tot["mean",], Pb_per_f_tot["97.5%",], col = alpha("red", 0.5))
-  points(Pb_per_f_tot["mean",] ~ f_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  segments(E["2.5%",], Pb_per_E["mean",], E["97.5%",], Pb_per_E["mean",], col = alpha("red", 0.5))
+  segments(E["mean",], Pb_per_E["2.5%",], E["mean",], Pb_per_E["97.5%",], col = alpha("red", 0.5))
+  points(Pb_per_E["mean",] ~ E["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
   
   rect(par("usr")[1], alpha["2.5%",], par("usr")[2], alpha["97.5%",], border = alpha("red", 0.5), col = alpha("salmon", 0.5))
   abline(h = alpha["mean",], lwd = 2, col = "red")
@@ -2030,8 +2029,8 @@ my_boxplot = function(params, ylab = NULL, ticklabs = pops, ylim = NULL, boxfill
 par(mfrow = c(1,4))
 my_boxplot("^alpha[.]$", "Productivity")
 my_boxplot("^beta[.]$", "Capacity")
-my_boxplot("^sig_Lphi_f_Pb[.]$", "Process SD")
-my_boxplot("^rho_Lphi_f_Pb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
+my_boxplot("^sig_Lphi_E_Pb[.]$", "Process SD")
+my_boxplot("^rho_Lphi_E_Pb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Life History Apportionment

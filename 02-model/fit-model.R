@@ -197,7 +197,7 @@ toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival
 
 jags_params = c(
   # reproduction
-  "alpha", "beta", "Sig_Lphi_f_Pb", "phi_f_Pb", "mu_beta_per_wul", "sig_lbeta",
+  "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "mu_beta_per_wul", "sig_lbeta",
 
   # overwinter survival coefficients
   "gamma0", "gamma1",
@@ -226,7 +226,7 @@ jags_params = c(
   
   # states
   "Pb", "Pa", "Mb", "Ma", "O0", "O", "Rb",
-  "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot", "f_tot",
+  "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot", "E",
   
   # carcass vs. weir correction
   "z", "carc_adj", "n_stray_tot", "stray_comp", "mu_z", "sig_z",
@@ -235,13 +235,13 @@ jags_params = c(
   "O_phi_scaler_nat_hat", "phi_Pb_Pa", "bad_flag",
   
   # misc derived quantities
-  "beta_per_wul", "Pb_per_Sa_tot", "Pb_per_f_tot", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
+  "beta_per_wul", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
   
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_O0_resid", "Lpsi_O1_Rb_resid",
   "Lpsi_O2_Rb_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
-  "Lphi_Sb_Sa_resid", "Lphi_f_Pb_resid", "Lphi_Rb_Ra_resid",
+  "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
   
   # AR(1) coefficients
   "kappa_phi_O0_O1",
@@ -314,7 +314,7 @@ cat("\nDecomposing all covariance matrices")
 
 # Convert the precision/covariance matrices monitored by JAGS into the marginal SD and correlation matrix terms
 suppressMessages({
-  Sig_Lphi_f_Pb = vcov_decomp(post, "Sig_Lphi_f_Pb", sigma_base_name = "sig_Lphi_f_Pb", rho_base_name = "rho_Lphi_f_Pb")
+  Sig_Lphi_E_Pb = vcov_decomp(post, "Sig_Lphi_E_Pb", sigma_base_name = "sig_Lphi_E_Pb", rho_base_name = "rho_Lphi_E_Pb")
   Sig_Lpi = vcov_decomp(post, "Sig_Lpi", sigma_base_name = "sig_Lpi", rho_base_name = "rho_Lpi")
   Sig_Lphi_Pa_Mb1 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,1]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
   Sig_Lphi_Pa_Mb2 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,2]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
@@ -349,7 +349,7 @@ vcov_rows = dummy_rows[lower.tri(dummy_rows)]
 vcov_indices = paste0("[", vcov_rows, ",", vcov_cols, "(,.)?]")
 
 # subset out only the unique elements
-Sig_Lphi_f_Pb = post_subset(Sig_Lphi_f_Pb, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lphi_E_Pb = post_subset(Sig_Lphi_E_Pb, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lpi = post_subset(Sig_Lpi, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Pa_Mb1 = post_subset(Sig_Lphi_Pa_Mb1, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Pa_Mb2 = post_subset(Sig_Lphi_Pa_Mb2, c("sig", paste0("rho.+", vcov_indices)))
@@ -365,7 +365,7 @@ Sig_Lphi_Rb_Ra = post_subset(Sig_Lphi_Rb_Ra, c("sig", "rho.+"))
 Sig_Lphi_Sb_Sa = post_subset(Sig_Lphi_Sb_Sa, c("sig", paste0("rho.+", vcov_indices)))
 
 # combine these derived posterior samples with the main object
-post = post_bind(post, Sig_Lphi_f_Pb)
+post = post_bind(post, Sig_Lphi_E_Pb)
 post = post_bind(post, Sig_Lpi)
 post = post_bind(post, Sig_Lphi_Pa_Mb1)
 post = post_bind(post, Sig_Lphi_Pa_Mb2)

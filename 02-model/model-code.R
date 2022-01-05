@@ -10,7 +10,7 @@ jags_model_code = function() {
     alpha[j] ~ dbeta(1, 1)
     lbeta[j] ~ dnorm(log(mu_beta_per_wul * wul[j]), 1/sig_lbeta^2) %_% T(,15) # log capacity. bound to prevent nonsensically large draws
     beta[j] <- exp(lbeta[j])
-    sig_Lphi_f_Pb[j] ~ dunif(0, 5)
+    sig_Lphi_E_Pb[j] ~ dunif(0, 5)
     beta_per_wul[j] <- beta[j]/wul[j]
 
     ### PRIORS: FRESHWATER PARAMETERS ###
@@ -119,7 +119,7 @@ jags_model_code = function() {
   
   # correlation parameters
   # see toggle_rho_estimation() function; 01-functions/util-fns.R
-  rho_Lphi_f_Pb <- 0
+  rho_Lphi_E_Pb <- 0
   rho_Lpi <- 0
   rho_Lphi_Pa_Mb[i_fall] <- 0
   rho_Lphi_Pa_Mb[i_spring] <- 0
@@ -138,7 +138,7 @@ jags_model_code = function() {
   for (i in 1:nj) {
     for (j in 1:nj) {
       # covariance matrix of parr recruitment
-      Sig_Lphi_f_Pb[i,j] <- sig_Lphi_f_Pb[i] * sig_Lphi_f_Pb[j] * ifelse(i == j, 1, rho_Lphi_f_Pb)
+      Sig_Lphi_E_Pb[i,j] <- sig_Lphi_E_Pb[i] * sig_Lphi_E_Pb[j] * ifelse(i == j, 1, rho_Lphi_E_Pb)
       
       # covariance matrix of LH apportionment
       Sig_Lpi[i,j] <- sig_Lpi[i] * sig_Lpi[j] * ifelse(i == j, 1, rho_Lpi)
@@ -220,7 +220,7 @@ jags_model_code = function() {
   for (y in 2:ny) {
     
     # egg to parr survival: Beverton-Holt relationship
-    Lphi_f_Pb[y,1:nj] ~ dmnorm.vcov(logit(phi_f_Pb_mean[y,1:nj]), Sig_Lphi_f_Pb[1:nj,1:nj])
+    Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(phi_E_Pb_mean[y,1:nj]), Sig_Lphi_E_Pb[1:nj,1:nj])
 
     # LH apportionment
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
@@ -266,7 +266,7 @@ jags_model_code = function() {
     for (j in 1:nj) {
       
       # transform egg to parr survival
-      phi_f_Pb[y,j] <- ilogit(Lphi_f_Pb[y,j])
+      phi_E_Pb[y,j] <- ilogit(Lphi_E_Pb[y,j])
 
       # transform LH apportionment
       pi[y,i_fall,j] <- ilogit(Lpi1[y,j])
@@ -342,13 +342,10 @@ jags_model_code = function() {
   ### PROCESS MODEL: COMPLETE LIFE CYCLE FOR REMAINING BROOD YEARS ###
   for (j in 1:nj) {
     for (y in 2:ny) {
-      # reproductive link: total summer parr
-      # Pb[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j]) * exp(lPb_resid[y,j])
-      # Pb_mean[y,j] <- f_tot[y,j]/(1/alpha[j] + f_tot[y,j]/beta[j])
-      phi_f_Pb_mean[y,j] <- 1/(1/alpha[j] + f_tot[y,j]/beta[j])
-      Pb[y,j] <- f_tot[y,j] * phi_f_Pb[y,j]
-      # Pb[y,j] ~ dlnorm(log(Pb_pred[y,j]), 1/sig_Pb[j]^2)
-      
+      # reproductive link: expected egg-to-parr survival is a BH function and parr recruitment is egg production times a latent survival
+      phi_E_Pb_mean[y,j] <- 1/(1/alpha[j] + E[y,j]/beta[j])
+      Pb[y,j] <- E[y,j] * phi_E_Pb[y,j]
+
       # natural origin tributary-to-LGD dynamics
       for (i in 1:ni) {
         # apportion to LH-strategy: parr after fall migration
@@ -415,8 +412,8 @@ jags_model_code = function() {
           # survive pre-spawn mortality
           Sa[y,k,o,j] <- Sb[y,k,o,j] * phi_Sb_Sa[y,j]
           
-          # calculate egg production
-          eggs[y,k,o,j] <- Sa[y,k,o,j] * p_female[k,j] * f[k]
+          # calculate egg production (eggs separated by age/origin)
+          E_sep[y,k,o,j] <- Sa[y,k,o,j] * p_female[k,j] * f[k]
           
           # calculate "adjusted carcasses": accounts for sampling bias relative to weir
           Sa_adj[y,k,o,j] <- Sa[y,k,o,j] * carc_adj[k,j]
@@ -429,8 +426,8 @@ jags_model_code = function() {
       # total spawning adults
       Sa_tot[y,j] <- sum(Sa[y,1:nk,1:no,j])
       
-      # total egg production: used as spawning stock
-      f_tot[y,j] <- sum(eggs[y,1:nk,1:no,j])
+      # total egg production summed across ages/origins: used as spawning stock index
+      E[y,j] <- sum(E_sep[y,1:nk,1:no,j])
       
       # reformat returns by age/origin for fitting to weir comp data (basically cbind two array slices)
       Ra_2d[y,1:nk,j] <- Ra[y,1:nk,o_nat,j]            # nat., all ages
@@ -448,7 +445,7 @@ jags_model_code = function() {
       
       # calculate misc derived quantities
       Pb_per_Sa_tot[y,j] <- Pb[y,j]/Sa_tot[y,j]                  # parr per spawner
-      Pb_per_f_tot[y,j] <- Pb[y,j]/f_tot[y,j]                    # parr per egg
+      Pb_per_E[y,j] <- Pb[y,j]/E[y,j]                    # parr per egg
       Mb_per_Sa_tot[y,j] <- sum(Mb[y,1:ni,o_nat,j])/Sa_tot[y,j]  # smolt per spawner
     }
     
@@ -691,7 +688,7 @@ jags_model_code = function() {
     for (j in 1:nj) {
       
       # total summer parr recruitment
-      Lphi_f_Pb_resid[y,j] <- Lphi_f_Pb[y,j] - logit(phi_f_Pb_mean[y,j])
+      Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(phi_E_Pb_mean[y,j])
       
       # proportion of summer parr that become fall migrants
       Lpi_resid[y,j] <- logit(pi[y,i_fall,j]) - logit(mu_pi[i_fall,j])

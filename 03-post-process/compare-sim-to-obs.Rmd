@@ -648,7 +648,7 @@ est_ratios = NULL
 #### Egg to Parr Survival
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^Pb_per_f_tot[year,pop]", obs_y, sim_y, pop = j))
+x = lapply(1:4, function(j) get_ratio("^Pb_per_E[year,pop]", obs_y, sim_y, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Egg to Parr Survival: Estimates")
 ratio_plots(x, "Egg to Parr Survival: Ratios")
@@ -811,7 +811,7 @@ derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", 
 #### Total Egg Production
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^f_tot[year,pop]", obs_y, sim_y, pop = j))
+x = lapply(1:4, function(j) get_ratio("^E[year,pop]", obs_y, sim_y, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Egg Production: Estimates")
 ratio_plots(x, "Total Egg Production: Ratios")
@@ -1113,7 +1113,7 @@ pop_ts_plots = function(param, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
 #### Egg to Parr Survival
 
 ```{r}
-pop_ts_plots("^Pb_per_f_tot[year,pop]")
+pop_ts_plots("^Pb_per_E[year,pop]")
 ```
 
 #### Proportion Fall Migrants
@@ -1247,7 +1247,7 @@ pop_ts_plots("^Sa_tot[year,pop]")
 #### Total Egg Production
 
 ```{r}
-pop_ts_plots("^f_tot[year,pop]")
+pop_ts_plots("^E[year,pop]")
 ```
 
 #### Total Parr Recruitment
