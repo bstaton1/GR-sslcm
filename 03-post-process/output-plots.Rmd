@@ -164,11 +164,11 @@ kable(df, format.args = list(big.mark = ",")) %>%
 
 ## Diagnostic Summaries
 
-```{r make-diag-post, message = FALSE}
+```{r make-diag-post}
 # make a reduced diagnostic posterior: drop out all quantities associated with simulated years
 # there is no point in calculating diagnostic summaries for future years
 if (length(simulated) > 0) {
-  diag_post = post_remove(post, paste0("[", simulated), ask = FALSE)
+  diag_post = suppressMessages(post_remove(post, paste0("[", simulated), ask = FALSE))
 } else {
   diag_post = post
 }
