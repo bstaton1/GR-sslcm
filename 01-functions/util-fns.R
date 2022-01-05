@@ -289,7 +289,7 @@ toggle_rho_estimation = function(rho_term, jags_file = "02-model/model.txt") {
   which_matches = stringr::str_which(model_lines, paste0("^[:space:]*", rho_term))
   
   # replace the "<- 0" with a prior to turn on the estimation of the rho term
-  model_lines[which_matches] = stringr::str_replace(model_lines[which_matches], "<- 0", "~ dunif(-0.99, 0.99)")
+  model_lines[which_matches] = stringr::str_replace(model_lines[which_matches], "<- 0", "~ dunif(-1, 1)")
   
   # write over the old jags model code
   writeLines(model_lines, jags_file)

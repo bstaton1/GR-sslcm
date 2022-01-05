@@ -18,7 +18,7 @@ out_dir = "02-model/model-output"
 
 # specify the last year of model calculations
 # make later than 2019 to include simulated outcomes
-last_yr = 2019
+last_yr = 2050
 
 # specify a scenario name
 scenario = "new-BH"
@@ -189,9 +189,9 @@ write_model_code(jags_source, jags_file)
 
 # toggle on the estimation of various rho terms
 # this function alters the contents of jags_file to
-# replace the appropriate "rho <- 0" with "rho ~ dunif(-0.99, 0.99)
+# replace the appropriate "rho <- 0" with "rho ~ dunif(-1, 1)
 # i.e., defines which components should have non-zero covariance
-toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival
+toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival process noise
 
 ##### STEP 3: SELECT NODES TO MONITOR #####
 
@@ -443,3 +443,4 @@ if (rmd) {
   setwd("../")
   cat("\n\nDone.")
 }
+
