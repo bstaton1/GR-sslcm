@@ -5,7 +5,7 @@ output: html_document
 params:
   scenario:
     label: "Scenario"
-    value: "base-with-sim-medium"
+    value: "new-BH"
     input: text
 editor_options: 
   chunk_output_type: console
@@ -31,7 +31,7 @@ model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds"
 
 # extract the two key structures from this object
 # post = model_info$post                               # full posterior takes a long time to run on this script
-post = post_thin(model_info$post, keep_percent = 0.05)  # uncomment this to run document with 10% of the retained MCMC samples
+post = post_thin(model_info$post, keep_percent = 0.05)  # uncomment this to run document with 5% of the retained MCMC samples
 jags_data = model_info$jags_data
 ```
 
@@ -279,8 +279,8 @@ Ma = post_subset(post, "^Ma[", matrix = TRUE)
 out_nor = out_hor = NULL
 for (i in 1:nrow(Ma)) {
   Ma_i = array_format(Ma[i,])
-  nor = Ma_i[,1,1,] + Ra_i[,2,1,]
-  hor = Ra_i[,2,2,]
+  nor = Ma_i[,1,1,] + Ma_i[,2,1,]
+  hor = Ma_i[,2,2,]
 
   out_nor = rbind(out_nor, rowSums(nor))
   out_hor = rbind(out_hor, rowSums(hor))
