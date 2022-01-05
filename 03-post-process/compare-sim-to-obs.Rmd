@@ -5,7 +5,7 @@ output: html_document
 params:
   scenario:
     label: "Scenario"
-    value: "base-with-sim-medium"
+    value: "new-BH"
     input: text
 editor_options: 
   chunk_output_type: console
@@ -31,7 +31,7 @@ model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds"
 
 # extract the two key structures from this object
 # post = model_info$post                               # full posterior takes a long time to run on this script
-post = post_thin(model_info$post, keep_percent = 0.05)  # uncomment this to run document with 10% of the retained MCMC samples
+post = post_thin(model_info$post, keep_percent = 0.05)  # uncomment this to run document with 5% of the retained MCMC samples
 jags_data = model_info$jags_data
 ```
 
@@ -279,8 +279,8 @@ Ma = post_subset(post, "^Ma[", matrix = TRUE)
 out_nor = out_hor = NULL
 for (i in 1:nrow(Ma)) {
   Ma_i = array_format(Ma[i,])
-  nor = Ma_i[,1,1,] + Ra_i[,2,1,]
-  hor = Ra_i[,2,2,]
+  nor = Ma_i[,1,1,] + Ma_i[,2,1,]
+  hor = Ma_i[,2,2,]
 
   out_nor = rbind(out_nor, rowSums(nor))
   out_hor = rbind(out_hor, rowSums(hor))
@@ -648,7 +648,7 @@ est_ratios = NULL
 #### Egg to Parr Survival
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^Pb_per_f_tot[year,pop]", obs_y, sim_y, pop = j))
+x = lapply(1:4, function(j) get_ratio("^Pb_per_E[year,pop]", obs_y, sim_y, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Egg to Parr Survival: Estimates")
 ratio_plots(x, "Egg to Parr Survival: Ratios")
@@ -811,7 +811,7 @@ derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", 
 #### Total Egg Production
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^f_tot[year,pop]", obs_y, sim_y, pop = j))
+x = lapply(1:4, function(j) get_ratio("^E[year,pop]", obs_y, sim_y, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Egg Production: Estimates")
 ratio_plots(x, "Total Egg Production: Ratios")
@@ -1113,7 +1113,7 @@ pop_ts_plots = function(param, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
 #### Egg to Parr Survival
 
 ```{r}
-pop_ts_plots("^Pb_per_f_tot[year,pop]")
+pop_ts_plots("^Pb_per_E[year,pop]")
 ```
 
 #### Proportion Fall Migrants
@@ -1247,7 +1247,7 @@ pop_ts_plots("^Sa_tot[year,pop]")
 #### Total Egg Production
 
 ```{r}
-pop_ts_plots("^f_tot[year,pop]")
+pop_ts_plots("^E[year,pop]")
 ```
 
 #### Total Parr Recruitment
