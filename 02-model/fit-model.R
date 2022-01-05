@@ -191,7 +191,15 @@ write_model_code(jags_source, jags_file)
 # this function alters the contents of jags_file to
 # replace the appropriate "rho <- 0" with "rho ~ dunif(-1, 1)
 # i.e., defines which components should have non-zero covariance
+toggle_rho_estimation("rho_Lphi_E_Pb")     # parr recruitment process noise
+toggle_rho_estimation("rho_Lpi")           # parr apportionment to LH type process noise
+toggle_rho_estimation("rho_Lphi_Pa_Mb")    # parr -> smolt overwinter survival process noise (both LH types)
+toggle_rho_estimation("rho_Lphi_Mb_Ma")    # migration to LGR survival process noise
+toggle_rho_estimation("rho_Lphi_Ma_O0")    # migration from LGR to ocean survival process noise
 toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival process noise
+toggle_rho_estimation("rho_Lpsi_O._Rb")    # all maturity process noise
+toggle_rho_estimation("rho_Lphi_Rb_Ra")    # migration BON to LGR survival process noise
+toggle_rho_estimation("rho_Lphi_Sb_Sa")    # pre-spawn survival process noise
 
 ##### STEP 3: SELECT NODES TO MONITOR #####
 
