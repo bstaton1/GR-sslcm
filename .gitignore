@@ -20,6 +20,11 @@
 *.jpg
 *.jpeg
 
+# add an exception for the math description document
+# viewers of the repo should not need to have to install LaTeX 
+# just to build this document for quick viewing
+!100-math-description/GR-sslcm-math-description.pdf
+
 # JAGS model files: these are never edited directly
 *.txt
 
