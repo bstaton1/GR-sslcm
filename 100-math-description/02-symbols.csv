@@ -1,0 +1,26 @@
+Phase,Type,Symbol,Eqs.,Description,Footnote
+1,state,"$E_{y,j}$","get-E, get-phi-E-Pb-dot, get-Pb",Total egg production,NA
+1,state,"$P^{b}_{y,j}$","get-Pb, get-Pa, summer-surv-data",Parr abundance at end of summer (\\textit{before} migratory strategy apportionment),NA
+1,state,"$P^{a}_{y,i,j}$","get-Pa, get-phi-Pa-Mb-dot, get-Mb-NOR, fall-surv-data, winter-surv-data",Parr abundance \\textit{after} migratory strategy apportionment,NA
+1,state,"$M^{b}_{y,i,o,j}$","get-Mb-NOR, get-Ma, spring-count-data","In-basin smolt abundance, immediately following over-winter mortality and \\textit{before} migration out of basin; hatchery-origin smolt releases introduced here",NA
+1,state,"$M^{a}_{y,i,o,j}$","get-Ma, get-O0, summer-surv-data, fall-surv-data, winter-surv-data, spring-surv-data, spring-surv-HOR-data",Smolt abundance at Lower Granite Dam \\textit{after} migration out of basin,NA
+1,rate,"$\\phi^{E \\rightarrow P^{b}}_{y,j}$","phi-E-Pb-random, get-Pb",Survival rate from egg to end of summer parr; density-dependent,NA
+1,rate,"$\\pi_{y,i,j}$","get-Pa, pi-random",Proportion of parr at end of summer that have migratory strategy $i$,NA
+1,rate,"$\\phi^{P^{a} \\rightarrow M^{b}}_{y,i,j}$","phi-Pa-Mb-random, get-Mb-NOR","Overwinter survival from parr year to smolt year; i.e., to move from total age-1 to total age-2; density-dependent",NA
+1,rate,"$\\phi^{M^{b} \\rightarrow M^{a}}_{y,i,o,j}$","phi-Mb-Ma-random, get-Ma, spring-surv-data, spring-surv-HOR-data",Migration survival from within basin to Lower Granite Dam,NA
+1,rate,"$\\phi^{M^{a} \\rightarrow O^{0}}_{y,o}$","phi-Ma-O0-random, get-O0, hydro-surv-data",Migration survival downstream through hydrosystem to reach ocean,NA
+2,state,"$O^{w}_{y,o,j}$","get-O0, get-Os, get-Rbs","Abundance of ocean juveniles after experiencing $w$ winter(s) at sea, where $w \\in [0,1,2,3]$",NA
+2,rate,"$\\phi^{O^{w} \\rightarrow O^{w+1}}_{y,o,j}$","phi-O0-O1-random, get-phi-O-HOR, get-Os","Survival of ocean juveniles from the end of winter $w$ to the end of winter $w+1$ at sea, where $w \\in [0,1,2]$",NA
+2,rate,"$\\psi^{O^{w}}_{y,o,j}$","psi-random, get-Os, get-Rbs","Proportion of ocean juveniles alive at the end of winter $w$ at sea that make spawning migration before winter $w+1$, where $w \\in [1,2,3]$",NA
+3,state,"$R^{b}_{y,k,o,j}$","get-Rbs, get-Ra","Abundance of adults (i.e., mature) arriving at the estuary (\\textit{before} upstream main-stem migration)",NA
+3,state,"$R^{a}_{y,k,o,j}$","get-Ra, get-Sb, Ra-data, get-pRa",Abundance of adults arriving at their natal tributary (\\textit{after} upstream main-stem migration),NA
+3,state,"$T_{y,k,o,j}$",get-Ra,Abundance of adult strays,NA
+3,state,"$B_{y,k,o,j}$",get-Sb,"Abundance of adults removed at weir, primarily for broodstock",NA
+3,state,"$S^{b}_{y,k,o,j}$","get-Sb, get-Sa","Abundance of adults following weir removals (e.g., for hatchery broodstock but \\textit{before} pre-spawn mortality)",NA
+3,state,"$S^{a}_{y,k,o,j}$","get-E, get-Sa, get-pSa-prime",Abundance of spawning adults \\textit{after} pre-spawn mortality,NA
+3,rate,"$\\phi^{SL}_{y,j}$",get-Ra,Survival past sea lion predation downstream of Bonneville Dam,NA
+3,rate,"$U_{y,k,o}$",get-Ra,Fishery harvest rate downstream of Bonneville Dam,NA
+3,rate,"$\\phi^{R^{b} \\rightarrow R^{a}}_{y,o}$","get-Ra, upstream-surv-data",Survival from all mortality sources during the migration between Bonneville Dam and arrival to natal tributaries,NA
+3,rate,"$\\phi^{S^{b} \\rightarrow S^{a}}_{y,j}$","get-Sa, prespawn-surv-data",Pre-spawn survival rate,NA
+3,rate,"$\\Omega_{k,j}$",get-E,Proportion of spawners that are female,NA
+3,rate,$f_{k}$,get-E,Fecundity per female spawner,NA

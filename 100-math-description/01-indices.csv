@@ -1,0 +1,18 @@
+Type,Symbol,Description,Footnote
+index,$j$,"Population; $j \\in [\\mathrm{CAT}, \\mathrm{LOS}, \\mathrm{MIN}, \\mathrm{UGR}]$",1
+index,$y$,"Year; $y \\in [1, \\dots, n_y]$",2
+index,$k$,"Age of maturation; $k \\in [1, \\dots, n_k]$",3
+index,$i$,"Juvenile migratory strategy; $i \\in [\\mathrm{fall}, \\mathrm{spring}]$",4
+index,$o$,"Origin type; either natural- or hatchery-origin; $o \\in [\\mathrm{NOR}, \\mathrm{HOR}]$",5
+index,$ko$,"Unique age/origin combinations; $ko \\in [1, \\dots, n_{ko}]$",6
+index,$w$,"Number of winters spent at sea prior to maturation; $w \\in [1,2,3]$",
+scope,$y_{\\mathrm{min}}$,First year modeled; equal to 1991 here; first brood year with juvenile data,2
+scope,$y_{\\mathrm{max}}$,Last year modeled; equal to 2019 here; last return year with adult data,2
+scope,$k_{\\mathrm{min}}$,Minimum total age of maturation; equal to 3 here,3
+scope,$k_{\\mathrm{max}}$,Maximum total age of maturation; equal to 5 here,3
+dimension,$n_j$,Number of populations modeled; equal to 4 here,1
+dimension,$n_y$,Number of years modeled; equal to 29 here,2
+dimension,$n_k$,Number of ages at maturation modeled; equal to 3 here,3
+dimension,$n_i$,Number of migratory strategies modeled; equal to 2 here,4
+dimension,$n_o$,Number of origins modeled; equal to 2 here,5
+dimension,$n_{ko}$,Number of unique age/origin combinations,6

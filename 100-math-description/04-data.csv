@@ -1,0 +1,25 @@
+Phase,Type,Symbol,Eqs.,Description
+1,abund,"$\\hat{P}^{a}_{y,i=\\mathrm{fall},j}$",fall-count-data,Estimated smolt trap passage of parr in the fall
+1,abund,"$\\hat{\\sigma}_{P^{a}_{y,i=\\mathrm{fall},j}}$",fall-count-data,Log-normal SE of estimated smolt trap passage of parr in the fall
+1,abund,"$\\hat{M}^{b}_{y,i=\\mathrm{spring},o=\\mathrm{NOR},j}$",spring-count-data,Estimated smolt trap passage of smolt in the spring
+1,abund,"$\\hat{\\sigma}_{M^{b}_{y,i=\\mathrm{spring},o=\\mathrm{NOR},j}}$",spring-count-data,Log-normal SE of estimated smolt trap passage of smolt in the spring
+1,surv,"$\\hat{\\phi}^{P^{b} \\rightarrow M^{a}}_{y,j}$",summer-surv-data,Estimated survival from summer tagging to LGR
+1,surv,"$\\hat{\\sigma}_{\\phi^{P^{b} \\rightarrow M^{a}}_{y,j}}$",summer-surv-data,Logit-normal SE of estimated survival from summer tagging to LGR
+1,surv,"$\\hat{\\phi}^{P^{a} \\rightarrow M^{a}}_{y,i=\\mathrm{fall},j}$",fall-surv-data,Estimated survival from fall tagging to LGR
+1,surv,"$\\hat{\\sigma}_{\\phi^{P^{a} \\rightarrow M^{a}}_{y,i=\\mathrm{fall},j}}$",fall-surv-data,Logit-normal SE of estimated survival from fall tagging to LGR
+1,surv,"$\\hat{\\phi}^{P^{a} \\rightarrow M^{a}}_{y,i=\\mathrm{spring},j}$",winter-surv-data,Estimated survival from winter tagging to LGR
+1,surv,"$\\hat{\\sigma}_{\\phi^{P^{a} \\rightarrow M^{a}}_{y,i=\\mathrm{spring},j}}$",winter-surv-data,Logit-normal SE of estimated survival from winter tagging to LGR
+1,surv,"$\\hat{\\phi}^{M^{b} \\rightarrow M^{a}}_{y,i=\\mathrm{spring},o=\\mathrm{NOR},j}$",spring-surv-data,Estimated survival from spring tagging to LGR
+1,surv,"$\\hat{\\sigma}_{\\phi^{M^{b} \\rightarrow M^{a}}_{y,i=\\mathrm{spring},o=\\mathrm{NOR},j}}$",spring-surv-data,Logit-normal SE of estimated survival from spring tagging to LGR
+1,surv,"$\\hat{\\phi}^{M^{b} \\rightarrow M^{a}}_{y,i=\\mathrm{spring},o=\\mathrm{HOR},j}$",spring-surv-HOR-data,Estimated survival of hatchery-origin smolt releases to LGR
+1,surv,"$\\hat{\\sigma}_{\\phi^{M^{b} \\rightarrow M^{a}}_{y,i=\\mathrm{spring},o=\\mathrm{HOR},j}}$",spring-surv-HOR-data,Logit-normal SE of estimated survival of hatchery-origin smolt releases to LGR
+1,surv,"$\\hat{\\phi}^{M^{a} \\rightarrow O^{0}}_{y,o}$",hydro-surv-data,Estimated aggregate survival of smolt through hydrosystem
+1,surv,"$\\hat{\\sigma}_{\\phi^{M^{a} \\rightarrow O^{0}}_{y,o}}$",hydro-surv-data,Logit-normal SE of estimated aggregate survival of smolt through hydrosystem
+3,abund,"$\\hat{R}^{a}_{y,j}$",Ra-data,Estimated total adult return to tributary (all ages/origins)
+3,abund,"$\\hat{\\sigma}_{R^{a}_{y,j}}$",Ra-data,Log-normal SE of estimated total adult return to tributary
+3,surv,"$\\hat{x}^{\\mathrm{BON}}_{y,o}$",upstream-surv-data,Count of Grande Ronde-origin PIT-tagged adults detected at BON
+3,surv,"$\\hat{x}^{\\mathrm{LGR}}_{y,o}$",upstream-surv-data,Count of Grande Ronde-origin PIT-tagged adults detected at LGR
+3,surv,"$\\hat{x}^{\\mathrm{carcass,total}}_{y,j}$",prespawn-surv-data,Count of female carcasses examined for spawning success
+3,surv,"$\\hat{x}^{\\mathrm{carcass,spawned}}_{y,j}$",prespawn-surv-data,Count of female carcasses found to have successfully spawned
+3,comp,"$\\hat{x}^{R^{a}}_{y,ko,j}$",weir-comp-data,"Count of sampled adults returning to tributary by age/origin; only for $j \\in [\\mathrm{CAT}, \\mathrm{LOS}, \\mathrm{UGR}]$"
+3,comp,"$\\hat{x}^{S^{a^{\\prime}}}_{y,ko,j}$",carcass-comp-data,Count of sampled carcasses by age/origin
