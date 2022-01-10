@@ -1,0 +1,46 @@
+Phase,Component,Eq.,Description
+0,syntax,generic-random,Syntax for quantities assumed to follow a multivariate logit-normal distribution
+0,syntax,generic-Sigma4by4,Covariance structure for quantities that vary across populations
+0,syntax,generic-Sigma2by2,Covariance structure for quantities that vary across origins (but not populations)
+1,process,get-E,Obtain total egg production
+1,process,get-phi-E-Pb-dot,Obtain expected egg-to-parr survival; density-dependent via Beverton-Holt function
+1,process,beta-random,Parr capacity as a stochastic function of weighted usable habitat length
+1,process,phi-E-Pb-random,Add stochasticity to egg-to-parr survival
+1,process,get-Pb,Obtain total parr recruitment
+1,process,get-Pa,Obtain migratory strategy-specific parr abundance
+1,process,pi-random,Add stochasticity to migratory strategy apportionment rates
+1,process,get-phi-Pa-Mb-dot,Obtain expected overwinter survival; density-dependent via logit-linear model
+1,process,phi-Pa-Mb-random,Add stochasticity to overwinter survival
+1,process,get-Mb-NOR,Obtain natural-origin smolt abundance prior to out-of-basin migration
+1,process,phi-Mb-Ma-random,Add stochasticity to migration survival from in-basin to LGR
+1,process,get-Ma,Obtain smolt abundance at LGR
+1,process,phi-Ma-O0-random,Add stochasticity to migration survival from LGR to ocean
+1,process,get-O0,Obtain initial abundance of ocean juveniles 
+1,observation,fall-count-data,Assumption for fall screw trap count data likelihood
+1,observation,spring-count-data,Assumption for spring screw trap count data likelihood
+1,observation,summer-surv-data,Assumption for summer tagging event survival data likelihood
+1,observation,fall-surv-data,Assumption for fall tagging event survival data likelihood
+1,observation,winter-surv-data,Assumption for winter tagging event survival data likelihood
+1,observation,spring-surv-data,Assumption for spring tagging event survival data likelihood (NOR)
+1,observation,spring-surv-HOR-data,Assumption for spring tagging event survival data likelihood (HOR)
+1,observation,hydro-surv-data,Assumption for migration through hydrosystem survival data likelihood
+2,process,phi-O0-O1-random,Add stochasticity to first year ocean survival
+2,process,get-phi-O-HOR,Obtain HOR ocean survival
+2,process,psi-random,Add stochasticity to maturation rates
+2,process,get-Os,Obtain abundance of ocean juveniles by ocean age
+2,process,get-Rbs,Obtain return abundance of adults by total age
+3,process,phi-Rb-Ra-random,Add stochasticity to migration survival from BON to LGR
+3,process,get-Ra,Obtain return abundance to natal tributary
+3,process,get-Sb,Obtain abundance of potential spawners reaching spawning grounds
+3,process,phi-Sb-Sa-random,Add stochasticity to pre-spawn survival
+3,process,get-Sa,Obtain abundance of successful spawners
+3,observation,Ra-data,Assumption for natal tributary return abundance data likelihood
+3,observation,upstream-surv-data,Assumption for migration from BON to LGR survival data likelihood
+3,observation,prespawn-surv-data,Assumption for pre-spawn survival data likelihood
+3,observation,get-pRa,Obtain expected composition by age and origin of adults counted at weirs
+3,observation,weir-comp-data,Assumption for age and origin composition at weir data likelihood
+3,observation,z-random,Add stochasticity to carcass composition correction factor coefficients
+3,observation,get-zeta-no-minam,Obtain correction factors for populations with weir and carcass composition data
+3,observation,get-zeta-minam,Obtain correction factors for population with carcass composition data only
+3,observation,get-pSa-prime,Obtain expected composition by age and origin of carcasses
+3,observation,carcass-comp-data,Assumption for age and origin carcass composition data likelihood
