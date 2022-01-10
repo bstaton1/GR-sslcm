@@ -195,10 +195,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   rm_comp = sub[,c(rm_comp_names$nat_names, rm_comp_names$hat_names)]
   rm_comp[is.na(rm_comp)] = 0
   
-  # place rm_comp in the correct location of n_remove: same numbers just reformatted array structure used by model
-  n_remove = array(NA, dim = c(ny, nk, no)); dimnames(n_remove) = list(y_names, k_names, o_names)
-  n_remove[y_names %in% sub$brood_year,,o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], k_names, sep = "_")])
-  n_remove[y_names %in% sub$brood_year,,o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], k_names, sep = "_")])
+  # place rm_comp in the correct location of B (name in model): same numbers just reformatted array structure used by model
+  B = array(NA, dim = c(ny, nk, no)); dimnames(B) = list(y_names, k_names, o_names)
+  B[y_names %in% sub$brood_year,,o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], k_names, sep = "_")])
+  B[y_names %in% sub$brood_year,,o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], k_names, sep = "_")])
 
   ### ADULT SURVIVAL PAST SEA LIONS ###
   phi_SL = rep(NA, ny); names(phi_SL) = y_names
@@ -301,7 +301,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     sig_Ra_obs = sig_Ra_obs,
     
     # number removed at weir
-    n_remove = n_remove,
+    B = B,
     
     ### ADULT COMPOSITION ###
     # observed frequency of age/origin arriving at weir
@@ -405,7 +405,7 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     carc_nx_obs = abind(lapply(main_list, function(x) x$carc_nx_obs), along = 2),
     
     # weir removals
-    n_remove = abind(lapply(main_list, function(x) x$n_remove), along = 4),
+    B = abind(lapply(main_list, function(x) x$B), along = 4),
     
     # number of carcasses sampled for spawn status
     carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
