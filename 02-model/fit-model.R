@@ -20,6 +20,12 @@ out_dir = "02-model/model-output"
 # make later than 2019 to include simulated outcomes
 last_yr = 2050
 
+# include posterior predictive checks in JAGS code?
+do_pp_check = FALSE
+
+# include posterior predictive density calculation in JAGS code?
+do_lppd = FALSE
+
 # specify a scenario name
 scenario = "base"
 
@@ -201,8 +207,12 @@ toggle_rho_estimation("rho_Lpsi_O._Rb")    # all maturity process noise
 toggle_rho_estimation("rho_Lphi_Rb_Ra")    # migration BON to LGR survival process noise
 toggle_rho_estimation("rho_Lphi_Sb_Sa")    # pre-spawn survival process noise
 
+# toggle on/off the calculation of pp checks and lppd
+toggle_data_diagnostics(do_lppd, do_pp_check)
+
 ##### STEP 3: SELECT NODES TO MONITOR #####
 
+# nodes to monitor for any model
 jags_params = c(
   # reproduction
   "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "lambda", "sig_lbeta",
@@ -255,22 +265,29 @@ jags_params = c(
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
   
   # AR(1) coefficients
-  "kappa_phi_O0_O1",
-  
-  # fit statistics for posterior predictive checks
+  "kappa_phi_O0_O1"
+)
+
+# nodes for posterior predictive checks
+pp_check_params = c(
   "x_Ra_dev", "x_Ra_new_dev", "x_Sa_prime_dev", "x_Sa_prime_new_dev",
   "Pa_obs_dev", "Pa_obs_new_dev", "Mb_obs_dev", "Mb_obs_new_dev", 
   "Ra_obs_dev", "Ra_obs_new_dev", "Lphi_obs_Pb_Ma_dev", "Lphi_obs_new_Pb_Ma_dev",
   "Lphi_obs_Pa_Ma_dev", "Lphi_obs_new_Pa_Ma_dev", "Lphi_obs_Mb_Ma_dev", "Lphi_obs_new_Mb_Ma_dev",
   "Lphi_obs_Ma_O0_dev", "Lphi_obs_new_Ma_O0_dev", "x_carcass_spawned_dev", "x_carcass_spawned_new_dev",
-  "x_LGR_dev", "x_LGR_new_dev",
-  
-  # log posterior predictive density
+  "x_LGR_dev", "x_LGR_new_dev"
+)
+
+# nodes for log posterior predictive density
+lppd_params = c(
   "x_Ra_lppd", "x_Sa_prime_lppd", "Pa_obs_lppd", "Mb_obs_lppd", "Ra_obs_lppd",
   "Lphi_obs_Pb_Ma_lppd", "Lphi_obs_Pa_Ma_lppd", "Lphi_obs_Mb_Ma_lppd",
   "Lphi_obs_Ma_O0_lppd", "x_carcass_spawned_lppd", "x_LGR_lppd"
-  
 )
+
+# add these additional nodes if included in JAGS model
+if (do_pp_check) jags_params = c(jags_params, pp_check_params)
+if (do_lppd) jags_params = c(jags_params, lppd_params)
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
@@ -405,6 +422,8 @@ out_obj = list(
   jags_data = jags_data,
   jags_inits = jags_inits,
   jags_dims = jags_dims,
+  do_lppd = do_lppd,
+  do_pp_check = do_pp_check,
   jags_time = c(starttime = format(starttime), stoptime = format(stoptime), elapsed = format(round(stoptime - starttime,2))),
   post = post,
   scenario = scenario
