@@ -397,12 +397,12 @@ Examination of the adult data indicated that hatchery-origin adults returned to 
 Further, the Minam River population (which has no hatchery supplementation program) has had hatchery adults return in many of the years with adult data.
 Since there were non-zero observations of hatchery-origin adults in cases without a process model component to produce them, we required a process model mechanism to populate non-zero expected values for the observation model to remain valid based on the available data.
 We term this part of the model the "straying model", and apply it only in years/populations in which there is no other way to explain the presence of hatchery-origin adults.
-We denote the total number of strays that enter population $j$ in year $y$ as $T_{y,o,j}$; we forced all $T_{y,o=\mathrm{NOR},j} = 0$ and forced all $T_{y,o=\mathrm{HOR},j} = 0$ in years where hatchery-origin smolt releases to population $j$ could have explained non-zero hatchery-origin adult returns in year $y$ at age $k$.
-We denote the age composition of these strays by $p^{T}_{k,j}$ (where $\sum_k^{n_k} p^{T}_{k,j} = 1$) and apportioned $T_{y,o,j}$ to age-specific values by $T_{y,k,o,j}=T_{y,o,j} \cdot p^{T}_{k,j}$.
+We denote the total number of strays that enter population $j$ in year $y$ as $G_{y,o,j}$; we forced all $G_{y,o=\mathrm{NOR},j} = 0$ and forced all $G_{y,o=\mathrm{HOR},j} = 0$ in years where hatchery-origin smolt releases to population $j$ could have explained non-zero hatchery-origin adult returns in year $y$ at age $k$.
+We denote the age composition of these strays by $p^{G}_{k,j}$ (where $\sum_k^{n_k} p^{G}_{k,j} = 1$) and apportioned $G_{y,o,j}$ to age-specific values by $G_{y,k,o,j}=G_{y,o,j} \cdot p^{G}_{k,j}$.
 
 We can now define the abundance of adults arriving to their natal spawning tributaries by age and origin ($R^{a}_{y,k,o,j}$) as:
 \begin{equation}
-R^{a}_{y,k,o,j} = R^{b}_{y,k,o,j} \cdot \phi^{SL}_{y,j} \cdot (1 - U_{y,k,o}) \cdot \phi^{R^{b} \rightarrow R^{a}}_{y,o} + \left(T_{y,o,j} \cdot p^{T}_{k,j}\right)
+R^{a}_{y,k,o,j} = R^{b}_{y,k,o,j} \cdot \phi^{SL}_{y,j} \cdot (1 - U_{y,k,o}) \cdot \phi^{R^{b} \rightarrow R^{a}}_{y,o} + \left(G_{y,o,j} \cdot p^{G}_{k,j}\right)
 \label{eq:get-Ra}
 \end{equation}
 Upon arrival in the tributary, populations with a weir and hatchery program (all populations except the Minam River, indexed by $j = \mathrm{MIN}$) have some number of adults removed each year for broodstock and as a means to minimize natural spawning of hatchery-origin fish.
