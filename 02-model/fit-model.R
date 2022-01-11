@@ -203,7 +203,7 @@ toggle_rho_estimation("rho_Lphi_Pa_Mb")    # parr -> smolt overwinter survival p
 toggle_rho_estimation("rho_Lphi_Mb_Ma")    # migration to LGR survival process noise
 toggle_rho_estimation("rho_Lphi_Ma_O0")    # migration from LGR to ocean survival process noise
 toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival process noise
-toggle_rho_estimation("rho_Lpsi_O._Rb")    # all maturity process noise
+toggle_rho_estimation("rho_Lpsi_O.")       # all maturity process noise
 toggle_rho_estimation("rho_Lphi_Rb_Ra")    # migration BON to LGR survival process noise
 toggle_rho_estimation("rho_Lphi_Sb_Sa")    # pre-spawn survival process noise
 
