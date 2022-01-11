@@ -15,7 +15,7 @@ fit_basic_BH = function(jags_data, plot = FALSE) {
     Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma)
     
     # get "observed" pre-spawn mortality
-    mu_phi_Sb_Sa = mean(carcs_spawned/carcs_sampled, na.rm = T)
+    mu_phi_Sb_Sa = mean(x_carcass_spawned/x_carcass_total, na.rm = T)
     
     # get "observed" spawners
     Sa_obs = Ra_obs * mu_phi_Sb_Sa
@@ -56,7 +56,7 @@ fit_fecund_BH = function(jags_data, pop, plot = FALSE) {
     Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma[,pop])
     
     # get "observed" pre-spawn mortality
-    mu_phi_Sb_Sa = mean(carcs_spawned[,pop]/carcs_sampled[,pop], na.rm = TRUE)
+    mu_phi_Sb_Sa = mean(x_carcass_spawned[,pop]/x_carcass_total[,pop], na.rm = TRUE)
     
     # get "observed" spawners
     Sa_obs = Ra_obs[,pop] * mu_phi_Sb_Sa
@@ -113,7 +113,7 @@ gen_initials = function(c, jags_data) {
   # generate random initial values for all years where strays can be present
   n_stray_tot = sapply(1:jags_data$nj, function(j) {
     stray_yrs = as.numeric(na.omit(jags_data$stray_yrs[,j]))
-    comp = t(apply(jags_data$carc_x_obs[stray_yrs,,j], 1, function(x) x/sum(x)))
+    comp = t(apply(jags_data$x_Sa_prime[stray_yrs,,j], 1, function(x) x/sum(x)))
     p_nat = rowSums(comp[,1:jags_data$nk])
     p_nat[is.na(p_nat)] = 1
     n_strays = jags_data$Ra_obs[stray_yrs,j] * (1 - p_nat)
@@ -146,12 +146,12 @@ gen_initials = function(c, jags_data) {
     mu_pi[i_fall,] = runif(nj, 0.2, 0.4)
     
     # maturity: at total age 3
-    mu_psi_O1_Rb = array(NA, dim = c(no,nj))
-    mu_psi_O1_Rb[1:no,1:nj] = runif(no*nj, 0.2, 0.3)
+    mu_psi_O1 = array(NA, dim = c(no,nj))
+    mu_psi_O1[1:no,1:nj] = runif(no*nj, 0.2, 0.3)
 
     # maturity: at total age 4
-    mu_psi_O2_Rb = array(NA, dim = c(no,nj))
-    mu_psi_O2_Rb[1:no,1:nj] = runif(no*nj, 0.7, 0.9)
+    mu_psi_O2 = array(NA, dim = c(no,nj))
+    mu_psi_O2[1:no,1:nj] = runif(no*nj, 0.7, 0.9)
 
     list(
       mu_phi_Ma_O0 = mu_phi_Ma_O0,
@@ -160,9 +160,9 @@ gen_initials = function(c, jags_data) {
       mu_phi_O1_O2 = mu_phi_O1_O2,
       mu_phi_Sb_Sa = mu_phi_Sb_Sa,
       mu_pi = mu_pi,
-      mu_psi_O1_Rb = mu_psi_O1_Rb,
-      mu_psi_O2_Rb = mu_psi_O2_Rb,
-      mu_beta_per_wul = runif(1, 5000, 15000)
+      mu_psi_O1 = mu_psi_O1,
+      mu_psi_O2 = mu_psi_O2,
+      lambda = runif(1, 5000, 15000)
     )
   })
   

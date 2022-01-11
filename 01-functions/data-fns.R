@@ -21,7 +21,7 @@ get_logit_se = function(p_mean, p_se, p_lwr, p_upr, alpha) {
 
 
 ##### CREATE NAMES FOR A SPECIFIC COMPOSITION DATA SET #####
-# o_names = c("Nat", "Hat")
+# o_names = c("NOR", "HOR")
 # k_names = c(3, 4, 5)
 # type = "weir";# type = "carc"; type = "rm"
 
@@ -86,7 +86,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   y_names = (first_y - 1):last_y
   k_names = kmin:kmax
   i_names = paste0(c("fall", "spring"), "-mig")
-  o_names = c("Nat", "Hat")
+  o_names = c("NOR", "HOR")
   ko_names = c(paste0(k_names, "-", o_names[1]), paste0(k_names, "-", o_names[2]))
   
   ### JUVENILE ABUNDANCE DATA ###
@@ -139,23 +139,23 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   
   # spring logit(surv) to LGD
   Lphi_obs_Mb_Ma = array(NA, dim = c(ny, ni, no)); dimnames(Lphi_obs_Mb_Ma) = list(y_names, i_names, o_names)
-  Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Nat"] = logit(sub$spring_surv_est)
-  Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Hat"] = logit(sub$hatchery_spring_surv_est)
+  Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig",o_names[1]] = logit(sub$spring_surv_est)
+  Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig",o_names[2]] = logit(sub$hatchery_spring_surv_est)
   
   # sd spring logit(surv) to LGD
   sig_Lphi_obs_Mb_Ma = array(NA, dim = c(ny, ni, no)); dimnames(sig_Lphi_obs_Mb_Ma) = list(y_names, i_names, o_names)
-  sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Nat"] = sub$spring_surv_logit_se
-  sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig","Hat"] = sub$hatchery_spring_surv_logit_se
+  sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig",o_names[1]] = sub$spring_surv_logit_se
+  sig_Lphi_obs_Mb_Ma[y_names %in% sub$brood_year,i_names == "spring-mig",o_names[2]] = sub$hatchery_spring_surv_logit_se
   
   # LGD to BON logit(surv)
   Lphi_obs_Ma_O0 = matrix(NA, ny, no); dimnames(Lphi_obs_Ma_O0) = list(y_names, o_names)
-  Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Nat"] = logit(all$nat_hydro_est)
-  Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Hat"] = logit(all$hat_hydro_est)
+  Lphi_obs_Ma_O0[y_names %in% all$brood_year,o_names[1]] = logit(all$nat_hydro_est)
+  Lphi_obs_Ma_O0[y_names %in% all$brood_year,o_names[2]] = logit(all$hat_hydro_est)
   
   # sd LGD to BON logit(surv)
   sig_Lphi_obs_Ma_O0 = matrix(NA, ny, no); dimnames(sig_Lphi_obs_Ma_O0) = list(y_names, o_names)
-  sig_Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Nat"] = all$nat_hydro_logit_se
-  sig_Lphi_obs_Ma_O0[y_names %in% all$brood_year,"Hat"] = all$hat_hydro_logit_se
+  sig_Lphi_obs_Ma_O0[y_names %in% all$brood_year,o_names[1]] = all$nat_hydro_logit_se
+  sig_Lphi_obs_Ma_O0[y_names %in% all$brood_year,o_names[2]] = all$hat_hydro_logit_se
   
   ### ADULT AGE COMP: WEIR ###
   # obtain names of age comp variables
@@ -168,9 +168,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   hat_comp[is.na(hat_comp)] = 0
   
   # age frequencies: for fitting composition of returns
-  weir_x_obs = matrix(NA, ny, no * nk); dimnames(weir_x_obs) = list(y_names, ko_names)
-  weir_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
-  weir_nx_obs = rowSums(weir_x_obs)
+  x_Ra = matrix(NA, ny, no * nk); dimnames(x_Ra) = list(y_names, ko_names)
+  x_Ra[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
+  nx_Ra = rowSums(x_Ra)
   
   ### ADULT AGE COMP: CARCASSES ###
   # obtain names of age comp variables
@@ -183,9 +183,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   hat_comp[is.na(hat_comp)] = 0
   
   # age frequencies: for fitting composition of returns
-  carc_x_obs = matrix(NA, ny, no * nk); dimnames(carc_x_obs) = list(y_names, ko_names)
-  carc_x_obs[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
-  carc_nx_obs = rowSums(carc_x_obs)
+  x_Sa_prime = matrix(NA, ny, no * nk); dimnames(x_Sa_prime) = list(y_names, ko_names)
+  x_Sa_prime[y_names %in% sub$brood_year,] = as.matrix(cbind(nat_comp, hat_comp))
+  nx_Sa_prime = rowSums(x_Sa_prime)
   
   ### NUMBER OF RETURNING ADULTS REMOVED AT WEIR ###
   rm_comp_names = create_comp_names("rm", o_names, k_names)
@@ -195,24 +195,24 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   rm_comp = sub[,c(rm_comp_names$nat_names, rm_comp_names$hat_names)]
   rm_comp[is.na(rm_comp)] = 0
   
-  # place rm_comp in the correct location of n_remove: same numbers just reformatted array structure used by model
-  n_remove = array(NA, dim = c(ny, nk, no)); dimnames(n_remove) = list(y_names, k_names, o_names)
-  n_remove[y_names %in% sub$brood_year,,o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], k_names, sep = "_")])
-  n_remove[y_names %in% sub$brood_year,,o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], k_names, sep = "_")])
+  # place rm_comp in the correct location of B (name in model): same numbers just reformatted array structure used by model
+  B = array(NA, dim = c(ny, nk, no)); dimnames(B) = list(y_names, k_names, o_names)
+  B[y_names %in% sub$brood_year,,o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], k_names, sep = "_")])
+  B[y_names %in% sub$brood_year,,o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], k_names, sep = "_")])
 
   ### ADULT SURVIVAL PAST SEA LIONS ###
   phi_SL = rep(NA, ny); names(phi_SL) = y_names
   phi_SL[y_names %in% sub$brood_year] = sub$surv_est_sea_lions
   
   ### COUNTS OF ADULT PIT TAG DETECTIONS AT BON ###
-  BON_adults = matrix(NA, ny, no); dimnames(BON_adults) = list(y_names, o_names)
-  BON_adults[y_names %in% all$brood_year,o_names[1]] = all$NOR_BON_adults
-  BON_adults[y_names %in% all$brood_year,o_names[2]] = all$HOR_BON_adults
+  x_BON = matrix(NA, ny, no); dimnames(x_BON) = list(y_names, o_names)
+  x_BON[y_names %in% all$brood_year,o_names[1]] = all$NOR_BON_adults
+  x_BON[y_names %in% all$brood_year,o_names[2]] = all$HOR_BON_adults
   
   ### COUNTS OF ADULT PIT TAG DETECTIONS AT LGR ###
-  LGR_adults = matrix(NA, ny, no); dimnames(LGR_adults) = list(y_names, o_names)
-  LGR_adults[y_names %in% all$brood_year,o_names[1]] = all$NOR_LGR_adults
-  LGR_adults[y_names %in% all$brood_year,o_names[2]] = all$HOR_LGR_adults
+  x_LGR = matrix(NA, ny, no); dimnames(x_LGR) = list(y_names, o_names)
+  x_LGR[y_names %in% all$brood_year,o_names[1]] = all$NOR_LGR_adults
+  x_LGR[y_names %in% all$brood_year,o_names[2]] = all$HOR_LGR_adults
   
   ### ADULT ABUNDANCE ###
 
@@ -227,9 +227,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   ### ADULT PRESPAWN DATA ###
   
   # number of carcasses sampled and found to have spawned successfully
-  carcs_spawned = carcs_sampled = rep(NA, ny); names(carcs_spawned) = names(carcs_sampled) = y_names
-  carcs_spawned[y_names %in% sub$brood_year] = sub$carcs_status_spawned
-  carcs_sampled[y_names %in% sub$brood_year] = sub$carcs_samp_for_status
+  x_carcass_spawned = x_carcass_total = rep(NA, ny); names(x_carcass_spawned) = names(x_carcass_total) = y_names
+  x_carcass_spawned[y_names %in% sub$brood_year] = sub$carcs_status_spawned
+  x_carcass_total[y_names %in% sub$brood_year] = sub$carcs_samp_for_status
   
   ### INFORMATION ABOUT WHICH YEARS NEED STRAYING ###
   # the years in which strays will be needed
@@ -290,10 +290,10 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     phi_SL = phi_SL,
     
     # counts of PIT tag detections at BON by origin
-    BON_adults = BON_adults,
+    x_BON = x_BON,
     
     # counts of PIT tag detections at LGR by origin
-    LGR_adults = LGR_adults,
+    x_LGR = x_LGR,
     
     ### ADULT ABUNDANCE ###
     # total adults arriving at "weir"
@@ -301,22 +301,22 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     sig_Ra_obs = sig_Ra_obs,
     
     # number removed at weir
-    n_remove = n_remove,
+    B = B,
     
     ### ADULT COMPOSITION ###
     # observed frequency of age/origin arriving at weir
-    weir_x_obs = weir_x_obs,
-    weir_nx_obs = weir_nx_obs,   # multinomial sample size
+    x_Ra = x_Ra,
+    nx_Ra = nx_Ra,   # multinomial sample size
     
     # observed frequency of age/origin sampled as carcasses
-    carc_x_obs = carc_x_obs,
-    carc_nx_obs = carc_nx_obs,   # multinomial sample size
+    x_Sa_prime = x_Sa_prime,
+    nx_Sa_prime = nx_Sa_prime,   # multinomial sample size
     
     # number of carcasses sampled for spawn status
-    carcs_sampled = carcs_sampled,
+    x_carcass_total = x_carcass_total,
     
     # number of carcasses found to have spawned successfully
-    carcs_spawned = carcs_spawned,
+    x_carcass_spawned = x_carcass_spawned,
     
     # weighted usable length
     wul = WUL[pop],
@@ -387,31 +387,31 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     phi_SL = abind(lapply(main_list, function(x) x$phi_SL), along = 2),
     
     # adult PIT tag counts at BON
-    BON_adults = main_list[[1]]$BON_adults,
+    x_BON = main_list[[1]]$x_BON,
     
     # adult PIT tag counts at LGR
-    LGR_adults = main_list[[1]]$LGR_adults,
+    x_LGR = main_list[[1]]$x_LGR,
     
     # adult returns to tributary
     Ra_obs = abind(lapply(main_list, function(x) x$Ra_obs), along = 2),
     sig_Ra_obs = abind(lapply(main_list, function(x) x$sig_Ra_obs), along = 2),
     
     # age/origin composition of returns: weir
-    weir_x_obs = abind(lapply(main_list, function(x) x$weir_x_obs), along = 3),
-    weir_nx_obs = abind(lapply(main_list, function(x) x$weir_nx_obs), along = 2),
+    x_Ra = abind(lapply(main_list, function(x) x$x_Ra), along = 3),
+    nx_Ra = abind(lapply(main_list, function(x) x$nx_Ra), along = 2),
     
     # age/origin composition of returns: carcass
-    carc_x_obs = abind(lapply(main_list, function(x) x$carc_x_obs), along = 3),
-    carc_nx_obs = abind(lapply(main_list, function(x) x$carc_nx_obs), along = 2),
+    x_Sa_prime = abind(lapply(main_list, function(x) x$x_Sa_prime), along = 3),
+    nx_Sa_prime = abind(lapply(main_list, function(x) x$nx_Sa_prime), along = 2),
     
     # weir removals
-    n_remove = abind(lapply(main_list, function(x) x$n_remove), along = 4),
+    B = abind(lapply(main_list, function(x) x$B), along = 4),
     
     # number of carcasses sampled for spawn status
-    carcs_sampled = abind(lapply(main_list, function(x) x$carcs_sampled), along = 2),
+    x_carcass_total = abind(lapply(main_list, function(x) x$x_carcass_total), along = 2),
     
     # number of carcasses sampled with successful spawning status
-    carcs_spawned = abind(lapply(main_list, function(x) x$carcs_spawned), along = 2),
+    x_carcass_spawned = abind(lapply(main_list, function(x) x$x_carcass_spawned), along = 2),
     
     # weighted usable length
     wul = abind(lapply(main_list, function(x) x$wul), along = 1)
@@ -458,9 +458,9 @@ append_no_na_indices = function(jags_data) {
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
       fit_Lphi_Ma_O0 = find_no_na_indices(Lphi_obs_Ma_O0),
-      fit_LGR_adults = find_no_na_indices(LGR_adults),
+      fit_x_LGR = find_no_na_indices(x_LGR),
       fit_Ra = find_no_na_indices(Ra_obs),
-      fit_spawned = find_no_na_indices(carcs_spawned)
+      fit_x_carcass_spawned = find_no_na_indices(x_carcass_spawned)
     )
   })
   
@@ -474,4 +474,3 @@ append_no_na_indices = function(jags_data) {
   # return the output list: now ready for JAGS
   return(out)
 }
-

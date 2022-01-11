@@ -21,7 +21,7 @@ out_dir = "02-model/model-output"
 last_yr = 2050
 
 # specify a scenario name
-scenario = "new-BH"
+scenario = "base"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -48,24 +48,24 @@ jags_data = append_no_na_indices(jags_data)
 
 # some parameters we are assuming known (for now)
 # harvest rates Below and Above BON by year, age, origin
-Ub_45_nat = with(jags_data, c(NA, rep(0.02, ny - 1)))
-Ub_45_hat = with(jags_data, c(NA, rep(0.08, ny - 1)))
-Ub = abind(list(cbind(Ub_45_nat * 0.25, Ub_45_nat, Ub_45_nat), cbind(Ub_45_hat * 0.75, Ub_45_hat, Ub_45_hat)), along = 3)
-dimnames(Ub) = with(jags_data, list(rownames(Ra_obs), kmin:kmax, c("Nat", "Hat")))
+U_45_nat = with(jags_data, c(NA, rep(0.02, ny - 1)))
+U_45_hat = with(jags_data, c(NA, rep(0.08, ny - 1)))
+U = abind(list(cbind(U_45_nat * 0.25, U_45_nat, U_45_nat), cbind(U_45_hat * 0.75, U_45_hat, U_45_hat)), along = 3)
+dimnames(U) = with(jags_data, list(rownames(Ra_obs), kmin:kmax, c("NOR", "HOR")))
 
 # proportion of spawners by age and population that are female
-p_female = array(NA, dim = c(jags_data$nk, jags_data$nj))
-dimnames(p_female) = list(jags_data$kmin:jags_data$kmax, colnames(jags_data$Ra_obs))
-p_female["3",] = 0
-p_female["4","CAT"] = 0.55; p_female["4","LOS"] = 0.53; p_female["4","UGR"] = 0.57 
-p_female["5","CAT"] = 0.43; p_female["5","LOS"] = 0.41; p_female["5","UGR"] = 0.48 
-p_female["4","MIN"] = round(mean(p_female["4",], na.rm = TRUE), 2)
-p_female["5","MIN"] = round(mean(p_female["5",], na.rm = TRUE), 2)
+Omega = array(NA, dim = c(jags_data$nk, jags_data$nj))
+dimnames(Omega) = list(jags_data$kmin:jags_data$kmax, colnames(jags_data$Ra_obs))
+Omega["3",] = 0
+Omega["4","CAT"] = 0.55; Omega["4","LOS"] = 0.53; Omega["4","UGR"] = 0.57 
+Omega["5","CAT"] = 0.43; Omega["5","LOS"] = 0.41; Omega["5","UGR"] = 0.48 
+Omega["4","MIN"] = round(mean(Omega["4",], na.rm = TRUE), 2)
+Omega["5","MIN"] = round(mean(Omega["5",], na.rm = TRUE), 2)
 
 add_jags_data = list(
-  Ub = Ub,                  # harvest rate after sea lion mortality below BON
+  U = U,                  # harvest rate after sea lion mortality below BON
   f = c(1904, 3971, 4846),  # fecundity [female age]
-  p_female = p_female       # proportion of spawners by age and population that are female
+  Omega = Omega             # proportion of spawners by age and population that are female
 )
 
 # some dummy variables for performing weir vs. carcass composition correction
@@ -81,13 +81,13 @@ add_jags_data = append(add_jags_data, add_jags_data2)
 add_jags_data3 = list(
   i_fall = 1,     # fall migrants are i = 1
   i_spring = 2,   # spring migrants are i = 2,
-  o_nat = 1,      # natural origin are o = 1,
-  o_hat = 2       # hatchery origin are o = 2,
+  o_nor = 1,      # natural origin are o = 1,
+  o_hor = 2       # hatchery origin are o = 2,
 )
 add_jags_data = append(add_jags_data, add_jags_data3)
 
 # set first year adult PIT tag data exist to inform BON -> LGR survival
-add_jags_data = append(add_jags_data, list(first_LGR_adults = min(which(!is.na(jags_data$LGR_adults[,1])))))
+add_jags_data = append(add_jags_data, list(first_x_LGR = min(which(!is.na(jags_data$x_LGR[,1])))))
 
 # set upper boundaries for early Rb states
 add_jags_data = append(add_jags_data, list(max_Rb_init = c(50, 200, 200)))
@@ -122,19 +122,19 @@ if (ny_sim > 0) {
   
   # append hypothetical future weir removal numbers (by age/origin/population)
   weir_remove_yrs = as.character(2001:2019)
-  n_remove_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
-  dimnames(n_remove_new)[[1]] = 1:ny_sim + last_obs_yr
-  dimnames(n_remove_new)[2:4] = dimnames(jags_data$n_remove)[2:4]
+  B_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
+  dimnames(B_new)[[1]] = 1:ny_sim + last_obs_yr
+  dimnames(B_new)[2:4] = dimnames(jags_data$B)[2:4]
   for (j in 1:jags_data$nj) {
     for (o in 1:jags_data$no) {
       for (k in 1:jags_data$nk) {
         for (y in 1:ny_sim) {
-          n_remove_new[y,k,o,j] = sample(jags_data$n_remove[weir_remove_yrs,k,o,j], 1)
+          B_new[y,k,o,j] = sample(jags_data$B[weir_remove_yrs,k,o,j], 1)
         }
       }
     }
   }
-  jags_data$n_remove = abind(jags_data$n_remove, n_remove_new, along = 1)
+  jags_data$B = abind(jags_data$B, B_new, along = 1)
   
   # append years that do not need straying accounted for for future years (by population)
   # this results in no strays in simulated years
@@ -168,16 +168,16 @@ if (ny_sim > 0) {
   jags_data$phi_SL = abind(jags_data$phi_SL, phi_SL_new, along = 1)
   
   # append hypothetical below BON harvest rates (by age/origin)
-  Ub_yrs = as.character(2001:2019)
-  Ub_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no))
-  dimnames(Ub_new)[[1]] = 1:ny_sim + last_obs_yr
-  dimnames(Ub_new)[2:3] = dimnames(jags_data$Ub_new)[2:3]
+  U_yrs = as.character(2001:2019)
+  U_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no))
+  dimnames(U_new)[[1]] = 1:ny_sim + last_obs_yr
+  dimnames(U_new)[2:3] = dimnames(jags_data$U_new)[2:3]
   for (k in 1:jags_data$nk) {
     for (o in 1:jags_data$no) {
-      Ub_new[,k,o] = mean(jags_data$Ub[Ub_yrs,k,o])
+      U_new[,k,o] = mean(jags_data$U[U_yrs,k,o])
     }
   }
-  jags_data$Ub = abind(jags_data$Ub, Ub_new, along = 1)
+  jags_data$U = abind(jags_data$U, U_new, along = 1)
 }
 
 ##### STEP 2: SPECIFY JAGS MODEL #####
@@ -205,24 +205,24 @@ toggle_rho_estimation("rho_Lphi_Sb_Sa")    # pre-spawn survival process noise
 
 jags_params = c(
   # reproduction
-  "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "mu_beta_per_wul", "sig_lbeta",
+  "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "lambda", "sig_lbeta",
 
   # overwinter survival coefficients
   "gamma0", "gamma1",
   
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_O0",
-  "mu_psi_O1_Rb", "mu_psi_O2_Rb", "mu_phi_Sb_Sa",
+  "mu_psi_O1", "mu_psi_O2", "mu_phi_Sb_Sa",
   "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
   
   # hyperparameters: inter-annual sd
   "Sig_Lpi", "Sig_Lphi_Pa_Mb", "Sig_Lphi_Mb_Ma", "Sig_Lphi_Ma_O0",
-  "Sig_Lpsi_O1_Rb", "Sig_Lpsi_O2_Rb", "Sig_Lphi_Sb_Sa",
+  "Sig_Lpsi_O1", "Sig_Lpsi_O2", "Sig_Lphi_Sb_Sa",
   "Sig_Lphi_O0_O1", "Sig_Lphi_Rb_Ra",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
-  "psi_O1_Rb", "psi_O2_Rb", "phi_Sb_Sa",
+  "psi_O1", "psi_O2", "phi_Sb_Sa",
   "phi_O0_O1", "phi_O1_O2", "phi_O2_O3",
   "phi_Rb_Ra",
   
@@ -234,49 +234,52 @@ jags_params = c(
   
   # states
   "Pb", "Pa", "Mb", "Ma", "O0", "O", "Rb",
-  "Ra", "Sb", "Sa", "q_Ra", "q_Sa_adj", "Sa_tot", "Ra_tot", "E",
+  "Ra", "Sb", "Sa", "p_Ra", "p_Sa_prime", "Sa_tot", "Ra_tot", "E",
   
   # carcass vs. weir correction
-  "z", "carc_adj", "n_stray_tot", "stray_comp", "mu_z", "sig_z",
+  "z", "zeta", "mu_z", "sig_z",
+  
+  # straying model
+  "G", "p_G",
   
   # misc parameters
-  "O_phi_scaler_nat_hat", "phi_Pb_Pa", "bad_flag",
+  "delta", "phi_Pb_Pa", "bad_flag",
   
   # misc derived quantities
-  "beta_per_wul", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
+  "lambda_pop", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
   
   # residuals
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
-  "Lphi_Ma_O0_resid", "Lpsi_O1_Rb_resid",
-  "Lpsi_O2_Rb_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
+  "Lphi_Ma_O0_resid", "Lpsi_O1_resid",
+  "Lpsi_O2_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
   
   # AR(1) coefficients
   "kappa_phi_O0_O1",
   
   # fit statistics for posterior predictive checks
-  "weir_x_obs_dev", "weir_x_obs_new_dev", "carc_x_obs_dev", "carc_x_obs_new_dev",
+  "x_Ra_dev", "x_Ra_new_dev", "x_Sa_prime_dev", "x_Sa_prime_new_dev",
   "Pa_obs_dev", "Pa_obs_new_dev", "Mb_obs_dev", "Mb_obs_new_dev", 
   "Ra_obs_dev", "Ra_obs_new_dev", "Lphi_obs_Pb_Ma_dev", "Lphi_obs_new_Pb_Ma_dev",
   "Lphi_obs_Pa_Ma_dev", "Lphi_obs_new_Pa_Ma_dev", "Lphi_obs_Mb_Ma_dev", "Lphi_obs_new_Mb_Ma_dev",
-  "Lphi_obs_Ma_O0_dev", "Lphi_obs_new_Ma_O0_dev", "carcs_spawned_dev", "carcs_spawned_new_dev",
-  "LGR_adults_dev", "LGR_adults_new_dev",
+  "Lphi_obs_Ma_O0_dev", "Lphi_obs_new_Ma_O0_dev", "x_carcass_spawned_dev", "x_carcass_spawned_new_dev",
+  "x_LGR_dev", "x_LGR_new_dev",
   
   # log posterior predictive density
-  "weir_x_obs_lppd", "carc_x_obs_lppd", "Pa_obs_lppd", "Mb_obs_lppd", "Ra_obs_lppd",
+  "x_Ra_lppd", "x_Sa_prime_lppd", "Pa_obs_lppd", "Mb_obs_lppd", "Ra_obs_lppd",
   "Lphi_obs_Pb_Ma_lppd", "Lphi_obs_Pa_Ma_lppd", "Lphi_obs_Mb_Ma_lppd",
-  "Lphi_obs_Ma_O0_lppd", "carcs_spawned_lppd", "LGR_adults_lppd"
+  "Lphi_obs_Ma_O0_lppd", "x_carcass_spawned_lppd", "x_LGR_lppd"
   
 )
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "very_short" = 500, "short" = 2000, "medium" = 24000, "long" = 60000),
-  n_burn = switch(mcmc_length,  "very_short" = 100, "short" = 1000, "medium" = 20000, "long" = 60000),
+  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 60000),
+  n_burn = switch(mcmc_length,  "very_short" = 5, "short" = 1000, "medium" = 20000, "long" = 60000),
   n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 20),
   n_chain = switch(mcmc_length, "very_short" = 3,   "short" = 3,    "medium" = 3,     "long" = 3),
-  n_adapt = switch(mcmc_length, "very_short" = 100, "short" = 1000, "medium" = 1000,  "long" = 1000),
+  n_adapt = switch(mcmc_length, "very_short" = 10, "short" = 1000, "medium" = 1000,  "long" = 1000),
   parallel = TRUE
 )
 
@@ -330,10 +333,10 @@ suppressMessages({
   Sig_Lphi_Mb_Ma2 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,2]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
   Sig_Lphi_Ma_O0 = vcov_decomp(post, "Sig_Lphi_Ma_O0", sigma_base_name = "sig_Lphi_Ma_O0", rho_base_name = "rho_Lphi_Ma_O0")
   Sig_Lphi_O0_O1 = vcov_decomp(post, "Sig_Lphi_O0_O1", sigma_base_name = "sig_Lphi_O0_O1", rho_base_name = "rho_Lphi_O0_O1")
-  Sig_Lpsi_O1_Rb1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1_Rb[.,.,1]"), "Sig_Lpsi_O1_Rb", sigma_base_name = "sig_Lpsi_O1_Rb", rho_base_name = "rho_Lpsi_O1_Rb")
-  Sig_Lpsi_O1_Rb2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1_Rb[.,.,2]"), "Sig_Lpsi_O1_Rb", sigma_base_name = "sig_Lpsi_O1_Rb", rho_base_name = "rho_Lpsi_O1_Rb")
-  Sig_Lpsi_O2_Rb1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2_Rb[.,.,1]"), "Sig_Lpsi_O2_Rb", sigma_base_name = "sig_Lpsi_O2_Rb", rho_base_name = "rho_Lpsi_O2_Rb")
-  Sig_Lpsi_O2_Rb2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2_Rb[.,.,2]"), "Sig_Lpsi_O2_Rb", sigma_base_name = "sig_Lpsi_O2_Rb", rho_base_name = "rho_Lpsi_O2_Rb")
+  Sig_Lpsi_O1_1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1[.,.,1]"), "Sig_Lpsi_O1", sigma_base_name = "sig_Lpsi_O1", rho_base_name = "rho_Lpsi_O1")
+  Sig_Lpsi_O1_2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1[.,.,2]"), "Sig_Lpsi_O1", sigma_base_name = "sig_Lpsi_O1", rho_base_name = "rho_Lpsi_O1")
+  Sig_Lpsi_O2_1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2[.,.,1]"), "Sig_Lpsi_O2", sigma_base_name = "sig_Lpsi_O2", rho_base_name = "rho_Lpsi_O2")
+  Sig_Lpsi_O2_2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2[.,.,2]"), "Sig_Lpsi_O2", sigma_base_name = "sig_Lpsi_O2", rho_base_name = "rho_Lpsi_O2")
   Sig_Lphi_Rb_Ra = vcov_decomp(post, "Sig_Lphi_Rb_Ra", sigma_base_name = "sig_Lphi_Rb_Ra", rho_base_name = "rho_Lphi_Rb_Ra")
   Sig_Lphi_Sb_Sa = vcov_decomp(post, "Sig_Lphi_Sb_Sa", sigma_base_name = "sig_Lphi_Sb_Sa", rho_base_name = "rho_Lphi_Sb_Sa")
 })
@@ -343,10 +346,10 @@ Sig_Lphi_Pa_Mb1 = add_index(Sig_Lphi_Pa_Mb1, c("sig", "rho"), 1)
 Sig_Lphi_Pa_Mb2 = add_index(Sig_Lphi_Pa_Mb2, c("sig", "rho"), 2)
 Sig_Lphi_Mb_Ma1 = add_index(Sig_Lphi_Mb_Ma1, c("sig", "rho"), 1)
 Sig_Lphi_Mb_Ma2 = add_index(Sig_Lphi_Mb_Ma2, c("sig", "rho"), 2)
-Sig_Lpsi_O1_Rb1 = add_index(Sig_Lpsi_O1_Rb1, c("sig", "rho"), 1)
-Sig_Lpsi_O1_Rb2 = add_index(Sig_Lpsi_O1_Rb2, c("sig", "rho"), 2)
-Sig_Lpsi_O2_Rb1 = add_index(Sig_Lpsi_O2_Rb1, c("sig", "rho"), 1)
-Sig_Lpsi_O2_Rb2 = add_index(Sig_Lpsi_O2_Rb2, c("sig", "rho"), 2)
+Sig_Lpsi_O1_1 = add_index(Sig_Lpsi_O1_1, c("sig", "rho"), 1)
+Sig_Lpsi_O1_2 = add_index(Sig_Lpsi_O1_2, c("sig", "rho"), 2)
+Sig_Lpsi_O2_1 = add_index(Sig_Lpsi_O2_1, c("sig", "rho"), 1)
+Sig_Lpsi_O2_2 = add_index(Sig_Lpsi_O2_2, c("sig", "rho"), 2)
 
 # make the labels/indices for which elements of the vcov matrices contain unique covariances
 # no point in summarizing/displaying both off-diagonal triangles
@@ -365,10 +368,10 @@ Sig_Lphi_Mb_Ma1 = post_subset(Sig_Lphi_Mb_Ma1, c("sig", paste0("rho.+", vcov_ind
 Sig_Lphi_Mb_Ma2 = post_subset(Sig_Lphi_Mb_Ma2, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Ma_O0 = post_subset(Sig_Lphi_Ma_O0, c("sig", "rho.+"))
 Sig_Lphi_O0_O1 = post_subset(Sig_Lphi_O0_O1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O1_Rb1 = post_subset(Sig_Lpsi_O1_Rb1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O1_Rb2 = post_subset(Sig_Lpsi_O1_Rb2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O2_Rb1 = post_subset(Sig_Lpsi_O2_Rb1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O2_Rb2 = post_subset(Sig_Lpsi_O2_Rb2, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O1_1 = post_subset(Sig_Lpsi_O1_1, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O1_2 = post_subset(Sig_Lpsi_O1_2, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O2_1 = post_subset(Sig_Lpsi_O2_1, c("sig", paste0("rho.+", vcov_indices)))
+Sig_Lpsi_O2_2 = post_subset(Sig_Lpsi_O2_2, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Rb_Ra = post_subset(Sig_Lphi_Rb_Ra, c("sig", "rho.+"))
 Sig_Lphi_Sb_Sa = post_subset(Sig_Lphi_Sb_Sa, c("sig", paste0("rho.+", vcov_indices)))
 
@@ -381,10 +384,10 @@ post = post_bind(post, Sig_Lphi_Mb_Ma1)
 post = post_bind(post, Sig_Lphi_Mb_Ma2)
 post = post_bind(post, Sig_Lphi_Ma_O0)
 post = post_bind(post, Sig_Lphi_O0_O1)
-post = post_bind(post, Sig_Lpsi_O1_Rb1)
-post = post_bind(post, Sig_Lpsi_O1_Rb2)
-post = post_bind(post, Sig_Lpsi_O2_Rb1)
-post = post_bind(post, Sig_Lpsi_O2_Rb2)
+post = post_bind(post, Sig_Lpsi_O1_1)
+post = post_bind(post, Sig_Lpsi_O1_2)
+post = post_bind(post, Sig_Lpsi_O2_1)
+post = post_bind(post, Sig_Lpsi_O2_2)
 post = post_bind(post, Sig_Lphi_Rb_Ra)
 post = post_bind(post, Sig_Lphi_Sb_Sa)
 

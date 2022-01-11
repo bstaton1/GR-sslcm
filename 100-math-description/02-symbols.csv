@@ -14,7 +14,7 @@ Phase,Type,Symbol,Eqs.,Description,Footnote
 2,rate,"$\\psi^{O^{w}}_{y,o,j}$","psi-random, get-Os, get-Rbs","Proportion of ocean juveniles alive at the end of winter $w$ at sea that make spawning migration before winter $w+1$, where $w \\in [1,2,3]$",NA
 3,state,"$R^{b}_{y,k,o,j}$","get-Rbs, get-Ra","Abundance of adults (i.e., mature) arriving at the estuary (\\textit{before} upstream main-stem migration)",NA
 3,state,"$R^{a}_{y,k,o,j}$","get-Ra, get-Sb, Ra-data, get-pRa",Abundance of adults arriving at their natal tributary (\\textit{after} upstream main-stem migration),NA
-3,state,"$T_{y,k,o,j}$",get-Ra,Abundance of adult strays,NA
+3,state,"$G_{y,k,o,j}$",get-Ra,Abundance of adult strays,NA
 3,state,"$B_{y,k,o,j}$",get-Sb,"Abundance of adults removed at weir, primarily for broodstock",NA
 3,state,"$S^{b}_{y,k,o,j}$","get-Sb, get-Sa","Abundance of adults following weir removals (e.g., for hatchery broodstock but \\textit{before} pre-spawn mortality)",NA
 3,state,"$S^{a}_{y,k,o,j}$","get-E, get-Sa, get-pSa-prime",Abundance of spawning adults \\textit{after} pre-spawn mortality,NA

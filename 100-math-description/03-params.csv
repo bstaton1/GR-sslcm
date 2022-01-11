@@ -34,8 +34,8 @@ Phase,Symbol,Prior,Eqs.,Description
 3,$\\dot{\\phi}^{R^{b} \\rightarrow R^{a}}_{o}$,"$b(1,1)$",phi-Rb-Ra-random,Expected migration survival from BON to LGR
 3,$\\sigma_{\\phi^{R^{b} \\rightarrow R^{a}}_o}$,"$\\mathcal{U}(0,5)$",phi-Rb-Ra-random,Among-year SD of migration survival from BON to LGR
 3,$\\rho_{\\phi^{R^{b} \\rightarrow R^{a}}}$,"$\\mathcal{U}(-1,1)$",phi-Rb-Ra-random,Among-origin correlation of migration survival from BON to LGR
-3,"$T_{y,o,j}$","$\\mathcal{U}(0,500)$",get-Ra,Total hatchery-origin ``strays''; only for $o = \\mathrm{HOR}$ and $y$ where presence of HOR adults could not be explained by non-zero smolt releases
-3,"$p^{T}_{k,j}$","$\\mathcal{D}(1,1,1)$",get-Ra,Age composition of hatchery-origin ``strays''
+3,"$G_{y,o,j}$","$\\mathcal{U}(0,500)$",get-Ra,Total hatchery-origin ``strays''; only for $o = \\mathrm{HOR}$ and $y$ where presence of HOR adults could not be explained by non-zero smolt releases
+3,"$p^{G}_{k,j}$","$\\mathcal{D}(1,1,1)$",get-Ra,Age composition of hatchery-origin ``strays''
 3,$\\dot{\\phi}^{S^{b} \\rightarrow S^{a}}_{j}$,"$b(1,1)$",phi-Sb-Sa-random,Expected pre-spawn survival
 3,$\\sigma_{\\phi^{S^{b} \\rightarrow S^{a}}_j}$,"$\\mathcal{U}(0,5)$",phi-Sb-Sa-random,Among-year SD of pre-spawn survival
 3,$\\rho_{\\phi^{S^{b} \\rightarrow S^{a}}}$,"$\\mathcal{U}(-1,1)$",phi-Sb-Sa-random,Among-population correlation of pre-spawn survival

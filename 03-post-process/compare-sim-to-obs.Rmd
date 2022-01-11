@@ -5,7 +5,7 @@ output: html_document
 params:
   scenario:
     label: "Scenario"
-    value: "new-BH"
+    value: "base"
     input: text
 editor_options: 
   chunk_output_type: console
@@ -723,8 +723,8 @@ est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type =
 
 ```{r}
 x = append(
-  lapply(1:4, function(j) get_ratio("^psi_O1_Rb[year,origin,pop]", obs_y, sim_y, origin = 1, pop = j)),
-  lapply(1:4, function(j) get_ratio("^psi_O1_Rb[year,origin,pop]", obs_y, sim_y, origin = 2, pop = j))
+  lapply(1:4, function(j) get_ratio("^psi_O1[year,origin,pop]", obs_y, sim_y, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("^psi_O1[year,origin,pop]", obs_y, sim_y, origin = 2, pop = j))
 )
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Age-3 Maturity: Estimates")
@@ -736,8 +736,8 @@ est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type =
 
 ```{r}
 x = append(
-  lapply(1:4, function(j) get_ratio("^psi_O2_Rb[year,origin,pop]", obs_y, sim_y, origin = 1, pop = j)),
-  lapply(1:4, function(j) get_ratio("^psi_O2_Rb[year,origin,pop]", obs_y, sim_y, origin = 2, pop = j))
+  lapply(1:4, function(j) get_ratio("^psi_O2[year,origin,pop]", obs_y, sim_y, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("^psi_O2[year,origin,pop]", obs_y, sim_y, origin = 2, pop = j))
 )
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Age-4 Maturity: Estimates")
@@ -1181,13 +1181,13 @@ pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 1)
 ##### NOR
 
 ```{r}
-pop_ts_plots("^psi_O1_Rb[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O1[year,origin,pop]", origin = 1)
 ```
 
 ##### HOR
 
 ```{r}
-pop_ts_plots("^psi_O1_Rb[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O1[year,origin,pop]", origin = 1)
 ```
 
 #### Age-4 Maturity {.tabset .tabset-pills}
@@ -1195,13 +1195,13 @@ pop_ts_plots("^psi_O1_Rb[year,origin,pop]", origin = 1)
 ##### NOR
 
 ```{r}
-pop_ts_plots("^psi_O2_Rb[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O2[year,origin,pop]", origin = 1)
 ```
 
 ##### HOR
 
 ```{r}
-pop_ts_plots("^psi_O2_Rb[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O2[year,origin,pop]", origin = 1)
 ```
 
 ### Freshwater Adult Phase {.tabset .tabset-pills}
