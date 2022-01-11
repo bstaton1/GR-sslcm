@@ -21,7 +21,7 @@ out_dir = "02-model/model-output"
 last_yr = 2050
 
 # include posterior predictive checks in JAGS code?
-do_pp_check = FALSE
+do_pp_check = TRUE
 
 # include posterior predictive density calculation in JAGS code?
 do_lppd = FALSE
@@ -37,7 +37,7 @@ rmd = as.logical(args[1])
 mcmc_length = args[2]
 
 if (is.na(rmd)) {
-  rmd = FALSE
+  rmd = TRUE
   cat("\n\n'rmd' was not supplied as a command line argument.", rmd, "will be used.")
 }
 
@@ -439,7 +439,7 @@ saveRDS(out_obj, file.path(out_dir, out_file))
 # delete the text file that contains the JAGS code
 unlink(jags_file)
 
-##### STEP 9: RENDER RMD #####
+##### STEP 9: RENDER RMDs #####
 
 # render the output plots if requested
 if (rmd) {
@@ -474,3 +474,35 @@ if (rmd) {
   cat("\n\nDone.")
 }
 
+# render the simulation vs. observed time series plots if requested and applicable
+if (rmd & last_yr > 2019) {
+  # start a timer, this can take a while
+  starttime = Sys.time()
+  
+  # print a progress message
+  cat("\nRendering Sim vs. Obs Rmd Output")
+  
+  # set working dir to post-processing directory
+  setwd("03-post-process")
+  
+  # file name of rendered output
+  rmd_out_file = paste0("sim-vs-obs-", scenario, ".html")
+  
+  # render the output
+  render(input = "compare-sim-to-obs.Rmd",
+         output_file = rmd_out_file,
+         params = list(scenario = scenario),
+         quiet = TRUE
+  )
+  
+  # open the rendered file when complete
+  file.show(rmd_out_file)
+  
+  # stop the timer
+  stoptime = Sys.time()
+  cat("\nSim vs. Obs Rmd elapsed:", format(round(stoptime - starttime, 2)))
+  
+  # set the working dir back
+  setwd("../")
+  cat("\n\nDone.")
+}
