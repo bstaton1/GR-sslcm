@@ -226,7 +226,7 @@ diag_fn = function(params, L1 = NA, L2 = NA, L3 = NA) {
 # parr recruitment
 L1 = "Egg-to-Parr Survival"
 L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Realized Survival", "Parr States")
-match = c("alpha", "^beta[", "mu_beta_per_wul", "sig_lbeta", "sig_Lphi_E_Pb", "rho_Lphi_E_Pb", "^phi_E_Pb[", "^Pb[")
+match = c("alpha", "^beta[", "lambda", "sig_lbeta", "sig_Lphi_E_Pb", "rho_Lphi_E_Pb", "^phi_E_Pb[", "^Pb[")
 parr_recruit_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # LH apportionment
@@ -274,22 +274,22 @@ phi_Ma_O0_diags = rbind(tmp1, tmp2, tmp3)
 # Probability of Maturing at Age-3
 L1 = "Pr(Mature at Age-3)"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O1_Rb[origin,pop]", "sig_Lpsi_O1_Rb[origin,pop]", "rho_Lpsi_O1_Rb[.,.,origin]", "psi_O1_Rb[.+,origin,pop]")
+base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[origin,pop]", "rho_Lpsi_O1[.,.,origin]", "psi_O1[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
 tmp2 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "HOR")))
-psi_O1_Rb_diags = rbind(tmp1, tmp2)
+psi_O1_diags = rbind(tmp1, tmp2)
 
 # Probability of Maturing at Age-4
 L1 = "Pr(Mature at Age-4)"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O2_Rb[origin,pop]", "sig_Lpsi_O2_Rb[origin,pop]", "rho_Lpsi_O1_Rb[.,.,origin]", "psi_O2_Rb[.+,origin,pop]")
+base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[origin,pop]", "rho_Lpsi_O2[.,.,origin]", "psi_O2[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp1 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "NOR")))
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
 tmp2 = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i], L3 = "HOR")))
-psi_O2_Rb_diags = rbind(tmp1, tmp2)
+psi_O2_diags = rbind(tmp1, tmp2)
 
 # Year 1 ocean survival
 L1 = "Year 1 Ocean Survival"
@@ -308,7 +308,7 @@ phi_O1_O2_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i
 # Misc ocean survival
 L1 = "Misc Ocean Survival"
 L2 = c("NOR:HOR Scaler", "Year 0 Residual", "AR(1) Coefficient")
-base = c("O_phi_scaler_nat_hat[pop]", "Lphi_O0_O1_resid[5,1,pop]", "kappa_phi_O0_O1[pop]")
+base = c("delta[pop]", "Lphi_O0_O1_resid[5,1,pop]", "kappa_phi_O0_O1[pop]")
 match = sub_index(base, pop = ".")
 misc_ocean_surv_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
@@ -343,9 +343,9 @@ init_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[[i]], 
 
 # Straying
 L1 = "Strays"
-L2 = c("Realized Number", "Age Comp")
-match = c("n_stray_tot[.+,.]", sub_index("stray_comp[age,origin,pop]", age = ".", origin = o_hor, pop = "."))
-stray_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
+L2 = c("Realized Total Number", "Age Comp")
+match = c(sub_index("G[.,origin,pop]", origin = o_hor, pop = "."), sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = "."))
+G_diags = unlist_dfs(lapply(1:length(match), function(i) diag_fn(match[i], L1 = L1, L2 = L2[i])))
 
 # combine diagnostic summaries into one massive table
 diags_table = rbind(
@@ -355,8 +355,8 @@ diags_table = rbind(
   phi_Pa_Mb_diags,
   phi_Mb_Ma_diags,
   phi_Ma_O0_diags,
-  psi_O1_Rb_diags,
-  psi_O2_Rb_diags,
+  psi_O1_diags,
+  psi_O2_diags,
   phi_O0_O1_diags,
   phi_O1_O2_diags,
   phi_Rb_Ra_diags,
@@ -364,7 +364,7 @@ diags_table = rbind(
   misc_ocean_surv_diags,
   z_diags,
   init_diags,
-  stray_diags
+  G_diags
 )
 
 # remove any summaries for nodes that don't have diagnostics
@@ -585,60 +585,60 @@ rownames(phi_Ma_O0_bp) = NULL
 ### CALCULATE BAYESIAN P-VALUES: COMPOSITION DATA SOURCES ###
 
 # weir composition
-new = post_subset(post, "weir_x_obs_new_dev", TRUE)
-obs = post_subset(post, "weir_x_obs_dev", TRUE)
+new = post_subset(post, "x_Ra_new_dev", TRUE)
+obs = post_subset(post, "x_Ra_dev", TRUE)
 bp = array_format(colMeans(obs > new))
 dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
-bp[jags_data$weir_nx_obs == 0 | is.na(jags_data$weir_nx_obs)] = NA
-weir_x_bp = data.frame(
+bp[jags_data$nx_Ra == 0 | is.na(jags_data$nx_Ra)] = NA
+x_Ra_bp = data.frame(
   name = rep("Weir", 4), pop = pops,
   origin = rep("Combined", 4), LH_type = rep("Combined", 4),
   summarize_bp(bp)
 )
-rownames(weir_x_bp) = NULL
+rownames(x_Ra_bp) = NULL
 
 # carcass composition
-new = post_subset(post, "carc_x_obs_new_dev", TRUE)
-obs = post_subset(post, "carc_x_obs_dev", TRUE)
+new = post_subset(post, "x_Sa_prime_new_dev", TRUE)
+obs = post_subset(post, "x_Sa_prime_dev", TRUE)
 bp = array_format(colMeans(obs > new))
 dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
-bp[jags_data$carc_nx_obs == 0 | is.na(jags_data$carc_nx_obs)] = NA
-carc_x_bp = data.frame(
+bp[jags_data$nx_Sa_prime == 0 | is.na(jags_data$nx_Sa_prime)] = NA
+x_Sa_prime_bp = data.frame(
   name = rep("Carcasses", 4), pop = pops,
   origin = rep("Combined", 4), LH_type = rep("Combined", 4),
   summarize_bp(bp)
 )
-rownames(carc_x_bp) = NULL
+rownames(x_Sa_prime_bp) = NULL
 
 # pre-spawn survival
-new = post_subset(post, "carcs_spawned_new_dev", TRUE)
-obs = post_subset(post, "carcs_spawned_dev", TRUE)
+new = post_subset(post, "x_carcass_spawned_new_dev", TRUE)
+obs = post_subset(post, "x_carcass_spawned_dev", TRUE)
 bp = array_format(colMeans(obs > new))
 dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
-carcs_spawned_bp = data.frame(
+x_carcass_spawned_bp = data.frame(
   name = rep("Prespawn", 4), pop = pops,
   origin = rep("Combined", 4), LH_type = rep("Combined", 4),
   summarize_bp(bp)
 )
-rownames(carcs_spawned_bp) = NULL
+rownames(x_carcass_spawned_bp) = NULL
 
 # movement survival from BON to LGR
-new = post_subset(post, "LGR_adults_new_dev", TRUE)
-obs = post_subset(post, "LGR_adults_dev", TRUE)
+new = post_subset(post, "x_LGR_new_dev", TRUE)
+obs = post_subset(post, "x_LGR_dev", TRUE)
 bp = array_format(colMeans(obs > new))
 dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("NOR", "HOR"))
-LGR_adults_bp = data.frame(
+x_LGR_bp = data.frame(
   name = rep("Hydrosystem (Upstream)", 2), pop = rep("Combined", 2),
   origin = c("NOR", "HOR"), LH_type = rep("Combined", 2),
   summarize_bp(bp)
 )
-rownames(LGR_adults_bp) = NULL
+rownames(x_LGR_bp) = NULL
 
 ### COMBINE INTO ONE TABLE ###
 bp_tab = rbind(
   Pa_bp, Mb_bp, Ra_bp,
   phi_Pb_Ma_bp, phi_Pa_Ma_bp, phi_Mb_Ma_bp,
-  phi_Ma_O0_bp, weir_x_bp, carc_x_bp, carcs_spawned_bp, LGR_adults_bp
+  phi_Ma_O0_bp, x_Ra_bp, x_Sa_prime_bp, x_carcass_spawned_bp, x_LGR_bp
 )
 
 # add a main data category variable
@@ -705,10 +705,10 @@ get_resids = function(post, j) {
     LGR_to_BON_surv_nor = post_summ(post, sub_index("^Lphi_Ma_O0_resid[.+,origin]", origin = 1))["mean",],
     LGR_to_BON_surv_hor = post_summ(post, sub_index("^Lphi_Ma_O0_resid[.+,origin]", origin = 2))["mean",],
     yr1_ocean_surv = post_summ(post, sub_index("^Lphi_O0_O1_resid[.+,1,pop]", pop = j))["mean",-1],
-    age3_mat_nor = post_summ(post, sub_index("^Lpsi_O1_Rb_resid[.+,origin,pop]", origin = 1, pop = j))["mean",],
-    age3_mat_hor = post_summ(post, sub_index("^Lpsi_O1_Rb_resid[.+,origin,pop]", origin = 2, pop = j))["mean",],
-    age4_mat_nor = post_summ(post, sub_index("^Lpsi_O2_Rb_resid[.+,origin,pop]", origin = 1, pop = j))["mean",],
-    age4_mat_hor = post_summ(post, sub_index("^Lpsi_O2_Rb_resid[.+,origin,pop]", origin = 2, pop = j))["mean",],
+    age3_mat_nor = post_summ(post, sub_index("^Lpsi_O1_resid[.+,origin,pop]", origin = 1, pop = j))["mean",],
+    age3_mat_hor = post_summ(post, sub_index("^Lpsi_O1_resid[.+,origin,pop]", origin = 2, pop = j))["mean",],
+    age4_mat_nor = post_summ(post, sub_index("^Lpsi_O2_resid[.+,origin,pop]", origin = 1, pop = j))["mean",],
+    age4_mat_hor = post_summ(post, sub_index("^Lpsi_O2_resid[.+,origin,pop]", origin = 2, pop = j))["mean",],
     BON_to_LGR_surv_nor = post_summ(post, sub_index("^Lphi_Rb_Ra_resid[.+,origin]", origin = 1))["mean",],
     BON_to_LGR_surv_hor = post_summ(post, sub_index("^Lphi_Rb_Ra_resid[.+,origin]", origin = 2))["mean",],
     prespawn_surv = post_summ(post, sub_index("Lphi_Sb_Sa_resid[.+,pop]", pop = j))["mean",]
@@ -929,7 +929,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```{r BON-LGR-surv-fit-nor, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[year,origin]$", year = ts_yrs, origin = o_nor)),
-             get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_nor], jags_data$BON_adults[observable,o_nor] - jags_data$LGR_adults[observable,o_nor]), 1),
+             get_obs_ests_multinomial(cbind(jags_data$x_LGR[observable,o_nor], jags_data$x_BON[observable,o_nor] - jags_data$x_LGR[observable,o_nor]), 1),
              main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(NOR)"),
              yrs = all_yrs[ts_yrs])
 mtext(side = 1, outer = T, line = 0.25, "Return Year")
@@ -941,7 +941,7 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 ```{r BON-LGR-surv-fit-hor, fig.width = 6, fig.height = 5}
 par(oma = c(1.5,1.5,0,0), mfrow = c(1,1))
 plot_tseries(post_summ(post, sub_index("^phi_Rb_Ra[year,origin]$", year = ts_yrs, origin = o_hor)),
-             get_obs_ests_multinomial(cbind(jags_data$LGR_adults[observable,o_hor], jags_data$BON_adults[observable,o_hor] - jags_data$LGR_adults[observable,o_hor]), 1),
+             get_obs_ests_multinomial(cbind(jags_data$x_LGR[observable,o_hor], jags_data$x_BON[observable,o_hor] - jags_data$x_LGR[observable,o_hor]), 1),
              main = TeX("$BON\\,Adults \\rightarrow LGR\\,Survival\\,(HOR)"),
              yrs = all_yrs[ts_yrs])
 mtext(side = 1, outer = T, line = 0.25, "Return Year")
@@ -952,11 +952,11 @@ mtext(side = 2, outer = T, line = 0.25, "Survival")
 
 ```{r calculate-aggregated-comps-model}
 # extract the full posteriors of the two composition sets
-q_Ra_full = post_subset(post, "q_Ra", matrix = TRUE)
-q_Sa_adj_full = post_subset(post, "q_Sa", matrix = TRUE)
+p_Ra_full = post_subset(post, "p_Ra", matrix = TRUE)
+p_Sa_prime_full = post_subset(post, "p_Sa", matrix = TRUE)
 
 # primary containers: will store final recalculated output
-q_Ra_age = q_Sa_adj_age = q_Ra_origin = q_Sa_adj_origin = NULL
+p_Ra_age = p_Sa_prime_age = p_Ra_origin = p_Sa_prime_origin = NULL
 
 # number of posterior samples
 n = post_dim(post, "saved")
@@ -965,19 +965,19 @@ n = post_dim(post, "saved")
 for (i in 1:n) {
   
   # format the posterior draw as arrays -- easier to subset
-  q_Ra = array_format(q_Ra_full[i,])
-  q_Sa_adj = array_format(q_Sa_adj_full[i,])
+  p_Ra = array_format(p_Ra_full[i,])
+  p_Sa_prime = array_format(p_Sa_prime_full[i,])
   
   ## BY AGE, AGGREGATED ACROSS ORIGINS
   
   # containers
-  q_Ra_age_tmp = q_Sa_adj_age_tmp = array(NA, dim = c(jags_data$ny, jags_data$nk, jags_data$nj))
-  inds_1_age = inds_2_age = inds_3_age = q_Ra_age_tmp
+  p_Ra_age_tmp = p_Sa_prime_age_tmp = array(NA, dim = c(jags_data$ny, jags_data$nk, jags_data$nj))
+  inds_1_age = inds_2_age = inds_3_age = p_Ra_age_tmp
   for (j in 1:jags_data$nj) {
     for (k in 1:jags_data$nk) {
       # calculate aggregate proportions for each age
-      q_Ra_age_tmp[,k,j] = rowSums(q_Ra[,ko_age[[k]],j])
-      q_Sa_adj_age_tmp[,k,j] = rowSums(q_Sa_adj[,ko_age[[k]],j])
+      p_Ra_age_tmp[,k,j] = rowSums(p_Ra[,ko_age[[k]],j])
+      p_Sa_prime_age_tmp[,k,j] = rowSums(p_Sa_prime[,ko_age[[k]],j])
       
       # build the element identifiers - for building names later
       inds_1_age[,k,j] = 1:jags_data$ny
@@ -987,23 +987,23 @@ for (i in 1:n) {
   }
   
   # vectorize, add names, and remove NAs
-  q_Ra_age_v = as.numeric(q_Ra_age_tmp)
-  q_Sa_adj_age_v = as.numeric(q_Sa_adj_age_tmp)
-  names(q_Ra_age_v) = paste0("q_Ra_age[", as.numeric(inds_1_age), ",", as.numeric(inds_2_age), ",", as.numeric(inds_3_age), "]")
-  names(q_Sa_adj_age_v) = paste0("q_Sa_adj_age[", as.numeric(inds_1_age), ",", as.numeric(inds_2_age), ",", as.numeric(inds_3_age), "]")
-  q_Ra_age_v = q_Ra_age_v[!is.na(q_Ra_age_v)]
-  q_Sa_adj_age_v = q_Sa_adj_age_v[!is.na(q_Sa_adj_age_v)]
+  p_Ra_age_v = as.numeric(p_Ra_age_tmp)
+  p_Sa_prime_age_v = as.numeric(p_Sa_prime_age_tmp)
+  names(p_Ra_age_v) = paste0("p_Ra_age[", as.numeric(inds_1_age), ",", as.numeric(inds_2_age), ",", as.numeric(inds_3_age), "]")
+  names(p_Sa_prime_age_v) = paste0("p_Sa_prime_age[", as.numeric(inds_1_age), ",", as.numeric(inds_2_age), ",", as.numeric(inds_3_age), "]")
+  p_Ra_age_v = p_Ra_age_v[!is.na(p_Ra_age_v)]
+  p_Sa_prime_age_v = p_Sa_prime_age_v[!is.na(p_Sa_prime_age_v)]
   
   ## BY ORIGIN, AGGREGATED ACROSS AGES
   
   # containers
-  q_Ra_origin_tmp = q_Sa_adj_origin_tmp = array(NA, dim = c(jags_data$ny, jags_data$no, jags_data$nj))
-  inds_1_origin = inds_2_origin = inds_3_origin = q_Ra_origin_tmp
+  p_Ra_origin_tmp = p_Sa_prime_origin_tmp = array(NA, dim = c(jags_data$ny, jags_data$no, jags_data$nj))
+  inds_1_origin = inds_2_origin = inds_3_origin = p_Ra_origin_tmp
   for (j in 1:jags_data$nj) {
     for (o in 1:jags_data$no) {
       # calculate aggregate proportions for each origin
-      q_Ra_origin_tmp[,o,j] = rowSums(q_Ra[,ko_origin[[o]],j])
-      q_Sa_adj_origin_tmp[,o,j] = rowSums(q_Sa_adj[,ko_origin[[o]],j])
+      p_Ra_origin_tmp[,o,j] = rowSums(p_Ra[,ko_origin[[o]],j])
+      p_Sa_prime_origin_tmp[,o,j] = rowSums(p_Sa_prime[,ko_origin[[o]],j])
       
       # build the element identifiers - for building names later
       inds_1_origin[,o,j] = 1:jags_data$ny
@@ -1013,24 +1013,24 @@ for (i in 1:n) {
   }
   
   # vectorize, add names, and remove NAs
-  q_Ra_origin_v = as.numeric(q_Ra_origin_tmp)
-  q_Sa_adj_origin_v = as.numeric(q_Sa_adj_origin_tmp)
-  names(q_Ra_origin_v) = paste0("q_Ra_origin[", as.numeric(inds_1_origin), ",", as.numeric(inds_2_origin), ",", as.numeric(inds_3_origin), "]")
-  names(q_Sa_adj_origin_v) = paste0("q_Sa_adj_origin[", as.numeric(inds_1_origin), ",", as.numeric(inds_2_origin), ",", as.numeric(inds_3_origin), "]")
-  q_Ra_origin_v = q_Ra_origin_v[!is.na(q_Ra_origin_v)]
-  q_Sa_adj_origin_v = q_Sa_adj_origin_v[!is.na(q_Sa_adj_origin_v)]
+  p_Ra_origin_v = as.numeric(p_Ra_origin_tmp)
+  p_Sa_prime_origin_v = as.numeric(p_Sa_prime_origin_tmp)
+  names(p_Ra_origin_v) = paste0("p_Ra_origin[", as.numeric(inds_1_origin), ",", as.numeric(inds_2_origin), ",", as.numeric(inds_3_origin), "]")
+  names(p_Sa_prime_origin_v) = paste0("p_Sa_prime_origin[", as.numeric(inds_1_origin), ",", as.numeric(inds_2_origin), ",", as.numeric(inds_3_origin), "]")
+  p_Ra_origin_v = p_Ra_origin_v[!is.na(p_Ra_origin_v)]
+  p_Sa_prime_origin_v = p_Sa_prime_origin_v[!is.na(p_Sa_prime_origin_v)]
   
   ## COMBINE NEW CALCULATED QUANTITIES ACROSS POSTERIOR SAMPLES
   
-  q_Ra_age = rbind(q_Ra_age, q_Ra_age_v)
-  q_Sa_adj_age = rbind(q_Sa_adj_age, q_Sa_adj_age_v)
-  q_Ra_origin = rbind(q_Ra_origin, q_Ra_origin_v)
-  q_Sa_adj_origin = rbind(q_Sa_adj_origin, q_Sa_adj_origin_v)
+  p_Ra_age = rbind(p_Ra_age, p_Ra_age_v)
+  p_Sa_prime_age = rbind(p_Sa_prime_age, p_Sa_prime_age_v)
+  p_Ra_origin = rbind(p_Ra_origin, p_Ra_origin_v)
+  p_Sa_prime_origin = rbind(p_Sa_prime_origin, p_Sa_prime_origin_v)
   
 }
 
 # combine new calculated quantities into a big matrix
-q_new = cbind(q_Ra_age, q_Sa_adj_age, q_Ra_origin, q_Sa_adj_origin)
+q_new = cbind(p_Ra_age, p_Sa_prime_age, p_Ra_origin, p_Sa_prime_origin)
 
 # combine with the rest of the posterior samples
 post = post_bind(post, q_new)
@@ -1042,33 +1042,33 @@ post = post_bind(post, q_new)
 # these are the observed proportions by age (aggregated across origins) and origin (aggregated across ages)
 
 # containers
-x_weir_age_obs = x_carc_age_obs = array(NA, dim = c(jags_data$ny_obs, jags_data$nk, jags_data$nj))
-x_weir_origin_obs = x_carc_origin_obs = array(NA, dim = c(jags_data$ny_obs, jags_data$no, jags_data$nj))
+x_Ra_age_obs = x_Sa_prime_age_obs = array(NA, dim = c(jags_data$ny_obs, jags_data$nk, jags_data$nj))
+x_Ra_origin_obs = x_Sa_prime_origin_obs = array(NA, dim = c(jags_data$ny_obs, jags_data$no, jags_data$nj))
 
 for (j in 1:jags_data$nj) {
   # calculate aggregate proportions for each age
   for (k in 1:jags_data$nk) {
-    x_weir_age_obs[,k,j] = rowSums(jags_data$weir_x_obs[,ko_age[[k]],j])
-    x_carc_age_obs[,k,j] = rowSums(jags_data$carc_x_obs[,ko_age[[k]],j])
+    x_Ra_age_obs[,k,j] = rowSums(jags_data$x_Ra[,ko_age[[k]],j])
+    x_Sa_prime_age_obs[,k,j] = rowSums(jags_data$x_Sa_prime[,ko_age[[k]],j])
   }
   
   # calculate aggregate proportions for each origin
   for (o in 1:jags_data$no) {
-    x_weir_origin_obs[,o,j] = rowSums(jags_data$weir_x_obs[,ko_origin[[o]],j])
-    x_carc_origin_obs[,o,j] = rowSums(jags_data$carc_x_obs[,ko_origin[[o]],j])
+    x_Ra_origin_obs[,o,j] = rowSums(jags_data$x_Ra[,ko_origin[[o]],j])
+    x_Sa_prime_origin_obs[,o,j] = rowSums(jags_data$x_Sa_prime[,ko_origin[[o]],j])
   }
 }
 
-dimnames(x_weir_age_obs)[[1]] = dimnames(x_weir_origin_obs)[[1]] = dimnames(x_carc_age_obs)[[1]] = dimnames(x_carc_origin_obs)[[1]] = dimnames(jags_data$weir_x_obs)[[1]]
+dimnames(x_Ra_age_obs)[[1]] = dimnames(x_Ra_origin_obs)[[1]] = dimnames(x_Sa_prime_age_obs)[[1]] = dimnames(x_Sa_prime_origin_obs)[[1]] = dimnames(jags_data$x_Ra)[[1]]
 
-x_weir_new_obs = list(
-  x_weir_age_obs = x_weir_age_obs,
-  x_weir_origin_obs = x_weir_origin_obs
+x_Ra_new_obs = list(
+  x_Ra_age_obs = x_Ra_age_obs,
+  x_Ra_origin_obs = x_Ra_origin_obs
 )
 
-x_carc_new_obs = list(
-  x_carc_age_obs = x_carc_age_obs,
-  x_carc_origin_obs = x_carc_origin_obs
+x_Sa_prime_new_obs = list(
+  x_Sa_prime_age_obs = x_Sa_prime_age_obs,
+  x_Sa_prime_origin_obs = x_Sa_prime_origin_obs
 )
 
 ```
@@ -1082,12 +1082,12 @@ Within a single year, the values across all panels sum to one.
 # for multinomial sample size
 weir_sample_size = function(j) {
   par(mar = c(3,3,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
-  mp = barplot(jags_data$weir_nx_obs[observable,j], xaxt = "n", col = alpha("skyblue2", 0.5), border = "blue",
-               ylim = c(0, max(jags_data$weir_nx_obs[observable,j], na.rm = TRUE)),
+  mp = barplot(jags_data$nx_Ra[observable,j], xaxt = "n", col = alpha("skyblue2", 0.5), border = "blue",
+               ylim = c(0, max(jags_data$nx_Ra[observable,j], na.rm = TRUE)),
                xlab = "Return Year", ylab = "Adults at Weir Sampled for Composition")
   usr = par("usr")
   at_x = seq(1, length(observable), 4)
-  axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$weir_nx_obs[observable,j]), 3, 4)[at_x])
+  axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$nx_Ra[observable,j]), 3, 4)[at_x])
   segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
 }
 
@@ -1095,12 +1095,12 @@ weir_sample_size = function(j) {
 weir_comp_fit_plot = function(j) {
 
   par(mfrow = c(2,3), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
-  plot_tseries(post_summ(post, sub_index("^q_Ra[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra[year,4,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 4), main = TeX("$Age\\,3\\,(HOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra[year,5,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 5), main = TeX("$Age\\,4\\,(HOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra[year,6,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$weir_x_obs[observable,,j], 6), main = TeX("$Age\\,5\\,(HOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Ra[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Ra[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Ra[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra[year,4,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Ra[observable,,j], 4), main = TeX("$Age\\,3\\,(HOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra[year,5,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Ra[observable,,j], 5), main = TeX("$Age\\,4\\,(HOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra[year,6,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Ra[observable,,j], 6), main = TeX("$Age\\,5\\,(HOR)$"), yrs = all_yrs[ts_yrs])
   
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
@@ -1109,9 +1109,9 @@ weir_comp_fit_plot = function(j) {
 # for fits to each age, aggregated across origins
 weir_comp_fit_plot_age = function(j) {
   par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra_age[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra_age[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Ra_new_obs$x_Ra_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra_age[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Ra_new_obs$x_Ra_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra_age[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Ra_new_obs$x_Ra_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1120,8 +1120,8 @@ weir_comp_fit_plot_age = function(j) {
 weir_comp_fit_plot_origin = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
   
-  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 1), main = TeX("$NOR$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Ra_origin[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_weir_new_obs$x_weir_origin_obs[observable,,j], 2), main = TeX("$HOR$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra_origin[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Ra_new_obs$x_Ra_origin_obs[observable,,j], 1), main = TeX("$NOR$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Ra_origin[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Ra_new_obs$x_Ra_origin_obs[observable,,j], 2), main = TeX("$HOR$"), ylim = c(0,1), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1246,12 +1246,12 @@ weir_sample_size(j_ugr)
 # for multinomial sample size
 carc_sample_size = function(j) {
   par(mar = c(3,3,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
-  mp = barplot(jags_data$carc_nx_obs[observable,j], xaxt = "n", col = alpha("skyblue2", 0.5), border = "blue",
-               ylim = c(0, max(jags_data$carc_nx_obs[observable,j], na.rm = TRUE)),
+  mp = barplot(jags_data$nx_Sa_prime[observable,j], xaxt = "n", col = alpha("skyblue2", 0.5), border = "blue",
+               ylim = c(0, max(jags_data$nx_Sa_prime[observable,j], na.rm = TRUE)),
                xlab = "Return Year", ylab = "Carcasses Sampled for Composition")
   usr = par("usr")
   at_x = seq(1, length(observable), 4)
-  axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$carc_nx_obs[observable,j]), 3, 4)[at_x])
+  axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$nx_Sa_prime[observable,j]), 3, 4)[at_x])
   segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
 }
 
@@ -1259,12 +1259,12 @@ carc_sample_size = function(j) {
 carc_comp_fit_plot = function(j) {
   
   par(mfrow = c(2,3), oma = c(1.5,1.5,0,0))#, mar = c(1.5,1.5,1.5,0.5))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,4,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 4), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,5,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 5), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj[year,6,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$carc_x_obs[observable,,j], 6), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Sa_prime[observable,,j], 1), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Sa_prime[observable,,j], 2), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Sa_prime[observable,,j], 3), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime[year,4,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Sa_prime[observable,,j], 4), main = TeX("$Age\\,3\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime[year,5,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Sa_prime[observable,,j], 5), main = TeX("$Age\\,4\\,(NOR)$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime[year,6,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(jags_data$x_Sa_prime[observable,,j], 6), main = TeX("$Age\\,5\\,(NOR)$"), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Carcasses")
 }
@@ -1272,9 +1272,9 @@ carc_comp_fit_plot = function(j) {
 # for fits to each age, aggregated across origins
 carc_comp_fit_plot_age = function(j) {
   par(mfcol = c(1,3), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_age[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime_age[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Sa_prime_new_obs$x_Sa_prime_age_obs[observable,,j], 1), main = TeX("$Age\\,3$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime_age[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Sa_prime_new_obs$x_Sa_prime_age_obs[observable,,j], 2), main = TeX("$Age\\,4$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime_age[year,3,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Sa_prime_new_obs$x_Sa_prime_age_obs[observable,,j], 3), main = TeX("$Age\\,5$"), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1282,8 +1282,8 @@ carc_comp_fit_plot_age = function(j) {
 # for fits to each origin, aggregated across ages
 carc_comp_fit_plot_origin = function(j) {
   par(mfcol = c(1,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 1), main = TeX("$NOR$"), yrs = all_yrs[ts_yrs])
-  plot_tseries(post_summ(post, sub_index("^q_Sa_adj_origin[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_carc_new_obs$x_carc_origin_obs[observable,,j], 2), main = TeX("$HOR$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime_origin[year,1,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Sa_prime_new_obs$x_Sa_prime_origin_obs[observable,,j], 1), main = TeX("$NOR$"), yrs = all_yrs[ts_yrs])
+  plot_tseries(post_summ(post, sub_index("^p_Sa_prime_origin[year,2,pop]$", pop = j, year = ts_yrs)), get_obs_ests_multinomial(x_Sa_prime_new_obs$x_Sa_prime_origin_obs[observable,,j], 2), main = TeX("$HOR$"), yrs = all_yrs[ts_yrs])
   mtext(side = 1, outer = T, line = 0.25, "Return Year")
   mtext(side = 2, outer = T, line = 0.25, "Proportion of Return")
 }
@@ -1411,12 +1411,12 @@ layout(matrix(1:(jags_data$nj * 2), 2, jags_data$nj), heights = c(1, 0.65))
 plot_f = function(j) {
   par(yaxs = "r")
   plot_tseries(post_summ(post, sub_index("^phi_Sb_Sa[year,pop]", pop = j, year = ts_yrs)),
-               get_obs_ests_multinomial(cbind(jags_data$carcs_spawned[,j], jags_data$carcs_sampled[,j] - jags_data$carcs_spawned[,j])[observable,], 1),
+               get_obs_ests_multinomial(cbind(jags_data$x_carcass_spawned[,j], jags_data$x_carcass_total[,j] - jags_data$x_carcass_spawned[,j])[observable,], 1),
                main = pops[j], ylim = c(0,1), yrs = all_yrs[ts_yrs])
   par(mar = c(1.5,1.5,2,0.5), yaxs = "i")
   
   if (j == 1) mtext(side = 2, "Survival Probability", line = 2)
-  mp = barplot(jags_data$carcs_sampled[observable,j], xaxt = "n", ylim = c(0, max(jags_data$carcs_sampled, na.rm = T)) + c(0, 5))
+  mp = barplot(jags_data$x_carcass_total[observable,j], xaxt = "n", ylim = c(0, max(jags_data$x_carcass_total, na.rm = T)) + c(0, 5))
   at_x = seq(1, length(observable), 4)
   axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$carcs_sampled[observable,j]), 3, 4)[at_x])
   box()
@@ -1617,7 +1617,7 @@ Error bars represent the central 80% of the posterior. The many grey lines are i
 beta_ests = post_summ(post, "^beta[", probs = c(0.1, 0.5, 0.9))
 
 # extract posterior samples of the slope parameter
-beta_per = post_subset(post, "mu_beta_per_wul", TRUE)
+beta_per = post_subset(post, "lambda", TRUE)
 
 # create a sequence of WUL values to predict capacity at
 wul_seq = seq(0, max(jags_data$wul) * 1.1, length = 30)
@@ -1653,7 +1653,7 @@ text(x = jags_data$wul, y = beta_ests["mean",], labels = c("CAT", "LOS", "MIN", 
 
 ```{r beta-v-habitat-slope}
 # extract posterior summary of slope
-est = post_summ(post, "mu_beta_per_wul")
+est = post_summ(post, "^lambda$")
 colnames(est) = "slope"
 
 # print a table 
@@ -1889,7 +1889,7 @@ mtext(side = 2, outer = T, line = 0.25, "Spawner per Spawner")
 
 ```{r n-stray, fig.width = 6, fig.height = 5}
 plot_fn = function(j) {
-  plot_tseries(est = post_summ(post, sub_index("n_stray_tot[year,pop]", pop = j, year = ts_yrs)), yrs = all_yrs[ts_yrs], main = pops[j])
+  plot_tseries(est = post_summ(post, sub_index("^G[year,origin,pop]", pop = j, year = ts_yrs, origin = o_hor)), yrs = all_yrs[ts_yrs], main = pops[j])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -1902,7 +1902,7 @@ mtext(side = 2, outer = T, line = 0.25, "Number of Strays Entering Population")
 
 ```{r stray-comp, fig.width = 6, fig.height = 5}
 plot_fn = function(j) {
-  x = post_summ(post, sub_index("stray_comp[age,origin,pop]", age = ".", origin = o_hor, pop = j))
+  x = post_summ(post, sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = j))
   
   par(mar = c(5,2,1,1), tcl = -0.15, mgp = c(2, 0.35, 0))
   mp = barplot(x["mean",], ylim = c(0, 1), xaxt = "n", main = pops[j], col = alpha("salmon", 0.5), border = alpha("red", 0.5))
@@ -1967,10 +1967,10 @@ ocean_surv_plot(j_ugr)
 ```{r maturity-plot-fn}
 maturity_plot = function(j) {
   par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
-  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 3 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^psi_O1_Rb[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 3 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 4 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
-  plot_tseries(post_summ(post, sub_index("^psi_O2_Rb[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 4 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 3 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 3 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 4 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 4 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
 
   mtext(side = 1, outer = T, line = 0.25, "Brood Year")
   mtext(side = 2, outer = T, line = 0.25, "Pr(Mature-at-Age|Alive in Ocean)")
@@ -2110,24 +2110,24 @@ my_boxplot(sub_index("rho_Lphi_Ma_O0[2,1]"), "Among-origin Correlation", ylim = 
 
 ```{r age3-mean-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("mu_psi_O1_Rb[origin,pop]", origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
-my_boxplot(sub_index("mu_psi_O1_Rb[origin,pop]", origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O1[origin,pop]", origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O1[origin,pop]", origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
 ```
 
 ### Process SD
 
 ```{r age3-sd-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("sig_Lpsi_O1_Rb[pop,origin]", origin = o_nor, pop = "."), "", main = "NOR")
-my_boxplot(sub_index("sig_Lpsi_O1_Rb[pop,origin]", origin = o_hor, pop = "."), "", main = "HOR")
+my_boxplot(sub_index("sig_Lpsi_O1[pop,origin]", origin = o_nor, pop = "."), "", main = "NOR")
+my_boxplot(sub_index("sig_Lpsi_O1[pop,origin]", origin = o_hor, pop = "."), "", main = "HOR")
 ```
 
 ### Among-pop Correlation
 
 ```{r age3-rho-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("rho_Lpsi_O1_Rb[.,.,origin]", origin = o_nor), "Among-pop Correlation (NOR)", ticklabs = vcov_labels, las = 3)
-my_boxplot(sub_index("rho_Lpsi_O1_Rb[.,.,origin]", origin = o_hor), "Among-pop Correlation (HOR)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lpsi_O1[.,.,origin]", origin = o_nor), "Among-pop Correlation (NOR)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lpsi_O1[.,.,origin]", origin = o_hor), "Among-pop Correlation (HOR)", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Probability of Maturing at Age-4 {.tabset .tabset-pills}
@@ -2136,24 +2136,24 @@ my_boxplot(sub_index("rho_Lpsi_O1_Rb[.,.,origin]", origin = o_hor), "Among-pop C
 
 ```{r age4-mean-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("mu_psi_O2_Rb[origin,pop]", origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
-my_boxplot(sub_index("mu_psi_O2_Rb[origin,pop]", origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O2[origin,pop]", origin = o_nor, pop = "."), "", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("mu_psi_O2[origin,pop]", origin = o_hor, pop = "."), "", main = "HOR", ylim = c(0,1))
 ```
 
 ### Process SD
 
 ```{r age4-sd-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("sig_Lpsi_O2_Rb[pop,origin]", origin = o_nor, pop = "."), "", main = "NOR")
-my_boxplot(sub_index("sig_Lpsi_O2_Rb[pop,origin]", origin = o_hor, pop = "."), "", main = "HOR")
+my_boxplot(sub_index("sig_Lpsi_O2[pop,origin]", origin = o_nor, pop = "."), "", main = "NOR")
+my_boxplot(sub_index("sig_Lpsi_O2[pop,origin]", origin = o_hor, pop = "."), "", main = "HOR")
 ```
 
 ### Among-pop Correlation
 
 ```{r age4-rho-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
-my_boxplot(sub_index("rho_Lpsi_O2_Rb[.,.,origin]", origin = o_nor), "Among-pop Correlation (NOR)", ticklabs = vcov_labels, las = 3)
-my_boxplot(sub_index("rho_Lpsi_O2_Rb[.,.,origin]", origin = o_hor), "Among-pop Correlation (HOR)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lpsi_O2[.,.,origin]", origin = o_nor), "Among-pop Correlation (NOR)", ticklabs = vcov_labels, las = 3)
+my_boxplot(sub_index("rho_Lpsi_O2[.,.,origin]", origin = o_hor), "Among-pop Correlation (HOR)", ticklabs = vcov_labels, las = 3)
 ```
 
 ## Ocean Survival {.tabset .tabset-pills}
@@ -2198,7 +2198,7 @@ my_boxplot(sub_index("mu_phi_O2_O3[origin,pop]", origin = o_hor, pop = "."), mai
 ### NOR:HOR Log Odds Ratio
 
 ```{r ocean-surv-scaler, fig.width = 8, fig.height = 3.5}
-my_boxplot(sub_index("O_phi_scaler_nat_hat[pop]", pop = "."), ylab = "Log Odds Ratio")
+my_boxplot(sub_index("delta[pop]", pop = "."), ylab = "Log Odds Ratio")
 ```
 
 ## Movement Survival BON to LGR
@@ -2250,10 +2250,10 @@ rho_names = c(
   "rho_Lphi_Pa_Mb[2,1,2]" = "Overwinter Survival (Spring)",
   "rho_Lphi_Mb_Ma[2,1,1]" = "Trib to LGR Survival (NOR)",
   "rho_Lphi_Mb_Ma[2,1,2]" = "Trib to LGR Survival (HOR)",
-  "rho_Lpsi_O1_Rb[2,1,1]" = "Age-3 Maturation (NOR)",
-  "rho_Lpsi_O1_Rb[2,1,2]" = "Age-3 Maturation (HOR)",
-  "rho_Lpsi_O2_Rb[2,1,1]" = "Age-4 Maturation (NOR)",
-  "rho_Lpsi_O2_Rb[2,1,2]" = "Age-4 Maturation (HOR)"
+  "rho_Lpsi_O1[2,1,1]" = "Age-3 Maturation (NOR)",
+  "rho_Lpsi_O1[2,1,2]" = "Age-3 Maturation (HOR)",
+  "rho_Lpsi_O2[2,1,1]" = "Age-4 Maturation (NOR)",
+  "rho_Lpsi_O2[2,1,2]" = "Age-4 Maturation (HOR)"
   )
 rho_summs$name = rho_names[rho_summs$param]
 

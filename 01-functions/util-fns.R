@@ -138,10 +138,10 @@ BH = function(x, alpha, beta) {
 }
 
 ##### REPLACE PLACEHOLDER INDEX #####
-# x: a string like "psi_O1_Rb[year,sex,origin,pop]
+# x: a string like "psi_O1[year,sex,origin,pop]
 # other arguments: a number to replace
-# e.g., sub_index("psi_O1_Rb[year,sex,origin,pop]", year = ".+", sex = 1, origin = 2, pop = ".")
-# returns "psi_O1_Rb[.+,1,2,.]"
+# e.g., sub_index("psi_O1[year,sex,origin,pop]", year = ".+", sex = 1, origin = 2, pop = ".")
+# returns "psi_O1[.+,1,2,.]"
 # this reduces how much hardcoding is required in generating output summaries
 
 sub_index = function(x, year = NULL, LH_type = NULL, age = NULL, origin = NULL, pop = NULL) {
