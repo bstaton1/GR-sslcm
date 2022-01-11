@@ -5,7 +5,7 @@ output: html_document
 params:
   scenario:
     label: "Scenario"
-    value: "new-BH"
+    value: "base"
     input: text
 editor_options: 
   chunk_output_type: console

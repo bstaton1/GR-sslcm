@@ -8,7 +8,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "new-BH"
+    value: "base"
     input: text
   include_sim_years:
     label: "Include Simulated Years on Plots?"
@@ -40,8 +40,8 @@ in_dir = "02-model/model-output"
 model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds")))
 
 # extract the two key structures from this object
-# post = model_info$post
-post = post_thin(model_info$post, keep_percent = 0.1)  # uncomment this to run document with 10% of the retained MCMC samples
+post = model_info$post
+# post = post_thin(model_info$post, keep_percent = 0.1)  # uncomment this to run document with 10% of the retained MCMC samples
 jags_data = model_info$jags_data
 ```
 
