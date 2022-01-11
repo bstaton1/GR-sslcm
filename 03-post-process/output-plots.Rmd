@@ -439,7 +439,7 @@ kable(kable_table, row.names = FALSE, align = c("lllcccccccccc")) %>%
 
 WAIC is a measure of model parsimony. The quantity `pD` is an index of model complexity (i.e., "effective parameters") and `deviance` is an index of model fit to the data. There are two methods of calculating `pD`, both are shown below. As for other measures like AIC or BIC, these numbers are really only relevant for comparing among models fitted to the same data set.
 
-```{r calculate-waic}
+```{r calculate-waic, eval = model_info$do_lppd}
 summarize_lppd = function(param, LH_type = NULL, origin = NULL, pop = NULL) {
   # calculate total lppd summed across all data sets within a given year
   total_lppd = sapply(observable, function(y) rowSums(post_subset(post, sub_index(param, year = y, LH_type = LH_type, origin = origin, pop = pop), matrix = TRUE)))
@@ -460,6 +460,10 @@ waic_out %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
 ```
 
+```{r dont-calculate-waic, eval = !model_info$do_lppd, results='asis'}
+cat("_Calculation of log posterior predictive density values needed to calculate WAIC was toggled off when fitting this model, so this output is omitted._")
+```
+
 ## Posterior Predictive Checks
 
 This output is a diagnostic of the consistency of variability in the data with the variability assumed by the model. For each observed data point and MCMC iteration, a value was simulated from the model. The fit of the observed and simulated data was calculated, and the proportion of MCMC iterations in which the observed data fitted more poorly than the simulated data (i.e., a Bayesian p-value) was calculated. P-values close the 0.5 are ideal (0.4 -- 0.6 have no color below), values closer to 1 (red below) indicate over-dispersion (i.e., model fits real data worse than expected), and values closer to 0 (blue below) indicate under-dispersion (i.e., model fits real data better than expected). Across years within a data set, p-values were summarized as the median and central 95% intervals. The left two columns show the percent of years that had extreme p-values, providing another indication of how often the model fit the real data far better (<0.05) or worse (>0.95) than expected.
@@ -470,7 +474,7 @@ The fit criterion differed depending on the likelihood function used to fit the 
 * **Logit-normal**: squared difference of the logit-scale observation and logit-scale expectation. This applies to all survival data, expect pre-spawn survival which used a binomial distribution.
 * **Binomial/Multinomial**: chi-squared fit statistic. This applies to all composition data and the pre-spawn survival data.
 
-```{r calculate-bayesian-pvals}
+```{r calculate-bayesian-pvals, eval = model_info$do_pp_check}
 # function to summarize bayesian p-values within a data source
 summarize_bp = function(bp) {
   data.frame(
@@ -660,7 +664,7 @@ bp_tab$p_gt_0.95 = paste0(round(bp_tab$p_gt_0.95 * 100), "%")
 rownames(bp_tab) = NULL
 ```
 
-```{r bayesian-pvals-table}
+```{r bayesian-pvals-table, eval = model_info$do_pp_check}
 # a function to color cells depending on the value
 assign_color = function(x) {
   red_pal = colorRampPalette(c("white", "red"))
@@ -685,6 +689,10 @@ bp_tab %>%
   column_spec(8, background = assign_color(bp_tab[,8])) %>%
   column_spec(9, background = assign_color(bp_tab[,9])) %>%
   collapse_rows(1:5) 
+```
+
+```{r dont-calculate-bayesian-pvals, eval = !model_info$do_pp_check, results='asis'}
+cat("_Generation of simulated data that can be compared to the observed data in terms of model fit was toggled off when fitting this model, so this output is omitted._")
 ```
 
 ## Process Noise Diagnostics
