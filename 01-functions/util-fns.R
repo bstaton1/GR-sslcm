@@ -274,7 +274,7 @@ write_model_code = function(fun_file, out_file) {
   writeLines(code, out_file)
 }
 
-##### TOGGLE ON THE ESTIAMTION OF A CORRELATION PARAMETER #####
+##### TOGGLE ON THE ESTIMATION OF A CORRELATION PARAMETER #####
 
 # the default JAGS model code has all correlation parameters (i.e., as part of covariance terms)
 # fixed at zero. If the user wishes to estimate these with a dunif(-0.99, 0.99) prior, they should
@@ -295,3 +295,36 @@ toggle_rho_estimation = function(rho_term, jags_file = "02-model/model.txt") {
   writeLines(model_lines, jags_file)
 }
 
+##### TOGGLE THE CALCULATION OF DATA CHECKS #####
+
+# the default JAGS model code includes data simulation for the observed period (for posterior predictive checks)
+# and calculates log posterior predictive density (for WAIC)
+# these are calculated separately for all observed stochastic nodes
+# given these calculations may add some computation time, use this function to turn them off when fitting the model
+
+toggle_data_diagnostics = function(do_lppd = FALSE, do_ppd_check = FALSE, jags_file = "02-model/model.txt") {
+  
+  # read in the existing jags model code (after running write_model_code())
+  # has all data diagnostics toggled on
+  model_lines = readLines(jags_file)
+  
+  # toggle off WAIC calculations if requested
+  if (!do_lppd) {
+    which_matches = stringr::str_which(model_lines, "_lppd")
+    spaces = stringr::str_remove(stringr::str_extract(model_lines[which_matches], "^[:space:]+[:alpha:]"), "[:alpha:]")
+    model_lines[which_matches] = paste0(spaces, "# WAIC Calculations Toggled Off")
+  }
+  
+  # toggle off posterior predictive check calculations
+  if (!do_ppd_check) {
+    which_matches = stringr::str_which(model_lines, "expected_|_new|_dev")
+    spaces = stringr::str_remove(stringr::str_extract(model_lines[which_matches], "^[:space:]+[:alpha:]"), "[:alpha:]")
+    model_lines[which_matches] = paste0(spaces, "# Posterior Predictive Check Calculations Toggled Off")
+  }
+  
+  # write over the old jags model code
+  if (!do_lppd | !do_ppd_check) {
+    writeLines(model_lines, jags_file)
+  }
+  
+}

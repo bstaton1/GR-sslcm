@@ -216,7 +216,7 @@ jags_model_code = function() {
   for (y in 2:ny) {
     
     # egg to parr survival: Beverton-Holt relationship
-    Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(phi_E_Pb_mean[y,1:nj]), Sig_Lphi_E_Pb[1:nj,1:nj])
+    Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(1/(1/alpha[1:nj] + E[y,1:nj]/beta[1:nj])), Sig_Lphi_E_Pb[1:nj,1:nj])
 
     # LH apportionment
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
@@ -339,7 +339,6 @@ jags_model_code = function() {
   for (j in 1:nj) {
     for (y in 2:ny) {
       # reproductive link: expected egg-to-parr survival is a BH function and parr recruitment is egg production times a latent survival
-      phi_E_Pb_mean[y,j] <- 1/(1/alpha[j] + E[y,j]/beta[j])
       Pb[y,j] <- E[y,j] * phi_E_Pb[y,j]
 
       # natural origin tributary-to-LGD dynamics
@@ -684,8 +683,8 @@ jags_model_code = function() {
     for (j in 1:nj) {
       
       # total summer parr recruitment
-      Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(phi_E_Pb_mean[y,j])
-      
+      Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(1/(1/alpha[j] + E[y,j]/beta[j]))
+
       # proportion of summer parr that become fall migrants
       Lpi_resid[y,j] <- logit(pi[y,i_fall,j]) - logit(mu_pi[i_fall,j])
       
