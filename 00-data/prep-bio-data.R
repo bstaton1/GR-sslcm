@@ -454,5 +454,8 @@ bio_dat = merge(bio_dat, empty_df, by = c("population", "brood_year"), all = T)
 # make hatchery releases be zero if NA
 bio_dat$hatchery_smolt[is.na(bio_dat$hatchery_smolt) & bio_dat$population != "ALL"] = 0
 
+colnames(bio_dat) = stringr::str_replace(colnames(bio_dat), "Nat", "NOR")
+colnames(bio_dat) = stringr::str_replace(colnames(bio_dat), "Hat", "HOR")
+
 # remove unnecessary objects from workspace, retain only bio_dat
 rm(list = setdiff(ls(), "bio_dat"))

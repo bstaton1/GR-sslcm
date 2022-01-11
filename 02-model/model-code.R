@@ -31,13 +31,13 @@ jags_model_code = function() {
     gamma1[i_spring,j] <- gamma1[i_fall,j]
     
     # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
-    mu_phi_Mb_Ma[i_spring,o_nat,j] ~ dbeta(1, 1)
-    sig_Lphi_Mb_Ma[o_nat,j] ~ dunif(0, 5)
-    mu_phi_Mb_Ma[i_fall,o_nat,j] <- mu_phi_Mb_Ma[i_spring,o_nat,j]
+    mu_phi_Mb_Ma[i_spring,o_nor,j] ~ dbeta(1, 1)
+    sig_Lphi_Mb_Ma[o_nor,j] ~ dunif(0, 5)
+    mu_phi_Mb_Ma[i_fall,o_nor,j] <- mu_phi_Mb_Ma[i_spring,o_nor,j]
 
     # hatchery origin movement survival (trib to LGD): have spring migrants only
-    mu_phi_Mb_Ma[i_spring,o_hat,j] ~ dbeta(1, 1)
-    sig_Lphi_Mb_Ma[o_hat,j] ~ dunif(0, 5)
+    mu_phi_Mb_Ma[i_spring,o_hor,j] ~ dbeta(1, 1)
+    sig_Lphi_Mb_Ma[o_hor,j] ~ dunif(0, 5)
     
     # pre-spawn survival (after brood-stock removal to successful spawning)
     mu_phi_Sb_Sa[j] ~ dbeta(1, 1)
@@ -58,9 +58,9 @@ jags_model_code = function() {
     
     ### PRIORS: OCEAN SURVIVAL ###
     # mean survival by ocean year transition for natural origin
-    mu_phi_O0_O1[o_nat,j] ~ dbeta(1,1)               # first winter at sea: to become SWA1
-    mu_phi_O1_O2[o_nat,j] ~ dbeta(60,15)             # second winter at sea: to become SWA2
-    mu_phi_O2_O3[o_nat,j] <- mu_phi_O1_O2[o_nat,j]   # third winter at sea: to become SW3
+    mu_phi_O0_O1[o_nor,j] ~ dbeta(1,1)               # first winter at sea: to become SWA1
+    mu_phi_O1_O2[o_nor,j] ~ dbeta(60,15)             # second winter at sea: to become SWA2
+    mu_phi_O2_O3[o_nor,j] <- mu_phi_O1_O2[o_nor,j]   # third winter at sea: to become SW3
     
     # log odds ratio between natural and hatchery origin
     delta[j] ~ dt(0, 1/1.566^2, 7.763)
@@ -75,20 +75,20 @@ jags_model_code = function() {
     sig_Lphi_O0_O1_init[j] <- sqrt(sig_Lphi_O0_O1[j]^2/(1 - kappa_phi_O0_O1[j]^2))
     
     # mean survival by ocean year transition for hatchery origin
-    logit(mu_phi_O0_O1[o_hat,j]) <- logit(mu_phi_O0_O1[o_nat,j]) + delta[j]
-    logit(mu_phi_O1_O2[o_hat,j]) <- logit(mu_phi_O1_O2[o_nat,j]) + delta[j]
-    logit(mu_phi_O2_O3[o_hat,j]) <- logit(mu_phi_O2_O3[o_nat,j]) + delta[j]
+    logit(mu_phi_O0_O1[o_hor,j]) <- logit(mu_phi_O0_O1[o_nor,j]) + delta[j]
+    logit(mu_phi_O1_O2[o_hor,j]) <- logit(mu_phi_O1_O2[o_nor,j]) + delta[j]
+    logit(mu_phi_O2_O3[o_hor,j]) <- logit(mu_phi_O2_O3[o_nor,j]) + delta[j]
     
     ### PRIORS: HATCHERY STRAYS RETURNING IN YEARS WITH NO ASSOCIATED SMOLT RELEASE ###
     
     # age composition of strays: only estimate for hatchery origin
-    p_G[1:nk,o_nat,j] <- rep(0, nk)
-    p_G[1:nk,o_hat,j] ~ ddirich(rep(1, nk))
+    p_G[1:nk,o_nor,j] <- rep(0, nk)
+    p_G[1:nk,o_hor,j] ~ ddirich(rep(1, nk))
     
     # the number of hatchery strays: only estimate in years where no other mechanism for generating hatchery fish
     for (i in 1:n_stray_yrs[j]) {
-      G[stray_yrs[i,j],o_nat,j] <- 0
-      G[stray_yrs[i,j],o_hat,j] ~ dunif(0, 500)
+      G[stray_yrs[i,j],o_nor,j] <- 0
+      G[stray_yrs[i,j],o_hor,j] ~ dunif(0, 500)
     }
     for (o in 1:no) {
       for (i in 1:n_not_stray_yrs[j]) {
@@ -119,14 +119,14 @@ jags_model_code = function() {
   rho_Lpi <- 0
   rho_Lphi_Pa_Mb[i_fall] <- 0
   rho_Lphi_Pa_Mb[i_spring] <- 0
-  rho_Lphi_Mb_Ma[o_nat] <- 0
-  rho_Lphi_Mb_Ma[o_hat] <- 0
+  rho_Lphi_Mb_Ma[o_nor] <- 0
+  rho_Lphi_Mb_Ma[o_hor] <- 0
   rho_Lphi_Ma_O0 <- 0
   rho_Lphi_O0_O1 <- 0
-  rho_Lpsi_O1[o_nat] <- 0
-  rho_Lpsi_O1[o_hat] <- 0
-  rho_Lpsi_O2[o_nat] <- 0
-  rho_Lpsi_O2[o_hat] <- 0
+  rho_Lpsi_O1[o_nor] <- 0
+  rho_Lpsi_O1[o_hor] <- 0
+  rho_Lpsi_O2[o_nor] <- 0
+  rho_Lpsi_O2[o_hor] <- 0
   rho_Lphi_Rb_Ra <- 0
   rho_Lphi_Sb_Sa <- 0
   
@@ -178,7 +178,7 @@ jags_model_code = function() {
   }
   
   # year 0 residuals for yr1 ocean survival (needed for AR(1) process)
-  Lphi_O0_O1_resid[1,o_nat,1:nj] ~ dmnorm.vcov(rep(0, nj), Sig_Lphi_O0_O1_init[1:nj,1:nj])
+  Lphi_O0_O1_resid[1,o_nor,1:nj] ~ dmnorm.vcov(rep(0, nj), Sig_Lphi_O0_O1_init[1:nj,1:nj])
 
   # migration survival adults from BON to LGR
   for (o in 1:no) {
@@ -237,16 +237,16 @@ jags_model_code = function() {
     }
     
     # yr1 NOR ocean survival: includes AR(1) process
-    Lphi_O0_O1[y,o_nat,1:nj] ~ dmnorm.vcov(logit(mu_phi_O0_O1[o_nat,1:nj]) + Lphi_O0_O1_resid[y-1,o_nat,1:nj] * kappa_phi_O0_O1[1:nj], Sig_Lphi_O0_O1[1:nj,1:nj])
+    Lphi_O0_O1[y,o_nor,1:nj] ~ dmnorm.vcov(logit(mu_phi_O0_O1[o_nor,1:nj]) + Lphi_O0_O1_resid[y-1,o_nor,1:nj] * kappa_phi_O0_O1[1:nj], Sig_Lphi_O0_O1[1:nj,1:nj])
 
     # yr2/yr3 NOR ocean survival: time constant
-    Lphi_O1_O2[y,o_nat,1:nj] <- logit(mu_phi_O1_O2[o_nat,1:nj])
-    Lphi_O2_O3[y,o_nat,1:nj] <- logit(mu_phi_O2_O3[o_nat,1:nj])
+    Lphi_O1_O2[y,o_nor,1:nj] <- logit(mu_phi_O1_O2[o_nor,1:nj])
+    Lphi_O2_O3[y,o_nor,1:nj] <- logit(mu_phi_O2_O3[o_nor,1:nj])
     
     # yr1/yr2/yr3 HOR ocean survival: same as NOR but adjusted by a time-constant log odds ratio
-    Lphi_O0_O1[y,o_hat,1:nj] <- Lphi_O0_O1[y,o_nat,1:nj] + delta[1:nj]
-    Lphi_O1_O2[y,o_hat,1:nj] <- Lphi_O1_O2[y,o_nat,1:nj] + delta[1:nj]
-    Lphi_O2_O3[y,o_hat,1:nj] <- Lphi_O2_O3[y,o_nat,1:nj] + delta[1:nj]
+    Lphi_O0_O1[y,o_hor,1:nj] <- Lphi_O0_O1[y,o_nor,1:nj] + delta[1:nj]
+    Lphi_O1_O2[y,o_hor,1:nj] <- Lphi_O1_O2[y,o_nor,1:nj] + delta[1:nj]
+    Lphi_O2_O3[y,o_hor,1:nj] <- Lphi_O2_O3[y,o_nor,1:nj] + delta[1:nj]
     
     # pre-spawn survival
     Lphi_Sb_Sa[y,1:nj] ~ dmnorm.vcov(logit(mu_phi_Sb_Sa[1:nj]), Sig_Lphi_Sb_Sa[1:nj,1:nj])
@@ -289,7 +289,7 @@ jags_model_code = function() {
       }
       
       # assume movement survival trib to LGR for NOR fish is equal between LH types
-      phi_Mb_Ma[y,i_fall,o_nat,j] <- phi_Mb_Ma[y,i_spring,o_nat,j]
+      phi_Mb_Ma[y,i_fall,o_nor,j] <- phi_Mb_Ma[y,i_spring,o_nor,j]
       
       # pre-spawn survival
       phi_Sb_Sa[y,j] <- ilogit(Lphi_Sb_Sa[y,j])
@@ -329,8 +329,8 @@ jags_model_code = function() {
   for (j in 1:nj) {
     for (k in 1:nk) {
       for (y in 2:(kmin+k)) {
-        Rb[y,k,o_nat,j] ~ dunif(0, max_Rb_init[k])
-        Rb[y,k,o_hat,j] <- 0
+        Rb[y,k,o_nor,j] ~ dunif(0, max_Rb_init[k])
+        Rb[y,k,o_hor,j] <- 0
       }
     }
   }
@@ -348,32 +348,32 @@ jags_model_code = function() {
         Pa[y,i,j] <- Pb[y,j] * pi[y,i,j]
         
         # survive over winter: smolt before spring migration
-        Mb[y,i,o_nat,j] <- Pa[y,i,j] * phi_Pa_Mb[y,i,j]
+        Mb[y,i,o_nor,j] <- Pa[y,i,j] * phi_Pa_Mb[y,i,j]
         
         # move to LGD: smolt after spring migration, at top of LGD
-        Ma[y,i,o_nat,j] <- Mb[y,i,o_nat,j] * phi_Mb_Ma[y,i,o_nat,j]
+        Ma[y,i,o_nor,j] <- Mb[y,i,o_nor,j] * phi_Mb_Ma[y,i,o_nor,j]
 
         # derived survival for fitting: fall trap to LGD
-        phi_Pa_Ma[y,i,j] <- Ma[y,i,o_nat,j]/max(Pa[y,i,j] * phi_Pb_Pa[i,j], Ma[y,i,o_nat,j])
+        phi_Pa_Ma[y,i,j] <- Ma[y,i,o_nor,j]/max(Pa[y,i,j] * phi_Pb_Pa[i,j], Ma[y,i,o_nor,j])
       }
       
       # flag that tells us how often max constraint is violated
       # will remove this eventually. the max constraint is needed for MCMC during early tuning (crashes w/o it)
       # but none of the converged samples have this occur
-      bad_flag[y,j] <- ifelse(Pa[y,i_spring,j] * phi_Pb_Pa[i_spring,j] < Ma[y,i_spring,o_nat,j], 1, 0)
+      bad_flag[y,j] <- ifelse(Pa[y,i_spring,j] * phi_Pb_Pa[i_spring,j] < Ma[y,i_spring,o_nor,j], 1, 0)
       
       # derived survival for fitting: summer tagging to LGD
-      phi_Pb_Ma[y,j] <- sum(Ma[y,1:ni,o_nat,j])/Pb[y,j]
+      phi_Pb_Ma[y,j] <- sum(Ma[y,1:ni,o_nor,j])/Pb[y,j]
       
       # put hatchery smolts in tributary
-      Mb[y,i_spring,o_hat,j] <- Mb_obs[y,i_spring,o_hat,j]
+      Mb[y,i_spring,o_hor,j] <- Mb_obs[y,i_spring,o_hor,j]
       
       # move hatchery smolts from tributary to LGD
-      Ma[y,i_spring,o_hat,j] <- Mb[y,i_spring,o_hat,j] * phi_Mb_Ma[y,i_spring,o_hat,j]
+      Ma[y,i_spring,o_hor,j] <- Mb[y,i_spring,o_hor,j] * phi_Mb_Ma[y,i_spring,o_hor,j]
       
       # create zeros for fall migrant hatchery fish at LGD
       # needed because we sum over this dimension below
-      Ma[y,i_fall,o_hat,j] <- 0
+      Ma[y,i_fall,o_hor,j] <- 0
       
       # origin-specific processes
       for (o in 1:no) {
@@ -426,12 +426,12 @@ jags_model_code = function() {
       E[y,j] <- sum(E_sep[y,1:nk,1:no,j])
       
       # reformat returns by age/origin for fitting to weir comp data (basically cbind two array slices)
-      Ra_2d[y,1:nk,j] <- Ra[y,1:nk,o_nat,j]            # nat., all ages
-      Ra_2d[y,(nk+1):(2*nk),j] <- Ra[y,1:nk,o_hat,j]   # hat., all ages
+      Ra_2d[y,1:nk,j] <- Ra[y,1:nk,o_nor,j]            # nat., all ages
+      Ra_2d[y,(nk+1):(2*nk),j] <- Ra[y,1:nk,o_hor,j]   # hat., all ages
 
       # reformat "adjusted carcasses" by age/origin for fitting to carcass comp data (basically cbind two array slices)
-      Sa_prime_2d[y,1:nk,j] <- Sa_prime[y,1:nk,o_nat,j]            # nat., all ages
-      Sa_prime_2d[y,(nk+1):(2*nk),j] <- Sa_prime[y,1:nk,o_hat,j]   # hat., all ages
+      Sa_prime_2d[y,1:nk,j] <- Sa_prime[y,1:nk,o_nor,j]            # nat., all ages
+      Sa_prime_2d[y,(nk+1):(2*nk),j] <- Sa_prime[y,1:nk,o_hor,j]   # hat., all ages
 
       # calculate age compositions
       for (ko in 1:nko) {
@@ -442,7 +442,7 @@ jags_model_code = function() {
       # calculate misc derived quantities
       Pb_per_Sa_tot[y,j] <- Pb[y,j]/Sa_tot[y,j]                  # parr per spawner
       Pb_per_E[y,j] <- Pb[y,j]/E[y,j]                    # parr per egg
-      Mb_per_Sa_tot[y,j] <- sum(Mb[y,1:ni,o_nat,j])/Sa_tot[y,j]  # smolt per spawner
+      Mb_per_Sa_tot[y,j] <- sum(Mb[y,1:ni,o_nor,j])/Sa_tot[y,j]  # smolt per spawner
     }
     
     # BON -> BON survival -- can't be calculated for all brood years in model

@@ -51,7 +51,7 @@ jags_data = append_no_na_indices(jags_data)
 U_45_nat = with(jags_data, c(NA, rep(0.02, ny - 1)))
 U_45_hat = with(jags_data, c(NA, rep(0.08, ny - 1)))
 U = abind(list(cbind(U_45_nat * 0.25, U_45_nat, U_45_nat), cbind(U_45_hat * 0.75, U_45_hat, U_45_hat)), along = 3)
-dimnames(U) = with(jags_data, list(rownames(Ra_obs), kmin:kmax, c("Nat", "Hat")))
+dimnames(U) = with(jags_data, list(rownames(Ra_obs), kmin:kmax, c("NOR", "HOR")))
 
 # proportion of spawners by age and population that are female
 Omega = array(NA, dim = c(jags_data$nk, jags_data$nj))
@@ -81,8 +81,8 @@ add_jags_data = append(add_jags_data, add_jags_data2)
 add_jags_data3 = list(
   i_fall = 1,     # fall migrants are i = 1
   i_spring = 2,   # spring migrants are i = 2,
-  o_nat = 1,      # natural origin are o = 1,
-  o_hat = 2       # hatchery origin are o = 2,
+  o_nor = 1,      # natural origin are o = 1,
+  o_hor = 2       # hatchery origin are o = 2,
 )
 add_jags_data = append(add_jags_data, add_jags_data3)
 
