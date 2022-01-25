@@ -987,6 +987,7 @@ x = append(
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 1, origin = 2, pop = j))
 )
 x = do.call(abind, append(x, list(along = 4)))
+x[x == "Inf"] = 1; x[x == "NaN"] = 1
 vals_plots(x, "Proportion Age-3 Return: Estimates")
 ratio_plots(x, "Proportion Age-3 Return: Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-3 Return"))
@@ -1000,6 +1001,7 @@ x = append(
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 2, origin = 2, pop = j))
 )
 x = do.call(abind, append(x, list(along = 4)))
+x[x == "Inf"] = 1; x[x == "NaN"] = 1
 vals_plots(x, "Proportion Age-4 Return: Estimates")
 ratio_plots(x, "Proportion Age-4 Return: Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-4 Return"))
@@ -1013,6 +1015,7 @@ x = append(
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 3, origin = 2, pop = j))
 )
 x = do.call(abind, append(x, list(along = 4)))
+x[x == "Inf"] = 1; x[x == "NaN"] = 1
 vals_plots(x, "Proportion Age-5 Return: Estimates")
 ratio_plots(x, "Proportion Age-5 Return: Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-5 Return"))

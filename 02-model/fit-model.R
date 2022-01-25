@@ -161,7 +161,11 @@ if (ny_sim > 0) {
   }
   
   jags_data$not_stray_yrs = not_stray_yrs_new
+  jags_data$stray_yrs = rbind(jags_data$stray_yrs, matrix(NA, ny_sim, jags_data$nj))
+  jags_data$not_stray_yrs[,"MIN"] = NA
+  jags_data$stray_yrs[,"MIN"] = 2:jags_data$ny
   jags_data$n_not_stray_yrs = colSums(!is.na(jags_data$not_stray_yrs))
+  jags_data$n_stray_yrs = colSums(!is.na(jags_data$stray_yrs))
   
   # append hypothetical future sea lion survival (by population)
   SL_yrs = as.character(2001:2019)

@@ -88,8 +88,12 @@ jags_model_code = function() {
     # the number of hatchery strays: only estimate in years where no other mechanism for generating hatchery fish
     for (i in 1:n_stray_yrs[j]) {
       G[stray_yrs[i,j],o_nor,j] <- 0
-      G[stray_yrs[i,j],o_hor,j] ~ dunif(0, 500)
+      G_random1[stray_yrs[i,j],o_hor,j] ~ dunif(0, 500)  # prior if an observed year
+      G_random2[stray_yrs[i,j],o_hor,j] ~ dunif(50, 150) # prior if a simulated year, only applies for MIN
+      G[stray_yrs[i,j],o_hor,j] <- ifelse(stray_yrs[i,j] <= ny_obs, G_random1[stray_yrs[i,j],o_hor,j], G_random2[stray_yrs[i,j],o_hor,j])
     }
+    
+    # force zero strays in years where they aren't needed
     for (o in 1:no) {
       for (i in 1:n_not_stray_yrs[j]) {
         G[not_stray_yrs[i,j],o,j] <- 0
