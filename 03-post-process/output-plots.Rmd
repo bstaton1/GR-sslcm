@@ -1,6 +1,7 @@
 ---
 title: "Output Summary"
-subtitle: "Multi-Population Model"
+subtitle: "`r paste0('Model Scenario: ', params$scenario)`" 
+date: "`r paste0('Date Rendered: ', Sys.Date())`"
 output: 
   html_document:
     toc: true
@@ -12,8 +13,12 @@ params:
     input: text
   include_sim_years:
     label: "Include Simulated Years on Plots?"
-    value: FALSE
+    value: TRUE
     input: checkbox
+  thin_percent:
+    label: "Proportion of Posterior Samples to Retain?"
+    value: 1
+    input: numeric
 editor_options: 
   chunk_output_type: console
 ---
@@ -39,9 +44,15 @@ in_dir = "02-model/model-output"
 # read information from this model
 model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds")))
 
-# extract the two key structures from this object
-post = model_info$post
-# post = post_thin(model_info$post, keep_percent = 0.1)  # uncomment this to run document with 10% of the retained MCMC samples
+# extract the posterior samples
+# post-MCMC thinning allowed to reduce run time of this document
+if (params$thin_percent < 1) {
+  post = post_thin(model_info$post, keep_percent = params$thin_percent)
+} else {
+  post = model_info$post
+}
+
+# extract the model data 
 jags_data = model_info$jags_data
 ```
 
