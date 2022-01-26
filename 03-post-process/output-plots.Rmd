@@ -80,6 +80,9 @@ sar_yrs = ts_yrs[-((length(ts_yrs) - jags_data$kmax + 1):length(ts_yrs))]
 # population names
 pops = colnames(jags_data$Ra_obs)
 
+# origin names
+origins = c("NOR", "HOR")
+
 # dimension IDs
 i_fall   = 1  # fall migrants are i = 1
 i_spring = 2  # spring migrants are i = 2,
@@ -572,7 +575,7 @@ rownames(phi_Pa_Ma_bp) = NULL
 new = post_subset(post, "Lphi_obs_new_Mb_Ma_dev", TRUE)
 obs = post_subset(post, "Lphi_obs_Mb_Ma_dev", TRUE)
 bp = array_format(colMeans(obs > new))
-dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("fall-mig", "spring-mig"), c("NOR", "HOR"), pops)
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("fall-mig", "spring-mig"), origins, pops)
 bp = bp[,"spring-mig",,]
 bp = cbind(CAT_NOR = bp[,"NOR","CAT"], CAT_HOR = bp[,"HOR","CAT"],
            LOS_NOR = bp[,"NOR","LOS"], LOS_HOR = bp[,"HOR","LOS"],
@@ -580,7 +583,7 @@ bp = cbind(CAT_NOR = bp[,"NOR","CAT"], CAT_HOR = bp[,"HOR","CAT"],
            UGR_NOR = bp[,"NOR","UGR"], UGR_HOR = bp[,"HOR","UGR"])
 phi_Mb_Ma_bp = data.frame(
   name = rep("Spring Trap/Release to LGR", 8), pop = rep(pops, each = 2),
-  origin = rep(c("NOR", "HOR"), 4), LH_type = rep("Spring Migrants", 8),
+  origin = rep(origins, 4), LH_type = rep("Spring Migrants", 8),
   summarize_bp(bp)
 )
 rownames(phi_Mb_Ma_bp) = NULL
@@ -589,10 +592,10 @@ rownames(phi_Mb_Ma_bp) = NULL
 new = post_subset(post, "Lphi_obs_new_Ma_O0_dev", TRUE)
 obs = post_subset(post, "Lphi_obs_Ma_O0_dev", TRUE)
 bp = array_format(colMeans(obs > new))
-dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("NOR", "HOR"))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], origins)
 phi_Ma_O0_bp = data.frame(
   name = rep("Hydrosystem (Downstream)", 2), pop = rep("Combined", 2),
-  origin = c("NOR", "HOR"), LH_type = rep("Combined", 2),
+  origin = origins, LH_type = rep("Combined", 2),
   summarize_bp(bp)
 )
 rownames(phi_Ma_O0_bp) = NULL
@@ -641,10 +644,10 @@ rownames(x_carcass_spawned_bp) = NULL
 new = post_subset(post, "x_LGR_new_dev", TRUE)
 obs = post_subset(post, "x_LGR_dev", TRUE)
 bp = array_format(colMeans(obs > new))
-dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("NOR", "HOR"))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], origins)
 x_LGR_bp = data.frame(
   name = rep("Hydrosystem (Upstream)", 2), pop = rep("Combined", 2),
-  origin = c("NOR", "HOR"), LH_type = rep("Combined", 2),
+  origin = origins, LH_type = rep("Combined", 2),
   summarize_bp(bp)
 )
 rownames(x_LGR_bp) = NULL
