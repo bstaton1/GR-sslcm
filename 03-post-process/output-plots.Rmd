@@ -677,8 +677,8 @@ This output is a diagnostic of the consistency of variability in the data with t
 The fit criterion differed depending on the likelihood function used to fit the model to the data set:
 
 * **Log-normal**: squared difference of the log-scale observation and log-scale expectation. This applies to all abundance data.
-* **Logit-normal**: squared difference of the logit-scale observation and logit-scale expectation. This applies to all survival data, expect pre-spawn survival which used a binomial distribution.
-* **Binomial/Multinomial**: chi-squared fit statistic. This applies to all composition data and the pre-spawn survival data.
+* **Logit-normal**: squared difference of the logit-scale observation and logit-scale expectation. This applies to all survival data, except the BON to LGR and the pre-spawn survival which were fitted using binomial distributions.
+* **Binomial/Multinomial**: Freeman-Tukey fit statistic, which is similar to the $\chi^2$ statistic but better handles small bin probabilities. This applies to all composition data, the survival from BON to LGR data, and the pre-spawn survival data.
 
 ```{r calculate-bayesian-pvals, eval = model_info$do_pp_check}
 # function to summarize bayesian p-values within a data source
