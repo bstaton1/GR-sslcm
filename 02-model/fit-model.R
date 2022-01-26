@@ -302,11 +302,11 @@ if (do_lppd) jags_params = c(jags_params, lppd_params)
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 60000),
-  n_burn = switch(mcmc_length,  "very_short" = 5, "short" = 1000, "medium" = 20000, "long" = 60000),
-  n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 20),
+  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 50000),
+  n_burn = switch(mcmc_length,  "very_short" = 5,   "short" = 1000, "medium" = 20000, "long" = 30000),
+  n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 10),
   n_chain = switch(mcmc_length, "very_short" = 3,   "short" = 3,    "medium" = 3,     "long" = 3),
-  n_adapt = switch(mcmc_length, "very_short" = 10, "short" = 1000, "medium" = 1000,  "long" = 1000),
+  n_adapt = switch(mcmc_length, "very_short" = 10,  "short" = 1000, "medium" = 3000,  "long" = 3000),
   parallel = TRUE
 )
 
@@ -436,6 +436,7 @@ out_obj = list(
   do_pp_check = do_pp_check,
   jags_time = c(starttime = format(starttime), stoptime = format(stoptime), elapsed = format(round(stoptime - starttime,2))),
   post = post,
+  last_yr = last_yr,
   scenario = scenario
 )
 
