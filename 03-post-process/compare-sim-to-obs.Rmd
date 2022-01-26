@@ -497,7 +497,7 @@ assign_color_1 = function(x) {
   blue_cols = blue_pal(5)
   cols = c(blue_cols, red_cols)
   
-  breaks = c(0, 0.25, 0.5, 0.75, 0.9, 1.1, 1.25, 1.5, 1.75, 3)
+  breaks = c(0, 0.25, 0.5, 0.75, 0.9, 1.1, 1.25, 1.5, 1.75, 100)
   bin_names = levels(cut(runif(1e6, 0, 2), breaks = breaks, include.lowest = TRUE))
   names(cols) = c(bin_names[1:5], bin_names[5:9])
   bins = cut(x, breaks = breaks, include.lowest = TRUE)
