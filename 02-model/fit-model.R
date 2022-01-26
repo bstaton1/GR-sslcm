@@ -262,11 +262,17 @@ jags_params = c(
   # misc derived quantities
   "lambda_pop", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
   
-  # residuals
+  # residuals: process model
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_O0_resid", "Lpsi_O1_resid",
   "Lpsi_O2_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
+  
+  # residuals: observation model
+  "x_Ra_obs_resid", "x_Sa_prime_obs_resid",
+  "lPa_obs_resid", "lMb_obs_resid", "lRa_obs_resid",
+  "Lphi_obs_Pb_Ma_resid", "Lphi_obs_Pa_Ma_resid", "Lphi_obs_Mb_Ma_resid",
+  "Lphi_obs_Ma_O0_resid", "x_LGR_obs_resid", "x_carcass_spawned_obs_resid",
   
   # AR(1) coefficients
   "kappa_phi_O0_O1"
