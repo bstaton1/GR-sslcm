@@ -161,7 +161,11 @@ if (ny_sim > 0) {
   }
   
   jags_data$not_stray_yrs = not_stray_yrs_new
+  jags_data$stray_yrs = rbind(jags_data$stray_yrs, matrix(NA, ny_sim, jags_data$nj))
+  jags_data$not_stray_yrs[,"MIN"] = NA
+  jags_data$stray_yrs[,"MIN"] = 2:jags_data$ny
   jags_data$n_not_stray_yrs = colSums(!is.na(jags_data$not_stray_yrs))
+  jags_data$n_stray_yrs = colSums(!is.na(jags_data$stray_yrs))
   
   # append hypothetical future sea lion survival (by population)
   SL_yrs = as.character(2001:2019)
@@ -258,11 +262,17 @@ jags_params = c(
   # misc derived quantities
   "lambda_pop", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
   
-  # residuals
+  # residuals: process model
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_O0_resid", "Lpsi_O1_resid",
   "Lpsi_O2_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
+  
+  # residuals: observation model
+  "x_Ra_obs_resid", "x_Sa_prime_obs_resid",
+  "lPa_obs_resid", "lMb_obs_resid", "lRa_obs_resid",
+  "Lphi_obs_Pb_Ma_resid", "Lphi_obs_Pa_Ma_resid", "Lphi_obs_Mb_Ma_resid",
+  "Lphi_obs_Ma_O0_resid", "x_LGR_obs_resid", "x_carcass_spawned_obs_resid",
   
   # AR(1) coefficients
   "kappa_phi_O0_O1"
@@ -292,11 +302,11 @@ if (do_lppd) jags_params = c(jags_params, lppd_params)
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 60000),
-  n_burn = switch(mcmc_length,  "very_short" = 5, "short" = 1000, "medium" = 20000, "long" = 60000),
-  n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 20),
+  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 50000),
+  n_burn = switch(mcmc_length,  "very_short" = 5,   "short" = 1000, "medium" = 20000, "long" = 30000),
+  n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 10),
   n_chain = switch(mcmc_length, "very_short" = 3,   "short" = 3,    "medium" = 3,     "long" = 3),
-  n_adapt = switch(mcmc_length, "very_short" = 10, "short" = 1000, "medium" = 1000,  "long" = 1000),
+  n_adapt = switch(mcmc_length, "very_short" = 10,  "short" = 1000, "medium" = 3000,  "long" = 3000),
   parallel = TRUE
 )
 
@@ -426,6 +436,7 @@ out_obj = list(
   do_pp_check = do_pp_check,
   jags_time = c(starttime = format(starttime), stoptime = format(stoptime), elapsed = format(round(stoptime - starttime,2))),
   post = post,
+  last_yr = last_yr,
   scenario = scenario
 )
 

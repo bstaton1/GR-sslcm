@@ -111,17 +111,17 @@ gen_initials = function(c, jags_data) {
   # })
 
   # generate random initial values for all years where strays can be present
-  n_stray_tot = sapply(1:jags_data$nj, function(j) {
-    stray_yrs = as.numeric(na.omit(jags_data$stray_yrs[,j]))
-    comp = t(apply(jags_data$x_Sa_prime[stray_yrs,,j], 1, function(x) x/sum(x)))
-    p_nat = rowSums(comp[,1:jags_data$nk])
-    p_nat[is.na(p_nat)] = 1
-    n_strays = jags_data$Ra_obs[stray_yrs,j] * (1 - p_nat)
-    out = rep(NA, jags_data$ny)
-    out[stray_yrs] = runif(jags_data$n_stray_yrs[j], n_strays * 0.8, n_strays + mean(n_strays) * 1.2)
-    
-    out
-  })
+  # n_stray_tot = sapply(1:jags_data$nj, function(j) {
+  #   stray_yrs = as.numeric(na.omit(jags_data$stray_yrs[1:(jags_data$ny_obs - 1),j]))
+  #   comp = t(apply(jags_data$x_Sa_prime[stray_yrs,,j], 1, function(x) x/sum(x)))
+  #   p_nat = rowSums(comp[,1:jags_data$nk])
+  #   p_nat[is.na(p_nat)] = 1
+  #   n_strays = jags_data$Ra_obs[stray_yrs,j] * (1 - p_nat)
+  #   out = rep(NA, jags_data$ny)
+  #   out[as.numeric(na.omit(jags_data$stray_yrs[,j]))] = runif(jags_data$n_stray_yrs[j], n_strays * 0.8, n_strays + mean(n_strays) * 1.2)
+  #   out[out < 50 | out > 500] = runif(1, 60, 100)
+  #   out
+  # })
   
   mu_list = with(jags_data, {
 
@@ -176,7 +176,7 @@ gen_initials = function(c, jags_data) {
     # log_beta = sapply(BH_ests, function(ests) rnorm(1, ests["log_beta","Estimate"], ests["log_beta","Std. Error"])),
     # lPb = log(Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj)),
     sig_Pb = runif(jags_data$nj, 0.3, 0.4),
-    n_stray_tot = n_stray_tot, 
+    # n_stray_tot = n_stray_tot, 
     mu_init_recruits = mu_init_recruits
   )
   
