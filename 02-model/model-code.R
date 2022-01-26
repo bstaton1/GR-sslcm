@@ -502,11 +502,11 @@ jags_model_code = function() {
       x_Ra_new[y,1:nko,j] ~ dmulti(p_Ra[y,1:nko,j], nx_Ra[y,j])
       
       # calculate expected count add small number to avoid division by zero
-      expected_x_Ra[y,1:nko,j] <- p_Ra[y,1:nko,j] * nx_Ra[y,j] + 1e-6
-      
-      # calculate fit statistic: chi-squared statistic
-      x_Ra_dev[y,j] <- sum(((x_Ra[y,1:nko,j] - expected_x_Ra[y,1:nko,j])^2)/expected_x_Ra[y,1:nko,j])
-      x_Ra_new_dev[y,j] <- sum(((x_Ra_new[y,1:nko,j] - expected_x_Ra[y,1:nko,j])^2)/expected_x_Ra[y,1:nko,j])
+      expected_x_Ra[y,1:nko,j] <- p_Ra[y,1:nko,j] * nx_Ra[y,j]
+
+      # calculate fit statistic: Freeman-Tukey statistic
+      x_Ra_dev[y,j] <- sum((sqrt(x_Ra[y,1:nko,j]) - sqrt(expected_x_Ra[y,1:nko,j]))^2)
+      x_Ra_new_dev[y,j] <- sum((sqrt(x_Ra_new[y,1:nko,j]) - sqrt(expected_x_Ra[y,1:nko,j]))^2)
       
       # calculate log posterior predictive density
       x_Ra_lppd[y,j] <- logdensity.multi(x_Ra[y,1:nko,j], p_Ra[y,1:nko,j], nx_Ra[y,j])
@@ -516,17 +516,17 @@ jags_model_code = function() {
       x_Sa_prime[y,1:nko,j] ~ dmulti(p_Sa_prime[y,1:nko,j], nx_Sa_prime[y,j])
       
       # simulate new data
-      x_Sa_prime_new[y,1:nko,j] ~ dmulti(p_Ra[y,1:nko,j], nx_Sa_prime[y,j])
+      x_Sa_prime_new[y,1:nko,j] ~ dmulti(p_Sa_prime[y,1:nko,j], nx_Sa_prime[y,j])
       
-      # calculate expected count add small number to avoid division by zero
-      expected_x_Sa_prime[y,1:nko,j] <- p_Ra[y,1:nko,j] * nx_Sa_prime[y,j] + 1e-6
-      
-      # calculate fit statistic: chi-squared statistic
-      x_Sa_prime_dev[y,j] <- sum(((x_Sa_prime[y,1:nko,j] - expected_x_Sa_prime[y,1:nko,j])^2)/expected_x_Sa_prime[y,1:nko,j])
-      x_Sa_prime_new_dev[y,j] <- sum(((x_Sa_prime_new[y,1:nko,j] - expected_x_Sa_prime[y,1:nko,j])^2)/expected_x_Sa_prime[y,1:nko,j])
+      # calculate expected count
+      expected_x_Sa_prime[y,1:nko,j] <- p_Sa_prime[y,1:nko,j] * nx_Sa_prime[y,j]
+
+      # calculate fit statistic: Freeman-Tukey statistic
+      x_Sa_prime_dev[y,j] <- sum((sqrt(x_Sa_prime[y,1:nko,j]) - sqrt(expected_x_Sa_prime[y,1:nko,j]))^2)
+      x_Sa_prime_new_dev[y,j] <- sum((sqrt(x_Sa_prime_new[y,1:nko,j]) - sqrt(expected_x_Sa_prime[y,1:nko,j]))^2)
       
       # calculate log posterior predictive density
-      x_Sa_prime_lppd[y,j] <- logdensity.multi(x_Sa_prime[y,1:nko,j], p_Ra[y,1:nko,j], nx_Sa_prime[y,j])
+      x_Sa_prime_lppd[y,j] <- logdensity.multi(x_Sa_prime[y,1:nko,j], p_Sa_prime[y,1:nko,j], nx_Sa_prime[y,j])
     }
   }
   
@@ -653,11 +653,11 @@ jags_model_code = function() {
     
     # calculate expected count
     expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- phi_Rb_Ra[fit_x_LGR[d,1],fit_x_LGR[d,2]] * x_BON[fit_x_LGR[d,1],fit_x_LGR[d,2]]
-    
-    # calculate fit statistic: chi-squared statistic
-    x_LGR_dev[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- ((x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]] - expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]])^2)/expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]]
-    x_LGR_new_dev[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- ((x_LGR_new[fit_x_LGR[d,1],fit_x_LGR[d,2]] - expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]])^2)/expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]]
-    
+
+    # calculate fit statistic: Freeman-Tukey statistic
+    x_LGR_dev[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- (sqrt(x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]]) - sqrt(expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]]))^2
+    x_LGR_new_dev[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- (sqrt(x_LGR_new[fit_x_LGR[d,1],fit_x_LGR[d,2]]) - sqrt(expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]]))^2
+
     # calculate log posterior predictive density
     x_LGR_lppd[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- logdensity.bin(x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]], phi_Rb_Ra[fit_x_LGR[d,1],fit_x_LGR[d,2]], x_BON[fit_x_LGR[d,1],fit_x_LGR[d,2]])
   }
@@ -672,11 +672,11 @@ jags_model_code = function() {
     
     # calculate expected count
     expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] * x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]
-    
-    # calculate fit statistic: chi-squared statistic
-    x_carcass_spawned_dev[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- ((x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] - expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])^2)/expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]
-    x_carcass_spawned_new_dev[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- ((x_carcass_spawned_new[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] - expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])^2)/expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]
-    
+
+    # calculate fit statistic: Freeman-Tukey statistic
+    x_carcass_spawned_dev[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- (sqrt(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]) - sqrt(expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]))^2
+    x_carcass_spawned_new_dev[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- (sqrt(x_carcass_spawned_new[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]) - sqrt(expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]))^2
+
     # calculate log posterior predictive density
     x_carcass_spawned_lppd[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- logdensity.bin(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
   }
