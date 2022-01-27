@@ -363,6 +363,46 @@ tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
 # rename the data frame and remove "tmp" objects
 juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 
+##### JUVENILE LENGTH DATA #####
+
+# read the data
+tmp = read.csv("98-scratch/juv-length.csv")
+
+# rename populations
+tmp$pop = ifelse(tmp$pop == "Catherine", "CAT", tmp$pop)
+tmp$pop = ifelse(tmp$pop == "Lostine", "LOS", tmp$pop)
+tmp$pop = ifelse(tmp$pop == "Minam", "MIN", tmp$pop)
+
+# discard below-trap CAT data
+tmp = tmp[tmp$pop %in% c("CAT", "LOS", "MIN", "UGR"),]
+
+# calculate brood year
+tmp$brood_year = tmp$mig.year - 2
+
+# keep only summer and spring length measurements
+tmp = tmp[tmp$season %in% c("summer", "spring"),]
+tmp$season = factor(tmp$season, levels = c("summer", "spring"))
+
+# retain only needed columns
+tmp = tmp[,c("pop", "season", "brood_year", "n.length", "len.mean", "len.sd", "len.se")]
+
+# extract and format mean length
+length_mean = dcast(tmp, brood_year + pop ~ season, value.var = "len.mean")
+colnames(length_mean)[3:ncol(length_mean)] = paste0("length_mean_", colnames(length_mean)[3:ncol(length_mean)])
+
+# extract and format se mean length
+length_se = dcast(tmp, brood_year + pop ~ season, value.var = "len.se")
+colnames(length_se)[3:ncol(length_se)] = paste0("length_se_", colnames(length_se)[3:ncol(length_se)])
+
+# combine into one data set
+tmp = merge(length_mean, length_se, by = c("pop", "brood_year"), all = TRUE)
+
+# rename columns
+colnames(tmp)[1] = "population"
+
+# rename the data frame and remove "tmp" objects
+juvenile_length = tmp; rm("tmp", "length_mean", "length_se")
+
 ##### HATCHERY RELEASES OF SMOLTS AND SURVIVAL TO LGD #####
 
 # read the data
@@ -436,6 +476,7 @@ hydro_surv = tmp; rm(tmp)
 
 # merge together the various data sets
 bio_dat = merge(juvenile_abundance, juvenile_survival, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, juvenile_length, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_abundance, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
