@@ -120,22 +120,22 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   
   ### JUVENILE LENGTH DATA ###
   # mean length at summer tagging
-  lL_Pb_obs = rep(NA, ny); names(lL_Pb_obs) = y_names
-  lL_Pb_obs[y_names %in% sub$brood_year] = log(sub$length_mean_summer)
+  L_Pb_obs = rep(NA, ny); names(L_Pb_obs) = y_names
+  L_Pb_obs[y_names %in% sub$brood_year] = sub$length_mean_summer
   
   # se mean length at summer tagging: calculate lognormal se by calculating "cv" then applying transformation
   # this se is so small (sample size nearly always ~1000), may want to consider down-weighting these?
-  sig_lL_Pb_obs = rep(NA, ny); names(sig_lL_Pb_obs) = y_names
-  sig_lL_Pb_obs[y_names %in% sub$brood_year] = cv2sig(sub$length_se_summer/sub$length_mean_summer)
+  sig_L_Pb_obs = rep(NA, ny); names(sig_L_Pb_obs) = y_names
+  sig_L_Pb_obs[y_names %in% sub$brood_year] = cv2sig(sub$length_se_summer/sub$length_mean_summer)
   
   # mean length at spring tagging
-  lL_Mb_obs = rep(NA, ny); names(lL_Mb_obs) = y_names
-  lL_Mb_obs[y_names %in% sub$brood_year] = log(sub$length_mean_spring)
+  L_Mb_obs = rep(NA, ny); names(L_Mb_obs) = y_names
+  L_Mb_obs[y_names %in% sub$brood_year] = sub$length_mean_spring
   
   # se mean length at summer tagging: calculate lognormal se by calculating "cv" then applying transformation
   # this se is so small (sample size nearly always ~1000), may want to consider down-weighting these?
-  sig_lL_Mb_obs = rep(NA, ny); names(sig_lL_Mb_obs) = y_names
-  sig_lL_Mb_obs[y_names %in% sub$brood_year] = cv2sig(sub$length_se_spring/sub$length_mean_spring)
+  sig_L_Mb_obs = rep(NA, ny); names(sig_L_Mb_obs) = y_names
+  sig_L_Mb_obs[y_names %in% sub$brood_year] = cv2sig(sub$length_se_spring/sub$length_mean_spring)
   
   ### JUVENILE SURVIVAL DATA ###
   # summer logit(surv) to LGD
@@ -287,12 +287,12 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     
     ### JUVENILE LENGTH ###
     # mean length at summer tagging
-    lL_Pb_obs = lL_Pb_obs,
-    sig_lL_Pb_obs = sig_lL_Pb_obs,
+    L_Pb_obs = L_Pb_obs,
+    sig_L_Pb_obs = sig_L_Pb_obs,
     
     # mean length at spring tagging
-    lL_Mb_obs = lL_Mb_obs,
-    sig_lL_Mb_obs = sig_lL_Mb_obs,
+    L_Mb_obs = L_Mb_obs,
+    sig_L_Mb_obs = sig_L_Mb_obs,
     
     ### JUVENILE SURVIVAL ###
     # summer tagging to LGD
@@ -396,12 +396,12 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     sig_Mb_obs = abind(lapply(main_list, function(x) x$sig_Mb_obs), along = 4),
     
     # mean length at summer tagging
-    lL_Pb_obs = abind(lapply(main_list, function(x) x$lL_Pb_obs), along = 2),
-    sig_lL_Pb_obs = abind(lapply(main_list, function(x) x$sig_lL_Pb_obs), along = 2),
+    L_Pb_obs = abind(lapply(main_list, function(x) x$L_Pb_obs), along = 2),
+    sig_L_Pb_obs = abind(lapply(main_list, function(x) x$sig_L_Pb_obs), along = 2),
     
     # mean length at spring tagging
-    lL_Mb_obs = abind(lapply(main_list, function(x) x$lL_Mb_obs), along = 2),
-    sig_lL_Mb_obs = abind(lapply(main_list, function(x) x$sig_lL_Mb_obs), along = 2),
+    L_Mb_obs = abind(lapply(main_list, function(x) x$L_Mb_obs), along = 2),
+    sig_L_Mb_obs = abind(lapply(main_list, function(x) x$sig_L_Mb_obs), along = 2),
     
     # summer tagging to LGD survival
     Lphi_obs_Pb_Ma = abind(lapply(main_list, function(x) x$Lphi_obs_Pb_Ma), along = 2),
@@ -490,8 +490,8 @@ append_no_na_indices = function(jags_data) {
     list(
       fit_Pa = find_no_na_indices(Pa_obs),
       fit_Mb = find_no_na_indices(sig_Mb_obs),   # use sig for Mb b/c hatchery releases don't have sig, and shouldn't be fitted to
-      fit_L_Pb = find_no_na_indices(lL_Pb_obs),
-      fit_L_Mb = find_no_na_indices(lL_Mb_obs),
+      fit_L_Pb = find_no_na_indices(L_Pb_obs),
+      fit_L_Mb = find_no_na_indices(L_Mb_obs),
       fit_Lphi_Pb_Ma = find_no_na_indices(Lphi_obs_Pb_Ma),
       fit_Lphi_Pa_Ma = find_no_na_indices(Lphi_obs_Pa_Ma),
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
