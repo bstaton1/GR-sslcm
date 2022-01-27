@@ -594,6 +594,44 @@ jags_model_code = function() {
     lRa_obs_resid[fit_Ra[d,1],fit_Ra[d,2]] <- (log(Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]) - log(Ra_tot[fit_Ra[d,1],fit_Ra[d,2]]))/sig_Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]
   }
   
+  # mean length at summer tagging 
+  for (d in 1:nfit_L_Pb) {
+    # data likelihood
+    L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]] ~ dlnorm(log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]), 1/sig_L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]^2)
+    
+    # simulate new data
+    L_Pb_obs_new[fit_L_Pb[d,1],fit_L_Pb[d,2]] ~ dlnorm(log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]), 1/sig_L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]^2)
+    
+    # calculate fit statistic: squared log deviates
+    L_Pb_obs_dev[fit_L_Pb[d,1],fit_L_Pb[d,2]] <- (log(L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]) - log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]))^2
+    L_Pb_obs_new_dev[fit_L_Pb[d,1],fit_L_Pb[d,2]] <- (log(L_Pb_obs_new[fit_L_Pb[d,1],fit_L_Pb[d,2]]) - log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]))^2
+    
+    # calculate log posterior predictive density
+    L_Pb_obs_lppd[fit_L_Pb[d,1],fit_L_Pb[d,2]] <- logdensity.lnorm(L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]], log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]), 1/sig_L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]^2)
+    
+    # calculate observation model residual
+    lL_Pb_obs_resid[fit_L_Pb[d,1],fit_L_Pb[d,2]] <- (log(L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]) - log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]))/sig_L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]
+  }
+  
+  # mean length at spring tagging 
+  for (d in 1:nfit_L_Mb) {
+    # data likelihood
+    L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]] ~ dlnorm(log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]), 1/sig_L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]^2)
+    
+    # simulate new data
+    L_Mb_obs_new[fit_L_Mb[d,1],fit_L_Mb[d,2]] ~ dlnorm(log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]), 1/sig_L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]^2)
+    
+    # calculate fit statistic: squared log deviates
+    L_Mb_obs_dev[fit_L_Mb[d,1],fit_L_Mb[d,2]] <- (log(L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]) - log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]))^2
+    L_Mb_obs_new_dev[fit_L_Mb[d,1],fit_L_Mb[d,2]] <- (log(L_Mb_obs_new[fit_L_Mb[d,1],fit_L_Mb[d,2]]) - log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]))^2
+    
+    # calculate log posterior predictive density
+    L_Mb_obs_lppd[fit_L_Mb[d,1],fit_L_Mb[d,2]] <- logdensity.lnorm(L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]], log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]), 1/sig_L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]^2)
+    
+    # calculate observation model residual
+    lL_Mb_obs_resid[fit_L_Mb[d,1],fit_L_Mb[d,2]] <- (log(L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]) - log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]))/sig_L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]
+  }
+  
   # summer tagging to LGD
   for (d in 1:nfit_Lphi_Pb_Ma) {
     # data likelihood
