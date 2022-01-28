@@ -400,6 +400,44 @@ tmp = merge(length_mean, length_se, by = c("pop", "brood_year"), all = TRUE)
 # rename columns
 colnames(tmp)[1] = "population"
 
+# loop through all records, and if the length measurement is NA, set mean length to mean of other years
+# missing_vals_filled = t(sapply(1:nrow(tmp), function(i) {
+#   
+#   # handle summer mean length
+#   if (is.na(tmp$length_mean_summer[i])) {
+#     length_mean_summer = round(mean(tmp$length_mean_summer[tmp$population == tmp$population[i]], na.rm = TRUE), 1)
+#   } else {
+#     length_mean_summer = tmp$length_mean_summer[i]
+#   }
+#   
+#   # handle spring mean length
+#   if (is.na(tmp$length_mean_spring[i])) {
+#     length_mean_spring = round(mean(tmp$length_mean_spring[tmp$population == tmp$population[i]], na.rm = TRUE), 1)
+#   } else {
+#     length_mean_spring = tmp$length_mean_spring[i]
+#   }
+#   
+#   # handle summer mean length se: make have a 20% CV if missing
+#   if (is.na(tmp$length_se_summer[i])) {
+#     length_se_summer = length_mean_summer * 0.2
+#   } else {
+#     length_se_summer = tmp$length_se_summer[i]
+#   }
+#   
+#   # handle summer mean length se: make have a 20% CV if missing
+#   if (is.na(tmp$length_se_spring[i])) {
+#     length_se_spring = length_mean_spring * 0.2
+#   } else {
+#     length_se_spring = tmp$length_se_spring[i]
+#   }
+#   
+#   c(length_mean_summer = length_mean_summer,
+#     length_mean_spring = length_mean_spring,
+#     length_se_summer = length_se_summer,
+#     length_se_spring = length_se_spring)
+# }))
+# tmp[,colnames(missing_vals_filled)] = missing_vals_filled
+
 # rename the data frame and remove "tmp" objects
 juvenile_length = tmp; rm("tmp", "length_mean", "length_se")
 
