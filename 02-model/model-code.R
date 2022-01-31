@@ -40,6 +40,12 @@ jags_model_code = function() {
     mu_growth[j] <- exp(mu_lgrowth[j])
     sig_lgrowth[j] ~ dunif(0, 0.5)
 
+    # size-dependent NOR migration to LGR survival
+    # assumed equal among migration types
+    tau0[j] ~ dnorm(0, 1e-3)
+    tau1[j] ~ dnorm(0, 1e-3)
+    sig_Lphi_Mb_Ma[o_nor,j] ~ dunif(0, 5)
+    
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hor,j] ~ dbeta(1, 1)
     sig_Lphi_Mb_Ma[o_hor,j] ~ dunif(0, 5)
@@ -247,10 +253,14 @@ jags_model_code = function() {
 
     # summer to spring growth rate
     lgrowth[y,1:nj] ~ dmnorm.vcov(log(mu_growth[1:nj]), Sig_lgrowth[1:nj,1:nj])
+    
+    # size-based migration survival from trib to LGR: NOR
+    Lphi_Mb_Ma[y,i_spring,o_nor,1:nj] ~ dmnorm.vcov(tau0[1:nj] + tau1[1:nj] * L_Mb[y,1:nj], Sig_Lphi_Mb_Ma[1:nj,1:nj,o_nor])
+    
+    # non-size-based migration survival from trib to LGR: HOR
+    Lphi_Mb_Ma[y,i_spring,o_hor,1:nj] ~ dmnorm.vcov(logit(mu_phi_Mb_Ma[i_spring,o_hor,1:nj]), Sig_Lphi_Mb_Ma[1:nj,1:nj,o_hor])
+    
     for (o in 1:no) {
-      # migration survival from trib to LGR by origin
-      Lphi_Mb_Ma[y,i_spring,o,1:nj] ~ dmnorm.vcov(logit(mu_phi_Mb_Ma[i_spring,o,1:nj]), Sig_Lphi_Mb_Ma[1:nj,1:nj,o])
-
       # pr(return at SWA1)
       Lpsi_O1[y,o,1:nj] ~ dmnorm.vcov(logit(mu_psi_O1[o,1:nj]), Sig_Lpsi_O1[1:nj,1:nj,o])
 
@@ -801,11 +811,14 @@ jags_model_code = function() {
       # summer to spring growth rate
       lgrowth_resid[y,j] <- lgrowth[y,j] - mu_lgrowth[j]
       
+      # movement survival to LGR: NOR
+      Lphi_Mb_Ma_resid[y,o_nor,j] <- Lphi_Mb_Ma[y,i_spring,o_nor,j] - (tau0[j] + tau1[j] * L_Mb[y,j])
+      
+      # movement survival to LGR: HOR
+      Lphi_Mb_Ma_resid[y,o_hor,j] <- Lphi_Mb_Ma[y,i_spring,o_hor,j] - logit(mu_phi_Mb_Ma[i_spring,o_hor,j])
+      
       # origin-specific quantities
       for (o in 1:no) {
-        # movement survival to LGR
-        Lphi_Mb_Ma_resid[y,o,j] <- Lphi_Mb_Ma[y,i_spring,o,j] - logit(mu_phi_Mb_Ma[i_spring,o,j])
-        
         # pr(return at SWA1)
         Lpsi_O1_resid[y,o,j] <- Lpsi_O1[y,o,j] - logit(mu_psi_O1[o,j])
         
