@@ -13,6 +13,11 @@ jags_model_code = function() {
     sig_Lphi_E_Pb[j] ~ dunif(0, 5)
     lambda_pop[j] <- beta[j]/wul[j]  # derived pop-specific lambda, includes process noise in regression
 
+    # length at end of summer vs. eggs relationship: density-dependent spring/summer growth
+    omega0[j] ~ dnorm(0, 1e-3)  # intercept
+    omega1[j] ~ dnorm(0, 1e-3)  # slope
+    sig_lL_Pb[j] ~ dunif(0, 0.5)
+
     ### PRIORS: FRESHWATER PARAMETERS ###
     # aggregate parr to LH-specific parr
     mu_pi[i_fall,j] ~ dbeta(1, 1)
@@ -120,6 +125,7 @@ jags_model_code = function() {
   # correlation parameters
   # see toggle_rho_estimation() function; 01-functions/util-fns.R
   rho_Lphi_E_Pb <- 0
+  rho_lL_Pb <- 0
   rho_Lpi <- 0
   rho_Lphi_Pa_Mb[i_fall] <- 0
   rho_Lphi_Pa_Mb[i_spring] <- 0
@@ -139,6 +145,9 @@ jags_model_code = function() {
     for (j in 1:nj) {
       # covariance matrix of parr recruitment
       Sig_Lphi_E_Pb[i,j] <- sig_Lphi_E_Pb[i] * sig_Lphi_E_Pb[j] * ifelse(i == j, 1, rho_Lphi_E_Pb)
+      
+      # covariance matrix of summer length
+      Sig_lL_Pb[i,j] <- sig_lL_Pb[i] * sig_lL_Pb[j] * ifelse(i == j, 1, rho_lL_Pb)
       
       # covariance matrix of LH apportionment
       Sig_Lpi[i,j] <- sig_Lpi[i] * sig_Lpi[j] * ifelse(i == j, 1, rho_Lpi)
@@ -222,6 +231,9 @@ jags_model_code = function() {
     # egg to parr survival: Beverton-Holt relationship
     Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(1/(1/alpha[1:nj] + E[y,1:nj]/beta[1:nj])), Sig_Lphi_E_Pb[1:nj,1:nj])
 
+    # density-dependent length at end of summer
+    lL_Pb[y,1:nj] ~ dmnorm.vcov(omega0[1:nj] + omega1[1:nj] * ((E[y,1:nj]/10000)/wul[1:nj]), Sig_lL_Pb[1:nj,1:nj])
+    
     # LH apportionment
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
 
@@ -267,6 +279,9 @@ jags_model_code = function() {
       
       # transform egg to parr survival
       phi_E_Pb[y,j] <- ilogit(Lphi_E_Pb[y,j])
+      
+      # transform summer length
+      L_Pb[y,j] <- exp(lL_Pb[y,j])
 
       # transform LH apportionment
       pi[y,i_fall,j] <- ilogit(Lpi1[y,j])
@@ -760,6 +775,9 @@ jags_model_code = function() {
       # total summer parr recruitment
       Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(1/(1/alpha[j] + E[y,j]/beta[j]))
 
+      # summer mean length
+      lL_Pb_resid[y,j] <- lL_Pb[y,j] - (omega0[j] + omega1[j] * ((E[y,j]/10000)/wul[j]))
+      
       # proportion of summer parr that become fall migrants
       Lpi_resid[y,j] <- logit(pi[y,i_fall,j]) - logit(mu_pi[i_fall,j])
       
