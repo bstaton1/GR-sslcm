@@ -35,10 +35,6 @@ jags_model_code = function() {
     gamma1[i_fall,j] ~ dnorm(0, 1e-3)
     gamma1[i_spring,j] <- gamma1[i_fall,j]
     
-    # natural origin movement survival (trib to LGD): estimate for spring migrants and assume the same value for fall migrants
-    mu_phi_Mb_Ma[i_spring,o_nor,j] ~ dbeta(1, 1)
-    sig_Lphi_Mb_Ma[o_nor,j] ~ dunif(0, 5)
-    mu_phi_Mb_Ma[i_fall,o_nor,j] <- mu_phi_Mb_Ma[i_spring,o_nor,j]
 
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hor,j] ~ dbeta(1, 1)
@@ -237,9 +233,9 @@ jags_model_code = function() {
     # LH apportionment
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
 
-    # overwinter survival by LH type: density dependent
-    Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * (Pa[y,i_fall,1:nj]/wul[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
-    Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * (Pa[y,i_spring,1:nj]/wul[1:nj]), Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
+    # overwinter survival by LH type: function of size
+    Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * L_Pb[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
+    Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * L_Pb[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
 
     for (o in 1:no) {
       # migration survival from trib to LGR by origin
@@ -783,7 +779,7 @@ jags_model_code = function() {
       
       # LH-specific overwinter survival
       for (i in 1:ni) {
-        Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * (Pa[y,i,j]/wul[j]))
+        Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * L_Pb[y,j])
       }
       
       # origin-specific quantities
