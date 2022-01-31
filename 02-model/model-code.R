@@ -35,6 +35,10 @@ jags_model_code = function() {
     gamma1[i_fall,j] ~ dnorm(0, 1e-3)
     gamma1[i_spring,j] <- gamma1[i_fall,j]
     
+    # growth coefficient from end of summer to spring tagging
+    mu_lgrowth[j] ~ dnorm(0, 1e-3)
+    mu_growth[j] <- exp(mu_lgrowth[j])
+    sig_lgrowth[j] ~ dunif(0, 0.5)
 
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hor,j] ~ dbeta(1, 1)
@@ -125,6 +129,7 @@ jags_model_code = function() {
   rho_Lpi <- 0
   rho_Lphi_Pa_Mb[i_fall] <- 0
   rho_Lphi_Pa_Mb[i_spring] <- 0
+  rho_lgrowth <- 0
   rho_Lphi_Mb_Ma[o_nor] <- 0
   rho_Lphi_Mb_Ma[o_hor] <- 0
   rho_Lphi_Ma_O0 <- 0
@@ -152,6 +157,9 @@ jags_model_code = function() {
       for (g in 1:ni) {
         Sig_Lphi_Pa_Mb[i,j,g] <- sig_Lphi_Pa_Mb[g,i] * sig_Lphi_Pa_Mb[g,j] * ifelse(i == j, 1, rho_Lphi_Pa_Mb[g])
       }
+      
+      # covariance matrix of summer to spring growth rate
+      Sig_lgrowth[i,j] <- sig_lgrowth[i] * sig_lgrowth[j] * ifelse(i == j, 1, rho_lgrowth)
       
       for (o in 1:no) {
         # covariance matrices of movement survival to LGR
@@ -237,6 +245,8 @@ jags_model_code = function() {
     Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * L_Pb[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
     Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * L_Pb[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
 
+    # summer to spring growth rate
+    lgrowth[y,1:nj] ~ dmnorm.vcov(log(mu_growth[1:nj]), Sig_lgrowth[1:nj,1:nj])
     for (o in 1:no) {
       # migration survival from trib to LGR by origin
       Lphi_Mb_Ma[y,i_spring,o,1:nj] ~ dmnorm.vcov(logit(mu_phi_Mb_Ma[i_spring,o,1:nj]), Sig_Lphi_Mb_Ma[1:nj,1:nj,o])
@@ -286,6 +296,12 @@ jags_model_code = function() {
       # transform overwinter survival
       phi_Pa_Mb[y,i_fall,j] <- ilogit(Lphi_Pa_Mb[y,i_fall,j])
       phi_Pa_Mb[y,i_spring,j] <- ilogit(Lphi_Pa_Mb[y,i_spring,j])
+      
+      # transform summer to spring growth rate
+      growth[y,j] <- exp(lgrowth[y,j])
+      
+      # obtain spring length
+      L_Mb[y,j] <- L_Pb[y,j] * growth[y,j]
 
       for (o in 1:no) {
         # transform movement survival trib to LGR
@@ -781,6 +797,9 @@ jags_model_code = function() {
       for (i in 1:ni) {
         Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * L_Pb[y,j])
       }
+      
+      # summer to spring growth rate
+      lgrowth_resid[y,j] <- lgrowth[y,j] - mu_lgrowth[j]
       
       # origin-specific quantities
       for (o in 1:no) {
