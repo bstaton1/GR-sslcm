@@ -791,7 +791,10 @@ jags_model_code = function() {
   
   ### CALCULATE ALL PROCESS MODEL RESIDUALS ###
   
+  # all processes vary annually
   for (y in 2:ny) {
+    
+    # processes that vary by population
     for (j in 1:nj) {
       
       # total summer parr recruitment
@@ -819,30 +822,31 @@ jags_model_code = function() {
       
       # origin-specific quantities
       for (o in 1:no) {
+        
         # pr(return at SWA1)
         Lpsi_O1_resid[y,o,j] <- Lpsi_O1[y,o,j] - logit(mu_psi_O1[o,j])
         
         # pr(return at SWA2|not returned at SWA1)
         Lpsi_O2_resid[y,o,j] <- Lpsi_O2[y,o,j] - logit(mu_psi_O2[o,j])
+        
+        # ocean survival
+        Lphi_O0_O1_resid[y,o,j] <- Lphi_O0_O1[y,o,j] - logit(mu_phi_O0_O1[o,j])
+        Lphi_O1_O2_resid[y,o,j] <- Lphi_O1_O2[y,o,j] - logit(mu_phi_O1_O2[o,j])
+        Lphi_O2_O3_resid[y,o,j] <- Lphi_O2_O3[y,o,j] - logit(mu_phi_O2_O3[o,j])
       }
       
       # pre-spawn survival
       Lphi_Sb_Sa_resid[y,j] <- Lphi_Sb_Sa[y,j] - logit(mu_phi_Sb_Sa[j])
     }
     
+    # processes that are constant across populations but vary by origin
     for (o in 1:no) {
+      
       # movement survival from LGR thru BON
       Lphi_Ma_O0_resid[y,o] <- Lphi_Ma_O0[y,o] - logit(mu_phi_Ma_O0[o])
       
       # movement survival from BON thru LGR
       Lphi_Rb_Ra_resid[y,o] <- Lphi_Rb_Ra[y,o] - logit(mu_phi_Rb_Ra[o])
-      
-      for (j in 1:nj) {
-        # ocean survival
-        Lphi_O0_O1_resid[y,o,j] <- Lphi_O0_O1[y,o,j] - logit(mu_phi_O0_O1[o,j])
-        Lphi_O1_O2_resid[y,o,j] <- Lphi_O1_O2[y,o,j] - logit(mu_phi_O1_O2[o,j])
-        Lphi_O2_O3_resid[y,o,j] <- Lphi_O2_O3[y,o,j] - logit(mu_phi_O2_O3[o,j])
-      }
     }
   }
 }
