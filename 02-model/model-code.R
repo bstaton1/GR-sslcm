@@ -71,11 +71,13 @@ jags_model_code = function() {
     ### PRIORS: OCEAN SURVIVAL ###
     # mean survival by ocean year transition for natural origin
     mu_phi_O0_O1[o_nor,j] ~ dbeta(1,1)               # first winter at sea: to become SWA1
-    mu_phi_O1_O2[o_nor,j] ~ dbeta(60,15)             # second winter at sea: to become SWA2
-    mu_phi_O2_O3[o_nor,j] <- mu_phi_O1_O2[o_nor,j]   # third winter at sea: to become SW3
+    mu_phi_O1_O2[o_nor,j] ~ dbeta(50,12.5)             # second winter at sea: to become SWA2
+    mu_phi_O2_O3[o_nor,j] ~ dbeta(50,12.5)             # third winter at sea: to become SW3
     
     # log odds ratio between natural and hatchery origin
-    delta[j] ~ dt(0, 1/1.566^2, 7.763)
+    delta_O0_O1[j] ~ dt(0, 1/1.566^2, 7.763)
+    delta_O1_O2[j] <- delta_O0_O1[j]
+    delta_O2_O3[j] <- delta_O0_O1[j]
     
     # AR(1) coefficient for first year ocean survival
     kappa_phi_O0_O1[j] ~ dunif(-0.99,0.99)
@@ -87,9 +89,9 @@ jags_model_code = function() {
     sig_Lphi_O0_O1_init[j] <- sqrt(sig_Lphi_O0_O1[j]^2/(1 - kappa_phi_O0_O1[j]^2))
     
     # mean survival by ocean year transition for hatchery origin
-    logit(mu_phi_O0_O1[o_hor,j]) <- logit(mu_phi_O0_O1[o_nor,j]) + delta[j]
-    logit(mu_phi_O1_O2[o_hor,j]) <- logit(mu_phi_O1_O2[o_nor,j]) + delta[j]
-    logit(mu_phi_O2_O3[o_hor,j]) <- logit(mu_phi_O2_O3[o_nor,j]) + delta[j]
+    logit(mu_phi_O0_O1[o_hor,j]) <- logit(mu_phi_O0_O1[o_nor,j]) + delta_O0_O1[j]
+    logit(mu_phi_O1_O2[o_hor,j]) <- logit(mu_phi_O1_O2[o_nor,j]) + delta_O1_O2[j]
+    logit(mu_phi_O2_O3[o_hor,j]) <- logit(mu_phi_O2_O3[o_nor,j]) + delta_O2_O3[j]
     
     ### PRIORS: HATCHERY STRAYS RETURNING IN YEARS WITH NO ASSOCIATED SMOLT RELEASE ###
     
@@ -277,9 +279,9 @@ jags_model_code = function() {
     Lphi_O2_O3[y,o_nor,1:nj] <- logit(mu_phi_O2_O3[o_nor,1:nj])
     
     # yr1/yr2/yr3 HOR ocean survival: same as NOR but adjusted by a time-constant log odds ratio
-    Lphi_O0_O1[y,o_hor,1:nj] <- Lphi_O0_O1[y,o_nor,1:nj] + delta[1:nj]
-    Lphi_O1_O2[y,o_hor,1:nj] <- Lphi_O1_O2[y,o_nor,1:nj] + delta[1:nj]
-    Lphi_O2_O3[y,o_hor,1:nj] <- Lphi_O2_O3[y,o_nor,1:nj] + delta[1:nj]
+    Lphi_O0_O1[y,o_hor,1:nj] <- Lphi_O0_O1[y,o_nor,1:nj] + delta_O0_O1[1:nj]
+    Lphi_O1_O2[y,o_hor,1:nj] <- Lphi_O1_O2[y,o_nor,1:nj] + delta_O1_O2[1:nj]
+    Lphi_O2_O3[y,o_hor,1:nj] <- Lphi_O2_O3[y,o_nor,1:nj] + delta_O2_O3[1:nj]
     
     # pre-spawn survival
     Lphi_Sb_Sa[y,1:nj] ~ dmnorm.vcov(logit(mu_phi_Sb_Sa[1:nj]), Sig_Lphi_Sb_Sa[1:nj,1:nj])
