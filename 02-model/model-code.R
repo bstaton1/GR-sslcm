@@ -30,10 +30,11 @@ jags_model_code = function() {
     # gamma1: LH-common slopes
     for (i in 1:ni) {
       gamma0[i,j] ~ dnorm(0, 1e-3)
+      gamma1[i,j] ~ dnorm(0, 1e-3)
       sig_Lphi_Pa_Mb[i,j] ~ dunif(0, 5)
     }
-    gamma1[i_fall,j] ~ dnorm(0, 1e-3)
-    gamma1[i_spring,j] <- gamma1[i_fall,j]
+    # gamma1[i_fall,j] ~ dnorm(0, 1e-3)
+    # gamma1[i_spring,j] <- gamma1[i_fall,j]
     
     # growth coefficient from end of summer to spring tagging
     mu_lgrowth[j] ~ dnorm(0, 1e-3)
