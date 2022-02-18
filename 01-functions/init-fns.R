@@ -2,185 +2,536 @@
 # SCRIPT TO HOUSE FUNCTIONS FOR GENERATING INITIAL MCMC VALUES #
 # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: #
 
-##### RECONSTRUCT PARR AND SPAWNER "OBSERVATIONS" AND FIT BH MODEL #####
 
-# function to fit a basic spawner to parr BH function
-fit_basic_BH = function(jags_data, plot = FALSE) {
-  out = with(jags_data, {
-    # get "observed" smolt at LGD
-    Ma_obs = Pa_obs[,"fall-mig"] * expit(Lphi_obs_Pa_Ma[,"fall-mig"]) + 
-      Mb_obs[,"spring-mig",1] * expit(Lphi_obs_Mb_Ma[,"spring-mig",1])
+# reconstruct total parr
+get_Pb_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
+  
+  # calculation:
+  # (fall_trap_count * fall_toLGR_surv + spring_trap_count * spring_to_LGR_surv)/summer_toLGR_surv
+  
+  Pb = with(jags_data, {
     
-    # get "observed" summer parr
-    Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma)
+    # extract survival from summer tagging to LGR
+    summer_toLGR_surv = expit(Lphi_obs_Pb_Ma)
     
-    # get "observed" pre-spawn mortality
-    mu_phi_Sb_Sa = mean(x_carcass_spawned/x_carcass_total, na.rm = T)
+    # extract survival from fall tagging to LGR and count at trap
+    fall_toLGR_surv = expit(Lphi_obs_Pa_Ma[,i_fall,])
+    fall_at_trap = Pa_obs[,i_fall,]
     
-    # get "observed" spawners
-    Sa_obs = Ra_obs * mu_phi_Sb_Sa
+    # extract survival from spring tagging to LGR and count at trap
+    spring_toLGR_surv = expit(Lphi_obs_Mb_Ma[,i_spring,o_nor,])
+    spring_at_trap = Mb_obs[1:ny_obs,i_spring,o_nor,]
     
-    # fit a basic BH model (assume lognormal errors)
-    fit = nls(log(Pb_obs) ~ log(BH(Sa_obs, exp(log_alpha), exp(log_beta))),
-              start = c(log_alpha = log(300), log_beta = log(300000)))
+    # calculate numbers reaching LGR
+    fall_at_LGR = fall_at_trap * fall_toLGR_surv
+    spring_at_LGR = spring_at_trap * spring_toLGR_surv
+    tot_at_LGR = fall_at_LGR + spring_at_LGR
     
-    # extract relevant information and return it
-    list(BH_dat = data.frame(brood_year = as.numeric(names(Pb_obs)),
-                             Pb_obs = Pb_obs, Sa_obs = Sa_obs),
-         BH_fit = fit)
+    # calculate initial parr abundance at summer tagging
+    tot_summer = tot_at_LGR/summer_toLGR_surv
+    
+    # append years for simulation if requested and needed
+    if (append_sim_yrs & (ny - ny_obs > 1)) {
+      
+      ny_sim = ny - ny_obs
+      obs_yrs = as.numeric(rownames(Lphi_obs_Pb_Ma)[ny_obs])
+      
+      empty = matrix(NA, ny_sim, nj)
+      rownames(empty) = obs_yrs + seq(1, ny_sim)
+      colnames(empty) = colnames(tot_summer)
+      tot_summer = rbind(tot_summer, empty)
+    }
+    
+    tot_summer
   })
   
-  # draw a basic plot if requested
-  if (plot) {
-    newx = seq(0, max(out$BH_dat$Sa_obs, na.rm = T) * 1.2, length = 30)
-    pred = exp(predict(out$BH_fit, data.frame(Sa_obs = newx)))
-    plot(out$BH_dat$Pb_obs ~ out$BH_dat$Sa_obs, pch = 16, col = "blue",
-         ylim = c(0, max(out$BH_dat$Pb_obs, na.rm = T)),
-         xlim = c(0, max(out$BH_dat$Sa_obs, na.rm = T)) * 1.2,
-         xlab = "Spawners", ylab = "Parr")
-    lines(pred ~ newx, lwd = 2)
+  # fill in missing values with the mean of all other years for that population
+  if (fill_missing) {
+    Pb_filled = apply(Pb, 2, function(x) {x[is.na(x)] = mean(x, na.rm = TRUE); x})
+    dimnames(Pb_filled) = dimnames(Pb)
+    Pb = Pb_filled
   }
   
-  # return output
-  return(out)
+  # first year should always be NA
+  Pb[1,] = NA
+  
+  return(Pb)
 }
 
-# function to fit a basic egg to parr BH function
-fit_fecund_BH = function(jags_data, pop, plot = FALSE) {
-  out = with(jags_data, {
-    # get "observed" smolt at LGD
-    Ma_obs = Pa_obs[,"fall-mig",pop] * expit(Lphi_obs_Pa_Ma[,"fall-mig",pop]) + 
-      Mb_obs[,"spring-mig",1,pop] * expit(Lphi_obs_Mb_Ma[,"spring-mig",1,pop])
+# reconstruct total egg production
+get_E_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
+  E = with(jags_data, {
+    # get the total adult return
+    total_return = Ra_obs
     
-    # get "observed" summer parr
-    Pb_obs = Ma_obs/expit(Lphi_obs_Pb_Ma[,pop])
+    # get the broodstock removed
+    broodstock = B
+    broodstock = lapply(1:nj, function(j) cbind(broodstock[1:ny_obs,,1,j], broodstock[1:ny_obs,,1,j]))
+    broodstock = do.call(abind, append(broodstock, list(along = 3)))
     
-    # get "observed" pre-spawn mortality
-    mu_phi_Sb_Sa = mean(x_carcass_spawned[,pop]/x_carcass_total[,pop], na.rm = TRUE)
+    # get the pre-spawn survival
+    prespawn_surv = x_carcass_spawned/x_carcass_total
+    prespawn_surv[is.na(prespawn_surv)] = 0.75
+    prespawn_surv[prespawn_surv < 0.5] = 0.5
     
-    # get "observed" spawners
-    Sa_obs = Ra_obs[,pop] * mu_phi_Sb_Sa
+    # get the age/origin compositon of the total adult return
+    # assume 60% pHOS and 20%, 60%, 20% of age 3, 4, and 5
+    p_hor_assume = 0.6
+    p_age_assume = c(0.2, 0.6, 0.2)
+    comp = c(p_age_assume * (1 - p_hor_assume), p_age_assume * p_hor_assume)
     
-    # set approximate composition (proportion of all spawners that are females of age 3, 4, or 5)
-    q = c(0, 0.4, 0.05)
-    
-    # get approximate egg production
-    f_tot = sapply(Sa_obs, function(x) {
-      sum(x * q * f)
+    # get the age/origin structured return
+    age_origin_return = lapply(1:nj, function(j) {
+      t(sapply(1:length(total_return[,j]), function(y) comp * total_return[y,j]))
     })
+    age_origin_return = do.call(abind, append(age_origin_return, list(along = 3)))
     
-    # fit a basic BH model (assume lognormal errors)
-    fit = nls(log(Pb_obs) ~ log(BH(f_tot, exp(log_alpha), exp(log_beta))),
-              start = c(log_alpha = log(0.1), log_beta = log(300000)))
+    # remove brood_stock
+    age_origin_above_weir = age_origin_return - broodstock
+    age_origin_above_weir[age_origin_above_weir < 0] = 5
     
-    # extract relevant information and return it
-    list(BH_dat = data.frame(brood_year = as.numeric(names(Pb_obs)),
-                             Pb_obs = Pb_obs, Sa_obs = Sa_obs, f_tot = f_tot),
-         BH_fit = fit)
+    # remove prespawn morts
+    age_origin_survived = lapply(1:nj, function(j) {
+      apply(age_origin_above_weir[,,j], 2, function(a) a * prespawn_surv[,j])
+    })
+    age_origin_survived = do.call(abind, append(age_origin_survived, list(along = 3)))
+    
+    # get number of females by age/origin
+    p_female_age_origin = rbind(Omega, Omega)
+    females_age_origin = lapply(1:nj, function(j) {
+      t(apply(age_origin_survived[,,j], 1, function(y) y * p_female_age_origin[,j]))
+    })
+    females_age_origin = do.call(abind, append(females_age_origin, list(along = 3)))
+    
+    # get total egg output
+    f_age_origin = c(f, f)
+    eggs_age_origin = lapply(1:nj, function(j) {
+      t(apply(females_age_origin[,,j], 1, function(y) y * f_age_origin))
+    })
+    eggs_age_origin = do.call(abind, append(eggs_age_origin, list(along = 3)))
+    total_eggs = apply(eggs_age_origin, 3, rowSums)
+    
+    # add population names back in
+    colnames(total_eggs) = colnames(total_return)
+    
+    # append years for simulation if requested and needed
+    if (append_sim_yrs & (ny - ny_obs > 1)) {
+      
+      ny_sim = ny - ny_obs
+      obs_yrs = as.numeric(rownames(Lphi_obs_Pb_Ma)[ny_obs])
+      
+      empty = matrix(NA, ny_sim, nj)
+      rownames(empty) = obs_yrs + seq(1, ny_sim)
+      colnames(empty) = colnames(total_eggs)
+      total_eggs = rbind(total_eggs, empty)
+    }
+    
+    total_eggs
   })
   
-  # draw a basic plot if requested
-  if (plot) {
-    newx = seq(0, max(out$BH_dat$f_tot, na.rm = T) * 1.2, length = 30)
-    pred = exp(predict(out$BH_fit, data.frame(f_tot = newx)))
-    plot(out$BH_dat$Pb_obs ~ out$BH_dat$f_tot, pch = 16, col = "blue",
-         ylim = c(0, max(out$BH_dat$Pb_obs, na.rm = T)),
-         xlim = c(0, max(out$BH_dat$f_tot, na.rm = T)) * 1.2,
-         xlab = "Total Egg Production", ylab = "Parr")
-    lines(pred ~ newx, lwd = 2)
+  if (fill_missing) {
+    E_filled = apply(E, 2, function(x) {x[is.na(x)] = mean(x, na.rm = TRUE); x})
+    dimnames(E_filled) = dimnames(E)
+    E = E_filled
   }
   
-  # return output
-  return(out)
+  return(E)
 }
 
-##### GENERATE SOME INITIAL VALUES FOR MCMC #####
-
-gen_initials = function(c, jags_data) {
-  # fit a simple BH model to each population
-  # BH_ests = lapply(1:jags_data$nj, function(j) {
-  #   summary(fit_fecund_BH(jags_data, j)$BH_fit)$coef
-  # })
-  # 
-  # Pb_ests = sapply(1:jags_data$nj, function(j) {
-  #   Pb_ests = fit_fecund_BH(jags_data, j)$BH_dat$Pb_obs
-  #   mn_Pb = mean(Pb_ests, na.rm = TRUE)
-  #   fill_yrs = (jags_data$kmax+1):jags_data$ny
-  #   Pb_ests[fill_yrs][is.na(Pb_ests[fill_yrs])] = mn_Pb
-  #   Pb_ests
-  # })
-
-  # generate random initial values for all years where strays can be present
-  # n_stray_tot = sapply(1:jags_data$nj, function(j) {
-  #   stray_yrs = as.numeric(na.omit(jags_data$stray_yrs[1:(jags_data$ny_obs - 1),j]))
-  #   comp = t(apply(jags_data$x_Sa_prime[stray_yrs,,j], 1, function(x) x/sum(x)))
-  #   p_nat = rowSums(comp[,1:jags_data$nk])
-  #   p_nat[is.na(p_nat)] = 1
-  #   n_strays = jags_data$Ra_obs[stray_yrs,j] * (1 - p_nat)
-  #   out = rep(NA, jags_data$ny)
-  #   out[as.numeric(na.omit(jags_data$stray_yrs[,j]))] = runif(jags_data$n_stray_yrs[j], n_strays * 0.8, n_strays + mean(n_strays) * 1.2)
-  #   out[out < 50 | out > 500] = runif(1, 60, 100)
-  #   out
-  # })
+# get egg to parr survival
+get_phi_E_Pb_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
+  Pb = get_Pb_obs(jags_data, fill_missing = fill_missing, append_sim_yrs = append_sim_yrs)
+  E = get_E_obs(jags_data, fill_missing = fill_missing, append_sim_yrs = append_sim_yrs)
   
-  mu_list = with(jags_data, {
+  phi_E_Pb = Pb/E
+  phi_E_Pb[phi_E_Pb >= 1] = 0.1
+  
+  phi_E_Pb
+}
 
-    # hydropower survival
-    mu_phi_Ma_O0 = runif(no, 0.4, 0.6)
+# get proportion of parr that become fall migrants (pi)
+get_pi_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
+  
+  pi = with(jags_data, {
     
-    # migration survival from trib to LGR
-    mu_phi_Mb_Ma = array(NA, dim = c(ni, no, nj))
-    mu_phi_Mb_Ma[i_spring,1:no,1:nj] = runif(no*nj, 0.4, 0.6)
+    # reconstruct parr recruitment
+    Pb = get_Pb_obs(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE)
     
-    # first year ocean survival
-    mu_phi_O0_O1 = matrix(c(runif(nj, 0.05, 0.15), rep(NA, nj)), no, nj, byrow = TRUE)
+    # extract count of fall parr at trap
+    Pa_fall = Pa_obs[,i_fall,]
     
-    # second year ocean survival
-    mu_phi_O1_O2 = matrix(c(runif(nj, 0.6, 0.8), rep(NA, nj)), no, nj, byrow = TRUE)
+    # divide to get fraction of all parr that become fall migrants
+    pi = Pa_fall/Pb
     
-    # pre-spawn survival
-    mu_phi_Sb_Sa = runif(nj, 0.8, 1)
-    
-    # LH apportionment
-    mu_pi = array(NA, dim = c(ni, nj))
-    mu_pi[i_fall,] = runif(nj, 0.2, 0.4)
-    
-    # maturity: at total age 3
-    mu_psi_O1 = array(NA, dim = c(no,nj))
-    mu_psi_O1[1:no,1:nj] = runif(no*nj, 0.2, 0.3)
+    # append years for simulation if requested and needed
+    if (append_sim_yrs & (ny - ny_obs > 1)) {
+      
+      ny_sim = ny - ny_obs
+      obs_yrs = as.numeric(rownames(Lphi_obs_Pb_Ma)[ny_obs])
+      
+      empty = matrix(NA, ny_sim, nj)
+      rownames(empty) = obs_yrs + seq(1, ny_sim)
+      colnames(empty) = colnames(pi)
+      pi = rbind(pi, empty)
+    }
+    pi
+  })
+  
+  if (fill_missing) {
+    pi_filled = apply(pi, 2, function(x) {x[is.na(x)] = mean(x, na.rm = TRUE); x})
+    dimnames(pi_filled) = dimnames(pi)
+    pi = pi_filled
+  }
+  
+  return(pi)
+}
 
-    # maturity: at total age 4
-    mu_psi_O2 = array(NA, dim = c(no,nj))
-    mu_psi_O2[1:no,1:nj] = runif(no*nj, 0.7, 0.9)
+fill_missing = FALSE
+append_sim_yrs = TRUE
 
+# get overwinter survival
+get_phi_Pa_Mb_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
+  
+  phi_Pa_Mb = with(jags_data, {
+    
+    # extract spring migrant smolt
+    Mb_spring = Mb_obs[1:ny_obs,i_spring,o_nor,]
+    
+    # extract smolt survival to LGR (assumed equal among LH types)
+    phi_Mb_Ma = plogis(Lphi_obs_Mb_Ma[,i_spring,o_nor,])
+    
+    # reconstruct total parr
+    Pb = get_Pb_obs(jags_data, fill_missing = fill_missing, append_sim_yrs = append_sim_yrs)
+    
+    # reconstruct proportion of total parr that migrate out as fall migrants
+    pi = get_pi_obs(jags_data, fill_missing = fill_missing, append_sim_yrs = append_sim_yrs)
+    
+    # get parr that are fall migrants
+    Pa_fall = Pb * pi
+    
+    # get parr that are spring migrants
+    Pa_spring = Pb * (1 - pi)
+    
+    # get overwinter survival for spring migrants
+    phi_Pa_Mb_spring = Mb_spring/Pa_spring[1:ny_obs,]
+    
+    # get fall migrant smolt at LGR
+    Ma_fall = Pa_obs[,i_fall,] * plogis(Lphi_obs_Pa_Ma[,i_fall,])
+    
+    # get fall migrant smolt in trib
+    Mb_fall = Ma_fall/phi_Mb_Ma
+    
+    # get overwinter survival for fall migrants
+    phi_Pa_Mb_fall = Mb_fall/Pa_obs[,i_fall,]
+    
+    # combine into an array
+    phi_Pa_Mb = abind(phi_Pa_Mb_fall, phi_Pa_Mb_spring, along = 3)
+    dimnames(phi_Pa_Mb)[[3]] = c("fall-mig", "spring-mig")
+    
+    # append years for simulation if requested and needed
+    if (append_sim_yrs & (ny - ny_obs > 1)) {
+      
+      ny_sim = ny - ny_obs
+      obs_yrs = as.numeric(rownames(Lphi_obs_Pb_Ma)[ny_obs])
+      
+      empty = matrix(NA, ny_sim, nj)
+      rownames(empty) = obs_yrs + seq(1, ny_sim)
+      colnames(empty) = dimnames(phi_Pa_Mb)[[2]]
+      empty = abind(empty, empty, along = 3)
+      dimnames(empty)[[3]] = c("fall-mig", "spring-mig")
+      phi_Pa_Mb = abind(phi_Pa_Mb, empty, along = 1)
+    }
+    phi_Pa_Mb
+  })
+  
+  if (fill_missing) {
+    phi_Pa_Mb_filled = lapply(1:jags_data$ni,  function(i) {
+      apply(phi_Pa_Mb[,,i], 2, function(x) {x[is.na(x)] = mean(x, na.rm = TRUE); x})
+    })
+    phi_Pa_Mb = do.call(abind, append(phi_Pa_Mb_filled, list(along = 3)))
+    dimnames(phi_Pa_Mb)[[3]] = c("fall-mig", "spring-mig")
+  }
+  
+  # reorder dimensions so it is [year,LH_type,pop]
+  phi_Pa_Mb = abind(phi_Pa_Mb[,1,], phi_Pa_Mb[,2,], phi_Pa_Mb[,3,], phi_Pa_Mb[,4,], along = 3)
+  dimnames(phi_Pa_Mb)[[3]] = colnames(jags_data$Ra_obs)
+  
+  return(phi_Pa_Mb)
+}
+
+get_pi_obs(jags_data)
+
+get_phi_Pa_Mb_obs(jags_data, FALSE, TRUE)
+
+# get BH params
+get_BH_params = function(jags_data) {
+  
+  # loop through populations and obtain estimates of alpha (max parr/egg), beta (max parr), and sigma (SD of logit(parr/egg))
+  BH_params = t(sapply(1:jags_data$nj, function(j) {
+    # reconstruct parr and eggs for this population
+    parr = get_Pb_obs(jags_data)[,j]
+    eggs = get_E_obs(jags_data)[,j]
+    
+    # get logit(phi_E_Pb) for this population
+    logit_parr_per_egg = qlogis(parr/eggs)
+    
+    # fit the BH model for this population
+    fit = nls(logit_parr_per_egg ~ qlogis(1/(1/plogis(logit_alpha) + eggs/exp(log_beta))),
+              start = c(logit_alpha = qlogis(0.1), log_beta = log(1e5)))
+    
+    # return point estimates for this population
+    c(alpha = unname(plogis(coef(fit)[1])), beta = unname(exp(coef(fit)[2])), sig_Lphi_E_Pb = summary(fit)$sigma)
+  }))
+  
+  # assign rownames
+  rownames(BH_params) = colnames(jags_data$Ra_obs)
+  
+  # return output
+  return(BH_params)
+}
+
+gen_initials = function(CHAIN, jags_data) {
+  
+  with(jags_data, {
+    # create random BH parameters
+    BH_params = get_BH_params(jags_data)
+    alpha_init = plogis(qlogis(BH_params[,"alpha"]) + rnorm(nj, 0, 0.1))
+    lbeta_init = log(BH_params[,"beta"]) + rnorm(nj, 0, 0.1)
+    sig_Lphi_E_Pb_init = exp(log(BH_params[,"sig_Lphi_E_Pb"]) + rnorm(nj, 0, 0.05))
+    
+    # create random egg-to-parr survival values
+    phi_E_Pb = get_phi_E_Pb_obs(jags_data, TRUE, TRUE)
+    Lphi_E_Pb_init = qlogis(phi_E_Pb) + matrix(rnorm(prod(dim(phi_E_Pb)), 0, 0.1), nrow(phi_E_Pb), ncol(phi_E_Pb))
+    
+    # create random parameters for capacity relationship
+    lambda_init = runif(1, 8000, 12000)
+    sig_lbeta_init = runif(1, 0.05, 0.15)
+    
+    # create random parameters for proportion of parr leaving in the fall
+    mu_pi_init = plogis(qlogis(colMeans(get_pi_obs(jags_data), na.rm = TRUE)) + rnorm(nj, 0, 0.2))
+    sig_Lpi_init = apply(qlogis(get_pi_obs(jags_data)), 2, sd, na.rm = TRUE) * rlnorm(nj, 0, 0.05)
+    Lpi1_init = qlogis(get_pi_obs(jags_data, TRUE, TRUE)) + matrix(rnorm(ny * nj, 0, 0.4), ny, nj)
+    Lpi1_init[1,] = NA
+    mu_pi_init = rbind(mu_pi_init, rep(NA, nj))
+    
+    # create random parameters for omegas
+    L_Pb_params = sapply(1:nj, function(j) {
+      x = (get_E_obs(jags_data)/10000)[,j]/wul[j]
+      y = L_Pb_obs[,j]
+      fit = lm(log(y) ~ x)
+      out = c(coef(fit), summary(fit)$sigma)
+      names(out) = c("omega0", "omega1", "sigma")
+      out
+    })
+    colnames(L_Pb_params) = colnames(jags_data$Ra_obs)
+    omega0_init = L_Pb_params["omega0",] * rlnorm(nj, 0, 0.05)
+    omega1_init = L_Pb_params["omega1",] * rlnorm(nj, 0, 0.05)
+    sig_lL_Pb_init = L_Pb_params["sigma",] * rlnorm(nj, 0, 0.05)
+    
+    # create random parameters for gammas
+    phi_Pa_Mb_params = lapply(1:nj, function(j) {
+      x = L_Pb_obs[,j]
+      y_fall = get_phi_Pa_Mb_obs(jags_data)[,i_fall,j]
+      y_spring = get_phi_Pa_Mb_obs(jags_data)[,i_spring,j]
+      fit_fall = lm(qlogis(y_fall) ~ x)
+      fit_spring = lm(qlogis(y_spring) ~ x)
+      
+      out_fall = c(coef(fit_fall), summary(fit_fall)$sigma)
+      out_spring = c(coef(fit_spring), summary(fit_spring)$sigma)
+      out = rbind(out_fall, out_spring)
+      rownames(out) = c("fall-mig", "spring-mig")
+      colnames(out) = c("gamma0", "gamma1", "sigma")
+      out
+    })
+    phi_Pa_Mb_params = do.call(abind, append(phi_Pa_Mb_params, list(along = 3)))
+    dimnames(phi_Pa_Mb_params)[[3]] = colnames(Ra_obs)
+    gamma0_init = phi_Pa_Mb_params[,"gamma0",] * matrix(rlnorm(ni * nj, 0, 0.05), ni, nj)
+    gamma1_init = phi_Pa_Mb_params[,"gamma1",] * matrix(rlnorm(ni * nj, 0, 0.05), ni, nj)
+    sig_Lphi_Pa_Mb_init = phi_Pa_Mb_params[,"sigma",] * matrix(rlnorm(ni * nj, 0, 0.05), ni, nj)
+    
+    # create random parameters for overwinter survival
+    Lphi_Pa_Mb_init = qlogis(get_phi_Pa_Mb_obs(jags_data, TRUE, TRUE)) + array(rnorm(ny * ni * nj, 0, 0.2), dim = c(ny, ni, nj))
+    Lphi_Pa_Mb_init[1,,] = NA
+    
+    # create random parameters for taus
+    phi_Mb_Ma_params = sapply(1:nj, function(j) {
+      x = L_Mb_obs[,j]
+      y = Lphi_obs_Mb_Ma[,i_spring,o_nor,j]
+      fit = lm(y ~ x)
+      out = c(coef(fit), summary(fit)$sigma)
+      names(out) = c("tau0", "tau1", "sigma")
+      out
+    })
+    colnames(phi_Mb_Ma_params) = colnames(jags_data$Ra_obs)
+    # tau0_init = phi_Mb_Ma_params["tau0",] * rlnorm(nj, 0, 0.05)
+    # tau1_init = phi_Mb_Ma_params["tau1",] * rlnorm(nj, 0, 0.05)
+    tau0_init = c(-6.31, -3.75, -2.68, -8.78) * rlnorm(nj, 0, 0.05)
+    tau1_init = c(0.06, 0.04, 0.03, 0.09) * rlnorm(nj, 0, 0.05)
+    
+    sig_Lphi_Mb_Ma_init = phi_Mb_Ma_params["sigma",] * rlnorm(nj, 0, 0.05)
+    sig_Lphi_Mb_Ma_init = rbind(NOR = sig_Lphi_Mb_Ma_init, HOR = rep(NA, nj))
+    
+    # create random parameters for trib to LGR migration survival
+    # Lphi_obs_Mb_Ma
+    
+    # create random parameters for straying dynamics
+    # p_G_init
+    # G_random1_init
+    # G_random2_init
+    
+    # create random parameters for carcass correction factors
+    # mu_z_init
+    # sig_z_init
+    # z_init
+    
+    # create random parameters for NOR return abundance-at-age in years w/o juvenile process model
+    # Rb_init
+    
+    # create random parameters for LGR to ocean migration
+    mu_phi_Ma_O0_init = runif(no, 0.4, 0.6)
+    sig_Lphi_Ma_O0_init = runif(no, 0.1, 0.5)
+    Lphi_Ma_O0_init = sapply(1:no, function(o) rnorm(ny, qlogis(mu_phi_Ma_O0_init[o]), sig_Lphi_Ma_O0_init[o]))
+    Lphi_Ma_O0_init[1,] = NA
+    
+    # create random parameters for first year ocean survival
+    kappa_phi_O0_O1_init = runif(nj, 0.2, 0.5)
+    mu_phi_O0_O1_init = matrix(c(runif(nj, 0.1, 0.2), rep(NA, nj)), no, nj, byrow = TRUE) 
+    sig_Lphi_O0_O1_init = runif(nj, 0.1, 0.5)
+    Lphi_O0_O1_resid_init = array(NA, dim = c(ny, no, nj))
+    Lphi_O0_O1_resid_init[1,o_nor,] = rnorm(nj, 0, 0.05)
+    Lphi_O0_O1_init = array(NA, dim = c(ny, no, nj))
+    Lphi_O0_O1_init[2:ny,o_nor,] = rnorm((ny-1) * nj, qlogis(0.15), 0.2)
+    
+    # create random parameters for second/third year ocean survival
+    mu_phi_O1_O2_init = array(runif(no * nj, 0.75, 0.85), dim = c(no, nj))
+    mu_phi_O1_O2_init[o_hor,] = NA
+    mu_phi_O2_O3_init = array(runif(no * nj, 0.75, 0.85), dim = c(no, nj))
+    mu_phi_O2_O3_init[o_hor,] = NA
+    
+    # create random parameters for difference between NOR and HOR ocean survival
+    delta_O0_O1_init = runif(nj, -1, -0.5)
+    delta_O1_O2_init = runif(nj, -1, -0.5)
+    delta_O2_O3_init = runif(nj, -1, -0.5)
+    
+    # create random parameters for age-3 maturation
+    mu_psi_O1_init = array(runif(no * nj, 0.2, 0.3), dim = c(no, nj))
+    sig_Lpsi_O1_init = array(runif(no * nj, 0.1, 0.5), dim = c(no, nj))
+    Lpsi_O1_init = qlogis(array(runif(ny * no * nj, 0.1, 0.4), dim = c(ny, no, nj)))
+    Lpsi_O1_init[1,,] = NA
+    
+    # create random parameters for age-4 maturation
+    mu_psi_O2_init = array(runif(no * nj, 0.7, 0.8), dim = c(no, nj))
+    sig_Lpsi_O2_init = array(runif(no * nj, 0.1, 0.5), dim = c(no, nj))
+    Lpsi_O2_init = qlogis(array(runif(ny * no * nj, 0.6, 0.9), dim = c(ny, no, nj)))
+    Lpsi_O2_init[1,,] = NA
+    
+    # create random parameters for BON to LGR migration
+    mu_phi_Rb_Ra_init = runif(no, 0.75, 0.85)
+    sig_Lphi_Rb_Ra_init = runif(no, 0.1, 0.5)
+    Lphi_Rb_Ra_random_init = sapply(1:no, function(o) rnorm(ny, qlogis(mu_phi_Rb_Ra_init[o]), sig_Lphi_Rb_Ra_init[o]))
+    Lphi_Rb_Ra_random_init[1,] = NA
+    
+    # create random parameters for prespawn survival
+    mu_phi_Sb_Sa_init = runif(nj, 0.8, 0.95)
+    sig_Lphi_Sb_Sa_init = runif(nj, 0.1, 0.5)
+    Lphi_Sb_Sa_init = array(qlogis(runif(ny * nj, 0.7, 0.99)), dim = c(ny, nj))
+    Lphi_Sb_Sa_init[1,] = NA
+    
+    # create random parameters for length at summer tagging
+    lL_Pb_init = log(matrix(runif(nj * ny, 60, 90), ny, nj))
+    lL_Pb_init[1,] = NA
+    
+    # create random parameters for growth between summer and spring tagging
+    lgrowth_init = log(matrix(runif(nj * ny, 1, 1.5), ny, nj))
+    lgrowth_init[1,] = NA
+    
+    # build the output as a list
     list(
-      mu_phi_Ma_O0 = mu_phi_Ma_O0,
-      mu_phi_Mb_Ma = mu_phi_Mb_Ma, 
-      mu_phi_O0_O1 = mu_phi_O0_O1,
-      mu_phi_O1_O2 = mu_phi_O1_O2,
-      mu_phi_Sb_Sa = mu_phi_Sb_Sa,
-      mu_pi = mu_pi,
-      mu_psi_O1 = mu_psi_O1,
-      mu_psi_O2 = mu_psi_O2,
-      lambda = runif(1, 5000, 15000)
+      # BH parameters
+      alpha = alpha_init,
+      lbeta = lbeta_init,
+      sig_Lphi_E_Pb = sig_Lphi_E_Pb_init,
+      Lphi_E_Pb = Lphi_E_Pb_init,
+      
+      # habitat capacity parameters
+      lambda = lambda_init,
+      sig_lbeta = sig_lbeta_init,
+      
+      # summer length relationship
+      omega0 = omega0_init,
+      omega1 = omega1_init,
+      sig_lL_Pb = sig_lL_Pb_init,
+      lL_Pb = lL_Pb_init,
+      
+      # proportion of parr leaving in fall
+      mu_pi = mu_pi_init,
+      sig_Lpi = sig_Lpi_init,
+      Lpi1 = Lpi1_init,
+      
+      # overwinter survival
+      gamma0 = gamma0_init,
+      gamma1 = gamma1_init,
+      sig_Lphi_Pa_Mb = sig_Lphi_Pa_Mb_init,
+      Lphi_Pa_Mb = Lphi_Pa_Mb_init,
+      
+      # summer to spring growth
+      # mu_growth = mu_growth_init,
+      # sig_lgrowth = sig_lgrowth_init,
+      lgrowth = lgrowth_init,
+      
+      # migration to LGR
+      # tau0 = tau0_init,
+      # tau1 = tau1_init,
+      sig_Lphi_Mb_Ma = sig_Lphi_Mb_Ma_init,
+      # Lphi_Mb_Ma = Lphi_Mb_Ma_init,
+      
+      # LGR to ocean
+      mu_phi_Ma_O0 = mu_phi_Ma_O0_init,
+      sig_Lphi_Ma_O0 = sig_Lphi_Ma_O0_init,
+      Lphi_Ma_O0 = Lphi_Ma_O0_init,
+      
+      # first year ocean survival
+      kappa_phi_O0_O1 = kappa_phi_O0_O1_init,
+      mu_phi_O0_O1 = mu_phi_O0_O1_init,
+      sig_Lphi_O0_O1 = sig_Lphi_O0_O1_init,
+      Lphi_O0_O1_resid = Lphi_O0_O1_resid_init,
+      Lphi_O0_O1 = Lphi_O0_O1_init,
+      
+      # second year ocean survival
+      mu_phi_O1_O2 = mu_phi_O1_O2_init,
+      
+      # third year ocean survival
+      mu_phi_O2_O3 = mu_phi_O2_O3_init,
+      
+      # NOR:HOR ocean survival scalers
+      delta_O0_O1 = delta_O0_O1_init,
+      # delta_O1_O2 = delta_O1_O2_init,
+      # delta_O2_O3 = delta_O2_O3_init,
+      
+      # age-3 maturity
+      mu_psi_O1 = mu_psi_O1_init,
+      sig_Lpsi_O1 = sig_Lpsi_O1_init,
+      Lpsi_O1 = Lpsi_O1_init,
+      
+      # age-4 maturity
+      mu_psi_O2 = mu_psi_O2_init,
+      sig_Lpsi_O2 = sig_Lpsi_O2_init,
+      Lpsi_O2 = Lpsi_O2_init,
+      
+      # LGR to BON migration
+      mu_phi_Rb_Ra = mu_phi_Rb_Ra_init,
+      sig_Lphi_Rb_Ra = sig_Lphi_Rb_Ra_init,
+      Lphi_Rb_Ra_random = Lphi_Rb_Ra_random_init,
+      
+      # straying dynamics parameter
+      # p_G = p_G_init,
+      # G_random1 = G_random1_init,
+      # G_random2 = G_random2_init,
+      
+      # prespawn survival
+      mu_phi_Sb_Sa = mu_phi_Sb_Sa_init,
+      sig_Lphi_Sb_Sa = sig_Lphi_Sb_Sa_init,
+      Lphi_Sb_Sa = Lphi_Sb_Sa_init
     )
   })
-  
-  # average adult recruits
-  mean_Ra = colMeans(jags_data$Ra_obs, na.rm = TRUE)
-  mu_init_recruits = runif(jags_data$nj, mean_Ra * 0.8, mean_Ra * 1.2)
-  
-  # generate random initial values for one chain
-  base_list = list(
-    # alpha = sapply(BH_ests, function(ests) exp(rnorm(1, ests["log_alpha","Estimate"], ests["log_alpha","Std. Error"]))),
-    # log_beta = sapply(BH_ests, function(ests) rnorm(1, ests["log_beta","Estimate"], ests["log_beta","Std. Error"])),
-    # lPb = log(Pb_ests * matrix(exp(rnorm(jags_data$ny * jags_data$nj, 0, 0.1)), jags_data$ny, jags_data$nj)),
-    sig_Pb = runif(jags_data$nj, 0.3, 0.4),
-    # n_stray_tot = n_stray_tot, 
-    mu_init_recruits = mu_init_recruits
-  )
-  
-  # base_list$alpha = ifelse(base_list$alpha > 0.99, 0.99, base_list$alpha)
-  
-  append(base_list, mu_list)
 }
