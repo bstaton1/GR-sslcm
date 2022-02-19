@@ -29,8 +29,8 @@ jags_model_code = function() {
     # gamma0: LH-specific intercepts
     # gamma1: LH-common slopes
     for (i in 1:ni) {
-      gamma0[i,j] ~ dnorm(0, 1e-3)
-      gamma1[i,j] ~ dnorm(0, 1e-3)
+      gamma0[i,j] ~ dt(0, 1/1.566^2, 7.763)
+      gamma1[i,j] ~ dt(0, 1/1.566^2, 7.763)
       sig_Lphi_Pa_Mb[i,j] ~ dunif(0, 5)
     }
     # gamma1[i_fall,j] ~ dnorm(0, 1e-3)
@@ -43,8 +43,8 @@ jags_model_code = function() {
 
     # size-dependent NOR migration to LGR survival
     # assumed equal among migration types
-    tau0[j] ~ dnorm(0, 1e-3)
-    tau1[j] ~ dnorm(0, 1e-3)
+    tau0[j] ~ dt(0, 1/1.566^2, 7.763)
+    tau1[j] ~ dt(0, 1/1.566^2, 7.763)
     sig_Lphi_Mb_Ma[o_nor,j] ~ dunif(0, 5)
     
     # hatchery origin movement survival (trib to LGD): have spring migrants only
