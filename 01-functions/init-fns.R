@@ -186,9 +186,6 @@ get_pi_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
   return(pi)
 }
 
-fill_missing = FALSE
-append_sim_yrs = TRUE
-
 # get overwinter survival
 get_phi_Pa_Mb_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
   
@@ -258,10 +255,6 @@ get_phi_Pa_Mb_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = F
   
   return(phi_Pa_Mb)
 }
-
-get_pi_obs(jags_data)
-
-get_phi_Pa_Mb_obs(jags_data, FALSE, TRUE)
 
 # get BH params
 get_BH_params = function(jags_data) {
