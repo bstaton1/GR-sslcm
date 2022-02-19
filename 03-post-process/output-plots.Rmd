@@ -13,7 +13,7 @@ params:
     input: text
   include_sim_years:
     label: "Include Simulated Years on Plots?"
-    value: TRUE
+    value: FALSE
     input: checkbox
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
@@ -1910,7 +1910,7 @@ plot_f = function(j) {
 
   # obtain posterior samples of total egg abundance scaled to WUL
   E = post_subset(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs), matrix = TRUE)
-  E_scaled = (E/10000)/jags_data$wul[j]
+  E_scaled = (E/jags_data$E_scale)/jags_data$wul[j]
   colnames(E_scaled) = gsub("E", "E_scaled", x = colnames(E_scaled))
   post_E = post_convert(cbind(postpack:::id_mat(post), E_scaled))
   
@@ -1969,9 +1969,10 @@ plot_f = function(j) {
   
 }
 
+xlab = paste0("Eggs/WUL (", prettyNum(jags_data$E_scale, big.mark = ","), "s per km)")
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Eggs/WUL")
+mtext(side = 1, outer = T, line = 0.25, xlab)
 mtext(side = 2, outer = T, line = 0.25, TeX("$Mean\\,Length\\,at\\,Summer\\,Tagging\\,(mm)$"))
 ```
 
@@ -2073,6 +2074,11 @@ plot_fn = function(j, i) {
   L_Pb_lwr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
   L_Pb_upr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
   
+  # obtain scaled/centered versions
+  L_Pb_star_mean = (L_Pb_mean - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  L_Pb_star_lwr = (L_Pb_lwr - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  L_Pb_star_upr = (L_Pb_upr - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  
   # summarize posterior of overwinter survival outcomes
   phi_Pa_Mb_mean = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["mean",])[-1,i,j]
   phi_Pa_Mb_lwr = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["2.5%",])[-1,i,j]
@@ -2080,6 +2086,7 @@ plot_fn = function(j, i) {
 
   # create vectors to predict survival at: for credible regions and mean curve
   L_Pb_seq = seq(min(L_Pb_lwr), max(L_Pb_upr), length = 30)
+  L_Pb_star_seq = seq(min(L_Pb_star_lwr), max(L_Pb_star_upr), length = 30)
   
   # extract posteriors of coefficients
   gamma0 = post_subset(post, sub_index("gamma0[LH_type,pop]", pop = j, LH_type = i), matrix = TRUE)
@@ -2087,7 +2094,7 @@ plot_fn = function(j, i) {
   
   # function to create predicted survival curve for one posterior sample
   pred_fn = function(i) {
-    pred_phi_Pa_Mb = plogis(gamma0[i] + gamma1[i] * L_Pb_seq)
+    pred_phi_Pa_Mb = plogis(gamma0[i] + gamma1[i] * L_Pb_star_seq)
     names(pred_phi_Pa_Mb) = paste0("pred_phi_Pa_Mb[", 1:30, "]")
     pred_phi_Pa_Mb
   }
@@ -2144,6 +2151,11 @@ plot_fn = function(j, i) {
   L_Mb_lwr = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
   L_Mb_upr = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
   
+  # obtain scaled/centered versions
+  L_Mb_star_mean = (L_Mb_mean - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  L_Mb_star_lwr = (L_Mb_lwr - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  L_Mb_star_upr = (L_Mb_upr - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  
   # summarize posterior of migration survival outcomes
   phi_Mb_Ma_mean = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["mean",])[-1,i_spring,o_nor,j]
   phi_Mb_Ma_lwr = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["2.5%",])[-1,i_spring,o_nor,j]
@@ -2151,6 +2163,7 @@ plot_fn = function(j, i) {
 
   # create vectors to predict survival at: for credible regions and mean curve
   L_Mb_seq = seq(min(L_Mb_lwr), max(L_Mb_upr), length = 30)
+  L_Mb_star_seq = seq(min(L_Mb_star_lwr), max(L_Mb_star_upr), length = 30)
   
   # extract posteriors of coefficients
   tau0 = post_subset(post, sub_index("tau0[pop]", pop = j), matrix = TRUE)
@@ -2158,7 +2171,7 @@ plot_fn = function(j, i) {
 
   # function to create predicted survival curve for one posterior sample
   pred_fn = function(i) {
-    pred_phi_Mb_Ma = plogis(tau0[i] + tau1[i] * L_Mb_seq)
+    pred_phi_Mb_Ma = plogis(tau0[i] + tau1[i] * L_Mb_star_seq)
     names(pred_phi_Mb_Ma) = paste0("pred_phi_Mb_Ma[", 1:30, "]")
     pred_phi_Mb_Ma
   }
