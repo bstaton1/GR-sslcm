@@ -245,20 +245,20 @@ jags_model_code = function() {
     Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(1/(1/alpha[1:nj] + E[y,1:nj]/beta[1:nj])), Sig_Lphi_E_Pb[1:nj,1:nj])
 
     # density-dependent length at end of summer
-    lL_Pb[y,1:nj] ~ dmnorm.vcov(omega0[1:nj] + omega1[1:nj] * ((E[y,1:nj]/10000)/wul[1:nj]), Sig_lL_Pb[1:nj,1:nj])
+    lL_Pb[y,1:nj] ~ dmnorm.vcov(omega0[1:nj] + omega1[1:nj] * ((E[y,1:nj]/E_scale)/wul[1:nj]), Sig_lL_Pb[1:nj,1:nj])
     
     # LH apportionment
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
 
     # overwinter survival by LH type: function of size
-    Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * L_Pb[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
-    Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * L_Pb[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
+    Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * L_Pb_star[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
+    Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * L_Pb_star[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
 
     # summer to spring growth rate
     lgrowth[y,1:nj] ~ dmnorm.vcov(log(mu_growth[1:nj]), Sig_lgrowth[1:nj,1:nj])
     
     # size-based migration survival from trib to LGR: NOR
-    Lphi_Mb_Ma[y,i_spring,o_nor,1:nj] ~ dmnorm.vcov(tau0[1:nj] + tau1[1:nj] * L_Mb[y,1:nj], Sig_Lphi_Mb_Ma[1:nj,1:nj,o_nor])
+    Lphi_Mb_Ma[y,i_spring,o_nor,1:nj] ~ dmnorm.vcov(tau0[1:nj] + tau1[1:nj] * L_Mb_star[y,1:nj], Sig_Lphi_Mb_Ma[1:nj,1:nj,o_nor])
     
     # non-size-based migration survival from trib to LGR: HOR
     Lphi_Mb_Ma[y,i_spring,o_hor,1:nj] ~ dmnorm.vcov(logit(mu_phi_Mb_Ma[i_spring,o_hor,1:nj]), Sig_Lphi_Mb_Ma[1:nj,1:nj,o_hor])
@@ -299,8 +299,9 @@ jags_model_code = function() {
       # transform egg to parr survival
       phi_E_Pb[y,j] <- ilogit(Lphi_E_Pb[y,j])
       
-      # transform summer length
+      # transform summer length and obtain scaled and centered version
       L_Pb[y,j] <- exp(lL_Pb[y,j])
+      L_Pb_star[y,j] <- (L_Pb[y,j] - L_Pb_center[j])/L_Pb_scale[j]
 
       # transform LH apportionment
       pi[y,i_fall,j] <- ilogit(Lpi1[y,j])
@@ -313,8 +314,9 @@ jags_model_code = function() {
       # transform summer to spring growth rate
       growth[y,j] <- exp(lgrowth[y,j])
       
-      # obtain spring length
+      # obtain spring length and scaled and centered version
       L_Mb[y,j] <- L_Pb[y,j] * growth[y,j]
+      L_Mb_star[y,j] <- (L_Mb[y,j] - L_Mb_center[j])/L_Mb_scale[j]
 
       for (o in 1:no) {
         # transform movement survival trib to LGR
@@ -811,14 +813,14 @@ jags_model_code = function() {
       
       # LH-specific overwinter survival
       for (i in 1:ni) {
-        Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * L_Pb[y,j])
+        Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * L_Pb_star[y,j])
       }
       
       # summer to spring growth rate
       lgrowth_resid[y,j] <- lgrowth[y,j] - mu_lgrowth[j]
       
       # movement survival to LGR: NOR
-      Lphi_Mb_Ma_resid[y,o_nor,j] <- Lphi_Mb_Ma[y,i_spring,o_nor,j] - (tau0[j] + tau1[j] * L_Mb[y,j])
+      Lphi_Mb_Ma_resid[y,o_nor,j] <- Lphi_Mb_Ma[y,i_spring,o_nor,j] - (tau0[j] + tau1[j] * L_Mb_star[y,j])
       
       # movement survival to LGR: HOR
       Lphi_Mb_Ma_resid[y,o_hor,j] <- Lphi_Mb_Ma[y,i_spring,o_hor,j] - logit(mu_phi_Mb_Ma[i_spring,o_hor,j])
