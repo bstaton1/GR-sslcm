@@ -27,7 +27,7 @@ do_pp_check = TRUE
 do_lppd = FALSE
 
 # specify a scenario name
-scenario = "size-based-surv"
+scenario = "size-based-surv-scaled"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -102,6 +102,15 @@ add_jags_data = append(add_jags_data, list(first_x_LGR = min(which(!is.na(jags_d
 
 # set upper boundaries for early Rb states
 add_jags_data = append(add_jags_data, list(max_Rb_init = c(50, 200, 200)))
+
+# add variables to scale and center quantities used in regressions
+add_jags_data = append(add_jags_data, list(
+  E_scale = 10000,
+  L_Pb_center = apply(jags_data$L_Pb_obs, 2, mean, na.rm = TRUE),
+  L_Pb_scale = apply(jags_data$L_Pb_obs, 2, sd, na.rm = TRUE),
+  L_Mb_center = apply(jags_data$L_Mb_obs, 2, mean, na.rm = TRUE),
+  L_Mb_scale = apply(jags_data$L_Mb_obs, 2, sd, na.rm = TRUE)
+))
 
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
