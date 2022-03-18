@@ -76,7 +76,7 @@ Although we model their population dynamics separately, it is also reasonable to
 Thus, wherever possible we attempt to capture the covariability among population-specific dynamics.
 
 The model is framed in the Bayesian mode of inference, as it is intuitive for the necessary integration over the many layers of uncertainty (i.e., process vs. observational variability).
-Further, Bayesian inference provides an intuitive framework to constrain population dynamics parameters to take on only biologically plausible values through the use of prior information -- we intentionally employ nearly exclusively uninformative prior information, but in several rare cases we were required to bring in auxiliary information in the form of reasonably strong priors (Table \ref{tab:param-table}).
+Further, Bayesian inference provides an intuitive framework to constrain population dynamics parameters to take on only biologically plausible values through the use of prior information -- we intentionally employ nearly exclusively uninformative prior information, but in several rare cases we were required to bring in auxiliary information in the form of reasonably strong priors (Table \@ref(tab:param-table)).
 A final benefit of using the Bayesian framework is the seamless propagation of uncertainty from directly estimated parameters to derived quantities (of which there are many) -- all unknown quantities, either estimated parameters or deterministic functions of estimated parameters, receive a posterior distribution in the Bayesian framework.
 Due to the analytical intractability of the complexity of the model, we employ Markov Chain Monte Carlo methods (implemented via the JAGS probabilistic programming language) to sample from the joint posterior distribution of all unknown quantities in the model.
 
@@ -84,7 +84,7 @@ We begin our description of the mathematical structure of the life cycle model w
 In our mathematical representation of quantities in the model, we have striven for consistency, but this has created somewhat non-intuitive conventions which require devoted explanation.
 All quantities are defined (i.e., symbology and the specific equations that use them) in Tables \ref{tab:index-table}, \ref{tab:symbol-table}, \ref{tab:param-table}, and \ref{tab:data-table} for reference and a catalog of all equations is provided in Table \ref{tab:equation-table}.
 
-We have described the life cycle model calculations as divided into three distinct life "phases" (Figure \ref{fig:diagram}): freshwater juvenile, ocean juvenile, and freshwater adult.
+We have described the life cycle model calculations as divided into three distinct life "phases" (Figure \@ref(fig:diagram)): freshwater juvenile, ocean juvenile, and freshwater adult.
 For each life phase, we describe the process model dynamics as a set of stochastic and deterministic processes followed by how they are informed by empirical data as part of the observation model.
 Although we present these phases and model components in discrete sections, note that they are all components of a single integrated population dynamics model that is statistical in the sense that unknown quantities are estimated with uncertainty from input data.
 
@@ -138,6 +138,7 @@ In cases where a quantity varies annually and is different by origin but not by 
 \label{eq:generic-Sigma2by2}
 \end{equation}
 Although the stochastic process requires the $\Sigma$ term, is is the component $\sigma_j$ (or $\sigma_o$) and $\rho$ terms that were assigned priors ($\mathcal{U}(0,5)$ and $\mathcal{U}(-1,1)$, respectively, Table \ref{tab:param-table}) and the $\Sigma$ matrices were constructed using the structures defined in eqs. \ref{eq:generic-Sigma4by4} and \ref{eq:generic-Sigma2by2}.
+Although the stochastic process requires the $\Sigma$ term, is is the component $\sigma_j$ (or $\sigma_o$) and $\rho$ terms that were assigned priors ($\mathcal{U}(0,5)$ and $\mathcal{U}(-1,1)$, respectively, Table \@ref(tab:param-table)) and the $\Sigma$ matrices were constructed using the structures defined in eqs. \@ref(eq:generic-Sigma4by4) and \@ref(eq:generic-Sigma2by2).
 
 \clearpage
 
@@ -147,7 +148,7 @@ Although the stochastic process requires the $\Sigma$ term, is is the component 
 
 ### Reproduction and Parr Recruitment
 
-Total egg production is the sum product of age-specific spawner abundance (from eq. \ref{eq:get-Sa}, below), proportion female, and fecundity:
+Total egg production is the sum product of age-specific spawner abundance (from eq. \@ref(eq:get-Sa), below), proportion female, and fecundity:
 \begin{equation}
 E_{y,j} = \sum_o^{n_o} \sum_k^{n_k} S^{a}_{y,k,o,j} \cdot \Omega_{k,j} \cdot f_{k}
 \label{eq:get-E}
@@ -168,7 +169,7 @@ Derivation of $\mathrm{WUL}_j$ is too detailed to describe fully here, but brief
 \end{equation}
 where $\lambda$ is the expected change in parr capacity per 1 km change in weighted usable habitat length, and $\sigma_{\beta}$ is the log-normal standard deviation of variability in this relationship not captured by $\mathrm{WUL}$ values.
 
-Realized (i.e., with process noise) egg-to-parr survival was a multivariate logit-normal random variable around the deterministic value ($\dot{\phi}^{E \rightarrow P^{b}}_{y,j}$) predicted by the Beverton-Holt function in eq. \ref{eq:get-phi-E-Pb-dot} with covariance matrix $\Sigma_{\phi^{E \rightarrow P^{b}}}$ (constructed of $\sigma_{\phi^{E \rightarrow P^{b}}_j}$ and $\rho_{\phi^{E \rightarrow P^{b}}}$ following eq. \ref{eq:generic-Sigma4by4}):
+Realized (i.e., with process noise) egg-to-parr survival was a multivariate logit-normal random variable around the deterministic value ($\dot{\phi}^{E \rightarrow P^{b}}_{y,j}$) predicted by the Beverton-Holt function in eq. \@ref(eq:get-phi-E-Pb-dot) with covariance matrix $\Sigma_{\phi^{E \rightarrow P^{b}}}$ (constructed of $\sigma_{\phi^{E \rightarrow P^{b}}_j}$ and $\rho_{\phi^{E \rightarrow P^{b}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{E \rightarrow P^{b}}_{y,1:n_j}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\phi}}^{E \rightarrow P^{b}}_{y,1:n_j}\right), \Sigma_{\phi^{E \rightarrow P^{b}}}\right]
 \label{eq:phi-E-Pb-random}
@@ -189,7 +190,7 @@ P^{a}_{y,i,j} = P^{b}_{y,j} \cdot \pi_{y,i,j}
 \label{eq:get-Pa}
 \end{equation}
 where $P^{a}_{y,i,j}$ is migratory strategy-specific parr abundance and $\pi_{y,i,j}$ is the proportion that take on each migratory strategy.
-For fall migrants, this proportion was a multivariate logit-normal random variable around a time-constant mean ($\dot{\pi}_{i = \mathrm{fall},j}$) with covariance matrix $\Sigma_{\pi_{i = \mathrm{fall}}}$ (constructed of $\sigma_{\pi_{i=\mathrm{fall},j}}$ and $\rho_{\pi_{i=\mathrm{fall}}}$ following eq. \ref{eq:generic-Sigma4by4}):
+For fall migrants, this proportion was a multivariate logit-normal random variable around a time-constant mean ($\dot{\pi}_{i = \mathrm{fall},j}$) with covariance matrix $\Sigma_{\pi_{i = \mathrm{fall}}}$ (constructed of $\sigma_{\pi_{i=\mathrm{fall},j}}$ and $\rho_{\pi_{i=\mathrm{fall}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 \begin{equation}
 \logit\left(\boldsymbol{\pi}_{y,i = \mathrm{fall},1:n_j}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\pi}}_{i = \mathrm{fall},1:n_j}\right), \Sigma_{\pi_{i = \mathrm{fall}}}\right]
 \label{eq:pi-random}
@@ -198,14 +199,14 @@ and the proportion that are spring migrants was obtained as its complement ($\pi
 
 ### Survival to Smolt Stage and Hatchery Inputs
 
-Overwinter survival from the end of the parr year (i.e., age-1) to the start of the smolt year (i.e., age-2), denoted by $\phi^{P^{a} \rightarrow M^{b}}_{y,i,j}$, was modeled as a logit-linear function of parr density (scaled to the same metric of weighted usable habitat length [$\mathrm{WUL}_j$] used in eq. \ref{eq:beta-random}).
+Overwinter survival from the end of the parr year (i.e., age-1) to the start of the smolt year (i.e., age-2), denoted by $\phi^{P^{a} \rightarrow M^{b}}_{y,i,j}$, was modeled as a logit-linear function of parr density (scaled to the same metric of weighted usable habitat length [$\mathrm{WUL}_j$] used in eq. \@ref(eq:beta-random)).
 Deterministic overwinter survival was:
 \begin{equation}
 \logit\left(\dot{\phi}^{P^{a} \rightarrow M^{b}}_{y,i,j}\right) = \gamma_{0,i,j} + \gamma_{1,j} \cdot \left(\frac{P^{a}_{y,i,j}}{\mathrm{WUL}_j}\right)
 \label{eq:get-phi-Pa-Mb-dot}
 \end{equation}
 Note the migratory strategy-specific intercept ($\gamma_{0,i,j}$) but common slope terms ($\gamma_{1,j}$).
-Then, for each migratory strategy separately, overwinter survival was a multivariate logit-normal random variable around the deterministic logistic model prediction with covariance matrix $\Sigma_{\phi^{P^{a} \rightarrow M^{b}}_i}$ (each matrix constructed of $\sigma_{\phi^{P^{a} \rightarrow M^{b}}_{i,j}}$ and $\rho_{\phi^{P^{a} \rightarrow M^{b}}_{i}}$ following eq. \ref{eq:generic-Sigma4by4}):
+Then, for each migratory strategy separately, overwinter survival was a multivariate logit-normal random variable around the deterministic logistic model prediction with covariance matrix $\Sigma_{\phi^{P^{a} \rightarrow M^{b}}_i}$ (each matrix constructed of $\sigma_{\phi^{P^{a} \rightarrow M^{b}}_{i,j}}$ and $\rho_{\phi^{P^{a} \rightarrow M^{b}}_{i}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{P^{a} \rightarrow M^{b}}_{y,i,1:n_j}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\phi}}^{P^{a} \rightarrow M^{b}}_{y,i,1:n_j}\right), \Sigma_{\phi^{P^{a} \rightarrow M^{b}}_i}\right]
 \label{eq:phi-Pa-Mb-random}
@@ -222,7 +223,7 @@ For populations with hatchery supplementation, hatchery-origin smolt releases (a
 In-basin smolt ($M^{b}_{y,i,o,j}$) migrate to the ocean in the spring of the year they become age-2.
 We divide mortality experienced during this migration into two stages: (_i_) from in-basin to Lower Granite Dam (LGR), the first in a series of eight dams encountered in the downstream migration, and (_ii_) from LGR to the ocean.
 For parameter identifiability in mortality stage (_i_), we were required to assume that survival from in-basin to LGR was identical between natural-origin fall and spring migrants (i.e., $\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{fall},o=\mathrm{NOR},j} = \phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}$, we thus omit the $i$ dimension when defining these parameter below), but we were able to model natural-origin survival separately from hatchery-origin.
-We assume that year-specific realized survival values were multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{M^{b} \rightarrow M^{a}}_{o,j}$) with covariance matrix $\Sigma_{\phi^{M^{b} \rightarrow M^{a}}_o}$ (constructed of $\sigma_{\phi^{M^{b} \rightarrow M^{a}}_{o,j}}$ and $\rho_{\phi^{M^{b} \rightarrow M^{a}}_{o}}$ following eq. \ref{eq:generic-Sigma4by4}):
+We assume that year-specific realized survival values were multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{M^{b} \rightarrow M^{a}}_{o,j}$) with covariance matrix $\Sigma_{\phi^{M^{b} \rightarrow M^{a}}_o}$ (constructed of $\sigma_{\phi^{M^{b} \rightarrow M^{a}}_{o,j}}$ and $\rho_{\phi^{M^{b} \rightarrow M^{a}}_{o}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{M^{b} \rightarrow M^{a}}_{y,o,1:n_j}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{b} \rightarrow M^{a}}_{o,1:n_j}\right), \Sigma_{\phi^{M^{b} \rightarrow M^{a}}_o}\right]
 \label{eq:phi-Mb-Ma-random}
@@ -233,7 +234,7 @@ M^{a}_{y,i,o,j} = M^{b}_{y,i,o,j} \cdot \phi^{M^{b} \rightarrow M^{a}}_{y,o,j}
 \label{eq:get-Ma}
 \end{equation}
 After reaching LGR, we modeled survival during the downstream migration through the hydrosystem on the Snake and Columbia rivers as a single survival rate, specific to each year and origin but shared among populations ($\phi^{M^{a} \rightarrow O^{0}}_{y,o}$).
-We assumed these survival rates were multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{M^{a} \rightarrow O^{0}}_{o}$) with covariance matrix $\Sigma_{\phi^{M^{a} \rightarrow O^{0}}}$ (constructed of $\sigma_{\phi^{M^{a} \rightarrow O^{0}}_{o}}$ and $\rho_{\phi^{M^{a} \rightarrow O^{0}}}$ following eq. \ref{eq:generic-Sigma2by2}):
+We assumed these survival rates were multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{M^{a} \rightarrow O^{0}}_{o}$) with covariance matrix $\Sigma_{\phi^{M^{a} \rightarrow O^{0}}}$ (constructed of $\sigma_{\phi^{M^{a} \rightarrow O^{0}}_{o}}$ and $\rho_{\phi^{M^{a} \rightarrow O^{0}}}$ following eq. \@ref(eq:generic-Sigma2by2)):
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{M^{a} \rightarrow O^{0}}_{y,1:n_o}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{a} \rightarrow O^{0}}_{1:n_o}\right), \Sigma_{\phi^{M^{a} \rightarrow O^{0}}}\right]
 \label{eq:phi-Ma-O0-random}
@@ -243,7 +244,7 @@ Thus, the abundance of fish reaching the ocean by origin was:
 O^{0}_{y,o,j} = \phi^{M^{a} \rightarrow O^{0}}_{y,o} \sum_i^{n_i} M^{a}_{y,i,o,j}
 \label{eq:get-O0}
 \end{equation}
-Note the summation across migratory strategies ($i$) in eq. \ref{eq:get-O0}, which indicates that the fates of fish with these different strategies were assumed to be the result of identical processes following arrival to LGR.
+Note the summation across migratory strategies ($i$) in eq. \@ref(eq:get-O0), which indicates that the fates of fish with these different strategies were assumed to be the result of identical processes following arrival to LGR.
 
 ## Observation Model
 
@@ -317,13 +318,13 @@ That is, ocean juveniles spend between 1 and 3 winters at sea and some fraction 
 Thus, we divided ocean population dynamics into two types of demographic rates: survival and maturation rates. We treated survival in the first year with the most complexity and we vastly simplified survival in the second and third years for parameter identifiability purposes.
 Further, we wished to account for differences in ocean survival among natural- and hatchery-origin fish, but were limited in the level of complexity that was estimable; thus we assumed natural- and hatchery-origin survival at sea was perfectly correlated over time, but shifted by a log-odds ratio.
 
-First year natural-origin ocean survival was assumed to be a multivariate logit-normal random variable around a time-constant and density-independent deterministic value ($\dot{\phi}^{O^{0} \rightarrow O^{1}}_{o=\mathrm{NOR},j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \rightarrow O^{1}}}$ (constructed of $\sigma_{\phi^{O^{0} \rightarrow O^{1}}_{j}}$ and $\rho_{\phi^{O^{0} \rightarrow O^{1}}}$ following eq. \ref{eq:generic-Sigma4by4}), but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion (all $o=\mathrm{NOR}$ in eq. \ref{eq:phi-O0-O1-random}, omitted for brevity):
+First year natural-origin ocean survival was assumed to be a multivariate logit-normal random variable around a time-constant and density-independent deterministic value ($\dot{\phi}^{O^{0} \rightarrow O^{1}}_{o=\mathrm{NOR},j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \rightarrow O^{1}}}$ (constructed of $\sigma_{\phi^{O^{0} \rightarrow O^{1}}_{j}}$ and $\rho_{\phi^{O^{0} \rightarrow O^{1}}}$ following eq. \@ref(eq:generic-Sigma4by4)), but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion (all $o=\mathrm{NOR}$ in eq. \@ref(eq:phi-O0-O1-random), omitted for brevity):
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{O^{0} \rightarrow O^{1}}_{y,o,1:n_j}\right) \sim \mathcal{MVN}\left\{\logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \rightarrow O^{1}}_{o,1:n_j}\right) + \boldsymbol{\kappa}^{O^{0} \rightarrow O^{1}}_{1:n_j} \cdot \left[ \logit\left(\boldsymbol{\phi}^{O^{0} \rightarrow O^{1}}_{y-1,o,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \rightarrow O^{1}}_{o,1:n_j}\right)\right], \Sigma_{\phi^{O^{0} \rightarrow O^{1}}} \right\}
 \label{eq:phi-O0-O1-random}
 \end{equation}
 We assumed process variation was negligible in the second and third year ocean survival terms, thus we forced the year-specific values of $\phi^{O^{1} \rightarrow O^{2}}_{y,o=\mathrm{NOR},j}$ and $\phi^{O^{2} \rightarrow O^{3}}_{y,o=\mathrm{NOR},j}$ to take on the same deterministic value each year (i.e., $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$, respectively).
-We further discovered that not all maturity and ocean survival terms were uniquely identifiable based solely on adult return abundance and age composition -- we thus relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$ (Table \ref{tab:param-table}).
+We further discovered that not all maturity and ocean survival terms were uniquely identifiable based solely on adult return abundance and age composition -- we thus relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$ (Table \@ref(tab:param-table)).
 To obtain hatchery-origin ocean survival each year, we adjusted the natural-origin survival by a log-odds ratio ($\delta_{j}$) that was common across all ocean years and brood years but varied by population:
 \begin{equation}
 \begin{aligned}
@@ -333,7 +334,8 @@ To obtain hatchery-origin ocean survival each year, we adjusted the natural-orig
 \end{aligned}
 \label{eq:get-phi-O-HOR}
 \end{equation}
-Maturation rates (i.e., the proportion of fish from a given brood year alive and in the ocean at the beginning of a year that make the return migration that year) were assumed to vary by ocean age, origin, brood year, and population and were treated as multivariate logit-normal random variables around time-constant and density-independent deterministic values ($\dot{\psi}^{O^{w}}_{o,j}$, $w$ is the number of winters spent in the ocean) with covariance matrix $\Sigma_{\psi^{O^{w}}_o}$ (one matrix per origin, each constructed of $\sigma_{\psi^{O^{w}}_{o,j}}$ and $\rho_{\psi^{O^{w}}_{o}}$ following eq. \ref{eq:generic-Sigma4by4}):
+
+Maturation rates (i.e., the proportion of fish from a given brood year alive and in the ocean at the beginning of a year that make the return migration that year) were assumed to vary by ocean age, origin, brood year, and population and were treated as multivariate logit-normal random variables around time-constant and density-independent deterministic values ($\dot{\psi}^{O^{w}}_{o,j}$, $w$ is the number of winters spent in the ocean) with covariance matrix $\Sigma_{\psi^{O^{w}}_o}$ (one matrix per origin, each constructed of $\sigma_{\psi^{O^{w}}_{o,j}}$ and $\rho_{\psi^{O^{w}}_{o}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 \begin{equation}
 \begin{aligned}
 \logit\left(\boldsymbol{\psi}^{O^{1}}_{y,o,1:n_j}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\psi}}^{O^{1}}_{o,1:n_j}\right), \Sigma_{\psi^{O^{1}}_o}\right] \\
@@ -369,12 +371,12 @@ R^{b}_{y+k_{\mathrm{min}} + 3 - 1,3,o,j} &= O^{3}_{y,o,j} \cdot \psi^{O^{3}}_{y,
 \end{equation}
 Note, however, that this leaves 12 age/year combinations per origin unpopulated (the first 3 missing years for age-3 returns, first 4 missing years for age-4 returns, and first 5 missing years for age-5 returns).
 This is because the life cycle dynamics must start somewhere, and no juvenile process model outcomes existed that would ultimately become these $R^{b}_{y,k,o,j}$ values in these early years.
-Thus, to initialize the adult returns for natural-origin fish (and as a result, the rest of the life cycle), we estimated these 12 year/age return abundances as free parameters with fairly restrictive priors (Table \ref{tab:param-table}) with boundaries loosely informed by the ranges of adult returns at age observed in the early years of the data time series.
+Thus, to initialize the adult returns for natural-origin fish (and as a result, the rest of the life cycle), we estimated these 12 year/age return abundances as free parameters with fairly restrictive priors (Table \@ref(tab:param-table)) with boundaries loosely informed by the ranges of adult returns at age observed in the early years of the data time series.
 Initial abundance of hatchery-origin returns was handled by the "straying model", described below.
 
 ## Observation Model
 
-No data sources were used to inform ocean juvenile population dynamics -- estimation of these quantities was enabled by (_i_) reasonably precise information about the abundance and composition of fish entering the ocean and returning to natal tributaries, (_ii_) the simplifying assumptions described above (i.e., time-constant second and third year ocean survival and perfectly correlated but offset origin-specific survival), and (_iii_) through the use of reasonably strong priors for second and third year ocean survival (Table \ref{tab:param-table}).
+No data sources were used to inform ocean juvenile population dynamics -- estimation of these quantities was enabled by (_i_) reasonably precise information about the abundance and composition of fish entering the ocean and returning to natal tributaries, (_ii_) the simplifying assumptions described above (i.e., time-constant second and third year ocean survival and perfectly correlated but offset origin-specific survival), and (_iii_) through the use of reasonably strong priors for second and third year ocean survival (Table \@ref(tab:param-table)).
 
 # Freshwater Adult Phase
 
@@ -383,7 +385,7 @@ No data sources were used to inform ocean juvenile population dynamics -- estima
 There are several sources of mortality that occur on the upstream migration between the mouth of the Columbia River and the natal tributaries in the Grande Ronde basin.
 Downstream of Bonneville Dam (BON, the first dam encountered in this upstream migration), returning adults are subject to predation mortality (survival denoted by $\phi^{SL}_{y,j}$) from sea lions and harvest mortality from fisheries (harvest rate after sea lion predation denoted by $U_{y,k,o}$).
 We compiled the best available estimates of these quantities, but did not fit to them explicitly as part of the observation model (as we do with many other data sources) -- instead we passed them to the model as non-stochastic quantities that were assumed to be known without error.
-Once fish reach BON, however, their survival to LGR has been monitored (since 2000; $y=10$) via PIT tags and so we did fit to those data and estimate the survival rate between BON and LGR as multivariate logit-normal random variables around deterministic values ($\dot{\phi}^{R^{b} \rightarrow R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \rightarrow R^{a}}}$ (constructed of $\sigma_{\phi^{R^{b} \rightarrow R^{a}}_o}$ and $\rho_{\phi^{R^{b} \rightarrow R^{a}}}$ following eq. \ref{eq:generic-Sigma2by2}).
+Once fish reach BON, however, their survival to LGR has been monitored (since 2000; $y=10$) via PIT tags and so we did fit to those data and estimate the survival rate between BON and LGR as multivariate logit-normal random variables around deterministic values ($\dot{\phi}^{R^{b} \rightarrow R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \rightarrow R^{a}}}$ (constructed of $\sigma_{\phi^{R^{b} \rightarrow R^{a}}_o}$ and $\rho_{\phi^{R^{b} \rightarrow R^{a}}}$ following eq. \@ref(eq:generic-Sigma2by2)).
 In years without these PIT tag counts, however, the survival from BON to LGR is confounded with ocean survival, and so we assumed BON to LGR survival was equal to the deterministic expectation in these years for parameter identifiability purposes:
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{R^{b} \rightarrow R^{a}}_{y,1:n_o}\right)
@@ -413,7 +415,7 @@ S^{b}_{y,k,o,j} = \max\left(R^{a}_{y,k,o,j} - B_{y,k,o,j}, 1\right)
 \label{eq:get-Sb}
 \end{equation}
 As a final step before spawning, these fish on the spawning grounds must survive the challenges of finding adequate spawning habitat and avoid succumbing to stress and mortality prior to spawning.
-We term this phenomenon "pre-spawn survival", denoted by $\phi^{S^{b} \rightarrow S^{a}}_{y,j}$, which we assume are multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{S^{b} \rightarrow S^{a}}_{j}$) with covariance matrix $\Sigma_{\phi^{S^{b} \rightarrow S^{a}}}$ (constructed of $\sigma_{\phi^{S^{b} \rightarrow S^{a}}_j}$ and $\rho_{\phi^{S^{b} \rightarrow S^{a}}}$ following eq. \ref{eq:generic-Sigma4by4}):
+We term this phenomenon "pre-spawn survival", denoted by $\phi^{S^{b} \rightarrow S^{a}}_{y,j}$, which we assume are multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{S^{b} \rightarrow S^{a}}_{j}$) with covariance matrix $\Sigma_{\phi^{S^{b} \rightarrow S^{a}}}$ (constructed of $\sigma_{\phi^{S^{b} \rightarrow S^{a}}_j}$ and $\rho_{\phi^{S^{b} \rightarrow S^{a}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{S^{b} \rightarrow S^{a}}_{y,1:n_j}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\phi}}^{S^{b} \rightarrow S^{a}}_{1:n_j}\right), \Sigma_{\phi^{S^{b} \rightarrow S^{a}}}\right]
 \label{eq:phi-Sb-Sa-random}
@@ -423,7 +425,7 @@ Thus, the abundance of total successfully spawning individuals ($S^{a}_{y,k,o,j}
 S^{a}_{y,k,o,j} = S^{b}_{y,k,o,j} \cdot \phi^{S^{b} \rightarrow S^{a}}_{y,j}
 \label{eq:get-Sa}
 \end{equation}
-It is this $S^{a}_{y,k,o,j}$ value from which total egg production ($E_{y,j}$) is calculated in eq. \ref{eq:get-E} to complete the life cycle.
+It is this $S^{a}_{y,k,o,j}$ value from which total egg production ($E_{y,j}$) is calculated in eq. \@ref(eq:get-E) to complete the life cycle.
 
 ## Observation Model
 
