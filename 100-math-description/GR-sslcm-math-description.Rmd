@@ -82,7 +82,7 @@ Due to the analytical intractability of the complexity of the model, we employ M
 
 We begin our description of the mathematical structure of the life cycle model with an overview of several syntax and statistical conventions we employ.
 In our mathematical representation of quantities in the model, we have striven for consistency, but this has created somewhat non-intuitive conventions which require devoted explanation.
-All quantities are defined (i.e., symbology and the specific equations that use them) in Tables \ref{tab:index-table}, \ref{tab:symbol-table}, \ref{tab:param-table}, and \ref{tab:data-table} for reference and a catalog of all equations is provided in Table \ref{tab:equation-table}.
+All quantities are defined (i.e., symbology and the specific equations that use them) in Tables \@ref(tab:index-table), \@ref(tab:symbol-table), \@ref(tab:param-table), and \@ref(tab:data-table) for reference and a catalog of all equations is provided in Table \@ref(tab:equation-table).
 
 We have described the life cycle model calculations as divided into three distinct life "phases" (Figure \@ref(fig:diagram)): freshwater juvenile, ocean juvenile, and freshwater adult.
 For each life phase, we describe the process model dynamics as a set of stochastic and deterministic processes followed by how they are informed by empirical data as part of the observation model.
@@ -137,7 +137,6 @@ In cases where a quantity varies annually and is different by origin but not by 
 \right]
 \label{eq:generic-Sigma2by2}
 \end{equation}
-Although the stochastic process requires the $\Sigma$ term, is is the component $\sigma_j$ (or $\sigma_o$) and $\rho$ terms that were assigned priors ($\mathcal{U}(0,5)$ and $\mathcal{U}(-1,1)$, respectively, Table \ref{tab:param-table}) and the $\Sigma$ matrices were constructed using the structures defined in eqs. \ref{eq:generic-Sigma4by4} and \ref{eq:generic-Sigma2by2}.
 Although the stochastic process requires the $\Sigma$ term, is is the component $\sigma_j$ (or $\sigma_o$) and $\rho$ terms that were assigned priors ($\mathcal{U}(0,5)$ and $\mathcal{U}(-1,1)$, respectively, Table \@ref(tab:param-table)) and the $\Sigma$ matrices were constructed using the structures defined in eqs. \@ref(eq:generic-Sigma4by4) and \@ref(eq:generic-Sigma2by2).
 
 \clearpage
