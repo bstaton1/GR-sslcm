@@ -2,7 +2,7 @@
 title: "\\textsc{Mathematical Description}"
 subtitle: "\\textsc{State-Space Life Cycle Model for Grande Ronde Spring Chinook Salmon}"
 output: 
-  pdf_document:
+  bookdown::pdf_document2:
     keep_tex: false
     toc: true
     toc_depth: 3
