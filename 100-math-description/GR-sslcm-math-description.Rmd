@@ -76,13 +76,13 @@ Although we model their population dynamics separately, it is also reasonable to
 Thus, wherever possible we attempt to capture the covariability among population-specific dynamics.
 
 The model is framed in the Bayesian mode of inference, as it is intuitive for the necessary integration over the many layers of uncertainty (i.e., process vs. observational variability).
-Further, Bayesian inference provides an intuitive framework to constrain population dynamics parameters to take on only biologically plausible values through the use of prior information -- we intentionally employ nearly exclusively uninformative prior information, but in several rare cases we were required to bring in auxiliary information in the form of reasonably strong priors (Table \ref{tab:param_table}).
+Further, Bayesian inference provides an intuitive framework to constrain population dynamics parameters to take on only biologically plausible values through the use of prior information -- we intentionally employ nearly exclusively uninformative prior information, but in several rare cases we were required to bring in auxiliary information in the form of reasonably strong priors (Table \ref{tab:param-table}).
 A final benefit of using the Bayesian framework is the seamless propagation of uncertainty from directly estimated parameters to derived quantities (of which there are many) -- all unknown quantities, either estimated parameters or deterministic functions of estimated parameters, receive a posterior distribution in the Bayesian framework.
 Due to the analytical intractability of the complexity of the model, we employ Markov Chain Monte Carlo methods (implemented via the JAGS probabilistic programming language) to sample from the joint posterior distribution of all unknown quantities in the model.
 
 We begin our description of the mathematical structure of the life cycle model with an overview of several syntax and statistical conventions we employ.
 In our mathematical representation of quantities in the model, we have striven for consistency, but this has created somewhat non-intuitive conventions which require devoted explanation.
-All quantities are defined (i.e., symbology and the specific equations that use them) in Tables \ref{tab:index_table}, \ref{tab:symbol_table}, \ref{tab:param_table}, and \ref{tab:data_table} for reference and a catalog of all equations is provided in Table \ref{tab:equation_table}.
+All quantities are defined (i.e., symbology and the specific equations that use them) in Tables \ref{tab:index-table}, \ref{tab:symbol-table}, \ref{tab:param-table}, and \ref{tab:data-table} for reference and a catalog of all equations is provided in Table \ref{tab:equation-table}.
 
 We have described the life cycle model calculations as divided into three distinct life "phases" (Figure \ref{fig:diagram}): freshwater juvenile, ocean juvenile, and freshwater adult.
 For each life phase, we describe the process model dynamics as a set of stochastic and deterministic processes followed by how they are informed by empirical data as part of the observation model.
@@ -137,7 +137,7 @@ In cases where a quantity varies annually and is different by origin but not by 
 \right]
 \label{eq:generic-Sigma2by2}
 \end{equation}
-Although the stochastic process requires the $\Sigma$ term, is is the component $\sigma_j$ (or $\sigma_o$) and $\rho$ terms that were assigned priors ($\mathcal{U}(0,5)$ and $\mathcal{U}(-1,1)$, respectively, Table \ref{tab:param_table}) and the $\Sigma$ matrices were constructed using the structures defined in eqs. \ref{eq:generic-Sigma4by4} and \ref{eq:generic-Sigma2by2}.
+Although the stochastic process requires the $\Sigma$ term, is is the component $\sigma_j$ (or $\sigma_o$) and $\rho$ terms that were assigned priors ($\mathcal{U}(0,5)$ and $\mathcal{U}(-1,1)$, respectively, Table \ref{tab:param-table}) and the $\Sigma$ matrices were constructed using the structures defined in eqs. \ref{eq:generic-Sigma4by4} and \ref{eq:generic-Sigma2by2}.
 
 \clearpage
 
@@ -323,7 +323,7 @@ First year natural-origin ocean survival was assumed to be a multivariate logit-
 \label{eq:phi-O0-O1-random}
 \end{equation}
 We assumed process variation was negligible in the second and third year ocean survival terms, thus we forced the year-specific values of $\phi^{O^{1} \rightarrow O^{2}}_{y,o=\mathrm{NOR},j}$ and $\phi^{O^{2} \rightarrow O^{3}}_{y,o=\mathrm{NOR},j}$ to take on the same deterministic value each year (i.e., $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$, respectively).
-We further discovered that not all maturity and ocean survival terms were uniquely identifiable based solely on adult return abundance and age composition -- we thus relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$ (Table \ref{tab:param_table}).
+We further discovered that not all maturity and ocean survival terms were uniquely identifiable based solely on adult return abundance and age composition -- we thus relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$ (Table \ref{tab:param-table}).
 To obtain hatchery-origin ocean survival each year, we adjusted the natural-origin survival by a log-odds ratio ($\delta_{j}$) that was common across all ocean years and brood years but varied by population:
 \begin{equation}
 \begin{aligned}
@@ -369,12 +369,12 @@ R^{b}_{y+k_{\mathrm{min}} + 3 - 1,3,o,j} &= O^{3}_{y,o,j} \cdot \psi^{O^{3}}_{y,
 \end{equation}
 Note, however, that this leaves 12 age/year combinations per origin unpopulated (the first 3 missing years for age-3 returns, first 4 missing years for age-4 returns, and first 5 missing years for age-5 returns).
 This is because the life cycle dynamics must start somewhere, and no juvenile process model outcomes existed that would ultimately become these $R^{b}_{y,k,o,j}$ values in these early years.
-Thus, to initialize the adult returns for natural-origin fish (and as a result, the rest of the life cycle), we estimated these 12 year/age return abundances as free parameters with fairly restrictive priors (Table \ref{tab:param_table}) with boundaries loosely informed by the ranges of adult returns at age observed in the early years of the data time series.
+Thus, to initialize the adult returns for natural-origin fish (and as a result, the rest of the life cycle), we estimated these 12 year/age return abundances as free parameters with fairly restrictive priors (Table \ref{tab:param-table}) with boundaries loosely informed by the ranges of adult returns at age observed in the early years of the data time series.
 Initial abundance of hatchery-origin returns was handled by the "straying model", described below.
 
 ## Observation Model
 
-No data sources were used to inform ocean juvenile population dynamics -- estimation of these quantities was enabled by (_i_) reasonably precise information about the abundance and composition of fish entering the ocean and returning to natal tributaries, (_ii_) the simplifying assumptions described above (i.e., time-constant second and third year ocean survival and perfectly correlated but offset origin-specific survival), and (_iii_) through the use of reasonably strong priors for second and third year ocean survival (Table \ref{tab:param_table}).
+No data sources were used to inform ocean juvenile population dynamics -- estimation of these quantities was enabled by (_i_) reasonably precise information about the abundance and composition of fish entering the ocean and returning to natal tributaries, (_ii_) the simplifying assumptions described above (i.e., time-constant second and third year ocean survival and perfectly correlated but offset origin-specific survival), and (_iii_) through the use of reasonably strong priors for second and third year ocean survival (Table \ref{tab:param-table}).
 
 # Freshwater Adult Phase
 
@@ -531,7 +531,7 @@ include_graphics("GR-sslcm-diagram.pdf")
 index_tab_cap = "The various indices and dimensional constants used in defining the structure and scope for the state-space life cycle model for Grande Ronde spring Chinook salmon."
 ```
 
-```{r index_table}
+```{r index-table}
 # read in csv version of table
 tab = read.csv("01-indices.csv", allowEscapes = TRUE)
 
@@ -570,10 +570,10 @@ kable(tab[,1:3], "latex", booktabs = TRUE, linesep = "", caption = index_tab_cap
 \clearpage
 
 ```{r symbol_tab_cap}
-symbol_tab_cap = "The symbology used to represent the key states (i.e., abundance at life stage/group) and rates (i.e., transition probabilities among states) in the presentation of the state-space life cycle model for Grande Ronde spring Chinook salmon. The majority of rates presented in this table are hierarchically structured/estimated, where the population- and/or origin-specific expected value and standard deviation are free parameters (or a function of free parameters) presented in Table \\ref{tab:param_table}. Equation numbers reference any equation that uses that quantity -- these may include the equation where the quantity is first defined, where it is used in process model, or where it is used in the observation model."
+symbol_tab_cap = "The symbology used to represent the key states (i.e., abundance at life stage/group) and rates (i.e., transition probabilities among states) in the presentation of the state-space life cycle model for Grande Ronde spring Chinook salmon. The majority of rates presented in this table are hierarchically structured/estimated, where the population- and/or origin-specific expected value and standard deviation are free parameters (or a function of free parameters) presented in Table \\ref{tab:param-table}. Equation numbers reference any equation that uses that quantity -- these may include the equation where the quantity is first defined, where it is used in process model, or where it is used in the observation model."
 ```
 
-```{r symbol_table}
+```{r symbol-table}
 tab = read.csv("02-symbols.csv", allowEscapes = TRUE)
 
 type_key = c(
@@ -616,7 +616,7 @@ kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = symbol_tab_ca
 param_tab_cap = "All free parameters (i.e., that have a prior that is not function of other free parameters) estimated by the state-space life cycle model for Grande Ronde spring Chinook salmon."
 ```
 
-```{r param_table}
+```{r param-table}
 tab = read.csv("03-params.csv", allowEscapes = TRUE)
 
 tab$Eqs. = unname(sapply(tab$Eqs., handle_eqs))
@@ -651,7 +651,7 @@ kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = param_tab_cap
 data_tab_cap = "The symbology used to represent the data sources in the presentation of observation model components of the state-space life cycle model for Grande Ronde spring Chinook salmon. All data sources listed here have an explicit likelihood component and were thus assumed to be observed with error."
 ```
 
-```{r data_table}
+```{r data-table}
 tab = read.csv("04-data.csv", allowEscapes = TRUE)
 
 type_key = c(
@@ -682,7 +682,7 @@ kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = data_tab_cap,
 equation_tab_cap = "Catalog of all equations presented, separated by life phase (freshwater juvenile, ocean juvenile, or freshwater adult) and model component (process model or observation model)."
 ```
 
-```{r equation_table}
+```{r equation-table}
 tab = read.csv("05-equations.csv", allowEscapes = TRUE)
 
 component_key = c(
