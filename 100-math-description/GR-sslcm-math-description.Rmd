@@ -20,6 +20,7 @@ editor_options:
   chunk_output_type: console
 header-includes:
   - \usepackage{microtype}
+  - \usepackage{float}
   - \usepackage[labelfont={bf,sc},labelsep=period]{caption}
   - \captionsetup{width=\textwidth}
   - \usepackage{fancyhdr}
@@ -507,24 +508,17 @@ which we used as the multinomial expected frequency to build the likelihood by a
 
 # Figures {-}
 
-```{r diagram_fig_cap}
-diagram_fig_cap = "Schematic of the primary states and transitions among states that are captured in the state-space life cycle model for Grande Ronde spring Chinook salmon."
-```
-
-```{r diagram, fig.cap = diagram_fig_cap, eval = FALSE}
-include_graphics("GR-sslcm-diagram.pdf")
-```
-
 \rhead{\empty}
 \lhead{\empty}
 \renewcommand{\headrulewidth}{0pt}
 
-\begin{figure}[H]
-\centering
-\caption{Schematic of the primary states and transitions among states that are captured in the state-space life cycle model for Grande Ronde spring Chinook salmon.}
-\includegraphics{GR-sslcm-diagram.pdf}
-\label{fig:diagram}
-\end{figure}
+```{r diagram_fig_cap}
+diagram_fig_cap = "Schematic of the primary states and transitions among states that are captured in the state-space life cycle model for Grande Ronde spring Chinook salmon."
+```
+
+```{r diagram, fig.cap = diagram_fig_cap, fig.pos = "H", out.extra = ""}
+include_graphics("GR-sslcm-diagram.pdf")
+```
 
 # Tables {-}
 
