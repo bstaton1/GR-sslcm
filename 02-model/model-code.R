@@ -37,8 +37,8 @@ jags_model_code = function() {
     # gamma1[i_spring,j] <- gamma1[i_fall,j]
     
     # growth coefficient from end of summer to spring tagging
-    mu_lgrowth[j] ~ dnorm(0, 1e-3)
-    mu_growth[j] <- exp(mu_lgrowth[j])
+    int_lgrowth[j] ~ dnorm(0, 1e-3)
+    slp_lgrowth[j] ~ dnorm(0, 1e-3)
     sig_lgrowth[j] ~ dunif(0, 0.5)
 
     # size-dependent NOR migration to LGR survival
@@ -254,8 +254,8 @@ jags_model_code = function() {
     Lphi_Pa_Mb[y,i_fall,1:nj] ~ dmnorm.vcov(gamma0[i_fall,1:nj] + gamma1[i_fall,1:nj] * L_Pb_star[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_fall])
     Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * L_Pb_star[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
 
-    # summer to spring growth rate
-    lgrowth[y,1:nj] ~ dmnorm.vcov(log(mu_growth[1:nj]), Sig_lgrowth[1:nj,1:nj])
+    # summer to spring growth factor
+    lgrowth[y,1:nj] ~ dmnorm.vcov(int_lgrowth[1:nj] + slp_lgrowth[1:nj] * L_Pb_star[y,1:nj], Sig_lgrowth[1:nj,1:nj])
     
     # size-based migration survival from trib to LGR: NOR
     Lphi_Mb_Ma[y,i_spring,o_nor,1:nj] ~ dmnorm.vcov(tau0[1:nj] + tau1[1:nj] * L_Mb_star[y,1:nj], Sig_Lphi_Mb_Ma[1:nj,1:nj,o_nor])
@@ -817,7 +817,7 @@ jags_model_code = function() {
       }
       
       # summer to spring growth rate
-      lgrowth_resid[y,j] <- lgrowth[y,j] - mu_lgrowth[j]
+      lgrowth_resid[y,j] <- lgrowth[y,j] - (int_lgrowth[j] + slp_lgrowth[j] * L_Pb_star[y,j])
       
       # movement survival to LGR: NOR
       Lphi_Mb_Ma_resid[y,o_nor,j] <- Lphi_Mb_Ma[y,i_spring,o_nor,j] - (tau0[j] + tau1[j] * L_Mb_star[y,j])

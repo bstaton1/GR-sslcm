@@ -27,7 +27,7 @@ do_pp_check = TRUE
 do_lppd = FALSE
 
 # specify a scenario name
-scenario = "size-based-surv-scaled"
+scenario = "size-based-surv-growth-relationship"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -239,7 +239,7 @@ jags_params = c(
 
   # length-related quantities
   "omega0", "omega1", "Sig_lL_Pb", 
-  "mu_growth", "Sig_lgrowth", "tau0", "tau1",
+  "int_lgrowth", "slp_lgrowth", "Sig_lgrowth", "tau0", "tau1",
   
   # overwinter survival coefficients
   "gamma0", "gamma1",
@@ -514,7 +514,7 @@ if (rmd) {
 }
 
 # render the simulation vs. observed time series plots if requested and applicable
-if (rmd & last_yr > 2019) {
+if (rmd & last_yr > 2019 & FALSE) {
   # start a timer, this can take a while
   starttime = Sys.time()
   
