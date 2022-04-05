@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "size-based-surv"
+    value: "size-based-surv-growth-relationship"
     input: text
   include_sim_years:
     label: "Include Simulated Years on Plots?"
@@ -311,7 +311,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # summer parr mean length
 L1 = "Summer to Spring 'Growth Factor'"
 L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
-match = c("int_lgrowth", "slp_lgrowth", "sig_lgrowth", "rho_lgrowth", "^growth[")
+match = c("theta0", "theta1", "sig_lDelta_L_Pb_Mb", "rho_lDelta_L_Pb_Mb", "^Delta_L_Pb_Mb[")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
@@ -1989,52 +1989,52 @@ plot_f = function(j) {
   L_Pb_upr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
   
   # extract posterior summaries of growth outcomes
-  growth_mean = post_summ(post, sub_index("^growth[year,pop]", year = ts_yrs, pop = j))["mean",]
-  growth_lwr = post_summ(post, sub_index("^growth[year,pop]", year = ts_yrs, pop = j))["2.5%",]
-  growth_upr = post_summ(post, sub_index("^growth[year,pop]", year = ts_yrs, pop = j))["97.5%",]
+  Delta_L_Pb_Mb_mean = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  Delta_L_Pb_Mb_lwr = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  Delta_L_Pb_Mb_upr = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
   
   # create a vector of scaled summer lengths to calculate at
   L_Pb_seq = seq(min(L_Pb_lwr), max(L_Pb_upr), length = 30)
   L_Pb_star_seq = (L_Pb_seq - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
 
   # extract posteriors of coefficients
-  int_lgrowth = post_subset(post, sub_index("int_lgrowth[pop]", pop = j), matrix = TRUE)
-  slp_lgrowth = post_subset(post, sub_index("slp_lgrowth[pop]", pop = j), matrix = TRUE)
+  theta0 = post_subset(post, sub_index("theta0[pop]", pop = j), matrix = TRUE)
+  theta1 = post_subset(post, sub_index("theta1[pop]", pop = j), matrix = TRUE)
 
   # function to create predicted curves for one posterior sample
   pred_fn = function(i) {
-    pred_growth = exp(int_lgrowth[i] + slp_lgrowth[i] * L_Pb_star_seq)
-    names(pred_growth) = paste0("pred_growth[", 1:30, "1]")
-    pred_growth
+    pred_Delta_L_Pb_Mb = exp(theta0[i] + theta1[i] * L_Pb_star_seq)
+    names(pred_Delta_L_Pb_Mb) = paste0("pred_Delta_L_Pb_Mb[", 1:30, "1]")
+    pred_Delta_L_Pb_Mb
   }
   
   # calculate predicted growth values and add to posterior samples
-  pred_growth = t(sapply(1:post_dim(post, "saved"), pred_fn))
-  post_pred_growth = post_convert(cbind(postpack:::id_mat(post), pred_growth))
+  pred_Delta_L_Pb_Mb = t(sapply(1:post_dim(post, "saved"), pred_fn))
+  post_pred_Delta_L_Pb_Mb = post_convert(cbind(postpack:::id_mat(post), pred_Delta_L_Pb_Mb))
   
   # extract summarize predicted growth
-  pred_growth_mean = post_summ(post_pred_growth, "")["mean",]
-  pred_growth_lwr = post_summ(post_pred_growth, "")["2.5%",]
-  pred_growth_upr = post_summ(post_pred_growth, "")["97.5%",]
+  pred_Delta_L_Pb_Mb_mean = post_summ(post_pred_Delta_L_Pb_Mb, "")["mean",]
+  pred_Delta_L_Pb_Mb_lwr = post_summ(post_pred_Delta_L_Pb_Mb, "")["2.5%",]
+  pred_Delta_L_Pb_Mb_upr = post_summ(post_pred_Delta_L_Pb_Mb, "")["97.5%",]
   
   # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
-       ylim = range(pred_growth_lwr, pred_growth_upr, growth_lwr, growth_upr, na.rm = TRUE),
+       ylim = range(pred_Delta_L_Pb_Mb_lwr, pred_Delta_L_Pb_Mb_upr, Delta_L_Pb_Mb_lwr, Delta_L_Pb_Mb_upr, na.rm = TRUE),
        xlim = range(L_Pb_seq), 
        main = pops[j]
   )
     
   # expected relationship
-  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_growth_lwr, rev(pred_growth_upr)), border = NA, col = alpha("salmon", 0.5))
-  lines(pred_growth_lwr ~ L_Pb_seq, col = "red", lty = 2)
-  lines(pred_growth_upr ~ L_Pb_seq, col = "red", lty = 2)
-  lines(pred_growth_mean ~ L_Pb_seq, col = "red", lwd = 2)
+  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_Delta_L_Pb_Mb_lwr, rev(pred_Delta_L_Pb_Mb_upr)), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_Delta_L_Pb_Mb_lwr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_Delta_L_Pb_Mb_upr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_Delta_L_Pb_Mb_mean ~ L_Pb_seq, col = "red", lwd = 2)
   
   # realized pairs
-  segments(L_Pb_lwr, growth_mean, L_Pb_upr, growth_mean, col = alpha("red", 0.5))
-  segments(L_Pb_mean, growth_lwr, L_Pb_mean, growth_upr, col = alpha("red", 0.5))
-  points(growth_mean ~ L_Pb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  segments(L_Pb_lwr, Delta_L_Pb_Mb_mean, L_Pb_upr, Delta_L_Pb_Mb_mean, col = alpha("red", 0.5))
+  segments(L_Pb_mean, Delta_L_Pb_Mb_lwr, L_Pb_mean, Delta_L_Pb_Mb_upr, col = alpha("red", 0.5))
+  points(Delta_L_Pb_Mb_mean ~ L_Pb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
   
 }
 
@@ -2048,12 +2048,9 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow Spring\
 
 ```{r}
 plot_f = function(j) {
-  
-  growth_obs = cbind(mean = jags_data$L_Mb_obs[observable,j]/jags_data$L_Pb_obs[observable,j],
-                     lwr95 = NA, upr95 = NA)
-  
-  plot_tseries(post_summ(post, sub_index("^growth[year,pop]$", year = ts_yrs, pop = j)),
-               growth_obs,
+  Delta_L_Pb_Mb_obs = cbind(mean = jags_data$L_Mb_obs[observable,j]/jags_data$L_Pb_obs[observable,j], lwr95 = NA, upr95 = NA)
+  plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
+               Delta_L_Pb_Mb_obs,
                main = pops[j],
                yrs = all_yrs[ts_yrs])
 }
@@ -2708,7 +2705,7 @@ rownames(rho_summs) = NULL
 rho_names = c(
   "rho_Lphi_E_Pb[2,1]" = "Egg-to-Parr Survival",
   "rho_lL_Pb[2,1]" = "Summer Mean Length",
-  "rho_lgrowth[2,1]" = "Summer to Spring 'Growth Factor'",
+  "rho_lDelta_L_Pb_Mb[2,1]" = "Summer to Spring 'Growth Factor'",
   "rho_Lpi[2,1]" = "Mig. Strategy Apportionment",
   "rho_Lphi_Ma_O0[2,1]" = "LGR to Ocean Survival",
   "rho_Lphi_O0_O1[2,1]" = "Yr1 Ocean Survival",
@@ -2962,8 +2959,8 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r growth-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("lgrowth_resid[year,pop]", "sig_lgrowth[pop]", pop = j, main = pops[j]))
-oma_labels("Brood Year", "log(Summer to Spring Growth) Residual")
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("lDelta_L_Pb_Mb_resid[year,pop]", "sig_lDelta_L_Pb_Mb[pop]", pop = j, main = pops[j]))
+oma_labels("Brood Year", "log(Summer to Spring Growth Factor) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
@@ -3078,7 +3075,7 @@ proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_E_Pb_r
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lL_Pb_resid\\[year,pop\\]", "Summer Parr Length")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpi_resid\\[year,pop\\]", "Migratory Strategy Apportionment")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Pa_Mb_resid\\[year,LH_type,pop\\]", "Overwinter Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lgrowth_resid\\[year,pop\\]", "Summer to Spring 'Growth Factor'")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lDelta_L_Pb_Mb_resid\\[year,pop\\]", "Summer to Spring 'Growth Factor'")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Mb_Ma_resid\\[year,origin,pop\\]", "Trib to LGR Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Ma_O0_resid\\[year,origin\\]", "LGR to BON Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_O0_O1_resid\\[year,origin,pop\\]", "Yr1 Ocean Survival")

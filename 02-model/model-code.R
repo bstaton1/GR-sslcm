@@ -25,7 +25,7 @@ jags_model_code = function() {
     mu_pi[i_spring,j] <- 1 - mu_pi[i_fall,j]
     
     # overwinter survival parameters: LH-specific
-    # uses logistic relationship to introduce density-dependence
+    # uses logistic relationship to introduce size-dependence
     # gamma0: LH-specific intercepts
     # gamma1: LH-common slopes
     for (i in 1:ni) {
@@ -33,13 +33,11 @@ jags_model_code = function() {
       gamma1[i,j] ~ dt(0, 1/1.566^2, 7.763)
       sig_Lphi_Pa_Mb[i,j] ~ dunif(0, 5)
     }
-    # gamma1[i_fall,j] ~ dnorm(0, 1e-3)
-    # gamma1[i_spring,j] <- gamma1[i_fall,j]
-    
-    # growth coefficient from end of summer to spring tagging
-    int_lgrowth[j] ~ dnorm(0, 1e-3)
-    slp_lgrowth[j] ~ dnorm(0, 1e-3)
-    sig_lgrowth[j] ~ dunif(0, 0.5)
+
+    # coefficients for obtaining summer mean length to spring mean length growth factor
+    theta0[j] ~ dnorm(0, 1e-3)
+    theta1[j] ~ dnorm(0, 1e-3)
+    sig_lDelta_L_Pb_Mb[j] ~ dunif(0, 0.5)
 
     # size-dependent NOR migration to LGR survival
     # assumed equal among migration types
@@ -138,7 +136,7 @@ jags_model_code = function() {
   rho_Lpi <- 0
   rho_Lphi_Pa_Mb[i_fall] <- 0
   rho_Lphi_Pa_Mb[i_spring] <- 0
-  rho_lgrowth <- 0
+  rho_lDelta_L_Pb_Mb <- 0
   rho_Lphi_Mb_Ma[o_nor] <- 0
   rho_Lphi_Mb_Ma[o_hor] <- 0
   rho_Lphi_Ma_O0 <- 0
@@ -168,7 +166,7 @@ jags_model_code = function() {
       }
       
       # covariance matrix of summer to spring growth rate
-      Sig_lgrowth[i,j] <- sig_lgrowth[i] * sig_lgrowth[j] * ifelse(i == j, 1, rho_lgrowth)
+      Sig_lDelta_L_Pb_Mb[i,j] <- sig_lDelta_L_Pb_Mb[i] * sig_lDelta_L_Pb_Mb[j] * ifelse(i == j, 1, rho_lDelta_L_Pb_Mb)
       
       for (o in 1:no) {
         # covariance matrices of movement survival to LGR
@@ -255,7 +253,7 @@ jags_model_code = function() {
     Lphi_Pa_Mb[y,i_spring,1:nj] ~ dmnorm.vcov(gamma0[i_spring,1:nj] + gamma1[i_spring,1:nj] * L_Pb_star[y,1:nj], Sig_Lphi_Pa_Mb[1:nj,1:nj,i_spring])
 
     # summer to spring growth factor
-    lgrowth[y,1:nj] ~ dmnorm.vcov(int_lgrowth[1:nj] + slp_lgrowth[1:nj] * L_Pb_star[y,1:nj], Sig_lgrowth[1:nj,1:nj])
+    lDelta_L_Pb_Mb[y,1:nj] ~ dmnorm.vcov(theta0[1:nj] + theta1[1:nj] * L_Pb_star[y,1:nj], Sig_lDelta_L_Pb_Mb[1:nj,1:nj])
     
     # size-based migration survival from trib to LGR: NOR
     Lphi_Mb_Ma[y,i_spring,o_nor,1:nj] ~ dmnorm.vcov(tau0[1:nj] + tau1[1:nj] * L_Mb_star[y,1:nj], Sig_Lphi_Mb_Ma[1:nj,1:nj,o_nor])
@@ -311,11 +309,11 @@ jags_model_code = function() {
       phi_Pa_Mb[y,i_fall,j] <- ilogit(Lphi_Pa_Mb[y,i_fall,j])
       phi_Pa_Mb[y,i_spring,j] <- ilogit(Lphi_Pa_Mb[y,i_spring,j])
       
-      # transform summer to spring growth rate
-      growth[y,j] <- exp(lgrowth[y,j])
+      # transform summer to spring growth factor
+      Delta_L_Pb_Mb[y,j] <- exp(lDelta_L_Pb_Mb[y,j])
       
       # obtain spring length and scaled and centered version
-      L_Mb[y,j] <- L_Pb[y,j] * growth[y,j]
+      L_Mb[y,j] <- L_Pb[y,j] * Delta_L_Pb_Mb[y,j]
       L_Mb_star[y,j] <- (L_Mb[y,j] - L_Mb_center[j])/L_Mb_scale[j]
 
       for (o in 1:no) {
@@ -817,7 +815,7 @@ jags_model_code = function() {
       }
       
       # summer to spring growth rate
-      lgrowth_resid[y,j] <- lgrowth[y,j] - (int_lgrowth[j] + slp_lgrowth[j] * L_Pb_star[y,j])
+      lDelta_L_Pb_Mb_resid[y,j] <- lDelta_L_Pb_Mb[y,j] - (theta0[j] + theta1[j] * L_Pb_star[y,j])
       
       # movement survival to LGR: NOR
       Lphi_Mb_Ma_resid[y,o_nor,j] <- Lphi_Mb_Ma[y,i_spring,o_nor,j] - (tau0[j] + tau1[j] * L_Mb_star[y,j])
