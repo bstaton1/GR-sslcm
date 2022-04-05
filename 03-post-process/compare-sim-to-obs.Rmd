@@ -545,7 +545,7 @@ prep_est_ratios = function(x, q) {
   
   # reorder rows
   x$Class = factor(x$Class, levels = c("FW Juvenile", "SW Juvenile", "FW Adult"))
-  x$Type = factor(x$Type, levels = c("Egg to Parr Survival", "Proportion Fall Migrants", "Overwinter Survival", "Migration to LGR Survival", "LGR to Ocean Survival", "First Year Ocean Survival", "Age-3 Maturity", "Age-4 Maturity", "BON to LGR Survival", "Pre-Spawn Survival"))
+  x$Type = factor(x$Type, levels = c("Egg to Parr Survival", "Parr Mean Size", "Proportion Fall Migrants", "Overwinter Survival", "Parr to Smolt Mean Size 'Growth Factor'", "Smolt Mean Size", "Migration to LGR Survival", "LGR to Ocean Survival", "First Year Ocean Survival", "Age-3 Maturity", "Age-4 Maturity", "BON to LGR Survival", "Pre-Spawn Survival"))
   x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
   x$origin = factor(x$origin, levels = c("Combined", "NOR", "HOR"))
   x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
@@ -669,6 +669,16 @@ ratio_plots(x, "Egg to Parr Survival: Ratios")
 est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Egg to Parr Survival"))
 ```
 
+#### Parr Mean Size
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^L_Pb[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Parr Mean Size: Estimates")
+ratio_plots(x, "Parr Mean Size: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Parr Mean Size"))
+```
+
 #### Proportion Fall Migrants
 
 ```{r}
@@ -690,6 +700,26 @@ x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Overwinter Survival: Estimates")
 ratio_plots(x, "Overwinter Survival: Ratios")
 est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Overwinter Survival"))
+```
+
+#### Parr to Smolt Mean Size "Growth Factor"
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^Delta_L_Pb_Mb[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Parr to Smolt Mean Size 'Growth Factor': Estimates")
+ratio_plots(x, "Parr to Smolt Mean Size 'Growth Factor': Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Parr to Smolt Mean Size 'Growth Factor'"))
+```
+
+#### Smolt Size
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^L_Mb[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Smolt Mean Size: Estimates")
+ratio_plots(x, "Smolt Mean Size: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Smolt Mean Size"))
 ```
 
 #### Migration to LGR Survival
@@ -1133,6 +1163,12 @@ pop_ts_plots = function(param, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
 pop_ts_plots("^Pb_per_E[year,pop]")
 ```
 
+#### Parr Mean Size
+
+```{r}
+pop_ts_plots("^L_Pb[year,pop]")
+```
+
 #### Proportion Fall Migrants
 
 ```{r}
@@ -1151,6 +1187,18 @@ pop_ts_plots("^phi_Pa_Mb[year,LH_type,pop]", LH_type = 1)
 
 ```{r}
 pop_ts_plots("^phi_Pa_Mb[year,LH_type,pop]", LH_type = 2)
+```
+
+#### Parr to Smolt Mean Size "Growth Factor"
+
+```{r}
+pop_ts_plots("^Delta_L_Pb_Mb[year,pop]")
+```
+
+#### Smolt Mean Size
+
+```{r}
+pop_ts_plots("^L_Mb[year,pop]")
 ```
 
 #### Migration to LGR Survival {.tabset .tabset-pills}

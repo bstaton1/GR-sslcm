@@ -52,6 +52,11 @@ if (is.na(mcmc_length)) {
 jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"))
 jags_data = append_no_na_indices(jags_data)
 
+# 1995 UGR spring tagging has mean length but no SE?
+# is.na(jags_data$L_Pb_obs) == is.na(jags_data$sig_L_Pb_obs)
+# is.na(jags_data$L_Mb_obs) == is.na(jags_data$sig_L_Mb_obs)
+jags_data$sig_L_Mb_obs["1995","UGR"] = mean(jags_data$sig_L_Mb_obs[,"UGR"], na.rm = TRUE)
+
 # some parameters we are assuming known (for now)
 # harvest rates Below and Above BON by year, age, origin
 U_45_nat = with(jags_data, c(NA, rep(0.02, ny - 1)))
@@ -97,6 +102,15 @@ add_jags_data = append(add_jags_data, list(first_x_LGR = min(which(!is.na(jags_d
 
 # set upper boundaries for early Rb states
 add_jags_data = append(add_jags_data, list(max_Rb_init = c(50, 200, 200)))
+
+# add variables to scale and center quantities used in regressions
+add_jags_data = append(add_jags_data, list(
+  E_scale = 10000,
+  L_Pb_center = apply(jags_data$L_Pb_obs, 2, mean, na.rm = TRUE),
+  L_Pb_scale = apply(jags_data$L_Pb_obs, 2, sd, na.rm = TRUE),
+  L_Mb_center = apply(jags_data$L_Mb_obs, 2, mean, na.rm = TRUE),
+  L_Mb_scale = apply(jags_data$L_Mb_obs, 2, sd, na.rm = TRUE)
+))
 
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
@@ -202,8 +216,10 @@ write_model_code(jags_source, jags_file)
 # replace the appropriate "rho <- 0" with "rho ~ dunif(-1, 1)
 # i.e., defines which components should have non-zero covariance
 toggle_rho_estimation("rho_Lphi_E_Pb")     # parr recruitment process noise
+toggle_rho_estimation("rho_lL_Pb")         # mean length at end of summer process noise
 toggle_rho_estimation("rho_Lpi")           # parr apportionment to LH type process noise
 toggle_rho_estimation("rho_Lphi_Pa_Mb")    # parr -> smolt overwinter survival process noise (both LH types)
+toggle_rho_estimation("rho_lDelta_L_Pb_Mb")# growth factor from summer mean length to spring mean length
 toggle_rho_estimation("rho_Lphi_Mb_Ma")    # migration to LGR survival process noise
 toggle_rho_estimation("rho_Lphi_Ma_O0")    # migration from LGR to ocean survival process noise
 toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival process noise
@@ -221,6 +237,10 @@ jags_params = c(
   # reproduction
   "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "lambda", "sig_lbeta",
 
+  # length-related quantities
+  "omega0", "omega1", "Sig_lL_Pb", 
+  "theta0", "theta1", "Sig_lDelta_L_Pb_Mb", "tau0", "tau1",
+  
   # overwinter survival coefficients
   "gamma0", "gamma1",
   
@@ -238,7 +258,7 @@ jags_params = c(
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
   "psi_O1", "psi_O2", "phi_Sb_Sa",
   "phi_O0_O1", "phi_O1_O2", "phi_O2_O3",
-  "phi_Rb_Ra",
+  "phi_Rb_Ra", "Delta_L_Pb_Mb",
   
   # derived survival terms
   "phi_Pb_Ma", "phi_Pa_Ma",
@@ -248,7 +268,7 @@ jags_params = c(
   
   # states
   "Pb", "Pa", "Mb", "Ma", "O0", "O", "Rb",
-  "Ra", "Sb", "Sa", "p_Ra", "p_Sa_prime", "Sa_tot", "Ra_tot", "E",
+  "Ra", "Sb", "Sa", "p_Ra", "p_Sa_prime", "Sa_tot", "Ra_tot", "E", "L_Pb", "L_Mb",
   
   # carcass vs. weir correction
   "z", "zeta", "mu_z", "sig_z",
@@ -257,7 +277,7 @@ jags_params = c(
   "G", "p_G",
   
   # misc parameters
-  "delta", "phi_Pb_Pa", "bad_flag",
+  "delta_O0_O1", "delta_O1_O2", "delta_O2_O3", "phi_Pb_Pa", "bad_flag",
   
   # misc derived quantities
   "lambda_pop", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
@@ -267,12 +287,14 @@ jags_params = c(
   "Lphi_Ma_O0_resid", "Lpsi_O1_resid",
   "Lpsi_O2_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
+  "lL_Pb_resid", "lDelta_L_Pb_Mb_resid",
   
   # residuals: observation model
   "x_Ra_obs_resid", "x_Sa_prime_obs_resid",
   "lPa_obs_resid", "lMb_obs_resid", "lRa_obs_resid",
   "Lphi_obs_Pb_Ma_resid", "Lphi_obs_Pa_Ma_resid", "Lphi_obs_Mb_Ma_resid",
   "Lphi_obs_Ma_O0_resid", "x_LGR_obs_resid", "x_carcass_spawned_obs_resid",
+  "lL_Pb_obs_resid", "lL_Mb_obs_resid",
   
   # AR(1) coefficients
   "kappa_phi_O0_O1"
@@ -285,7 +307,7 @@ pp_check_params = c(
   "Ra_obs_dev", "Ra_obs_new_dev", "Lphi_obs_Pb_Ma_dev", "Lphi_obs_new_Pb_Ma_dev",
   "Lphi_obs_Pa_Ma_dev", "Lphi_obs_new_Pa_Ma_dev", "Lphi_obs_Mb_Ma_dev", "Lphi_obs_new_Mb_Ma_dev",
   "Lphi_obs_Ma_O0_dev", "Lphi_obs_new_Ma_O0_dev", "x_carcass_spawned_dev", "x_carcass_spawned_new_dev",
-  "x_LGR_dev", "x_LGR_new_dev"
+  "x_LGR_dev", "x_LGR_new_dev", "L_Pb_obs_dev", "L_Pb_obs_new_dev", "L_Mb_obs_dev", "L_Mb_obs_new_dev"
 )
 
 # nodes for log posterior predictive density
@@ -302,17 +324,17 @@ if (do_lppd) jags_params = c(jags_params, lppd_params)
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 50000),
-  n_burn = switch(mcmc_length,  "very_short" = 5,   "short" = 1000, "medium" = 20000, "long" = 30000),
-  n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 10),
-  n_chain = switch(mcmc_length, "very_short" = 3,   "short" = 3,    "medium" = 3,     "long" = 3),
-  n_adapt = switch(mcmc_length, "very_short" = 10,  "short" = 1000, "medium" = 3000,  "long" = 3000),
+  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 50000, "very_long" = 100000),
+  n_burn = switch(mcmc_length,  "very_short" = 5,   "short" = 1000, "medium" = 20000, "long" = 30000, "very_long" = 50000),
+  n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 10,    "very_long" = 25),
+  n_chain = switch(mcmc_length, "very_short" = 4,   "short" = 3,    "medium" = 3,     "long" = 3,     "very_long" = 4),
+  n_adapt = switch(mcmc_length, "very_short" = 10,  "short" = 100,  "medium" = 3000,  "long" = 3000,  "very_long" = 5000),
   parallel = TRUE
 )
 
 ##### STEP 5: GENERATE INITIAL VALUES #####
 
-jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data)
+jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data = jags_data)
 
 ##### STEP 6: CALL THE JAGS SAMPLER #####
 
@@ -353,9 +375,11 @@ cat("\nDecomposing all covariance matrices")
 # Convert the precision/covariance matrices monitored by JAGS into the marginal SD and correlation matrix terms
 suppressMessages({
   Sig_Lphi_E_Pb = vcov_decomp(post, "Sig_Lphi_E_Pb", sigma_base_name = "sig_Lphi_E_Pb", rho_base_name = "rho_Lphi_E_Pb")
+  Sig_lL_Pb = vcov_decomp(post, "Sig_lL_Pb", sigma_base_name = "sig_lL_Pb", rho_base_name = "rho_lL_Pb")
   Sig_Lpi = vcov_decomp(post, "Sig_Lpi", sigma_base_name = "sig_Lpi", rho_base_name = "rho_Lpi")
   Sig_Lphi_Pa_Mb1 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,1]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
   Sig_Lphi_Pa_Mb2 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,2]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
+  Sig_lDelta_L_Pb_Mb = vcov_decomp(post, "Sig_lDelta_L_Pb_Mb", sigma_base_name = "sig_lDelta_L_Pb_Mb", rho_base_name = "rho_lDelta_L_Pb_Mb")
   Sig_Lphi_Mb_Ma1 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,1]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
   Sig_Lphi_Mb_Ma2 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,2]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
   Sig_Lphi_Ma_O0 = vcov_decomp(post, "Sig_Lphi_Ma_O0", sigma_base_name = "sig_Lphi_Ma_O0", rho_base_name = "rho_Lphi_Ma_O0")
@@ -388,9 +412,11 @@ vcov_indices = paste0("[", vcov_rows, ",", vcov_cols, "(,.)?]")
 
 # subset out only the unique elements
 Sig_Lphi_E_Pb = post_subset(Sig_Lphi_E_Pb, c("sig", paste0("rho.+", vcov_indices)))
+Sig_lL_Pb = post_subset(Sig_lL_Pb, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lpi = post_subset(Sig_Lpi, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Pa_Mb1 = post_subset(Sig_Lphi_Pa_Mb1, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Pa_Mb2 = post_subset(Sig_Lphi_Pa_Mb2, c("sig", paste0("rho.+", vcov_indices)))
+Sig_lDelta_L_Pb_Mb = post_subset(Sig_lDelta_L_Pb_Mb, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Mb_Ma1 = post_subset(Sig_Lphi_Mb_Ma1, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Mb_Ma2 = post_subset(Sig_Lphi_Mb_Ma2, c("sig", paste0("rho.+", vcov_indices)))
 Sig_Lphi_Ma_O0 = post_subset(Sig_Lphi_Ma_O0, c("sig", "rho.+"))
@@ -404,6 +430,8 @@ Sig_Lphi_Sb_Sa = post_subset(Sig_Lphi_Sb_Sa, c("sig", paste0("rho.+", vcov_indic
 
 # combine these derived posterior samples with the main object
 post = post_bind(post, Sig_Lphi_E_Pb)
+post = post_bind(post, Sig_lL_Pb)
+post = post_bind(post, Sig_lDelta_L_Pb_Mb)
 post = post_bind(post, Sig_Lpi)
 post = post_bind(post, Sig_Lphi_Pa_Mb1)
 post = post_bind(post, Sig_Lphi_Pa_Mb2)

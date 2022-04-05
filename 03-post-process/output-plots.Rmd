@@ -13,7 +13,7 @@ params:
     input: text
   include_sim_years:
     label: "Include Simulated Years on Plots?"
-    value: TRUE
+    value: FALSE
     input: checkbox
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
@@ -261,6 +261,15 @@ tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
+# summer parr mean length
+L1 = "Density-Dependent Summer Length"
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+match = c("omega0", "omega1", "sig_lL_Pb", "rho_lL_Pb", "^L_Pb[")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
 # LH apportionment
 L1 = "Life History Apportionment"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
@@ -298,11 +307,21 @@ tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
+# growth from summer to spring
+# summer parr mean length
+L1 = "Summer to Spring 'Growth Factor'"
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+match = c("theta0", "theta1", "sig_lDelta_L_Pb_Mb", "rho_lDelta_L_Pb_Mb", "^Delta_L_Pb_Mb[")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
 # trib to LGR Migration survival: NOR 
 L1 = "Migration Survival (Trib to LGR)"
-L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "phi_Mb_Ma[year,LH_type,origin,pop]")
-match = sub_index(base, year = ".+", LH_type = i_spring, origin = o_nor, pop = ".")
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+base = c("tau0", "tau1", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "^phi_Mb_Ma[.+,LH_type,origin,pop]")
+match = sub_index(base, LH_type = i_spring, origin = o_nor, pop = ".", year = ".+")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
@@ -395,7 +414,7 @@ diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Year 2 ocean survival
-L1 = "Year 2&3 Ocean Survival"
+L1 = "Year 2 Ocean Survival"
 L2 = c("Mean")
 base = c("mu_phi_O1_O2[origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
@@ -404,10 +423,20 @@ tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
+# Year 2 ocean survival
+L1 = "Year 3 Ocean Survival"
+L2 = c("Mean")
+base = c("mu_phi_O2_O3[origin,pop]")
+match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
 # Misc ocean survival
 L1 = "Misc Ocean Survival"
-L2 = c("NOR:HOR Scaler", "Year 0 Residual", "AR(1) Coefficient")
-base = c("delta[pop]", "Lphi_O0_O1_resid[5,1,pop]", "kappa_phi_O0_O1[pop]")
+L2 = c("Yr1 NOR:HOR Scaler", "Yr2 NOR:HOR Scaler", "Yr3 NOR:HOR Scaler", "Yr1 Initial Residual", "Yr 1 AR(1) Coefficient")
+base = c("delta_O0_O1[pop]", "delta_O1_O2[pop]", "delta_O2_O3[pop]", "Lphi_O0_O1_resid[5,1,pop]", "kappa_phi_O0_O1[pop]")
 match = sub_index(base, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -709,8 +738,8 @@ Pa_bp = data.frame(
 rownames(Pa_bp) = NULL
 
 # spring trap
-new = post_subset(post, "Mb_obs_new_dev", TRUE)
-obs = post_subset(post, "Mb_obs_dev", TRUE)
+new = post_subset(post, "^Mb_obs_new_dev", TRUE)
+obs = post_subset(post, "^Mb_obs_dev", TRUE)
 bp = array_format(colMeans(obs > new))
 dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("fall-mig", "spring-mig"), "NOR", pops)
 bp = bp[,"spring-mig","NOR",]
@@ -792,6 +821,32 @@ phi_Ma_O0_bp = data.frame(
 )
 rownames(phi_Ma_O0_bp) = NULL
 
+### CALCULATE BAYESIAN P-VALUES: LENGTH DATA SOURCES ###
+
+# summer length
+new = post_subset(post, "L_Pb_obs_new_dev", TRUE)
+obs = post_subset(post, "L_Pb_obs_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+L_Pb_bp = data.frame(
+  name = rep("Summer Length", 4), pop = pops,
+  origin = rep("NOR", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(L_Pb_bp) = NULL
+
+# spring length
+new = post_subset(post, "L_Mb_obs_new_dev", TRUE)
+obs = post_subset(post, "L_Mb_obs_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+L_Mb_bp = data.frame(
+  name = rep("Spring Length", 4), pop = pops,
+  origin = rep("NOR", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(L_Mb_bp) = NULL
+
 ### CALCULATE BAYESIAN P-VALUES: COMPOSITION DATA SOURCES ###
 
 # weir composition
@@ -848,13 +903,14 @@ rownames(x_LGR_bp) = NULL
 bp_tab = rbind(
   Pa_bp, Mb_bp, Ra_bp,
   phi_Pb_Ma_bp, phi_Pa_Ma_bp, phi_Mb_Ma_bp,
-  phi_Ma_O0_bp, x_Ra_bp, x_Sa_prime_bp, x_carcass_spawned_bp, x_LGR_bp
+  phi_Ma_O0_bp, L_Pb_bp, L_Mb_bp, x_Ra_bp, x_Sa_prime_bp, x_carcass_spawned_bp, x_LGR_bp
 )
 
 # add a main data category variable
 category = rep(NA, nrow(bp_tab))
 category = ifelse(bp_tab$name %in% c("Adults", "Juveniles"), "Abundance", category)
 category = ifelse(bp_tab$name %in% c("Weir", "Carcasses"), "Composition", category)
+category = ifelse(bp_tab$name %in% c("Summer Length", "Spring Length"), "Mean Length", category)
 category[is.na(category)] = "Survival"
 bp_tab = data.frame(category = category, bp_tab)
 
@@ -1562,6 +1618,40 @@ plot_f = function(j) {
 junk = sapply(1:jags_data$nj, plot_f)
 ```
 
+## Length Data {.tabset .tabset-pills}
+
+### Mean Length at Summer Tagging
+
+```{r summer-length-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^L_Pb[year,pop]$", year = ts_yrs, pop = j)),
+               get_obs_ests_log_normal(log(jags_data$L_Pb_obs[observable,j]), jags_data$sig_L_Pb_obs[observable,j]),
+               yrs = all_yrs[ts_yrs],
+               main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Mean Length at Summer Tagging (mm)")
+```
+
+### Mean Length at Spring Tagging
+
+```{r spring-length-fit, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^L_Mb[year,pop]$", year = ts_yrs, pop = j)),
+               get_obs_ests_log_normal(log(jags_data$L_Mb_obs[observable,j]), jags_data$sig_L_Mb_obs[observable,j]),
+               yrs = all_yrs[ts_yrs],
+               main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Mean Length at Spring Tagging (mm)")
+```
+
 # Spawner-to-Parr Relationship {.tabset .tabset-pills}
 
 ## Beverton-Holt
@@ -1811,87 +1901,313 @@ mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Proportion of Parr with Fall Migration Strategy")
 ```
 
-# Overwinter Survival Relationships
+# Length Relationships {.tabset .tabset-pills}
 
-```{r overwinter-survival-plots, fig.width = 8, fig.height = 5}
-plot_fn = function(j) {
-  # extract parr, scale it to WUL, and create new post object
-  Pa = post_subset(post, sub_index("^Pa[year,.,pop]", pop = j, year = ts_yrs), matrix = TRUE)
-  Pa_scaled = Pa/jags_data$wul[j]
-  colnames(Pa_scaled) = gsub("Pa", "Pa_scaled", x = colnames(Pa_scaled))
-  post_pa = post_convert(cbind(postpack:::id_mat(post), Pa_scaled))
+## Summer Tagging
+
+```{r}
+plot_f = function(j) {
+
+  # obtain posterior samples of total egg abundance scaled to WUL
+  E = post_subset(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs), matrix = TRUE)
+  E_scaled = (E/jags_data$E_scale)/jags_data$wul[j]
+  colnames(E_scaled) = gsub("E", "E_scaled", x = colnames(E_scaled))
+  post_E = post_convert(cbind(postpack:::id_mat(post), E_scaled))
   
-  # summarize posterior of scaled parr
-  Pa_scaled_mean = array_format(post_summ(post_pa, sub_index("Pa_scaled[.+,.+,pop]", pop = j))["mean",])
-  Pa_scaled_lwr = array_format(post_summ(post_pa, sub_index("Pa_scaled[.+,.+,pop]", pop = j))["2.5%",])
-  Pa_scaled_upr = array_format(post_summ(post_pa, sub_index("Pa_scaled[.+,.+,pop]", pop = j))["97.5%",])
+  # summarize scaled egg abundance
+  E_scaled_mean = post_summ(post_E, "")["mean",]
+  E_scaled_lwr = post_summ(post_E, "")["2.5%",]
+  E_scaled_upr = post_summ(post_E, "")["97.5%",]
   
-  # create vectors to predict survival at: for credible regions and mean curve
-  Pa_scaled_seq = matrix(NA, 30, 2)
-  Pa_scaled_seq[,i_fall] = seq(min(Pa_scaled_lwr[,i_fall,j], na.rm = TRUE), max(Pa_scaled_upr[,i_fall,j], na.rm = T), length = 30)
-  Pa_scaled_seq[,i_spring] = seq(min(Pa_scaled_lwr[,i_spring,j], na.rm = TRUE), max(Pa_scaled_upr[,i_spring,j], na.rm = T), length = 30)
-  
+  # create a vector of scaled egg abundances to calculate at
+  E_scaled_seq = seq(min(E_scaled_lwr), max(E_scaled_upr), length = 30)
+
   # extract posteriors of coefficients
-  gamma0 = post_subset(post, sub_index("gamma0[.,pop]", pop = j), matrix = TRUE)
-  gamma1 = post_subset(post, sub_index("gamma1[.,pop]", pop = j), matrix = TRUE)
+  omega0 = post_subset(post, sub_index("omega0[pop]", pop = j), matrix = TRUE)
+  omega1 = post_subset(post, sub_index("omega1[pop]", pop = j), matrix = TRUE)
   
-  # extract/format posterior summaries of realized survivals
-  phi_Pa_Mb_mean = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,.+,pop]", pop = j, year = ts_yrs))["mean",])
-  phi_Pa_Mb_lwr = array_format(post_summ(post,  sub_index("^phi_Pa_Mb[year,.+,pop]", pop = j, year = ts_yrs))["2.5%",])
-  phi_Pa_Mb_upr = array_format(post_summ(post,  sub_index("^phi_Pa_Mb[year,.+,pop]", pop = j, year = ts_yrs))["97.5%",])
+  # extract posterior summaries of summer length outcomes
+  L_Pb_mean = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  L_Pb_lwr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  L_Pb_upr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
   
   # function to create predicted survival curves for one posterior sample
   pred_fn = function(i) {
-    pred_phi_Pa_Mb1 = plogis(gamma0[i,1] + gamma1[i,1] * Pa_scaled_seq[,1])
-    pred_phi_Pa_Mb2 = plogis(gamma0[i,2] + gamma1[i,2] * Pa_scaled_seq[,2])
+    pred_L_Pb = exp(omega0[i] + omega1[i] * E_scaled_seq)
+    names(pred_L_Pb) = paste0("pred_L_Pb[", 1:30, "1]")
+    pred_L_Pb
+  }
+  
+  # calculate predicted survivals and add to posterior samples
+  pred_L_Pb = t(sapply(1:post_dim(post, "saved"), pred_fn))
+  post_pred_L_Pb = post_convert(cbind(postpack:::id_mat(post), pred_L_Pb))
+  
+  # extract summarize predicted length
+  pred_L_Pb_mean = post_summ(post_pred_L_Pb, "")["mean",]
+  pred_L_Pb_lwr = post_summ(post_pred_L_Pb, "")["2.5%",]
+  pred_L_Pb_upr = post_summ(post_pred_L_Pb, "")["97.5%",]
+  
+  # make a blank plot with the correct dimensions
+  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  
+  plot(1,1, type = "n", 
+       ylim = range(pred_L_Pb_lwr, pred_L_Pb_upr, L_Pb_lwr, L_Pb_upr, na.rm = T),
+       xlim = range(0, E_scaled_seq), 
+       main = pops[j]
+  )
     
-    names(pred_phi_Pa_Mb1) = paste0("pred_phi_Pa_Mb[", 1:30, ",1]")
-    names(pred_phi_Pa_Mb2) = paste0("pred_phi_Pa_Mb[", 1:30, ",2]")
+  # expected relationship
+  polygon(c(E_scaled_seq, rev(E_scaled_seq)), c(pred_L_Pb_lwr, rev(pred_L_Pb_upr)), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_L_Pb_lwr ~ E_scaled_seq, col = "red", lty = 2)
+  lines(pred_L_Pb_upr ~ E_scaled_seq, col = "red", lty = 2)
+  lines(pred_L_Pb_mean ~ E_scaled_seq, col = "red", lwd = 2)
+  
+  # realized pairs
+  segments(E_scaled_lwr, L_Pb_mean, E_scaled_upr, L_Pb_mean, col = alpha("red", 0.5))
+  segments(E_scaled_mean, L_Pb_lwr, E_scaled_mean, L_Pb_upr, col = alpha("red", 0.5))
+  points(L_Pb_mean ~ E_scaled_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  
+}
+
+xlab = paste0("Eggs/WUL (", prettyNum(jags_data$E_scale, big.mark = ","), "s per km)")
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, xlab)
+mtext(side = 2, outer = T, line = 0.25, TeX("$Mean\\,Length\\,at\\,Summer\\,Tagging\\,(mm)$"))
+```
+
+## Spring Length {.tabset .tabset-pills}
+
+### "Growth Factor" vs. Summer Length
+
+```{r}
+plot_f = function(j) {
+
+  # extract posterior summaries of summer length outcomes
+  L_Pb_mean = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  L_Pb_lwr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  L_Pb_upr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
+  
+  # extract posterior summaries of growth outcomes
+  Delta_L_Pb_Mb_mean = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  Delta_L_Pb_Mb_lwr = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  Delta_L_Pb_Mb_upr = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
+  
+  # create a vector of scaled summer lengths to calculate at
+  L_Pb_seq = seq(min(L_Pb_lwr), max(L_Pb_upr), length = 30)
+  L_Pb_star_seq = (L_Pb_seq - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+
+  # extract posteriors of coefficients
+  theta0 = post_subset(post, sub_index("theta0[pop]", pop = j), matrix = TRUE)
+  theta1 = post_subset(post, sub_index("theta1[pop]", pop = j), matrix = TRUE)
+
+  # function to create predicted curves for one posterior sample
+  pred_fn = function(i) {
+    pred_Delta_L_Pb_Mb = exp(theta0[i] + theta1[i] * L_Pb_star_seq)
+    names(pred_Delta_L_Pb_Mb) = paste0("pred_Delta_L_Pb_Mb[", 1:30, "1]")
+    pred_Delta_L_Pb_Mb
+  }
+  
+  # calculate predicted growth values and add to posterior samples
+  pred_Delta_L_Pb_Mb = t(sapply(1:post_dim(post, "saved"), pred_fn))
+  post_pred_Delta_L_Pb_Mb = post_convert(cbind(postpack:::id_mat(post), pred_Delta_L_Pb_Mb))
+  
+  # extract summarize predicted growth
+  pred_Delta_L_Pb_Mb_mean = post_summ(post_pred_Delta_L_Pb_Mb, "")["mean",]
+  pred_Delta_L_Pb_Mb_lwr = post_summ(post_pred_Delta_L_Pb_Mb, "")["2.5%",]
+  pred_Delta_L_Pb_Mb_upr = post_summ(post_pred_Delta_L_Pb_Mb, "")["97.5%",]
+  
+  # make a blank plot with the correct dimensions
+  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  plot(1,1, type = "n", 
+       ylim = range(pred_Delta_L_Pb_Mb_lwr, pred_Delta_L_Pb_Mb_upr, Delta_L_Pb_Mb_lwr, Delta_L_Pb_Mb_upr, na.rm = TRUE),
+       xlim = range(L_Pb_seq), 
+       main = pops[j]
+  )
     
-    c(pred_phi_Pa_Mb1, pred_phi_Pa_Mb2)
+  # expected relationship
+  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_Delta_L_Pb_Mb_lwr, rev(pred_Delta_L_Pb_Mb_upr)), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_Delta_L_Pb_Mb_lwr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_Delta_L_Pb_Mb_upr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_Delta_L_Pb_Mb_mean ~ L_Pb_seq, col = "red", lwd = 2)
+  
+  # realized pairs
+  segments(L_Pb_lwr, Delta_L_Pb_Mb_mean, L_Pb_upr, Delta_L_Pb_Mb_mean, col = alpha("red", 0.5))
+  segments(L_Pb_mean, Delta_L_Pb_Mb_lwr, L_Pb_mean, Delta_L_Pb_Mb_upr, col = alpha("red", 0.5))
+  points(Delta_L_Pb_Mb_mean ~ L_Pb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, TeX("$Mean\\,Length\\,at\\,Summer\\,Tagging\\,(mm)$"))
+mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow Spring\\,Smolt\\,Growth\\, Factor$"))
+```
+
+### "Growth Factor" Time Series
+
+```{r}
+plot_f = function(j) {
+  Delta_L_Pb_Mb_obs = cbind(mean = jags_data$L_Mb_obs[observable,j]/jags_data$L_Pb_obs[observable,j], lwr95 = NA, upr95 = NA)
+  plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
+               Delta_L_Pb_Mb_obs,
+               main = pops[j],
+               yrs = all_yrs[ts_yrs])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow Spring\\,Smolt\\,Growth\\, Factor$"))
+```
+
+# Length-Based Survival Relationships {.tabset .tabset-pills}
+
+## Overwinter Survival
+
+```{r overwinter-survival-plots, fig.width = 8, fig.height = 5}
+plot_fn = function(j, i) {
+  
+  # extract posterior summaries of spring length outcomes
+  L_Pb_mean = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  L_Pb_lwr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  L_Pb_upr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
+  
+  # obtain scaled/centered versions
+  L_Pb_star_mean = (L_Pb_mean - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  L_Pb_star_lwr = (L_Pb_lwr - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  L_Pb_star_upr = (L_Pb_upr - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  
+  # summarize posterior of overwinter survival outcomes
+  phi_Pa_Mb_mean = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["mean",])[-1,i,j]
+  phi_Pa_Mb_lwr = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["2.5%",])[-1,i,j]
+  phi_Pa_Mb_upr = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["97.5%",])[-1,i,j]
+
+  # create vectors to predict survival at: for credible regions and mean curve
+  L_Pb_seq = seq(min(L_Pb_lwr), max(L_Pb_upr), length = 30)
+  L_Pb_star_seq = seq(min(L_Pb_star_lwr), max(L_Pb_star_upr), length = 30)
+  
+  # extract posteriors of coefficients
+  gamma0 = post_subset(post, sub_index("gamma0[LH_type,pop]", pop = j, LH_type = i), matrix = TRUE)
+  gamma1 = post_subset(post, sub_index("gamma1[LH_type,pop]", pop = j, LH_type = i), matrix = TRUE)
+  
+  # function to create predicted survival curve for one posterior sample
+  pred_fn = function(i) {
+    pred_phi_Pa_Mb = plogis(gamma0[i] + gamma1[i] * L_Pb_star_seq)
+    names(pred_phi_Pa_Mb) = paste0("pred_phi_Pa_Mb[", 1:30, "]")
+    pred_phi_Pa_Mb
   }
   
   # calculate predicted survivals and add to posterior samples
   pred_phi_Pa_Mb = t(sapply(1:post_dim(post, "saved"), pred_fn))
-  post_pa = post_bind(post_pa, pred_phi_Pa_Mb)
+  post_pred_phi_Pa_Mb = post_convert(cbind(postpack:::id_mat(post), pred_phi_Pa_Mb))
   
-  # summarize predicted survivals
-  pred_phi_Pa_Mb_mean = array_format(post_summ(post_pa, "pred_phi_Pa_Mb")["mean",])
-  pred_phi_Pa_Mb_lwr = array_format(post_summ(post_pa, "pred_phi_Pa_Mb")["2.5%",])
-  pred_phi_Pa_Mb_upr = array_format(post_summ(post_pa, "pred_phi_Pa_Mb")["97.5%",])
-
-  # function to draw plot for one LH-type
-  plot_fn2 = function(i) {
-    # blank plot of correct dimensions
-    plot(1,1, type = "n", 
-         ylim = range(pred_phi_Pa_Mb_lwr[,i], pred_phi_Pa_Mb_upr[,i], phi_Pa_Mb_lwr[,i,j], phi_Pa_Mb_upr[,i,j], na.rm = T),
-         xlim = range(0, Pa_scaled_seq), 
-         main = ifelse(i == 1, pops[j], "")
-    )
-    
-    # expected relationship
-    polygon(c(Pa_scaled_seq[,i], rev(Pa_scaled_seq[,i])), c(pred_phi_Pa_Mb_lwr[,i], rev(pred_phi_Pa_Mb_upr[,i])), border = NA, col = alpha("salmon", 0.5))
-    lines(pred_phi_Pa_Mb_lwr[,i] ~ Pa_scaled_seq[,i], col = "red", lty = 2)
-    lines(pred_phi_Pa_Mb_upr[,i] ~ Pa_scaled_seq[,i], col = "red", lty = 2)
-    lines(pred_phi_Pa_Mb_mean[,i] ~ Pa_scaled_seq[,i], col = "red", lwd = 2)
-    
-    # realized survivals
-    segments(Pa_scaled_lwr[,i,j], phi_Pa_Mb_mean[,i,j], Pa_scaled_upr[,i,j], phi_Pa_Mb_mean[,i,j], col = alpha("red", 0.5))
-    segments(Pa_scaled_mean[,i,j], phi_Pa_Mb_lwr[,i,j], Pa_scaled_mean[,i,j], phi_Pa_Mb_upr[,i,j], col = alpha("red", 0.5))
-    points(phi_Pa_Mb_mean[,i,j] ~ Pa_scaled_mean[,i,j], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
-  }
+  # extract summarize predicted length
+  pred_phi_Pa_Mb_mean = post_summ(post_pred_phi_Pa_Mb, "")["mean",]
+  pred_phi_Pa_Mb_lwr = post_summ(post_pred_phi_Pa_Mb, "")["2.5%",]
+  pred_phi_Pa_Mb_upr = post_summ(post_pred_phi_Pa_Mb, "")["97.5%",]
   
-  # create the plot
+  # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
-  plot_fn2(1); if (j == 1) mtext(side = 2, line = 1.5, "Fall Migrants")
-  plot_fn2(2); if (j == 1) mtext(side = 2, line = 1.5, "Spring Migrants")
+  plot(1,1, type = "n", 
+       ylim = range(pred_phi_Pa_Mb_lwr, pred_phi_Pa_Mb_upr, phi_Pa_Mb_lwr, phi_Pa_Mb_upr, na.rm = T),
+       xlim = range(L_Pb_seq), 
+       main = ifelse(i == 1, pops[j], "")
+  )
+    
+  # expected relationship
+  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_phi_Pa_Mb_lwr, rev(pred_phi_Pa_Mb_upr)), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_phi_Pa_Mb_lwr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_phi_Pa_Mb_upr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_phi_Pa_Mb_mean ~ L_Pb_seq, col = "red", lwd = 2)
   
+  # realized pairs
+  segments(L_Pb_lwr, phi_Pa_Mb_mean, L_Pb_upr, phi_Pa_Mb_mean, col = alpha("red", 0.5))
+  segments(L_Pb_mean, phi_Pa_Mb_lwr, L_Pb_mean, phi_Pa_Mb_upr, col = alpha("red", 0.5))
+  points(phi_Pa_Mb_mean ~ L_Pb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+}
+
+plot_fn2 = function(j) {
+    # create the plots for both migratory strategies
+  par(mgp = c(2, 0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  plot_fn(j = j, i = 1); if (j == 1) mtext(side = 2, line = 1.5, "Fall Migrants")
+  plot_fn(j = j, i = 2); if (j == 1) mtext(side = 2, line = 1.5, "Spring Migrants")
 }
 
 par(mfcol = c(jags_data$ni,jags_data$nj), oma = c(2.5,3.5,0,0))
-junk = sapply(1:jags_data$nj, plot_fn)
-mtext(side = 1, line = 1.5, outer = T, "LH-Specific Parr/WUL", cex = 1.2)
+junk = sapply(1:jags_data$nj, plot_fn2)
+mtext(side = 1, line = 1.5, outer = T, "Mean Length at Summer Tagging (mm)", cex = 1.2)
 mtext(side = 2, line = 2, outer = T, "Overwinter Survival", cex = 1.2)
+```
+
+## Migration to LGR
+
+```{r toLGR-survival-plots, fig.width = 6, fig.height = 5}
+plot_fn = function(j, i) {
+  
+  # extract posterior summaries of spring length outcomes
+  L_Mb_mean = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  L_Mb_lwr = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  L_Mb_upr = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
+  
+  # obtain scaled/centered versions
+  L_Mb_star_mean = (L_Mb_mean - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  L_Mb_star_lwr = (L_Mb_lwr - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  L_Mb_star_upr = (L_Mb_upr - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  
+  # summarize posterior of migration survival outcomes
+  phi_Mb_Ma_mean = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["mean",])[-1,i_spring,o_nor,j]
+  phi_Mb_Ma_lwr = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["2.5%",])[-1,i_spring,o_nor,j]
+  phi_Mb_Ma_upr = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["97.5%",])[-1,i_spring,o_nor,j]
+
+  # create vectors to predict survival at: for credible regions and mean curve
+  L_Mb_seq = seq(min(L_Mb_lwr), max(L_Mb_upr), length = 30)
+  L_Mb_star_seq = seq(min(L_Mb_star_lwr), max(L_Mb_star_upr), length = 30)
+  
+  # extract posteriors of coefficients
+  tau0 = post_subset(post, sub_index("tau0[pop]", pop = j), matrix = TRUE)
+  tau1 = post_subset(post, sub_index("tau1[pop]", pop = j), matrix = TRUE)
+
+  # function to create predicted survival curve for one posterior sample
+  pred_fn = function(i) {
+    pred_phi_Mb_Ma = plogis(tau0[i] + tau1[i] * L_Mb_star_seq)
+    names(pred_phi_Mb_Ma) = paste0("pred_phi_Mb_Ma[", 1:30, "]")
+    pred_phi_Mb_Ma
+  }
+  
+  # calculate predicted survivals and add to posterior samples
+  pred_phi_Mb_Ma = t(sapply(1:post_dim(post, "saved"), pred_fn))
+  post_pred_phi_Mb_Ma = post_convert(cbind(postpack:::id_mat(post), pred_phi_Mb_Ma))
+  
+  # extract summarize predicted length
+  pred_phi_Mb_Ma_mean = post_summ(post_pred_phi_Mb_Ma, "")["mean",]
+  pred_phi_Mb_Ma_lwr = post_summ(post_pred_phi_Mb_Ma, "")["2.5%",]
+  pred_phi_Mb_Ma_upr = post_summ(post_pred_phi_Mb_Ma, "")["97.5%",]
+  
+  # make a blank plot with the correct dimensions
+  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  plot(1,1, type = "n", 
+       ylim = range(pred_phi_Mb_Ma_lwr, pred_phi_Mb_Ma_upr, phi_Mb_Ma_lwr, phi_Mb_Ma_upr, na.rm = T),
+       xlim = range(L_Mb_seq), 
+       main = pops[j]
+  )
+    
+  # expected relationship
+  polygon(c(L_Mb_seq, rev(L_Mb_seq)), c(pred_phi_Mb_Ma_lwr, rev(pred_phi_Mb_Ma_upr)), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_phi_Mb_Ma_lwr ~ L_Mb_seq, col = "red", lty = 2)
+  lines(pred_phi_Mb_Ma_upr ~ L_Mb_seq, col = "red", lty = 2)
+  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = "red", lwd = 2)
+  
+  # realized pairs
+  segments(L_Mb_lwr, phi_Mb_Ma_mean, L_Mb_upr, phi_Mb_Ma_mean, col = alpha("red", 0.5))
+  segments(L_Mb_mean, phi_Mb_Ma_lwr, L_Mb_mean, phi_Mb_Ma_upr, col = alpha("red", 0.5))
+  points(phi_Mb_Ma_mean ~ L_Mb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 1, outer = T, line = 0.25, "Length at Spring Tagging (mm)")
+mtext(side = 2, outer = T, line = 0.25, "Migration to LGR Survival")
 ```
 
 # Equivilency Rates {.tabset .tabset-pills}
@@ -2168,6 +2484,16 @@ my_boxplot("^sig_Lphi_E_Pb[.]$", "Process SD")
 my_boxplot("^rho_Lphi_E_Pb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
 ```
 
+## Summer Parr Size
+
+```{r summer-size-bxp, fig.width = 8, fig.height = 3.5}
+par(mfrow = c(1,4))
+my_boxplot("^omega0[.]$", "Intercept")
+my_boxplot("^omega1[.]$", "Slope")
+my_boxplot("^sig_lL_Pb[.]$", "Process SD")
+my_boxplot("^rho_lL_Pb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
+```
+
 ## Life History Apportionment
 
 ```{r LH-type-bxp, fig.width = 8, fig.height = 3.5}
@@ -2206,11 +2532,12 @@ my_boxplot(sub_index("rho_Lphi_Pa_Mb[.,.,LH_type]", LH_type = i_spring), "Among-
 
 ## Movement Survival to LGR {.tabset .tabset-pills}
 
-### Mean
+### Mean/Logistic Model Parameters
 
 ```{r trib-to-lgr-bxp1, fig.width = 8, fig.height = 3.5}
-par(mfrow = c(1,2))
-my_boxplot(sub_index("mu_phi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_nor, pop = "."), "Average Migration Survival", main = "NOR", ylim = c(0,1))
+par(mfrow = c(1,3))
+my_boxplot(sub_index("tau0[pop]", pop = "."), "Intercept", main = "NOR", ylim = c(0,1))
+my_boxplot(sub_index("tau1[pop]", pop = "."), "Slope", main = "NOR", ylim = c(0,1))
 my_boxplot(sub_index("mu_phi_Mb_Ma[LH_type,origin,pop]", LH_type = i_spring, origin = o_hor, pop = "."), "Average Migration Survival", main = "HOR", ylim = c(0,1))
 ```
 
@@ -2322,18 +2649,19 @@ my_boxplot(sub_index("mu_phi_O1_O2[origin,pop]", origin = o_hor, pop = "."), mai
 
 ### Year 3 {.tabset .tabset-pills}
 
-**NOTE:** The Year 3 parameters are the same as the Year 2 parameters.
-
 ```{r yr3-ocean-bxp, fig.width = 8, fig.height = 3.5}
 par(mfrow = c(1,2))
 my_boxplot(sub_index("mu_phi_O2_O3[origin,pop]", origin = o_nor, pop = "."), main = "NOR", ylim = c(0,1), ylab = "Average Survival")
 my_boxplot(sub_index("mu_phi_O2_O3[origin,pop]", origin = o_hor, pop = "."), main = "HOR", ylim = c(0,1), ylab = "Average Survival")
 ```
 
-### NOR:HOR Log Odds Ratio
+### NOR:HOR Log Odds Ratios
 
 ```{r ocean-surv-scaler, fig.width = 8, fig.height = 3.5}
-my_boxplot(sub_index("delta[pop]", pop = "."), ylab = "Log Odds Ratio")
+par(mfrow = c(1,3))
+my_boxplot(sub_index("delta_O0_O1[pop]", pop = "."), ylab = "Log Odds Ratio", main = "Year 1")
+my_boxplot(sub_index("delta_O1_O2[pop]", pop = "."), ylab = "Log Odds Ratio", main = "Year 2")
+my_boxplot(sub_index("delta_O2_O3[pop]", pop = "."), ylab = "Log Odds Ratio", main = "Year 3")
 ```
 
 ## Movement Survival BON to LGR
@@ -2376,6 +2704,8 @@ rownames(rho_summs) = NULL
 # make prettier names for each term
 rho_names = c(
   "rho_Lphi_E_Pb[2,1]" = "Egg-to-Parr Survival",
+  "rho_lL_Pb[2,1]" = "Summer Mean Length",
+  "rho_lDelta_L_Pb_Mb[2,1]" = "Summer to Spring 'Growth Factor'",
   "rho_Lpi[2,1]" = "Mig. Strategy Apportionment",
   "rho_Lphi_Ma_O0[2,1]" = "LGR to Ocean Survival",
   "rho_Lphi_O0_O1[2,1]" = "Yr1 Ocean Survival",
@@ -2587,6 +2917,15 @@ oma_labels("Brood Year", "logit(Egg-to-Parr Survival) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
+#### Summer Parr Mean Length
+
+```{r summer-length-noise, fig.width = 6, fig.height = 5}
+my_par()
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("lL_Pb_resid[year,pop]", "sig_lL_Pb[pop]", pop = j, main = pops[j]))
+oma_labels("Brood Year", "log(Summer Parr Mean Length) Residual")
+proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
+```
+
 #### Migratory Strategy Apportionment
 
 ```{r pi-noise, fig.width = 6, fig.height = 5}
@@ -2613,6 +2952,15 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 my_par()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_Pa_Mb_resid[year,LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", pop = j, LH_type = 2, main = pops[j]))
 oma_labels("Brood Year", "logit(Over-winter Survival [Spring Migrants]) Residual")
+proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
+```
+
+#### Summer Parr to Spring Smolt "Growth Factor"
+
+```{r growth-noise, fig.width = 6, fig.height = 5}
+my_par()
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("lDelta_L_Pb_Mb_resid[year,pop]", "sig_lDelta_L_Pb_Mb[pop]", pop = j, main = pops[j]))
+oma_labels("Brood Year", "log(Summer to Spring Growth Factor) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
@@ -2724,8 +3072,10 @@ Bold values denote that the target value for verifying model assumptions was not
 ```{r proc-error-table-prep}
 # rename parameters to human-readable format
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_E_Pb_resid\\[year,pop\\]", "Egg to Parr Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lL_Pb_resid\\[year,pop\\]", "Summer Parr Length")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpi_resid\\[year,pop\\]", "Migratory Strategy Apportionment")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Pa_Mb_resid\\[year,LH_type,pop\\]", "Overwinter Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lDelta_L_Pb_Mb_resid\\[year,pop\\]", "Summer to Spring 'Growth Factor'")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Mb_Ma_resid\\[year,origin,pop\\]", "Trib to LGR Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Ma_O0_resid\\[year,origin\\]", "LGR to BON Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_O0_O1_resid\\[year,origin,pop\\]", "Yr1 Ocean Survival")
@@ -2753,7 +3103,7 @@ proc_error_ests$origin = c("NOR", "HOR", "Combined")[proc_error_ests$origin]
 proc_error_ests$LH_type = c("Fall Mig.", "Spring Mig.", "Combined")[proc_error_ests$LH_type]
 
 # which processes are in each life phase?
-fw_juv = c("Egg to Parr Survival", "Migratory Strategy Apportionment", "Overwinter Survival", "Trib to LGR Survival", "LGR to BON Survival")
+fw_juv = c("Egg to Parr Survival", "Summer Parr Length", "Migratory Strategy Apportionment", "Overwinter Survival", "Summer to Spring 'Growth Factor'", "Trib to LGR Survival", "LGR to BON Survival")
 sw_juv = c("Yr1 Ocean Survival", "Pr(Mature Age-3)", "Pr(Mature Age-4)")
 fw_adult = c("BON to LGR Survival", "Pre-spawn Survival")
 
@@ -3048,6 +3398,26 @@ oma_labels("Return Year", "Count of Female Spawned-out Carcasses Residual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
+### Length Data {.tabset .tabset-pills}
+
+#### Summer Length
+
+```{r summer-length-resid, fig.width = 6, fig.height = 5}
+my_par()
+tmp = lapply(1:jags_data$nj, function(j) plot_obs_resid("lL_Pb_obs_resid[year,pop]", pop = j, main = pops[j]))
+oma_labels("Brood Year", "log(Mean Summer Length) Residual")
+obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
+```
+
+#### Spring Length
+
+```{r spring-length-resid, fig.width = 6, fig.height = 5}
+my_par()
+tmp = lapply(1:jags_data$nj, function(j) plot_obs_resid("lL_Mb_obs_resid[year,pop]", pop = j, main = pops[j]))
+oma_labels("Brood Year", "log(Mean Spring Length) Residual")
+obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
+```
+
 ### Composition Data {.tabset .tabset-pills}
 
 #### Weir Sampling {.tabset .tabset-pills}
@@ -3144,6 +3514,8 @@ obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "Lphi_obs_Mb_M
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "Lphi_obs_Ma_O0_resid\\[year,origin\\]", "LGR Smolt -> Ocean")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "x_LGR_obs_resid\\[year,origin\\]", "BON Adults -> LGR")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "x_carcass_spawned_obs_resid\\[year,pop\\]", "Pre-spawn")
+obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "lL_Pb_obs_resid\\[year,pop\\]", "Summer Parr")
+obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "lL_Mb_obs_resid\\[year,pop\\]", "Spring Smolt")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "x_Ra_obs_resid\\[year,age,pop\\]", "Weir")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "x_Sa_prime_obs_resid\\[year,age,pop\\]", "Carcass")
 
@@ -3156,6 +3528,7 @@ obs_error_ests$origin[obs_error_ests$param == "Adult Return"] = 3
 # correct origin indices
 obs_error_ests$origin[stringr::str_detect(obs_error_ests$param, "Tagging")] = 1
 obs_error_ests$origin[obs_error_ests$param == "Pre-spawn"] = 3
+obs_error_ests$origin[obs_error_ests$param %in% c("Summer Parr", "Spring Smolt")] = 1
 
 # correct LH_type indices
 obs_error_ests$LH_type[is.na(obs_error_ests$LH_type)] = 3
@@ -3180,11 +3553,12 @@ obs_error_ests$type = ifelse(obs_error_ests$param %in% c("Fall Screw Trap", "Spr
 obs_error_ests$type = ifelse(stringr::str_detect(obs_error_ests$param, "->"), 2, obs_error_ests$type)
 obs_error_ests$type = ifelse(stringr::str_detect(obs_error_ests$param, "Pre-spawn"), 2, obs_error_ests$type)
 obs_error_ests$type = ifelse(obs_error_ests$param %in% c("Weir", "Carcass"), 3, obs_error_ests$type)
-obs_error_ests$type = c("Abundance", "Survival", "Composition")[obs_error_ests$type]
+obs_error_ests$type = ifelse(obs_error_ests$param %in% c("Summer Parr", "Spring Smolt"), 4, obs_error_ests$type)
+obs_error_ests$type = c("Abundance", "Survival", "Composition", "Mean Length")[obs_error_ests$type]
 
 # add levels to each variable
-obs_error_ests$type = factor(obs_error_ests$type, levels = c("Abundance", "Survival", "Composition"))
-obs_error_ests$param = factor(obs_error_ests$param, levels = c("Fall Screw Trap", "Spring Screw Trap", "Adult Return", "Summer Tagging -> LGR", "Fall Tagging -> LGR", "Winter Tagging -> LGR", "Spring Tagging -> LGR", "Smolt Release -> LGR", "LGR Smolt -> Ocean", "BON Adults -> LGR", "Pre-spawn", "Weir", "Carcass"))
+obs_error_ests$type = factor(obs_error_ests$type, levels = c("Abundance", "Survival", "Mean Length", "Composition"))
+obs_error_ests$param = factor(obs_error_ests$param, levels = c("Fall Screw Trap", "Spring Screw Trap", "Adult Return", "Summer Tagging -> LGR", "Fall Tagging -> LGR", "Winter Tagging -> LGR", "Spring Tagging -> LGR", "Smolt Release -> LGR", "LGR Smolt -> Ocean", "BON Adults -> LGR", "Pre-spawn", "Summer Parr", "Spring Smolt", "Weir", "Carcass"))
 obs_error_ests$origin = factor(obs_error_ests$origin, levels = c("NOR", "HOR", "Combined"))
 obs_error_ests$LH_type = factor(obs_error_ests$LH_type, levels = c("Fall Mig.", "Spring Mig.", "Combined"))
 obs_error_ests$age = factor(obs_error_ests$age, levels = c("Age-3", "Age-4", "Age-5", "Combined"))
