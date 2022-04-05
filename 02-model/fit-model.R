@@ -27,7 +27,7 @@ do_pp_check = TRUE
 do_lppd = FALSE
 
 # specify a scenario name
-scenario = "size-based-surv-growth-relationship"
+scenario = "base"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -514,7 +514,7 @@ if (rmd) {
 }
 
 # render the simulation vs. observed time series plots if requested and applicable
-if (rmd & last_yr > 2019 & FALSE) {
+if (rmd & last_yr > 2019) {
   # start a timer, this can take a while
   starttime = Sys.time()
   

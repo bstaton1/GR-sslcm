@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "size-based-surv-growth-relationship"
+    value: "base"
     input: text
   include_sim_years:
     label: "Include Simulated Years on Plots?"
