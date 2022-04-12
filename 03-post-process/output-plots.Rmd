@@ -255,7 +255,7 @@ summs_out = NULL
 # parr recruitment
 L1 = "Egg-to-Parr Survival"
 L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Realized")
-match = c("alpha", "^beta[", "lambda", "sig_lbeta", "sig_Lphi_E_Pb", "rho_Lphi_E_Pb", "^phi_E_Pb[")
+match = c("alpha", "^beta[", "^lambda$", "sig_lbeta", "sig_Lphi_E_Pb", "rho_Lphi_E_Pb", "^phi_E_Pb[")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
@@ -290,7 +290,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # Overwinter survival: Fall Migrants
 L1 = "Overwinter Survival"
 L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
-base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[LH_type,pop]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
 match = sub_index(base, year = ".+", LH_type = i_fall, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "Fall Migrants"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -300,7 +300,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # Overwinter survival: Spring Migrants
 L1 = "Overwinter Survival"
 L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
-base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[LH_type,pop]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
 match = sub_index(base, year = ".+", LH_type = i_spring, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "Spring Migrants"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -340,7 +340,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # LGR to Ocean Migration survival: NOR
 L1 = "Migration Survival (LGR to Ocean)"
 L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_phi_Ma_O0[origin]", "sig_Lphi_Ma_O0[origin]", "phi_Ma_O0[year,origin]")
+base = c("mu_phi_Ma_O0[origin]", "sig_Lphi_Ma_O0[origin]", "^phi_Ma_O0[year,origin]")
 match = sub_index(base, year = ".+", origin = o_nor)
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -350,7 +350,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # LGR to Ocean Migration survival: HOR
 L1 = "Migration Survival (LGR to Ocean)"
 L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_phi_Ma_O0[origin]", "sig_Lphi_Ma_O0[origin]", "phi_Ma_O0[year,origin]")
+base = c("mu_phi_Ma_O0[origin]", "sig_Lphi_Ma_O0[origin]", "^phi_Ma_O0[year,origin]")
 match = sub_index(base, year = ".+", origin = o_hor)
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -366,7 +366,7 @@ summs_out = rbind(summs_out, tmp_summ)
 # Probability of Maturing at Age-3: NOR
 L1 = "Pr(Mature at Age-3)"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[origin,pop]", "rho_Lpsi_O1[.,.,origin]", "psi_O1[.+,origin,pop]")
+base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[pop,origin]", "rho_Lpsi_O1[.,.,origin]", "^psi_O1[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -376,7 +376,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # Probability of Maturing at Age-3: HOR
 L1 = "Pr(Mature at Age-3)"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[origin,pop]", "rho_Lpsi_O1[.,.,origin]", "psi_O1[.+,origin,pop]")
+base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[pop,origin]", "rho_Lpsi_O1[.,.,origin]", "^psi_O1[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -386,7 +386,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # Probability of Maturing at Age-4: NOR
 L1 = "Pr(Mature at Age-4)"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[origin,pop]", "rho_Lpsi_O2[.,.,origin]", "psi_O2[.+,origin,pop]")
+base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[pop,origin]", "rho_Lpsi_O2[.,.,origin]", "^psi_O2[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -396,7 +396,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # Probability of Maturing at Age-4: HOR
 L1 = "Pr(Mature at Age-4)"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[origin,pop]", "rho_Lpsi_O2[.,.,origin]", "psi_O2[.+,origin,pop]")
+base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[pop,origin]", "rho_Lpsi_O2[.,.,origin]", "^psi_O2[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -446,7 +446,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # BON to LGR Migration survival: NOR 
 L1 = "Migration Survival (BON to LGR)"
 L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_phi_Rb_Ra[origin]", "sig_Lphi_Rb_Ra[origin]", "phi_Rb_Ra[year,origin]")
+base = c("mu_phi_Rb_Ra[origin]", "sig_Lphi_Rb_Ra[origin]", "^phi_Rb_Ra[year,origin]")
 match = sub_index(base, year = ".+", origin = o_nor)
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -456,7 +456,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # BON to LGR Migration survival: HOR 
 L1 = "Migration Survival (BON to LGR)"
 L2 = c("Mean", "Process SD", "Realized")
-base = c("mu_phi_Rb_Ra[origin]", "sig_Lphi_Rb_Ra[origin]", "phi_Rb_Ra[year,origin]")
+base = c("mu_phi_Rb_Ra[origin]", "sig_Lphi_Rb_Ra[origin]", "^phi_Rb_Ra[year,origin]")
 match = sub_index(base, year = ".+", origin = o_hor)
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -472,7 +472,7 @@ summs_out = rbind(summs_out, tmp_summ)
 # Pre-spawn Survival
 L1 = "Pre-spawn Survival"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "rho_Lphi_Sb_Sa", "phi_Sb_Sa[.+,.]")
+match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "rho_Lphi_Sb_Sa", "^phi_Sb_Sa[.+,.]")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
@@ -1664,7 +1664,7 @@ plot_f = function(j) {
   bh_params = post_subset(post, sub_index(c("alpha[pop]", "^beta[pop]$"), pop = j), matrix = TRUE)
   
   # extract posterior summaries of total spawners by brood year
-  Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
+  # Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total egg production by brood year
   E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
@@ -1673,7 +1673,7 @@ plot_f = function(j) {
   Pb = post_summ(post, sub_index("^Pb[year,pop]", pop = j, year = ts_yrs))
   
   # predict parr recruits along a sequence of spawner abundances
-  Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
+  # Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
   E_pred = seq(0, max(E[5,]), length = 30)
   
   Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(E_pred, bh_params[i,1], bh_params[i,2])))
