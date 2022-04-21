@@ -1677,7 +1677,7 @@ plot_f = function(j) {
   E_pred = seq(0, max(E[5,]), length = 30)
   
   Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(E_pred, bh_params[i,1], bh_params[i,2])))
-  colnames(Pb_pred) = paste0("Pb_pred[", 1:length(Sa_pred), "]")
+  colnames(Pb_pred) = paste0("Pb_pred[", 1:length(E_pred), "]")
   Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
   Pb_pred = post_summ(Pb_pred, "Pb_pred")
   
