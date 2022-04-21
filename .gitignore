@@ -30,3 +30,6 @@
 
 # ignore anything in the scratch folder (personal sandboxes)
 98-scratch/*
+
+# ignore the test Rmd script
+03-post-process/test-rmd.Rmd
