@@ -2818,76 +2818,67 @@ They are shown at the top left of each time series plot and summarized across pr
 
 ```{r plot-proc-resid-fn}
 
-# function to plot a residual time series for one pop/origin/LH_type/age combo
-# returns a data frame with identifiers and across-year summary statistics
-plot_proc_resid = function(resid_param, sig_param, year = ts_yrs, pop = NULL, origin = NULL, LH_type = NULL, age = NULL, main = NULL) {
+plot_proc_qresid = function(qresid_param, year = ts_yrs, pop = NULL, origin = NULL, LH_type = NULL, age = NULL, main = NULL) {
   
   # extract posterior samples of residual time series
-  resid_post = post_subset(post, sub_index(resid_param, year = year, pop = pop, origin = origin, LH_type = LH_type, age = age), matrix = TRUE)
-  
-  # extract posterior samples of st. dev. parameter
-  sig_post = post_subset(post, sub_index(sig_param, year = year, pop = pop, origin = origin, LH_type = LH_type, age = age), matrix = TRUE)
-  
-  # divide each residual by its estimated SD parameterize: to standardize
-  resid_post = apply(resid_post, 2, function(x) x/sig_post)
+  qresid_post = post_subset(post, sub_index(qresid_param, year = year, pop = pop, origin = origin, LH_type = LH_type, age = age), matrix = TRUE)
   
   # extract the year indices available
-  y_ind = get_yr_index(colnames(resid_post))
+  y_ind = get_yr_index(colnames(qresid_post))
   y_ind_obs = y_ind %in% observable
   
   # calculate posterior across-year mean and sd for each posterior sample
   # only for years that are observable; don't want to include any simulated years in these stats
-  mn_post = apply(resid_post[,y_ind_obs], 1, mean)
-  sd_post = apply(resid_post[,y_ind_obs], 1, sd)
+  mn_post = apply(qresid_post[,y_ind_obs], 1, mean)
+  sd_post = apply(qresid_post[,y_ind_obs], 1, sd)
   
   # calculate posterior mean(last half of years) - mean(first half of years)
   y_first = 1:round(length(y_ind[y_ind_obs])/2)
   y_last = (max(y_first) + 1):length(y_ind[y_ind_obs])
-  mn_post_first = apply(resid_post[,y_first], 1, mean)
-  mn_post_last = apply(resid_post[,y_last], 1, mean)
+  mn_post_first = apply(qresid_post[,y_first], 1, mean)
+  mn_post_last = apply(qresid_post[,y_last], 1, mean)
   first_last_mn_diff_post = mn_post_last - mn_post_first
   
-  # calculate posterior summaries of standardized residual time series
-  resid = apply(resid_post, 2, function(x) c(mean = mean(x), sd = sd(x), quantile(x, c(0.5, 0.025, 0.975))))
+  # calculate posterior summaries of standardized qresidual time series
+  qresid = apply(qresid_post, 2, function(x) c(mean = mean(x), sd = sd(x), quantile(x, c(0.5, 0.025, 0.975))))
   
-  # set the y-axis limits: want zero in center and leave room at top for legend
-  ylim = max(abs(c(resid["2.5%",], resid["97.5%",])), na.rm = TRUE) * c(-1.4,1.4)
-  
+    # set the y-axis limits: leave room at top for legend
+  ylim = c(0,1.3)
+
   # blank plot with correct dimensions
   par(lend = "square")
-  plot(resid["mean",] ~ all_yrs[y_ind], main = main, type = "n",
-       ylim = ylim, xlim = range(all_yrs[y_ind]), xaxt = "n", xlab = "", ylab = "")
+  plot(qresid["mean",] ~ all_yrs[y_ind], main = main, type = "n",
+       ylim = ylim, xlim = range(all_yrs[y_ind]), xaxt = "n", yaxt = "n", xlab = "", ylab = "")
   
   # draw x-axis: years
-  at_x = seq(min(all_yrs[y_ind]), max(all_yrs[y_ind]), 4)
+  at_x = seq(min(all_yrs[observable]), max(all_yrs[observable]), 4)
   axis(side = 1, at = at_x, labels = paste0("'", substr(at_x, 3, 4)))
+  axis(side = 2, at = seq(0, 1, 0.25), labels = TRUE)
   
-  # draw the noise time series: mean and 95% CRI
-  polygon(x = c(all_yrs[y_ind], rev(all_yrs[y_ind])),
-          y = c(resid["2.5%",], rev(resid["97.5%",])),
-          border = NA, col = alpha("salmon", 0.5))
-  lines(resid["mean",] ~ all_yrs[y_ind], lwd = 2, col = "red")
-  lines(resid["2.5%",] ~ all_yrs[y_ind], lty = 2, col = "red")
-  lines(resid["97.5%",] ~ all_yrs[y_ind], lty = 2, col = "red")
-  
-  # draw reference line at zero noise
-  abline(h = 0, lty = 2, col = "black", lwd = 2)
+  # draw reference line at 25%, 50%, and 75% quantiles
+  abline(h = c(0.25, 0.5, 0.75), lty = 3, col = "grey", lwd = 2)
   
   # draw posterior mean for first and half of time series
   lines(x = all_yrs[y_ind[y_first]], y = rep(mean(mn_post_first), length(y_first)), col = "blue", lty = 3, lwd = 2)
   lines(x = all_yrs[y_ind[y_last]], y = rep(mean(mn_post_last), length(y_last)), col = "blue", lty = 3, lwd = 2)
   
+  # draw the noise time series: mean and 95% CRI
+  segments(all_yrs[observable], qresid["2.5%",], all_yrs[observable], qresid["97.5%",], col = "red")
+  points(qresid["mean",] ~ all_yrs[observable], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  
   # draw legend that shows estimate summaries
   usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
-  legend(x = usr[1] - xdiff * 0.05, y = usr[4] + ydiff * 0.01, legend = make_legend_text(mn_post, sd_post, first_last_mn_diff_post), bty = "n", cex = 0.8)
+  rect(usr[1], 1, usr[2], usr[4], border = "black", col = "grey90")
+  legend(x = usr[1] - xdiff * 0.05, y = usr[4] + ydiff * 0.025, legend = make_legend_text(mn_post, sd_post, first_last_mn_diff_post), bty = "n", cex = 0.8)
+  box()
   
   # create output for building summary tables
-  data.frame(param = resid_param,
+  data.frame(param = qresid_param,
              pop = ifelse(!is.null(pop), pop, NA),
              origin = ifelse(!is.null(origin), origin, NA),
              LH_type = ifelse(!is.null(LH_type), LH_type, NA),
              age = ifelse(!is.null(age), age, NA),
-             n_yrs = ncol(resid_post[,y_ind %in% observable]),
+             n_yrs = ncol(qresid_post[,y_ind %in% observable]),
              year_mean_mean = mean(mn_post),
              year_mean_lwr = unname(quantile(mn_post, 0.025)),
              year_mean_upr = unname(quantile(mn_post, 0.975)),
@@ -2912,7 +2903,7 @@ proc_error_ests = NULL
 
 ```{r egg-to-parr-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_E_Pb_resid[year,pop]", "sig_Lphi_E_Pb[pop]", pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_E_Pb_qresid[year,pop]", pop = j, main = pops[j]))
 oma_labels("Brood Year", "logit(Egg-to-Parr Survival) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2921,7 +2912,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r summer-length-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("lL_Pb_resid[year,pop]", "sig_lL_Pb[pop]", pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("lL_Pb_qresid[year,pop]", pop = j, main = pops[j]))
 oma_labels("Brood Year", "log(Summer Parr Mean Length) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2930,7 +2921,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r pi-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lpi_resid[year,pop]", "sig_Lpi[pop]", pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpi_qresid[year,pop]", pop = j, main = pops[j]))
 oma_labels("Brood Year", "logit(Proportion Fall Migrants) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2941,7 +2932,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r overwinter-surv-noise-fall, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_Pa_Mb_resid[year,LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", pop = j, LH_type = 1, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Pa_Mb_qresid[year,LH_type,pop]", pop = j, LH_type = 1, main = pops[j]))
 oma_labels("Brood Year", "logit(Over-winter Survival [Fall Migrants]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2950,7 +2941,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r overwinter-surv-noise-spring, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_Pa_Mb_resid[year,LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", pop = j, LH_type = 2, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Pa_Mb_qresid[year,LH_type,pop]", pop = j, LH_type = 2, main = pops[j]))
 oma_labels("Brood Year", "logit(Over-winter Survival [Spring Migrants]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2959,7 +2950,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r growth-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("lDelta_L_Pb_Mb_resid[year,pop]", "sig_lDelta_L_Pb_Mb[pop]", pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("lDelta_L_Pb_Mb_qresid[year,pop]", pop = j, main = pops[j]))
 oma_labels("Brood Year", "log(Summer to Spring Growth Factor) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2970,7 +2961,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r trib-to-LGR-surv-nor, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_Mb_Ma_resid[year,origin,pop]", "sig_Lphi_Mb_Ma[pop,origin]", pop = j, origin = 1, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,origin,pop]", pop = j, origin = 1, main = pops[j]))
 oma_labels("Brood Year", "logit(Trib to LGR Survival [NOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2979,16 +2970,16 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r trib-to-LGR-surv-hor, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_Mb_Ma_resid[year,origin,pop]", "sig_Lphi_Mb_Ma[pop,origin]", pop = j, origin = 2, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,origin,pop]", pop = j, origin = 2, main = pops[j]))
 oma_labels("Brood Year", "logit(Trib to LGR Survival [HOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 #### LGR to BON Survival
 
-```{r LGR-to-BON-surv-noise, fig.width = 7, fig.height = 4}
+```{r LGR-to-BON-surv-noise, fig.width = 6, fig.height = 3.5}
 my_par(); par(mfrow = c(1,2))
-tmp = lapply(1:jags_data$no, function(o) plot_proc_resid("Lphi_Ma_O0_resid[year,origin]", "sig_Lphi_Ma_O0[origin]", origin = o, main = origins[o]))
+tmp = lapply(1:jags_data$no, function(o) plot_proc_qresid("Lphi_Ma_O0_qresid[year,origin]", origin = o, main = origins[o]))
 oma_labels("Brood Year", "logit(LGR to Ocean Survival) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -2999,7 +2990,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r yr1-ocean-surv-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_O0_O1_resid[year,origin,pop]", "sig_Lphi_O0_O1[pop]", origin = 1, year = c(1, ts_yrs), pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_O0_O1_qresid[year,origin,pop]", origin = 1, year = c(ts_yrs), pop = j, main = pops[j]))
 oma_labels("Brood Year", "logit(First Year Ocean Survival) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -3010,7 +3001,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r pr-mat-3-nor-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lpsi_O1_resid[year,origin,pop]", "sig_Lpsi_O1[pop,origin]", origin = 1, pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O1_qresid[year,origin,pop]", origin = 1, pop = j, main = pops[j]))
 oma_labels("Brood Year", "logit(Mature at Age-3 [NOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -3019,7 +3010,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r pr-mat-3-hor-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lpsi_O1_resid[year,origin,pop]", "sig_Lpsi_O1[pop,origin]", origin = 2, pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O1_qresid[year,origin,pop]", origin = 2, pop = j, main = pops[j]))
 oma_labels("Brood Year", "logit(Mature at Age-3 [HOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -3030,7 +3021,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r pr-mat-4-nor-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lpsi_O2_resid[year,origin,pop]", "sig_Lpsi_O2[pop,origin]", origin = 1, pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O2_qresid[year,origin,pop]", origin = 1, pop = j, main = pops[j]))
 oma_labels("Brood Year", "logit(Mature at Age-4 [NOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -3039,7 +3030,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r pr-mat-4-hor-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lpsi_O2_resid[year,origin,pop]", "sig_Lpsi_O2[pop,origin]", origin = 2, pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O2_qresid[year,origin,pop]", origin = 2, pop = j, main = pops[j]))
 oma_labels("Brood Year", "logit(Mature at Age-4 [HOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -3048,9 +3039,9 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 #### BON to LGR Survival
 
-```{r BON-to-LGR-surv-noise, fig.width = 7, fig.height = 4}
+```{r BON-to-LGR-surv-noise, fig.width = 6, fig.height = 3.5}
 my_par(); par(mfrow = c(1,2))
-tmp = lapply(1:jags_data$no, function(o) plot_proc_resid("Lphi_Rb_Ra_resid[year,origin]", "sig_Lphi_Rb_Ra[origin]", origin = o, main = origins[o]))
+tmp = lapply(1:jags_data$no, function(o) plot_proc_qresid("Lphi_Rb_Ra_qresid[year,origin]", origin = o, main = origins[o]))
 oma_labels("Return Year", "logit(BON to LGR Survival) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -3059,7 +3050,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r prespawn-surv-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_resid("Lphi_Sb_Sa_resid[year,pop]", "sig_Lphi_Sb_Sa[pop]", pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Sb_Sa_qresid[year,pop]", pop = j, main = pops[j]))
 oma_labels("Return Year", "logit(Pre-spawn Survival) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -3071,18 +3062,18 @@ Bold values denote that the target value for verifying model assumptions was not
 
 ```{r proc-error-table-prep}
 # rename parameters to human-readable format
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_E_Pb_resid\\[year,pop\\]", "Egg to Parr Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lL_Pb_resid\\[year,pop\\]", "Summer Parr Length")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpi_resid\\[year,pop\\]", "Migratory Strategy Apportionment")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Pa_Mb_resid\\[year,LH_type,pop\\]", "Overwinter Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lDelta_L_Pb_Mb_resid\\[year,pop\\]", "Summer to Spring 'Growth Factor'")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Mb_Ma_resid\\[year,origin,pop\\]", "Trib to LGR Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Ma_O0_resid\\[year,origin\\]", "LGR to BON Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_O0_O1_resid\\[year,origin,pop\\]", "Yr1 Ocean Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpsi_O1_resid\\[year,origin,pop\\]", "Pr(Mature Age-3)")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpsi_O2_resid\\[year,origin,pop\\]", "Pr(Mature Age-4)")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Rb_Ra_resid\\[year,origin\\]", "BON to LGR Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Sb_Sa_resid\\[year,pop\\]", "Pre-spawn Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_E_Pb_qresid\\[year,pop\\]", "Egg to Parr Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lL_Pb_qresid\\[year,pop\\]", "Summer Parr Length")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpi_qresid\\[year,pop\\]", "Migratory Strategy Apportionment")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Pa_Mb_qresid\\[year,LH_type,pop\\]", "Overwinter Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lDelta_L_Pb_Mb_qresid\\[year,pop\\]", "Summer to Spring 'Growth Factor'")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Mb_Ma_qresid\\[year,origin,pop\\]", "Trib to LGR Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Ma_O0_qresid\\[year,origin\\]", "LGR to BON Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_O0_O1_qresid\\[year,origin,pop\\]", "Yr1 Ocean Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpsi_O1_qresid\\[year,origin,pop\\]", "Pr(Mature Age-3)")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpsi_O2_qresid\\[year,origin,pop\\]", "Pr(Mature Age-4)")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Rb_Ra_qresid\\[year,origin\\]", "BON to LGR Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Sb_Sa_qresid\\[year,pop\\]", "Pre-spawn Survival")
 
 # correct origin indices
 proc_error_ests$origin[proc_error_ests$param == "Pre-spawn Survival"] = 3
@@ -3122,18 +3113,18 @@ proc_error_ests$LH_type = factor(proc_error_ests$LH_type, levels = c("Fall Mig."
 proc_error_ests$pop = factor(proc_error_ests$pop, levels = c("CAT", "LOS", "MIN", "UGR", "Combined"))
 
 # determine whether posterior of across-year quantities overlaps the target value
-proc_error_ests$yr_mean_incl_zero = ifelse(proc_error_ests$year_mean_lwr <= 0 & proc_error_ests$year_mean_upr >= 0, TRUE, FALSE)
-proc_error_ests$yr_sd_incl_one = ifelse(proc_error_ests$year_sd_lwr <= 1 & proc_error_ests$year_sd_upr >= 1, TRUE, FALSE)
-proc_error_ests$diff_incl_zero = ifelse(proc_error_ests$diff_lwr <= 0 & proc_error_ests$diff_upr >= 0, TRUE, FALSE)
+proc_error_ests$yr_mean_incl_target = ifelse(proc_error_ests$year_mean_lwr <= 0.5 & proc_error_ests$year_mean_upr >= 0.5, TRUE, FALSE)
+proc_error_ests$yr_sd_incl_target = ifelse(proc_error_ests$year_sd_lwr <= sqrt(1/12) & proc_error_ests$year_sd_upr >= sqrt(1/12), TRUE, FALSE)
+proc_error_ests$diff_incl_target = ifelse(proc_error_ests$diff_lwr <= 0 & proc_error_ests$diff_upr >= 0, TRUE, FALSE)
 
 # format the mean values to present in table
 # round and make bold if target value not in interval
 proc_error_ests$year_mean_mean = round(proc_error_ests$year_mean_mean, 2)
-proc_error_ests$year_mean_mean = ifelse(!proc_error_ests$yr_mean_incl_zero, paste0("<b>", proc_error_ests$year_mean_mean, "</b>"), proc_error_ests$year_mean_mean)
+proc_error_ests$year_mean_mean = ifelse(!proc_error_ests$yr_mean_incl_target, paste0("<b>", proc_error_ests$year_mean_mean, "</b>"), proc_error_ests$year_mean_mean)
 proc_error_ests$year_sd_mean = round(proc_error_ests$year_sd_mean, 2)
-proc_error_ests$year_sd_mean = ifelse(!proc_error_ests$yr_sd_incl_one, paste0("<b>", proc_error_ests$year_sd_mean, "</b>"), proc_error_ests$year_sd_mean)
+proc_error_ests$year_sd_mean = ifelse(!proc_error_ests$yr_sd_incl_target, paste0("<b>", proc_error_ests$year_sd_mean, "</b>"), proc_error_ests$year_sd_mean)
 proc_error_ests$diff_mean = round(proc_error_ests$diff_mean, 2)
-proc_error_ests$diff_mean = ifelse(!proc_error_ests$diff_incl_zero, paste0("<b>", proc_error_ests$diff_mean, "</b>"), proc_error_ests$diff_mean)
+proc_error_ests$diff_mean = ifelse(!proc_error_ests$diff_incl_target, paste0("<b>", proc_error_ests$diff_mean, "</b>"), proc_error_ests$diff_mean)
 
 # drop unneeded columns
 proc_error_ests = proc_error_ests[,c("phase", "param", "pop", "origin", "LH_type","year_mean_mean", "year_sd_mean", "diff_mean")]
