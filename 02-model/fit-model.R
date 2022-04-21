@@ -289,12 +289,12 @@ jags_params = c(
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
   "lL_Pb_resid", "lDelta_L_Pb_Mb_resid",
   
-  # residuals: observation model
-  "x_Ra_obs_resid", "x_Sa_prime_obs_resid",
-  "lPa_obs_resid", "lMb_obs_resid", "lRa_obs_resid",
-  "Lphi_obs_Pb_Ma_resid", "Lphi_obs_Pa_Ma_resid", "Lphi_obs_Mb_Ma_resid",
-  "Lphi_obs_Ma_O0_resid", "x_LGR_obs_resid", "x_carcass_spawned_obs_resid",
-  "lL_Pb_obs_resid", "lL_Mb_obs_resid",
+  # quantile residuals: observation model
+  "x_Ra_obs_qresid", "x_Sa_prime_obs_qresid",
+  "lPa_obs_qresid", "lMb_obs_qresid", "lRa_obs_qresid",
+  "Lphi_obs_Pb_Ma_qresid", "Lphi_obs_Pa_Ma_qresid", "Lphi_obs_Mb_Ma_qresid",
+  "Lphi_obs_Ma_O0_qresid", "x_LGR_obs_qresid", "x_carcass_spawned_obs_qresid",
+  "lL_Pb_obs_qresid", "lL_Mb_obs_qresid",
   
   # AR(1) coefficients
   "kappa_phi_O0_O1"
