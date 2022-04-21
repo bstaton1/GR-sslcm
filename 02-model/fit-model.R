@@ -285,9 +285,16 @@ jags_params = c(
   # residuals: process model
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_O0_resid", "Lpsi_O1_resid",
-  "Lpsi_O2_resid", "Lphi_O0_O1_resid", "Lphi_O1_O2_resid",
+  "Lpsi_O2_resid", "Lphi_O0_O1_resid",
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
   "lL_Pb_resid", "lDelta_L_Pb_Mb_resid",
+  
+  # quantile residuals: process model
+  "Lpi_qresid", "Lphi_Pa_Mb_qresid", "Lphi_Mb_Ma_qresid",
+  "Lphi_Ma_O0_qresid", "Lpsi_O1_qresid",
+  "Lpsi_O2_qresid", "Lphi_O0_O1_qresid",
+  "Lphi_Sb_Sa_qresid", "Lphi_E_Pb_qresid", "Lphi_Rb_Ra_qresid",
+  "lL_Pb_qresid", "lDelta_L_Pb_Mb_qresid",
   
   # quantile residuals: observation model
   "x_Ra_obs_qresid", "x_Sa_prime_obs_qresid",
