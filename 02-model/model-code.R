@@ -552,7 +552,10 @@ jags_model_code = function() {
       x_Ra_lppd[y,j] <- logdensity.multi(x_Ra[y,1:nko,j], p_Ra[y,1:nko,j], nx_Ra[y,j])
       
       # calculate observation model residual
-      x_Ra_obs_resid[y,1:nko,j] <- sqrt(x_Ra[y,1:nko,j]) - sqrt(expected_x_Ra[y,1:nko,j])
+      # x_Ra_obs_resid[y,1:nko,j] <- sqrt(x_Ra[y,1:nko,j]) - sqrt(expected_x_Ra[y,1:nko,j])
+      for (ko in 1:nko) {
+        x_Ra_obs_qresid[y,ko,j] <- pbin(x_Ra[y,ko,j], p_Ra[y,ko,j], nx_Ra[y,j])
+      }
       
       # FOR CARCASSES
       # data likelihood
@@ -572,7 +575,10 @@ jags_model_code = function() {
       x_Sa_prime_lppd[y,j] <- logdensity.multi(x_Sa_prime[y,1:nko,j], p_Sa_prime[y,1:nko,j], nx_Sa_prime[y,j])
       
       # calculate observation model residual
-      x_Sa_prime_obs_resid[y,1:nko,j] <- sqrt(x_Sa_prime[y,1:nko,j]) - sqrt(expected_x_Sa_prime[y,1:nko,j])
+      # x_Sa_prime_obs_resid[y,1:nko,j] <- sqrt(x_Sa_prime[y,1:nko,j]) - sqrt(expected_x_Sa_prime[y,1:nko,j])
+      for (ko in 1:nko) {
+        x_Sa_prime_obs_qresid[y,ko,j] <- pbin(x_Sa_prime[y,ko,j], p_Sa_prime[y,ko,j], nx_Sa_prime[y,j])
+      }
     }
   }
   
@@ -593,7 +599,7 @@ jags_model_code = function() {
     Pa_obs_lppd[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]] <- logdensity.lnorm(Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]], log(Pa[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]), 1/sig_Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]^2)
     
     # calculate observation model residual
-    lPa_obs_resid[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]] <- (log(Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]) - log(Pa[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]))/sig_Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]
+    lPa_obs_qresid[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]] <- plnorm(Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]], log(Pa[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]), 1/sig_Pa_obs[fit_Pa[d,1],fit_Pa[d,2],fit_Pa[d,3]]^2)
   }
   
   # spring trap abundance
@@ -612,7 +618,7 @@ jags_model_code = function() {
     Mb_obs_lppd[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]] <- logdensity.lnorm(Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]], log(Mb[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]), 1/sig_Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]^2)
     
     # calculate observation model residual
-    lMb_obs_resid[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]] <- (log(Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]) - log(Mb[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]))/sig_Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]
+    lMb_obs_qresid[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]] <- plnorm(Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]], log(Mb[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]), 1/sig_Mb_obs[fit_Mb[d,1],fit_Mb[d,2],fit_Mb[d,3],fit_Mb[d,4]]^2)
   }
   
   # adult abundance
@@ -631,7 +637,7 @@ jags_model_code = function() {
     Ra_obs_lppd[fit_Ra[d,1],fit_Ra[d,2]] <- logdensity.lnorm(Ra_obs[fit_Ra[d,1],fit_Ra[d,2]], log(Ra_tot[fit_Ra[d,1],fit_Ra[d,2]]), 1/sig_Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]^2)
     
     # calculate observation model residual
-    lRa_obs_resid[fit_Ra[d,1],fit_Ra[d,2]] <- (log(Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]) - log(Ra_tot[fit_Ra[d,1],fit_Ra[d,2]]))/sig_Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]
+    lRa_obs_qresid[fit_Ra[d,1],fit_Ra[d,2]] <- plnorm(Ra_obs[fit_Ra[d,1],fit_Ra[d,2]], log(Ra_tot[fit_Ra[d,1],fit_Ra[d,2]]), 1/sig_Ra_obs[fit_Ra[d,1],fit_Ra[d,2]]^2)
   }
   
   # mean length at summer tagging 
@@ -650,7 +656,7 @@ jags_model_code = function() {
     L_Pb_obs_lppd[fit_L_Pb[d,1],fit_L_Pb[d,2]] <- logdensity.lnorm(L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]], log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]), 1/sig_L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]^2)
     
     # calculate observation model residual
-    lL_Pb_obs_resid[fit_L_Pb[d,1],fit_L_Pb[d,2]] <- (log(L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]) - log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]))/sig_L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]
+    lL_Pb_obs_qresid[fit_L_Pb[d,1],fit_L_Pb[d,2]] <- plnorm(L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]], log(L_Pb[fit_L_Pb[d,1],fit_L_Pb[d,2]]), 1/sig_L_Pb_obs[fit_L_Pb[d,1],fit_L_Pb[d,2]]^2)
   }
   
   # mean length at spring tagging 
@@ -669,7 +675,7 @@ jags_model_code = function() {
     L_Mb_obs_lppd[fit_L_Mb[d,1],fit_L_Mb[d,2]] <- logdensity.lnorm(L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]], log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]), 1/sig_L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]^2)
     
     # calculate observation model residual
-    lL_Mb_obs_resid[fit_L_Mb[d,1],fit_L_Mb[d,2]] <- (log(L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]) - log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]))/sig_L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]
+    lL_Mb_obs_qresid[fit_L_Mb[d,1],fit_L_Mb[d,2]] <- plnorm(L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]], log(L_Mb[fit_L_Mb[d,1],fit_L_Mb[d,2]]), 1/sig_L_Mb_obs[fit_L_Mb[d,1],fit_L_Mb[d,2]]^2)
   }
   
   # summer tagging to LGD
@@ -688,7 +694,7 @@ jags_model_code = function() {
     Lphi_obs_Pb_Ma_lppd[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] <- logdensity.norm(Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]], logit(phi_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]), 1/sig_Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]^2)
     
     # calculate observation model residual
-    Lphi_obs_Pb_Ma_resid[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] <- (Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] - logit(phi_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]))/sig_Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]
+    Lphi_obs_Pb_Ma_qresid[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]] <- pnorm(Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]], logit(phi_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]), 1/sig_Lphi_obs_Pb_Ma[fit_Lphi_Pb_Ma[d,1],fit_Lphi_Pb_Ma[d,2]]^2)
   }
   
   # fall tagging to LGD
@@ -707,7 +713,7 @@ jags_model_code = function() {
     Lphi_obs_Pa_Ma_lppd[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] <- logdensity.norm(Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]], logit(phi_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]), 1/sig_Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]^2)
     
     # calculate observation model residual
-    Lphi_obs_Pa_Ma_resid[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] <- (Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] - logit(phi_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]))/sig_Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]
+    Lphi_obs_Pa_Ma_qresid[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]] <- pnorm(Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]], logit(phi_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]), 1/sig_Lphi_obs_Pa_Ma[fit_Lphi_Pa_Ma[d,1],fit_Lphi_Pa_Ma[d,2],fit_Lphi_Pa_Ma[d,3]]^2)
   }
   
   # spring tagging/smolt releases to LGD
@@ -726,7 +732,7 @@ jags_model_code = function() {
     Lphi_obs_Mb_Ma_lppd[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] <- logdensity.norm(Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]], logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]), 1/sig_Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]^2)
     
     # calculate observation model residual
-    Lphi_obs_Mb_Ma_resid[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] <- (Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] - logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]))/sig_Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]
+    Lphi_obs_Mb_Ma_qresid[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]] <- pnorm(Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]], logit(phi_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]), 1/sig_Lphi_obs_Mb_Ma[fit_Lphi_Mb_Ma[d,1],fit_Lphi_Mb_Ma[d,2],fit_Lphi_Mb_Ma[d,3],fit_Lphi_Mb_Ma[d,4]]^2)
   }
   
   # hydrosystem survival
@@ -745,7 +751,7 @@ jags_model_code = function() {
     Lphi_obs_Ma_O0_lppd[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] <- logdensity.norm(Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]], logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]), 1/sig_Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]^2)
     
     # calculate observation model residual
-    Lphi_obs_Ma_O0_resid[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] <- (Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] - logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]))/sig_Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]
+    Lphi_obs_Ma_O0_qresid[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]] <- pnorm(Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]], logit(phi_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]), 1/sig_Lphi_obs_Ma_O0[fit_Lphi_Ma_O0[d,1],fit_Lphi_Ma_O0[d,2]]^2)
   }
   
   # movement survival from BON to LGR
@@ -767,7 +773,7 @@ jags_model_code = function() {
     x_LGR_lppd[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- logdensity.bin(x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]], phi_Rb_Ra[fit_x_LGR[d,1],fit_x_LGR[d,2]], x_BON[fit_x_LGR[d,1],fit_x_LGR[d,2]])
     
     # calculate observation model residuals
-    x_LGR_obs_resid[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- sqrt(x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]]) - sqrt(expected_x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]])
+    x_LGR_obs_qresid[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- pbin(x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]], phi_Rb_Ra[fit_x_LGR[d,1],fit_x_LGR[d,2]], x_BON[fit_x_LGR[d,1],fit_x_LGR[d,2]])
   }
   
   # pre-spawn survival
@@ -789,7 +795,7 @@ jags_model_code = function() {
     x_carcass_spawned_lppd[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- logdensity.bin(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
     
     # calculate observation model residuals
-    x_carcass_spawned_obs_resid[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- sqrt(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]) - sqrt(expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
+    x_carcass_spawned_obs_qresid[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- pbin(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
   }
   
   ### CALCULATE ALL PROCESS MODEL RESIDUALS ###
@@ -802,44 +808,55 @@ jags_model_code = function() {
       
       # total summer parr recruitment
       Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(1/(1/alpha[j] + E[y,j]/beta[j]))
+      Lphi_E_Pb_qresid[y,j] <- pnorm(Lphi_E_Pb[y,j], logit(1/(1/alpha[j] + E[y,j]/beta[j])), 1/sig_Lphi_E_Pb[j]^2)
 
       # summer mean length
       lL_Pb_resid[y,j] <- lL_Pb[y,j] - (omega0[j] + omega1[j] * ((E[y,j]/10000)/wul[j]))
+      lL_Pb_qresid[y,j] <- pnorm(lL_Pb[y,j], omega0[j] + omega1[j] * ((E[y,j]/10000)/wul[j]), 1/sig_lL_Pb[j]^2)
       
       # proportion of summer parr that become fall migrants
       Lpi_resid[y,j] <- logit(pi[y,i_fall,j]) - logit(mu_pi[i_fall,j])
+      Lpi_qresid[y,j] <- pnorm(logit(pi[y,i_fall,j]), logit(mu_pi[i_fall,j]), 1/sig_Lpi[j]^2)
       
       # LH-specific overwinter survival
       for (i in 1:ni) {
         Lphi_Pa_Mb_resid[y,i,j] <- Lphi_Pa_Mb[y,i,j] - (gamma0[i,j] + gamma1[i,j] * L_Pb_star[y,j])
+        Lphi_Pa_Mb_qresid[y,i,j] <- pnorm(Lphi_Pa_Mb[y,i,j], gamma0[i,j] + gamma1[i,j] * L_Pb_star[y,j], 1/sig_Lphi_Pa_Mb[i,j]^2)
       }
       
       # summer to spring growth rate
       lDelta_L_Pb_Mb_resid[y,j] <- lDelta_L_Pb_Mb[y,j] - (theta0[j] + theta1[j] * L_Pb_star[y,j])
+      lDelta_L_Pb_Mb_qresid[y,j] <- pnorm(lDelta_L_Pb_Mb[y,j], theta0[j] + theta1[j] * L_Pb_star[y,j], 1/sig_lDelta_L_Pb_Mb[j]^2)
       
       # movement survival to LGR: NOR
       Lphi_Mb_Ma_resid[y,o_nor,j] <- Lphi_Mb_Ma[y,i_spring,o_nor,j] - (tau0[j] + tau1[j] * L_Mb_star[y,j])
+      Lphi_Mb_Ma_qresid[y,o_nor,j] <- pnorm(Lphi_Mb_Ma[y,i_spring,o_nor,j], tau0[j] + tau1[j] * L_Mb_star[y,j], 1/sig_Lphi_Mb_Ma[o_nor,j]^2)
       
       # movement survival to LGR: HOR
       Lphi_Mb_Ma_resid[y,o_hor,j] <- Lphi_Mb_Ma[y,i_spring,o_hor,j] - logit(mu_phi_Mb_Ma[i_spring,o_hor,j])
+      Lphi_Mb_Ma_qresid[y,o_hor,j] <- pnorm(Lphi_Mb_Ma[y,i_spring,o_hor,j], logit(mu_phi_Mb_Ma[i_spring,o_hor,j]), 1/sig_Lphi_Mb_Ma[o_hor,j]^2)
       
       # origin-specific quantities
       for (o in 1:no) {
         
         # pr(return at SWA1)
         Lpsi_O1_resid[y,o,j] <- Lpsi_O1[y,o,j] - logit(mu_psi_O1[o,j])
+        Lpsi_O1_qresid[y,o,j] <- pnorm(Lpsi_O1[y,o,j], logit(mu_psi_O1[o,j]), 1/sig_Lpsi_O1[o,j]^2)
         
         # pr(return at SWA2|not returned at SWA1)
         Lpsi_O2_resid[y,o,j] <- Lpsi_O2[y,o,j] - logit(mu_psi_O2[o,j])
+        Lpsi_O2_qresid[y,o,j] <- pnorm(Lpsi_O2[y,o,j], logit(mu_psi_O2[o,j]), 1/sig_Lpsi_O2[o,j]^2)
         
         # ocean survival
         Lphi_O0_O1_resid[y,o,j] <- Lphi_O0_O1[y,o,j] - logit(mu_phi_O0_O1[o,j])
-        Lphi_O1_O2_resid[y,o,j] <- Lphi_O1_O2[y,o,j] - logit(mu_phi_O1_O2[o,j])
-        Lphi_O2_O3_resid[y,o,j] <- Lphi_O2_O3[y,o,j] - logit(mu_phi_O2_O3[o,j])
+        Lphi_O0_O1_qresid[y,o,j] <- pnorm(Lphi_O0_O1[y,o,j], logit(mu_phi_O0_O1[o,j]), 1/sig_Lphi_O0_O1_init[j]^2)
+        # Lphi_O1_O2_resid[y,o,j] <- Lphi_O1_O2[y,o,j] - logit(mu_phi_O1_O2[o,j])
+        # Lphi_O2_O3_resid[y,o,j] <- Lphi_O2_O3[y,o,j] - logit(mu_phi_O2_O3[o,j])
       }
       
       # pre-spawn survival
       Lphi_Sb_Sa_resid[y,j] <- Lphi_Sb_Sa[y,j] - logit(mu_phi_Sb_Sa[j])
+      Lphi_Sb_Sa_qresid[y,j] <- pnorm(Lphi_Sb_Sa[y,j], logit(mu_phi_Sb_Sa[j]), 1/sig_Lphi_Sb_Sa[j]^2)
     }
     
     # processes that are constant across populations but vary by origin
@@ -847,9 +864,11 @@ jags_model_code = function() {
       
       # movement survival from LGR thru BON
       Lphi_Ma_O0_resid[y,o] <- Lphi_Ma_O0[y,o] - logit(mu_phi_Ma_O0[o])
+      Lphi_Ma_O0_qresid[y,o] <- pnorm(Lphi_Ma_O0[y,o], logit(mu_phi_Ma_O0[o]), 1/sig_Lphi_Ma_O0[o]^2)
       
       # movement survival from BON thru LGR
       Lphi_Rb_Ra_resid[y,o] <- Lphi_Rb_Ra[y,o] - logit(mu_phi_Rb_Ra[o])
+      Lphi_Rb_Ra_qresid[y,o] <- pnorm(Lphi_Rb_Ra[y,o], logit(mu_phi_Rb_Ra[o]), 1/sig_Lphi_Rb_Ra[o]^2)
     }
   }
 }
