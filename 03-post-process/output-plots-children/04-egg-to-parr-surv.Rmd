@@ -1,0 +1,178 @@
+# Egg-to-Parr Survival {.tabset .tabset-pills}
+
+## Beverton-Holt
+
+All red components are posterior summaries (medians and 95% credible intervals). The black curve is from an `nls()` fit on reconstructed parr and roughly approximated total egg production -- the grey region is the confidence interval around this fit.
+
+```{r eggs-to-parr, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  # extract posterior samples of the BH productivity and capacity parameters
+  bh_params = post_subset(post, sub_index(c("alpha[pop]", "^beta[pop]$"), pop = j), matrix = TRUE)
+  
+  # extract posterior summaries of total spawners by brood year
+  # Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
+  
+  # extract posterior summaries of total egg production by brood year
+  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
+  
+  # extract posterior summaries of total parr recruits by brood year
+  Pb = post_summ(post, sub_index("^Pb[year,pop]", pop = j, year = ts_yrs))
+  
+  # predict parr recruits along a sequence of spawner abundances
+  # Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
+  E_pred = seq(0, max(E[5,]), length = 30)
+  
+  Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(E_pred, bh_params[i,1], bh_params[i,2])))
+  colnames(Pb_pred) = paste0("Pb_pred[", 1:length(E_pred), "]")
+  Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
+  Pb_pred = post_summ(Pb_pred, "Pb_pred")
+  
+  # graphical parameters
+  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+  
+  # empty plot
+  plot(1, 1, type = "n", xlim = range(0, E[5,]), ylim = range(0, Pb[5,], Pb_pred[5,]),
+       xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = pops[j])
+  
+  x_ticks = axisTicks(par("usr")[1:2], log = FALSE)
+  y_ticks = axisTicks(par("usr")[3:4], log = FALSE)
+  axis(side = 1, at = x_ticks, labels = x_ticks/1e6)
+  axis(side = 2, at = y_ticks, labels = y_ticks/1e3)
+  
+  # draw fitted relationship: Bayesian
+  polygon(c(E_pred, rev(E_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
+  lines(Pb_pred[4,] ~ E_pred, col = "red", lty = 2)
+  lines(Pb_pred[5,] ~ E_pred, col = "red", lty = 2)
+  lines(Pb_pred[3,] ~ E_pred, col = "red", lwd = 2)
+  
+  # draw state pairs + uncertainty
+  segments(E[4,], Pb[3,], E[5,], Pb[3,], col = alpha("red", 0.5))
+  segments(E[3,], Pb[4,], E[3,], Pb[5,], col = alpha("red", 0.5))
+  points(Pb[3,] ~ E[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Total Egg Production (Millions)")
+mtext(side = 2, outer = T, line = 0.25, "Parr Recruits (Thousands)")
+```
+
+## Total Eggs vs. Total Spawners
+
+This figure illustrates that total spawners is a reasonable index of total egg production, according to the assumptions of our model. The three lines illustrate the relationship if each spawner (regardless of age or sex) had a fixed number of eggs.
+
+```{r eggs-vs-spawners, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  # extract posterior summaries of total spawners by brood year
+  Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
+  
+  # extract posterior summaries of total egg production by brood year
+  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
+
+  # graphical parameters
+  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+  
+  # empty plot
+  plot(E["mean",] ~ Sa_tot["mean",],
+       ylim = c(0, max(E["97.5%",])),
+       xlim = c(0, max(Sa_tot["97.5%",])), type = "n",
+       ylab = "", xlab = "", las = 1, yaxt = "n")
+  
+  # yaxis ticks
+  y_ticks = axisTicks(par("usr")[3:4], log = F)
+  axis(side = 2, at = y_ticks, labels = y_ticks/1e6, las = 2)
+  
+  segments(Sa_tot["2.5%",], E["mean",], Sa_tot["97.5%",], E["mean",], col = alpha("red", 0.5))
+  segments(Sa_tot["mean",], E["2.5%",], Sa_tot["mean",], E["97.5%",], col = alpha("red", 0.5))
+  points(E["mean",] ~ Sa_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  abline(c(0, 1000), lty = 1)
+  abline(c(0, 1800), lty = 2)
+  abline(c(0, 3600), lty = 3)
+
+  if (j == 1) {
+    legend("bottomright", title = "If Each Spawner Had:",
+           legend = c("1000 Eggs", "1800 Eggs", "3600 Eggs"),
+           lty = c(1,2,3), bty = "n", cex = 0.75)
+  }
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Total Spawners")
+mtext(side = 2, outer = T, line = 0.25, "Total Egg Production (Millions)")
+```
+
+## Parr per Egg
+
+This figure shows the density dependence built in to the Beverton-Holt recruitment function: with increasing egg density, survival per egg decreases. The horizontal line/region shows the theoretical maximum ($\alpha_j$) in the absence of density dependence.
+
+```{r parr-per-egg-v-eggs, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  # extract posterior summaries of total egg production by brood year
+  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
+  
+  # conversion rates
+  Pb_per_E = post_summ(post, sub_index("^Pb_per_E[year,pop]", pop = j, year = ts_yrs))
+  
+  # max survival
+  alpha = post_summ(post, sub_index("^alpha[pop]", pop = j))
+  
+  # graphical parameters
+  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+  
+  # empty plot
+  plot(Pb_per_E["mean",] ~ E["mean",],
+       ylim = c(0, 1),
+       xlim = c(0, max(E["97.5%",])), type = "n",
+       ylab = "", xlab = "", las = 1, xaxt = "n", main = pops[j])
+  
+  # x-axis
+  x_ticks = axisTicks(par("usr")[1:2], log = F)
+  axis(side = 1, at = x_ticks, labels = x_ticks/1e6)
+  
+  segments(E["2.5%",], Pb_per_E["mean",], E["97.5%",], Pb_per_E["mean",], col = alpha("red", 0.5))
+  segments(E["mean",], Pb_per_E["2.5%",], E["mean",], Pb_per_E["97.5%",], col = alpha("red", 0.5))
+  points(Pb_per_E["mean",] ~ E["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  
+  rect(par("usr")[1], alpha["2.5%",], par("usr")[2], alpha["97.5%",], border = alpha("red", 0.5), col = alpha("salmon", 0.5))
+  abline(h = alpha["mean",], lwd = 2, col = "red")
+  box()
+}
+  
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Total Egg Production (Millions)")
+mtext(side = 2, outer = T, line = 0.25, "Parr per Egg")
+```
+
+## Parr per Spawner
+
+This figure is identical to above, but shows parr production per spawner instead of per egg.
+
+```{r parr-per-spawner-v-spawners, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  # extract posterior summaries of total spawners by brood year
+  Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
+  
+  # conversion rates
+  Pb_per_Sa_tot = post_summ(post, sub_index("^Pb_per_Sa_tot[year,pop]", pop = j, year = ts_yrs))
+  
+  # graphical parameters
+  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+  
+  # empty plot
+  plot(Pb_per_Sa_tot["mean",] ~ Sa_tot["mean",],
+       ylim = c(0, max(Pb_per_Sa_tot["97.5%",])),
+       xlim = c(0, max(Sa_tot["97.5%",])), type = "n",
+       ylab = "", xlab = "", las = 1)
+  
+  segments(Sa_tot["2.5%",], Pb_per_Sa_tot["mean",], Sa_tot["97.5%",], Pb_per_Sa_tot["mean",], col = alpha("red", 0.5))
+  segments(Sa_tot["mean",], Pb_per_Sa_tot["2.5%",], Sa_tot["mean",], Pb_per_Sa_tot["97.5%",], col = alpha("red", 0.5))
+  points(Pb_per_Sa_tot["mean",] ~ Sa_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Total Spawners")
+mtext(side = 2, outer = T, line = 0.25, "Parr per Spawner")
+```

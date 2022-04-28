@@ -1,0 +1,134 @@
+# Miscellaneous Process Model Components {.tabset .tabset-pills}
+
+## Migratory Strategy Apportionment
+
+```{r pi-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^pi[year,LH_type,pop]$", year = ts_yrs, LH_type = i_fall, pop = j)),
+               yrs = all_yrs[ts_yrs],
+               main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Proportion of Parr with Fall Migration Strategy")
+```
+
+## Ocean Survival {.tabset .tabset-pills}
+
+```{r ocean-surv-plots, fig.width = 6, fig.height = 5}
+ocean_surv_plot = function(j) {
+  par(mfrow = c(3,2), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)),
+               main = TeX("$O_0 \\rightarrow O_1\\,(NOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)),
+               main = TeX("$O_0 \\rightarrow O_1\\,(HOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)),
+               main = TeX("$O_1 \\rightarrow O_2\\,(NOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)),
+               main = TeX("$O_1 \\rightarrow O_2\\,(HOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)),
+               main = TeX("$O_2 \\rightarrow O_3\\,(NOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)),
+               main = TeX("$O_2 \\rightarrow O_3\\,(HOR)$"), yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  mtext(side = 1, outer = T, line = 0.5, "Brood Year")
+  mtext(side = 2, outer = T, line = 0, "Survival")
+}
+```
+
+### CAT
+
+```{r}
+ocean_surv_plot(j_cat)
+```
+
+### LOS
+
+```{r}
+ocean_surv_plot(j_los)
+```
+
+### MIN
+
+```{r}
+ocean_surv_plot(j_min)
+```
+
+### UGR
+
+```{r}
+ocean_surv_plot(j_ugr)
+```
+
+## Maturity {.tabset .tabset-pills}
+
+```{r maturity-plot-fn}
+maturity_plot = function(j) {
+  par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+  plot_tseries(post_summ(post, sub_index("^psi_O1[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 3 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O1[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 3 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2[year,origin,pop]$", year = ts_yrs, origin = o_nor, pop = j)), main = "Age 4 (NOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+  plot_tseries(post_summ(post, sub_index("^psi_O2[year,origin,pop]$", year = ts_yrs, origin = o_hor, pop = j)), main = "Age 4 (HOR)", yrs = all_yrs[ts_yrs], ylim = c(0,1))
+
+  mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+  mtext(side = 2, outer = T, line = 0.25, "Pr(Mature-at-Age|Alive in Ocean)")
+}
+```
+
+### CAT
+
+```{r maturity-cat, fig.width = 6, fig.height = 5}
+maturity_plot(j_cat)
+```
+
+### LOS
+
+```{r maturity-los, fig.width = 6, fig.height = 5}
+maturity_plot(j_los)
+```
+
+### MIN
+
+```{r maturity-min, fig.width = 6, fig.height = 5}
+maturity_plot(j_min)
+```
+
+### UGR
+
+```{r maturity-ugr, fig.width = 6, fig.height = 5}
+maturity_plot(j_ugr)
+```
+
+## Straying Dynamics {.tabset .tabset-pills}
+
+### Number of Strays
+
+```{r n-stray, fig.width = 6, fig.height = 5}
+plot_fn = function(j) {
+  plot_tseries(est = post_summ(post, sub_index("^G[year,origin,pop]", pop = j, year = ts_yrs, origin = o_hor)), yrs = all_yrs[ts_yrs], main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 1, outer = T, line = 0.25, "Return Year")
+mtext(side = 2, outer = T, line = 0.25, "Number of Strays Entering Population")
+```
+
+### Stray Composition
+
+```{r stray-comp, fig.width = 6, fig.height = 5}
+plot_fn = function(j) {
+  x = post_summ(post, sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = j))
+  
+  par(mar = c(5,2,1,1), tcl = -0.15, mgp = c(2, 0.35, 0))
+  mp = barplot(x["mean",], ylim = c(0, 1), xaxt = "n", main = pops[j], col = alpha("salmon", 0.5), border = alpha("red", 0.5))
+  segments(mp, x["2.5%",], mp, x["97.5%",], col = alpha("red", 0.5))
+  axis(side = 1, at = mp, labels = paste0("Age", jags_data$kmin:jags_data$kmax), las = 2)
+  segments(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[3], xpd = TRUE)
+}
+
+par(mfrow = c(2,2), oma = c(0,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 2, outer = T, line = 0.25, "Proportion of Strays by Age")
+```
