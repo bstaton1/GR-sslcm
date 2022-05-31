@@ -638,7 +638,7 @@ carc_sample_size(j_ugr)
 
 
 
-#### Spawn Status Data
+### Spawn Status Data
 
 ```{r spawn-status-fits, fig.width = 8, fig.height = 5}
 par(oma = c(2,2,0,0))
@@ -663,9 +663,9 @@ plot_f = function(j) {
 junk = sapply(1:jags_data$nj, plot_f)
 ```
 
-#### Mean Length Data {.tabset .tabset-pills}
+### Mean Length Data {.tabset .tabset-pills}
 
-##### Summer Parr
+#### Summer Parr
 
 ```{r summer-length-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
@@ -681,7 +681,7 @@ mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Mean Length at Summer Tagging (mm)")
 ```
 
-##### Spring Smolt
+#### Spring Smolt
 
 ```{r spring-length-fit, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
