@@ -57,13 +57,6 @@ jags_data = append_no_na_indices(jags_data)
 # is.na(jags_data$L_Mb_obs) == is.na(jags_data$sig_L_Mb_obs)
 jags_data$sig_L_Mb_obs["1995","UGR"] = mean(jags_data$sig_L_Mb_obs[,"UGR"], na.rm = TRUE)
 
-# some parameters we are assuming known (for now)
-# harvest rates Below and Above BON by year, age, origin
-U_45_nat = with(jags_data, c(NA, rep(0.02, ny - 1)))
-U_45_hat = with(jags_data, c(NA, rep(0.08, ny - 1)))
-U = abind(list(cbind(U_45_nat * 0.25, U_45_nat, U_45_nat), cbind(U_45_hat * 0.75, U_45_hat, U_45_hat)), along = 3)
-dimnames(U) = with(jags_data, list(rownames(Ra_obs), kmin:kmax, c("NOR", "HOR")))
-
 # proportion of spawners by age and population that are female
 Omega = array(NA, dim = c(jags_data$nk, jags_data$nj))
 dimnames(Omega) = list(jags_data$kmin:jags_data$kmax, colnames(jags_data$Ra_obs))
@@ -74,7 +67,6 @@ Omega["4","MIN"] = round(mean(Omega["4",], na.rm = TRUE), 2)
 Omega["5","MIN"] = round(mean(Omega["5",], na.rm = TRUE), 2)
 
 add_jags_data = list(
-  U = U,                  # harvest rate after sea lion mortality below BON
   f = c(1904, 3971, 4846),  # fecundity [female age]
   Omega = Omega             # proportion of spawners by age and population that are female
 )
