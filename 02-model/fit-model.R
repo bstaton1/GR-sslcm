@@ -52,6 +52,9 @@ if (is.na(mcmc_length)) {
 jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"))
 jags_data = append_no_na_indices(jags_data)
 
+# reduce assumed survival past sea lions in the early years
+jags_data$phi_SL[as.character(1991:2000),] = 0.85
+
 # 1995 UGR spring tagging has mean length but no SE?
 # is.na(jags_data$L_Pb_obs) == is.na(jags_data$sig_L_Pb_obs)
 # is.na(jags_data$L_Mb_obs) == is.na(jags_data$sig_L_Mb_obs)
