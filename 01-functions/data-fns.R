@@ -219,6 +219,14 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   B[y_names %in% sub$brood_year,,o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], k_names, sep = "_")])
   B[y_names %in% sub$brood_year,,o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], k_names, sep = "_")])
 
+  ### ADULT HARVEST RATE BELOW BON ###
+  # assume age-3 is harvested at a rate 25% of that for age-4 and age-5
+  U = array(NA, dim = c(ny, nk, no)); dimnames(U) = list(y_names, k_names, o_names)
+  U[y_names %in% all$brood_year,"3","NOR"] = all$HR_NOR * 0.25
+  U[y_names %in% all$brood_year,c("4", "5"),"NOR"] = all$HR_NOR
+  U[y_names %in% all$brood_year,"3","HOR"] = all$HR_HOR * 0.25
+  U[y_names %in% all$brood_year,c("4", "5"),"HOR"] = all$HR_HOR
+  
   ### ADULT SURVIVAL PAST SEA LIONS ###
   phi_SL = rep(NA, ny); names(phi_SL) = y_names
   phi_SL[y_names %in% sub$brood_year] = sub$surv_est_sea_lions
@@ -316,6 +324,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     ### ADULT SURVIVAL ###
     # adult survival past sea lions (not fitted; assumed known w/o error)
     phi_SL = phi_SL,
+    
+    # adult harvest rate below BON
+    U = U,
     
     # counts of PIT tag detections at BON by origin
     x_BON = x_BON,
@@ -452,6 +463,9 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     # weighted usable length
     wul = abind(lapply(main_list, function(x) x$wul), along = 1)
   )
+  
+  # add the harvest rate below BON (common to all pops)
+  obs_list = append(obs_list, list(U = main_list[[1]]$U))
   
   # list containing information about years needing straying
   stray_yrs = lapply(main_list, function(x) x$stray_yrs); nmax_stray = max(sapply(stray_yrs, length))

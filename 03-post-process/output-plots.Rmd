@@ -57,7 +57,7 @@ editor_options:
 
 ```{r directories, include = F}
 # set root directory to the project directory: one level up from this location
-knitr::opts_knit$set(root.dir = "../")
+# knitr::opts_knit$set(root.dir = "../")
 ```
 
 ```{r setup, include = FALSE}
@@ -65,13 +65,13 @@ knitr::opts_knit$set(root.dir = "../")
 knitr::opts_chunk$set(echo = FALSE, fig.align = "center")
 
 # load packages
-source("00-packages.R")
+source("../00-packages.R")
 
 # load all necessary functions
-invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
+invisible(sapply(list.files(path = "../01-functions", pattern = "\\.R$", full.names = T), source))
 
 # set the input directory
-in_dir = "02-model/model-output"
+in_dir = "../02-model/model-output"
 
 # read information from this model
 model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds")))

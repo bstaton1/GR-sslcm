@@ -255,6 +255,20 @@ colnames(tmp)[1] = "brood_year"
 # rename object and remove "tmp" object
 sea_lion_survival = tmp; rm(tmp)
 
+##### ADULT HARVEST RATES BELOW BON #####
+
+# read the data
+tmp = read.csv("98-scratch/harvest-rates-below-BON.csv")
+
+# add a population variable
+tmp$population = "ALL"
+
+# update column names
+colnames(tmp) = c("brood_year", "HR_NOR", "HR_HOR", "population")
+
+# rename object and remove "tmp" object
+harvest_rates = tmp; rm(tmp) 
+
 ##### ADULT SURVIVAL BON -> LGR #####
 
 # read the data
@@ -524,6 +538,7 @@ bio_dat = merge(bio_dat, sea_lion_survival, by = c("population", "brood_year"), 
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hydro_surv, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, dam_adult_counts, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, harvest_rates, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year
