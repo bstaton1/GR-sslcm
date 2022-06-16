@@ -1238,7 +1238,7 @@ pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 1)
 ##### HOR
 
 ```{r}
-pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 1)
+pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 2)
 ```
 
 #### Age-3 Maturity {.tabset .tabset-pills}
@@ -1252,7 +1252,7 @@ pop_ts_plots("^psi_O1[year,origin,pop]", origin = 1)
 ##### HOR
 
 ```{r}
-pop_ts_plots("^psi_O1[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O1[year,origin,pop]", origin = 2)
 ```
 
 #### Age-4 Maturity {.tabset .tabset-pills}
@@ -1266,7 +1266,7 @@ pop_ts_plots("^psi_O2[year,origin,pop]", origin = 1)
 ##### HOR
 
 ```{r}
-pop_ts_plots("^psi_O2[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O2[year,origin,pop]", origin = 2)
 ```
 
 ### Freshwater Adult Phase {.tabset .tabset-pills}
