@@ -107,6 +107,12 @@ add_jags_data = append(add_jags_data, list(
   L_Mb_scale = apply(jags_data$L_Mb_obs, 2, sd, na.rm = TRUE)
 ))
 
+# add hyperparameters of priors on ocean survival parameters
+add_jags_data = append(add_jags_data, list(
+  mu_phi_O1_O2_prior = c(60, 40),
+  mu_phi_O2_O3_prior = c(70, 30)
+))
+
 # append all of this additional content to the data object
 jags_data = append(jags_data, add_jags_data)
 
