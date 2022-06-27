@@ -299,11 +299,20 @@ The abundance of hatchery-origin fish for all subsequent life stages was tracked
 
 In-basin smolt ($M^{b}_{y,i,o,j}$) migrate to the ocean in the spring of the year they become age-2.
 We divide mortality experienced during this migration into two stages: (_i_) from in-basin to Lower Granite Dam (LGR), the first in a series of eight dams encountered in the downstream migration, and (_ii_) from LGR to the ocean.
-For parameter identifiability in mortality stage (_i_), we were required to assume that survival from in-basin to LGR was identical between natural-origin fall and spring migrants (i.e., $\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{fall},o=\mathrm{NOR},j} = \phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}$, we thus omit the $i$ dimension when defining these parameter below), but we were able to model natural-origin survival separately from hatchery-origin.
-We assume that year-specific realized survival values were multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{M^{b} \rightarrow M^{a}}_{o,j}$) with covariance matrix $\Sigma_{\phi^{M^{b} \rightarrow M^{a}}_o}$ (constructed of $\sigma_{\phi^{M^{b} \rightarrow M^{a}}_{o,j}}$ and $\rho_{\phi^{M^{b} \rightarrow M^{a}}_{o}}$ following eq. \@ref(eq:generic-Sigma4by4)):
+For parameter identifiability in mortality stage (_i_), we were required to assume that survival from in-basin to LGR was identical between natural-origin fall and spring migrants (i.e., $\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{fall},o=\mathrm{NOR},j} = \phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}$, we thus omit the $i$ dimension when defining these quantities below), but we were able to model natural-origin survival separately from hatchery-origin.
+
+We modeled deterministic out-of-basin migration for natural-origin smolt as a logit-linear function of smolt size:
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{M^{b} \rightarrow M^{a}}_{y,o,1:n_j}\right) \sim \mathcal{MVN}\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{b} \rightarrow M^{a}}_{o,1:n_j}\right), \Sigma_{\phi^{M^{b} \rightarrow M^{a}}_o}\right]
+\logit\left(\dot{\phi}^{M^{b} \rightarrow M^{a}}_{y,o=\mathrm{NOR},j}\right) = \tau_{0,j} + \tau_{1,j} \cdot L^{*M^{b}}_{y,j}
+(\#eq:get-phi-Mb-Ma-dot)
+\end{equation}
+
+Where $L^{*M^{b}}_{y,j}$ has been scaled and centered by subtracting the historical average observed mean smolt length for population $j$ from $L^{M^{b}}_{y,j}$ and dividing by the historical observed standard deviation (just as for $L^{*P^{b}}_{y,j}$ for standardized parr mean length).
+Realized out-of-basin migration survival was a multivariate logit-normal random variable around the deterministic logistic model prediction with covariance matrix $\Sigma_{\phi^{M^{b} \rightarrow M^{a}}}$ (each matrix constructed of $\sigma_{\phi^{M^{b} \rightarrow M^{a}}_{j}}$ and $\rho_{\phi^{M^{b} \rightarrow M^{a}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
+
+\begin{equation}
+\logit\left(\boldsymbol{\phi}^{M^{b} \rightarrow M^{a}}_{y,o,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{b} \rightarrow M^{a}}_{o,1:n_j}\right), \Sigma_{\phi^{M^{b} \rightarrow M^{a}}_o}\right]
 (\#eq:phi-Mb-Ma-random)
 \end{equation}
 
