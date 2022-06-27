@@ -418,6 +418,26 @@ Similar to the other survival data sets, we assumed these estimates are made wit
 (\#eq:hydro-surv-data)
 \end{equation}
 
+### Mean Length Data Sources
+
+Upon capture for PIT tagging, individual fish lengths are measured.
+We calculated the mean length (and the associated standard errors) of all captured fish (tagged and untagged; only fish $\ge$ 55mm can receive a PIT tag) and used them in log-normal likelihoods by assuming:
+
+\begin{equation}
+\log\left(\hat{L}^{P^{b}}_{y,j}\right) \sim \Ndist\left[\log\left(L^{P^{b}}_{y,j}\right), \hat{\sigma}_{L^{P^{b}}_{y,j}}\right]
+(\#eq:L-Pb-data)
+\end{equation}
+
+for mean length data for the summer parr tagging group and
+
+\begin{equation}
+\log\left(\hat{L}^{M^{b}}_{y,j}\right) \sim \Ndist\left[\log\left(L^{M^{b}}_{y,j}\right), \hat{\sigma}_{L^{M^{b}}_{y,j}}\right]
+(\#eq:L-Mb-data)
+\end{equation}
+
+for mean length data for the smolt tagging group.
+Because the each population has approximately 1,000 fish tagged and measured during each tagging event, the standard errors on the mean length estimates were quite small.
+
 # Ocean Juvenile Phase
 
 ## Process Model
@@ -797,6 +817,7 @@ tab = read.csv("04-data.csv", allowEscapes = TRUE)
 type_key = c(
   "abund" = "Abundance",
   "surv" = "Survival",
+  "length" = "Length",
   "comp" = "Composition"
 )
 
