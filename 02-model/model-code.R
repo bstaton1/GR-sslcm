@@ -10,7 +10,7 @@ jags_model_code = function() {
     alpha[j] ~ dbeta(1, 1)
     lbeta[j] ~ dnorm(log(lambda * wul[j]), 1/sig_lbeta^2) %_% T(,15) # log capacity. bound to prevent nonsensically large draws
     beta[j] <- exp(lbeta[j])
-    sig_Lphi_E_Pb[j] ~ dunif(0, 5)
+    sig_Lphi_E_Pb[j] ~ dunif(0, 1)
     lambda_pop[j] <- beta[j]/wul[j]  # derived pop-specific lambda, includes process noise in regression
 
     # length at end of summer vs. eggs relationship: density-dependent spring/summer growth
@@ -21,7 +21,7 @@ jags_model_code = function() {
     ### PRIORS: FRESHWATER PARAMETERS ###
     # aggregate parr to LH-specific parr
     mu_pi[i_fall,j] ~ dbeta(1, 1)
-    sig_Lpi[j] ~ dunif(0, 5)
+    sig_Lpi[j] ~ dunif(0, 1)
     mu_pi[i_spring,j] <- 1 - mu_pi[i_fall,j]
     
     # overwinter survival parameters: LH-specific
@@ -31,7 +31,7 @@ jags_model_code = function() {
     for (i in 1:ni) {
       gamma0[i,j] ~ dt(0, 1/1.566^2, 7.763)
       gamma1[i,j] ~ dt(0, 1/1.566^2, 7.763)
-      sig_Lphi_Pa_Mb[i,j] ~ dunif(0, 5)
+      sig_Lphi_Pa_Mb[i,j] ~ dunif(0, 1)
     }
 
     # coefficients for obtaining summer mean length to spring mean length growth factor
@@ -43,15 +43,15 @@ jags_model_code = function() {
     # assumed equal among migration types
     tau0[j] ~ dt(0, 1/1.566^2, 7.763)
     tau1[j] ~ dt(0, 1/1.566^2, 7.763)
-    sig_Lphi_Mb_Ma[o_nor,j] ~ dunif(0, 5)
+    sig_Lphi_Mb_Ma[o_nor,j] ~ dunif(0, 1)
     
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hor,j] ~ dbeta(1, 1)
-    sig_Lphi_Mb_Ma[o_hor,j] ~ dunif(0, 5)
+    sig_Lphi_Mb_Ma[o_hor,j] ~ dunif(0, 1)
     
     # pre-spawn survival (after brood-stock removal to successful spawning)
     mu_phi_Sb_Sa[j] ~ dbeta(1, 1)
-    sig_Lphi_Sb_Sa[j] ~ dunif(0, 5)
+    sig_Lphi_Sb_Sa[j] ~ dunif(0, 1)
     
     ### PRIORS: MATURATION ###
     # age/origin-specific maturation probabilities
@@ -59,11 +59,11 @@ jags_model_code = function() {
       
       # pr(return at SWA1)
       mu_psi_O1[o,j] ~ dbeta(1, 1)
-      sig_Lpsi_O1[o,j] ~ dunif(0, 5)
+      sig_Lpsi_O1[o,j] ~ dunif(0, 2)
       
       # pr(return at SWA2|not returned at SWA1)
       mu_psi_O2[o,j] ~ dbeta(1, 1)
-      sig_Lpsi_O2[o,j] ~ dunif(0, 5)
+      sig_Lpsi_O2[o,j] ~ dunif(0, 2)
     }
     
     ### PRIORS: OCEAN SURVIVAL ###
@@ -81,7 +81,7 @@ jags_model_code = function() {
     kappa_phi_O0_O1[j] ~ dunif(-0.99,0.99)
     
     # standard deviation of white noise residuals
-    sig_Lphi_O0_O1[j] ~ dunif(0, 5)
+    sig_Lphi_O0_O1[j] ~ dunif(0, 1)
     
     # standard deviation of total year 1 residual (i.e., includes autocorrelation)
     sig_Lphi_O0_O1_init[j] <- sqrt(sig_Lphi_O0_O1[j]^2/(1 - kappa_phi_O0_O1[j]^2))
@@ -126,7 +126,7 @@ jags_model_code = function() {
   # juvenile movement survival (LGR to estuary [ocean-age 0]): same for both LH types, different for origin types
   for (o in 1:no) {
     mu_phi_Ma_O0[o] ~ dbeta(1, 1)
-    sig_Lphi_Ma_O0[o] ~ dunif(0, 5)
+    sig_Lphi_Ma_O0[o] ~ dunif(0, 1)
   }
   
   # correlation parameters
@@ -207,7 +207,7 @@ jags_model_code = function() {
   # migration survival adults from BON to LGR
   for (o in 1:no) {
     mu_phi_Rb_Ra[o] ~ dbeta(1, 1)
-    sig_Lphi_Rb_Ra[o] ~ dunif(0, 5)
+    sig_Lphi_Rb_Ra[o] ~ dunif(0, 1)
   }
   
   # carcass vs. weir composition correction factor coefficients
