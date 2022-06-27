@@ -266,7 +266,6 @@ M^{b}_{y,i,o=\mathrm{NOR},j} = P^{a}_{y,i,j} \cdot \phi^{P^{a} \rightarrow M^{b}
 (\#eq:get-Mb-NOR)
 \end{equation}
 
-For populations with hatchery supplementation, hatchery-origin smolt releases (assumed known without error) were introduced at this point as well and stored in the variable $M^{b}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}$; we assumed no hatchery-origin parr were released the prior year, thus $M^{b}_{y,i=\mathrm{fall},o=\mathrm{HOR},j} = 0$.
 We further wished to use the mean length of these surviving smolt ($L^{M^{b}}_{y,j}$) to later explain variability in survival along the migration out-of-basin.
 Because only spring migrants are measured for mean smolt length in the spring (as they pass the screw trap), we must assume equal lengths for fall migrant smolt and thus omit the $i$ subscript from these quantities related to mean smolt length.
 Preliminary analyses on the observed mean length data revealed that mean smolt length was positively related with parr length, but that the relationship was non-linear.
@@ -291,6 +290,10 @@ L^{M^{b}}_{y,j} = L^{P^{b}}_{y,j} \cdot \Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}
 (\#eq:get-L-Mb)
 \end{equation}
 
+### Hatchery Inputs
+
+For populations with hatchery supplementation (CAT, LOS, and UGR), hatchery-origin smolt releases (assumed known without error) were stored in the variable $M^{b}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}$; we assumed no hatchery-origin parr were released the prior year, thus $M^{b}_{y,i=\mathrm{fall},o=\mathrm{HOR},j} = 0$.
+The abundance of hatchery-origin fish for all subsequent life stages was tracked separately from natural-origin fish.
 
 ### Seaward Migration
 
