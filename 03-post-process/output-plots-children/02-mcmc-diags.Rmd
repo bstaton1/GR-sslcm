@@ -443,7 +443,7 @@ rhat_hist = function(rhat) {
 
 There were **`r length(rhat_1_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes with $\hat{R}$ in this group. Here is their distribution:
   
-  ```{r rhat-hist-1, fig.width = 6, fig.height = 4}
+```{r rhat-hist-1, fig.width = 6, fig.height = 4}
 rhat_hist(rhat_1)
 ```
 
@@ -461,7 +461,7 @@ diag_plots(post_sub_1, "", show_diags = "never")
 
 There were **`r length(rhat_2_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. Here is their distribution:
   
-  ```{r rhat-hist-2, fig.width = 6, fig.height = 4}
+```{r rhat-hist-2, fig.width = 6, fig.height = 4}
 rhat_hist(rhat_2)
 ```
 
@@ -479,7 +479,7 @@ diag_plots(post_sub_2, "", show_diags = "never")
 
 There were **`r length(rhat_3_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. Here is their distribution:
   
-  ```{r rhat-hist-3, fig.width = 6, fig.height = 4}
+```{r rhat-hist-3, fig.width = 6, fig.height = 4}
 rhat_hist(rhat_3)
 ```
 
