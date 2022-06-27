@@ -161,7 +161,7 @@ Although the stochastic process requires the $\Sigma$ term, is is the component 
 
 ## Process Model
 
-### Reproduction and Parr Recruitment
+### Egg Production, Parr Recruitment, and Parr Mean Size
 
 Total egg production is the sum product of age-specific spawner abundance (from eq. \@ref(eq:get-Sa), below), proportion female, and fecundity:
 
@@ -202,6 +202,22 @@ Parr recruitment ($P^{b}_{y,j}$) to the end of summer was then the product of to
 \begin{equation}
 P^{b}_{y,j} = \phi^{E \rightarrow P^{b}}_{y,j} \cdot E_{y,j}
 (\#eq:get-Pb)
+\end{equation}
+
+In addition to density-dependent egg-to-parr survival (eq. \@ref(eq:get-phi-E-Pb-dot)), we also wished to model the size of parr at the end of summer as a function of density.
+It is well known that juvenile survival is related to body size \todo{Insert References} and if parr size is density-dependent, that would provide the possibility of modeling variability in survival later in life (overwinter rearing and migration out-of-basin) based on a density-dependent process that occurred earlier.
+We modeled expected mean parr length ($\dot{L}^{P^{b}}_{y,j}$, mm fork length) as a log-linear function of egg density:
+
+\begin{equation}
+\log\left(\dot{L}^{P^{b}}_{y,j}\right) = \omega_{0,j} + \omega_{1,j} \cdot \frac{E_{y,j}}{\mathrm{WUL}_j}
+(\#eq:get-L-Pb-dot)
+\end{equation}
+
+and the realized mean parr length as being multivariate log-normally distributed around $\dot{L}^{P^{b}}_{y,j}$ with covariance matrix $\Sigma_{L^{P^{b}}}$ (constructed of $\sigma_{L_{j}^{P^{b}}}$ and $\rho_{L^{P^{b}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
+
+\begin{equation}
+\log\left(\boldsymbol{L}^{P^{b}}_{y,1:n_j}\right) \sim \MVNdist\left[\log\left(\boldsymbol{\dot{L}}^{P^{b}}_{y,1:n_j}\right), \Sigma_{L^{P^{b}}}\right]
+(\#eq:L-Pb-random)
 \end{equation}
 
 ### Migratory Strategy Apportionment
