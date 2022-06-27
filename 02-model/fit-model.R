@@ -282,6 +282,7 @@ jags_params = c(
   
   # misc derived quantities
   "lambda_pop", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
+  "E_per_Sa",
   
   # residuals: process model
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",

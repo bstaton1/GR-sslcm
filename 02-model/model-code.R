@@ -519,6 +519,11 @@ jags_model_code = function() {
           ifelse(sum(Ma[y,1:ni,o,j]) == 0, 1, sum(Ma[y,1:ni,o,j]))                    # total smolts at LGR from brood year y
       }
     }
+    
+    # eggs per spawner
+    for (y in 2:ny) {
+      E_per_Sa[y,j] <- E[y,j]/Sa_tot[y,j]
+    }
   }
   
   ### OBSERVATION MODEL ###
