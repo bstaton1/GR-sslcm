@@ -27,7 +27,7 @@ do_pp_check = TRUE
 do_lppd = FALSE
 
 # specify a scenario name
-scenario = "base"
+scenario = "survival-edits-no-O1-prior-fix-ocean-surv"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -42,7 +42,7 @@ if (is.na(rmd)) {
 }
 
 if (is.na(mcmc_length)) {
-  mcmc_length = "very_short"
+  mcmc_length = "short"
   cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, "will be used.")
 }
 
@@ -109,6 +109,7 @@ add_jags_data = append(add_jags_data, list(
 
 # add hyperparameters of priors on ocean survival parameters
 add_jags_data = append(add_jags_data, list(
+  mu_phi_O0_O1_prior = c(1, 1),
   mu_phi_O1_O2_prior = c(60, 40),
   mu_phi_O2_O3_prior = c(70, 30)
 ))
@@ -554,3 +555,4 @@ if (rmd & last_yr > 2019) {
   setwd("../")
   cat("\n\nDone.")
 }
+

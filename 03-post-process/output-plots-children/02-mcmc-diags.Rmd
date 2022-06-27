@@ -236,24 +236,24 @@ diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Year 2 ocean survival
-L1 = "Year 2 Ocean Survival"
-L2 = c("Mean")
-base = c("mu_phi_O1_O2[origin,pop]")
-match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
-tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
-tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
-diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
-summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+# L1 = "Year 2 Ocean Survival"
+# L2 = c("Mean")
+# base = c("mu_phi_O1_O2[origin,pop]")
+# match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+# tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+# tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+# diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+# summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Year 2 ocean survival
-L1 = "Year 3 Ocean Survival"
-L2 = c("Mean")
-base = c("mu_phi_O2_O3[origin,pop]")
-match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
-tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
-tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
-diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
-summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+# L1 = "Year 3 Ocean Survival"
+# L2 = c("Mean")
+# base = c("mu_phi_O2_O3[origin,pop]")
+# match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+# tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+# tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+# diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+# summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Misc ocean survival
 L1 = "Misc Ocean Survival"
