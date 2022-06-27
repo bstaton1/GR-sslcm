@@ -758,7 +758,9 @@ handle_eqs = function(x) {
 tab$Eqs. = unname(sapply(tab$Eqs., handle_eqs))
 
 kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = symbol_tab_cap, escape = FALSE, longtable = TRUE) %>%
-  kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header"), repeat_header_continued = "\\textit{(Continued on next page...)}") %>%
+  kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
+                # repeat_header_continued = "\\textit{(Continued on next page...)}"
+                ) %>%
   row_spec(0, bold = TRUE) %>%
   pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
   pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) %>%
@@ -792,7 +794,9 @@ footnote_key = c(
 colnames(tab)[3] = "Prior\\textsuperscript{1,2,3,4,5}"
 
 kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = param_tab_cap, escape = FALSE, longtable = TRUE) %>%
-  kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header"), repeat_header_continued = "\\textit{(Continued on next page...)}") %>%
+  kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
+                # repeat_header_continued = "\\textit{(Continued on next page...)}"
+                ) %>%
   row_spec(0, bold = TRUE) %>%
   pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
   pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) %>%
@@ -825,8 +829,10 @@ tab$Eqs. = unname(sapply(tab$Eqs., handle_eqs))
 
 tab$Type = type_key[as.character(tab$Type)]
 
-kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = data_tab_cap, escape = FALSE) %>%
-  kable_styling(full_width = FALSE, latex_options = c("HOLD")) %>%
+kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = data_tab_cap, escape = FALSE, longtable = TRUE) %>%
+  kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
+                # repeat_header_continued = "\\textit{(Continued on next page...)}"
+                ) %>%
   row_spec(0, bold = TRUE) %>%
   pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
   pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) %>%
@@ -858,7 +864,9 @@ tab$Component = component_key[as.character(tab$Component)]
 colnames(tab)[2] = "Model Component"
 
 kable(tab[,2:4], "latex", booktabs = TRUE, linesep = "", caption = equation_tab_cap, escape = FALSE, longtable = TRUE, align = "lrl") %>%
-  kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header"), repeat_header_continued = "\\textit{(Continued on next page...)}") %>%
+  kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
+                # repeat_header_continued = "\\textit{(Continued on next page...)}"
+                ) %>%
   row_spec(0, bold = TRUE) %>%
   pack_rows("Generic", min(which(tab$Phase == 0)), max(which(tab$Phase == 0)), bold = TRUE, hline_after = TRUE) %>%
   pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
