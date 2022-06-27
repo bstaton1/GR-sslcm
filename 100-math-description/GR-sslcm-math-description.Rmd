@@ -241,17 +241,17 @@ For fall migrants, this proportion was a multivariate logit-normal random variab
 
 and the proportion that are spring migrants was obtained as its complement ($\pi_{y,i = \mathrm{spring},j} = 1 - \pi_{y,i = \mathrm{fall},j}$).
 
-### Survival to Smolt Stage and Hatchery Inputs
+### Survival to Smolt Stage and Mean Smolt Size
 
-Overwinter survival from the end of the parr year (i.e., age-1) to the start of the smolt year (i.e., age-2), denoted by $\phi^{P^{a} \rightarrow M^{b}}_{y,i,j}$, was modeled as a logit-linear function of parr density (scaled to the same metric of weighted usable habitat length [$\mathrm{WUL}_j$] used in eq. \@ref(eq:beta-random)).
+Overwinter survival from the end of the parr year (i.e., age-1) to the start of the smolt year (i.e., age-2), denoted by $\phi^{P^{a} \rightarrow M^{b}}_{y,i,j}$, was modeled as a logit-linear function of mean parr size.
 Deterministic overwinter survival was:
 
 \begin{equation}
-\logit\left(\dot{\phi}^{P^{a} \rightarrow M^{b}}_{y,i,j}\right) = \gamma_{0,i,j} + \gamma_{1,j} \cdot \left(\frac{P^{a}_{y,i,j}}{\mathrm{WUL}_j}\right)
+\logit\left(\dot{\phi}^{P^{a} \rightarrow M^{b}}_{y,i,j}\right) = \gamma_{0,i,j} + \gamma_{1,i,j} \cdot L^{*P^{b}}_{y,j}
 (\#eq:get-phi-Pa-Mb-dot)
 \end{equation}
 
-Note the migratory strategy-specific intercept ($\gamma_{0,i,j}$) but common slope terms ($\gamma_{1,j}$).
+Where $L^{*P^{b}}_{y,j}$ has been scaled and centered by subtracting the historical average observed mean parr length for population $j$ from $L^{P^{b}}_{y,j}$ and dividing by the historical observed standard deviation.
 Then, for each migratory strategy separately, overwinter survival was a multivariate logit-normal random variable around the deterministic logistic model prediction with covariance matrix $\Sigma_{\phi^{P^{a} \rightarrow M^{b}}_i}$ (each matrix constructed of $\sigma_{\phi^{P^{a} \rightarrow M^{b}}_{i,j}}$ and $\rho_{\phi^{P^{a} \rightarrow M^{b}}_{i}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 
 \begin{equation}
@@ -267,6 +267,30 @@ M^{b}_{y,i,o=\mathrm{NOR},j} = P^{a}_{y,i,j} \cdot \phi^{P^{a} \rightarrow M^{b}
 \end{equation}
 
 For populations with hatchery supplementation, hatchery-origin smolt releases (assumed known without error) were introduced at this point as well and stored in the variable $M^{b}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}$; we assumed no hatchery-origin parr were released the prior year, thus $M^{b}_{y,i=\mathrm{fall},o=\mathrm{HOR},j} = 0$.
+We further wished to use the mean length of these surviving smolt ($L^{M^{b}}_{y,j}$) to later explain variability in survival along the migration out-of-basin.
+Because only spring migrants are measured for mean smolt length in the spring (as they pass the screw trap), we must assume equal lengths for fall migrant smolt and thus omit the $i$ subscript from these quantities related to mean smolt length.
+Preliminary analyses on the observed mean length data revealed that mean smolt length was positively related with parr length, but that the relationship was non-linear.
+We thus modeled the expected multiplicative change in mean size between the parr and smolt stage as a log-linear function of (standardized) parr mean size:
+
+\begin{equation}
+\log\left(\dot{\Delta}^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,j}\right) = \theta_{0,j} + \theta_{1,j} \cdot L^{*P^{b}}_{y,j}
+(\#eq:get-Delta-L-Pb-L-Mb-dot)
+\end{equation}
+
+and obtained the realized multiplicative change in mean length as being multivariate log-normally distributed around $\dot{\Delta}^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,j}$ with covariance matrix $\Sigma_{\Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}}$ (constructed of $\sigma_{\Delta_{j}^{L^{P^{b}} \rightarrow L^{M^{b}}}}$ and $\rho_{\Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
+
+\begin{equation}
+\log\left(\boldsymbol{\Delta}^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,1:n_j}\right) \sim \MVNdist\left[\log\left(\boldsymbol{\dot{\Delta}}^{L^{P^{b} \rightarrow L^{M^{b}}}}_{y,1:n_j}\right), \Sigma_{\Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}}\right]
+(\#eq:Delta-L-Pb-L-Mb-random)
+\end{equation}
+
+Mean smolt length was then the product:
+
+\begin{equation}
+L^{M^{b}}_{y,j} = L^{P^{b}}_{y,j} \cdot \Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,j}
+(\#eq:get-L-Mb)
+\end{equation}
+
 
 ### Seaward Migration
 
