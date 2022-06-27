@@ -37,6 +37,14 @@ header-includes:
   - \titleformat{\subsubsection}{\itshape}{\thesubsubsection}{1em}{}
   - \renewcommand{\contentsname}{Table of Contents}
   - \renewcommand{\eqref}[1]{\ref{#1}}
+  - \renewcommand*{\log}{\mathrm{log}\hspace{-0.20em}}
+  - \renewcommand*{\max}{\mathrm{max}\hspace{-0.20em}}
+  - \newcommand{\logit}{\mathrm{logit}\hspace{-0.20em}}
+  - \newcommand{\ilogit}{\mathrm{logit}^{-1}\hspace{-0.20em}}
+  - \newcommand{\MVNdist}{\mathcal{MVN}\hspace{-0.20em}}
+  - \newcommand{\Ndist}{\mathcal{N}\hspace{-0.20em}}
+  - \newcommand{\Bdist}{\mathcal{B}\hspace{-0.20em}}
+  - \newcommand{\Mdist}{\mathcal{M}\hspace{-0.20em}}
 ---
 
 ```{r setup, include=FALSE}
@@ -45,8 +53,7 @@ library(knitr)
 library(kableExtra)
 ```
 
-\newcommand{\logit}{\mathrm{logit}}
-\newcommand{\ilogit}{\mathrm{logit}^{-1}}
+
 
 \pagenumbering{gobble}
 \clearpage
