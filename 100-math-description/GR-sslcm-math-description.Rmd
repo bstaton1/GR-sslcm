@@ -10,7 +10,7 @@ output:
     citation_package: natbib
   # bookdown::word_document2
 fontfamily: mathpazo
-geometry: margin=1in
+geometry: [top=1in,bottom=1in,left=0.25in,right=1.75in]
 linkcolor: cyan
 urlcolor: cyan
 citecolor: black
@@ -22,6 +22,10 @@ editor_options:
 header-includes:
   - \usepackage{microtype}
   - \usepackage{float}
+  - \usepackage{xcolor}
+  - \definecolor{my-blue}{HTML}{E6F0FF}
+  - \usepackage[textwidth=1.5in]{todonotes}
+  - \setuptodonotes{backgroundcolor=my-blue,textcolor=black,linecolor=ProcessBlue,bordercolor=my-blue,size=footnotesize}
   - \usepackage[labelfont={bf,sc},labelsep=period]{caption}
   - \captionsetup{width=\textwidth}
   - \usepackage{fancyhdr}
