@@ -436,20 +436,23 @@ Because the each population has approximately 1,000 fish tagged and measured dur
 
 ## Process Model
 
-Spring Chinook salmon in the Grande Ronde basin migrate to sea as age-2 smolts and can return as either age-3, age-4, or age-5 adults.
-That is, ocean juveniles spend between 1 and 3 winters at sea and some fraction will mature and make the return migration after each winter and before the following winter at sea (which we term the "maturation rate").
-Thus, we divided ocean population dynamics into two types of demographic rates: survival and maturation rates. We treated survival in the first year with the most complexity and we vastly simplified survival in the second and third years for parameter identifiability purposes.
-Further, we wished to account for differences in ocean survival among natural- and hatchery-origin fish, but were limited in the level of complexity that was estimable; thus we assumed natural- and hatchery-origin survival at sea was perfectly correlated over time, but shifted by a log-odds ratio.
+Spring Chinook salmon in the Grande Ronde basin migrate to sea as age-2 smolt and can return as either age-3, age-4, or age-5 adults.
+That is, ocean juveniles spend between 1 and 3 winters at sea and some fraction will make the return migration after each winter and before the following winter at sea.
+Thus, we divided ocean population dynamics into two types of demographic rates and their process noise: survival and maturation.
+Due to the confounding of these parameters\todo{Insert a reference to a paper that describes this ocean survival/maturation rate confounding?}, we were unable to freely estimate all rates and were instead required to make some simplifying assumptions and use more informative priors than in other parts of the model.
 
-First year natural-origin ocean survival was assumed to be a multivariate logit-normal random variable around a time-constant and density-independent deterministic value ($\dot{\phi}^{O^{0} \rightarrow O^{1}}_{o=\mathrm{NOR},j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \rightarrow O^{1}}}$ (constructed of $\sigma_{\phi^{O^{0} \rightarrow O^{1}}_{j}}$ and $\rho_{\phi^{O^{0} \rightarrow O^{1}}}$ following eq. \@ref(eq:generic-Sigma4by4)), but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion (all $o=\mathrm{NOR}$ in eq. \@ref(eq:phi-O0-O1-random), omitted for brevity):
+### Survival Rates {#ocean-survival}
+
+We assumed first year natural-origin^[All $o=\mathrm{NOR}$ in eq. \@ref(eq:phi-O0-O1-random), omitted for brevity.] ocean survival was a multivariate logit-normal random variable around a time-constant expected value ($\dot{\phi}^{O^{0} \rightarrow O^{1}}_{o=\mathrm{NOR},j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \rightarrow O^{1}}}$ (constructed of $\sigma_{\phi^{O^{0} \rightarrow O^{1}}_{j}}$ and $\rho_{\phi^{O^{0} \rightarrow O^{1}}}$ following eq. \@ref(eq:generic-Sigma4by4)), but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion\todo{Include reference to papers that talk about ocean survival varying cyclically; e.g., Mantua et al. paper on PDO}:
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{O^{0} \rightarrow O^{1}}_{y,o,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \rightarrow O^{1}}_{o,1:n_j}\right) + \boldsymbol{\kappa}^{O^{0} \rightarrow O^{1}}_{1:n_j} \cdot \left[ \logit\left(\boldsymbol{\phi}^{O^{0} \rightarrow O^{1}}_{y-1,o,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \rightarrow O^{1}}_{o,1:n_j}\right)\right], \Sigma_{\phi^{O^{0} \rightarrow O^{1}}} \right\}
 (\#eq:phi-O0-O1-random)
 \end{equation}
 
-We assumed process variation was negligible in the second and third year ocean survival terms, thus we forced the year-specific values of $\phi^{O^{1} \rightarrow O^{2}}_{y,o=\mathrm{NOR},j}$ and $\phi^{O^{2} \rightarrow O^{3}}_{y,o=\mathrm{NOR},j}$ to take on the same deterministic value each year (i.e., $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$, respectively).
-We further discovered that not all maturity and ocean survival terms were uniquely identifiable based solely on adult return abundance and age composition -- we thus relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$ (Table \@ref(tab:param-table)).
+We assumed process variation was negligible in the second and third year ocean survival terms, thus we forced the year-specific values of $\phi^{O^{1} \rightarrow O^{2}}_{y,o=\mathrm{NOR},j}$ and $\phi^{O^{2} \rightarrow O^{3}}_{y,o=\mathrm{NOR},j}$ to take on the same value for all years (i.e., $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$, respectively).
+Because not all maturity and ocean survival terms were uniquely identifiable based on adult return abundance and age composition, we relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$ (Table \@ref(tab:param-table)).
+\todo{Are we using priors or fixed values? Include reference to reports where we can reference the specific values used.}
 To obtain hatchery-origin ocean survival each year, we adjusted the natural-origin survival by a log-odds ratio ($\delta_{j}$) that was common across all ocean years and brood years but varied by population:
 
 \begin{equation}
@@ -461,7 +464,11 @@ To obtain hatchery-origin ocean survival each year, we adjusted the natural-orig
 (\#eq:get-phi-O-HOR)
 \end{equation}
 
-Maturation rates (i.e., the proportion of fish from a given brood year alive and in the ocean at the beginning of a year that make the return migration that year) were assumed to vary by ocean age, origin, brood year, and population and were treated as multivariate logit-normal random variables around time-constant and density-independent deterministic values ($\dot{\psi}^{O^{w}}_{o,j}$, $w$ is the number of winters spent in the ocean) with covariance matrix $\Sigma_{\psi^{O^{w}}_o}$ (one matrix per origin, each constructed of $\sigma_{\psi^{O^{w}}_{o,j}}$ and $\rho_{\psi^{O^{w}}_{o}}$ following eq. \@ref(eq:generic-Sigma4by4)):
+This $\delta_j$ parameter allows hatchery- and natural-origin to have different survival for each ocean year, but assumes the origin effect is equal for all brood years and ocean ages within a population, implying an assumption that ocean survival among origins is perfectly correlated.
+
+### Maturation Rates {#maturity}
+
+We treated realized maturation rates (i.e., the proportion of fish from a given brood year alive and in the ocean at the beginning of a year that make the return migration that year) as multivariate logit-normal random variables around time-constant expected values ($\dot{\psi}^{O^{w}}_{o,j}$; $w$ is the number of winters spent in the ocean) with covariance matrix $\Sigma_{\psi^{O^{w}}_o}$ (one matrix per origin, each constructed of $\sigma_{\psi^{O^{w}}_{o,j}}$ and $\rho_{\psi^{O^{w}}_{o}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 
 \begin{equation}
 \begin{aligned}
@@ -473,7 +480,9 @@ Maturation rates (i.e., the proportion of fish from a given brood year alive and
 
 Since we assumed age-5 to be the last age of maturity, all fish alive and in the ocean after the third year at sea must mature and return that year (i.e., all $\psi^{O^{3}}_{y,o,j} = 1$).
 
-Now that we have defined the sources of process noise in the ocean demographic rates, we can define the process equations that result in transitioning ocean juveniles through the various ocean ages.
+### Return to Columbia River {#return-to-columbia-river}
+
+Now that we have defined the sources of process noise in the ocean demographic rates, we can define the process equations that result in transitioning ocean juveniles through the various ocean ages and ultimately at the mouth of the Columbia River for the upstream migration.
 We modeled ocean population dynamics as a sequence of survival, maturation of surviving fish, and survival of non-maturing fish:
 
 \begin{equation}
@@ -485,11 +494,12 @@ O^{3}_{y,o,j} &= O^{2}_{y,o,j} \cdot (1 - \psi^{O^{2}}_{y,o,j}) \cdot \phi^{O^{2
 (\#eq:get-Os)
 \end{equation}
 
-That is, fish reaching the ocean as age-2 juveniles ($O^{0}_{y,o,j}$) must survive one winter to become age-3 ocean juveniles ($O^{1}_{y,o,j}$); if they do not mature at age-3 ($1 - \psi^{O^{1}}_{y,o,j}$), then they must survive another winter to become age-4 ocean juveniles ($O^{2}_{y,o,j}$), and if they do not mature at that point ($1 - \psi^{O^{2}}_{y,o,j}$), they must survive a third winter to become age-5 ocean juveniles ($O^{3}_{y,o,j}$).
+That is, fish reaching the ocean as age-2 juveniles ($O^{0}_{y,o,j}$) must survive one winter to become age-3 ocean juveniles ($O^{1}_{y,o,j}$); if they do not mature at age-3 (with probability $1 - \psi^{O^{1}}_{y,o,j}$), then they must survive another winter to become age-4 ocean juveniles ($O^{2}_{y,o,j}$), and if they do not mature at that point (with probability $1 - \psi^{O^{2}}_{y,o,j}$), they must survive a third winter to become age-5 ocean juveniles ($O^{3}_{y,o,j}$).
 
-Now, we must place the maturing portion of each of $O^{1}_{y,o,j}$, $O^{2}_{y,o,j}$, and $O^{3}_{y,o,j}$ into the correct year and age of return to the mouth of the Columbia River ($R^{b}_{y,k,o,j}$).
-Fish spawned in year $y$ will return as the $k^{\mathrm{th}}$ possible age at maturity in year $y + k_{\mathrm{min}} + k - 1$ (age-3 is the first possible total age of maturity, thus $k_{\mathrm{min}}$ = 3).
-As an example, fish spawned in brood year $y$ = 2000 will return in 2003 as age-3 ($k$ = 1), in 2004 as age-4 ($k$ = 2), or in 2005 as age-5 ($k$ = 3).
+The abundances of ocean juveniles ($O^{1}_{y,o,j}$, $O^{2}_{y,o,j}$, and $O^{3}_{y,o,j}$) are organized by brood year, however they will return in different years to spawn (and be observed) because they are of different ages.
+We placed returning mature fish into the correct year and age of return to the mouth of the Columbia River before the upstream migration ($R^{b}_{y,k,o,j}$) based on the following rule.
+Fish spawned in year $y$ will return as the $k^{\mathrm{th}}$ possible age of maturity in year $y + k_{\mathrm{min}} + k - 1$ (age-3 is the first possible total age of maturity, thus $k_{\mathrm{min}}$ = 3).
+As an example, fish spawned in brood year $y$ = 2000 will return in 2003 as age-3 ($k$ = 1), in 2004 as age-4 ($k$ = 2), or in 2005 as age-5 ($k$ = 3) -- see Table \@ref(tab:year-table) for a visual of this example.
 Thus, the abundance of fish spawned in brood year $y$ returning as age-3, age-4, and age-5, respectively, was:
 
 \begin{equation}
@@ -501,10 +511,10 @@ R^{b}_{y+k_{\mathrm{min}} + 3 - 1,3,o,j} &= O^{3}_{y,o,j} \cdot \psi^{O^{3}}_{y,
 (\#eq:get-Rbs)
 \end{equation}
 
-Note, however, that this leaves 12 age/year combinations per origin unpopulated (the first 3 missing years for age-3 returns, first 4 missing years for age-4 returns, and first 5 missing years for age-5 returns).
-This is because the life cycle dynamics must start somewhere, and no juvenile process model outcomes existed that would ultimately become these $R^{b}_{y,k,o,j}$ values in these early years.
-Thus, to initialize the adult returns for natural-origin fish (and as a result, the rest of the life cycle), we estimated these 12 year/age return abundances as free parameters with fairly restrictive priors (Table \@ref(tab:param-table)) with boundaries loosely informed by the ranges of adult returns at age observed in the early years of the data time series.
-Initial abundance of hatchery-origin returns was handled by the "straying model", described below.
+Note, however, that this leaves 12 age/year combinations per origin unpopulated with returning adults (the first 3 missing years for age-3 returns, first 4 missing years for age-4 returns, and first 5 missing years for age-5 returns; see Table \@ref(tab:year-table)).
+This is because no juvenile process model outcomes existed that would ultimately become these $R^{b}_{y,k,o,j}$ values in these early years.
+Thus, to initialize the adult returns for natural-origin fish (and as a result, the rest of the life cycle), we estimated these 12 year/age return abundances as unknown parameters with fairly restrictive priors (Table \@ref(tab:param-table)) with boundaries loosely informed by the ranges of adult returns at age observed in the early years of the data time series.
+Initial abundance of hatchery-origin returns was handled by the "straying model" (see Section \@ref(processes-between-bon-and-lgr), below).
 
 ## Observation Model
 
@@ -886,6 +896,38 @@ kable(tab[,2:4], "latex", booktabs = TRUE, linesep = "", caption = equation_tab_
 
 \clearpage
 
+```{r}
+year_tab_caption = "Year of return based on age of return and brood year. For example, adults that are progeny of the spawners in returning in 2000 (the brood year) return to spawn in the year 2003 as age-3, 2004 as age-4, and in 2005 as age-5 (shown in blue, example also given in the text in Section \\ref{return-to-columbia-river}). The return years with red brood years show the age-specific return abundances that were estimated because no previous states (e.g., parr, smolt) were available for these early brood years (see Section \\ref{return-to-columbia-river} for more details)."
+```
+
+```{r year-table}
+
+return_year = 1991:2019
+age_3 = 1988:2016
+age_4 = 1987:2015
+age_5 = 1986:2014
+
+tab_full = data.frame(return_year, age_3, age_4, age_5)
+tab_NA = data.frame(return_year = NA, age_3 = NA, age_4 = NA, age_5 = NA)
+
+tab_start = tab_full[tab_full$return_year %in% c(1991:1996),]
+tab_end = tab_full[tab_full$return_year %in% c(2019),]
+tab_middle = tab_full[tab_full$return_year %in% c(2003:2005),]
+tab = rbind(tab_start, tab_NA, tab_middle, tab_NA, tab_end)
+
+tab[,-1][tab[,-1] < 1991 & !is.na(tab[,-1])] = kableExtra::cell_spec(tab[,-1][tab[,-1] < 1991 & !is.na(tab[,-1])], format = "latex", color = "red")
+tab[,-1][tab[,-1] == 2000 & !is.na(tab[,-1])] = kableExtra::cell_spec(tab[,-1][tab[,-1] == 2000 & !is.na(tab[,-1])], format = "latex", color = "blue")
+
+tab[is.na(tab)] = "$\\vdots$"
+
+kable(tab, "latex", booktabs = TRUE, align = "cccc", linesep = "", col.names = c("Return Year", "Age-3", "Age-4", "Age-5"), escape = FALSE,
+      caption = year_tab_caption, row.names = FALSE) %>%
+  kable_styling(full_width = FALSE) %>%
+  add_header_above(c(" " = 1, "Brood Year of Returning Adults by Age" = 3), bold = TRUE) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(2:4, width = "50px")
+```
 
 \clearpage
 
