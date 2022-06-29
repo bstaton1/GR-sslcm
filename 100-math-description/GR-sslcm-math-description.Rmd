@@ -524,11 +524,18 @@ No data sources were used to inform ocean juvenile population dynamics -- estima
 
 ## Process Model
 
-There are several sources of mortality that occur on the upstream migration between the mouth of the Columbia River and the natal tributaries in the Grande Ronde basin.
-Downstream of Bonneville Dam (BON, the first dam encountered in this upstream migration), returning adults are subject to predation mortality (survival denoted by $\phi^{SL}_{y,j}$) from sea lions and harvest mortality from fisheries (harvest rate after sea lion predation denoted by $U_{y,k,o}$).
-We compiled the best available estimates of these quantities, but did not fit to them explicitly as part of the observation model (as we do with many other data sources) -- instead we passed them to the model as non-stochastic quantities that were assumed to be known without error.
-Once fish reach BON, however, their survival to LGR has been monitored (since 2000; $y=10$) via PIT tags and so we did fit to those data and estimate the survival rate between BON and LGR as multivariate logit-normal random variables around deterministic values ($\dot{\phi}^{R^{b} \rightarrow R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \rightarrow R^{a}}}$ (constructed of $\sigma_{\phi^{R^{b} \rightarrow R^{a}}_o}$ and $\rho_{\phi^{R^{b} \rightarrow R^{a}}}$ following eq. \@ref(eq:generic-Sigma2by2)).
-In years without these PIT tag counts, however, the survival from BON to LGR is confounded with ocean survival, and so we assumed BON to LGR survival was equal to the deterministic expectation in these years for parameter identifiability purposes:
+We attempted to partition several sources of mortality that occur between the upstream migration from the mouth of the Columbia River to the point of spawning in natal tributaries in Grande Ronde basin.
+For ease of presentation, we separate these processes into three categories depending on where they occur spatiotemporally: (_i_) downstream of Bonneville Dam (BON) at the beginning of the upstream migration, (_ii_) along the upstream migration in the mainstem Columbia and Snake rivers between BON and LGR, and (_iii_) after arrival to the natal tributaries and up until the point of spawning.
+
+### Processes Downstream of BON
+
+Prior to reaching BON, we subject the returning adults to predation mortality from sea lions (survival denoted by $\phi^{SL}_{y,j}$) and harvest mortality from fisheries (harvest rate on fish surviving sea lion predation denoted by $U_{y,k,o}$).\todo{Insert information about where harvest rates and sea lion predation estimates came from.}
+We compiled the best available estimates of these quantities, but did not fit to them explicitly as part of the observation model (as we do with many other data sources) -- instead we passed them to the model as non-stochastic quantities that were assumed to be known without error (used in eq. \@ref(eq:get-Ra), below).
+
+### Processes Between BON and LGR
+
+Once fish reach BON, however, their survival to LGR has been monitored (since 2000; $y=10$) via PIT tags and so we did fit to those data and estimate the survival rate between BON and LGR as multivariate logit-normal random variables around expected values ($\dot{\phi}^{R^{b} \rightarrow R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \rightarrow R^{a}}}$ (constructed of $\sigma_{\phi^{R^{b} \rightarrow R^{a}}_o}$ and $\rho_{\phi^{R^{b} \rightarrow R^{a}}}$ following eq. \@ref(eq:generic-Sigma2by2)).
+In years without these PIT tag counts, however, the survival from BON to LGR is confounded with ocean survival, and so we assumed BON to LGR survival was equal to the expected value in these years for parameter identifiability purposes:
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{R^{b} \rightarrow R^{a}}_{y,1:n_o}\right)
@@ -539,11 +546,11 @@ In years without these PIT tag counts, however, the survival from BON to LGR is 
 (\#eq:phi-Rb-Ra-random)
 \end{equation}
 
-Examination of the adult data indicated that hatchery-origin adults returned to Grande Ronde populations in years that could not be attributed to hatchery-origin smolt releases to these populations.
-Further, the Minam River population (which has no hatchery supplementation program) has had hatchery adults return in many of the years with adult data.
+Examination of the adult composition data indicated that hatchery-origin adults returned to Grande Ronde populations in years that could not be attributed to hatchery-origin smolt releases to these populations.
+Further, the Minam River population (which has no hatchery supplementation program) has had hatchery adults return in many of the years included in our model.
 Since there were non-zero observations of hatchery-origin adults in cases without a process model component to produce them, we required a process model mechanism to populate non-zero expected values for the observation model to remain valid based on the available data.
-We term this part of the model the "straying model", and apply it only in years/populations in which there is no other way to explain the presence of hatchery-origin adults.
-We denote the total number of strays that enter population $j$ in year $y$ as $G_{y,o,j}$; we forced all $G_{y,o=\mathrm{NOR},j} = 0$ and forced all $G_{y,o=\mathrm{HOR},j} = 0$ in years where hatchery-origin smolt releases to population $j$ could have explained non-zero hatchery-origin adult returns in year $y$ at age $k$.
+We term this model component the "straying model", and applied it only in years/populations in which the presence of non-zero hatchery-origin returning adults could not otherwise be explained due to zero-valued hatchery-origin smolt releases.
+We denote the total number of strays that entered population $j$ in year $y$ as $G_{y,o,j}$; we forced all $G_{y,o=\mathrm{NOR},j} = 0$ and forced all $G_{y,o=\mathrm{HOR},j} = 0$ in years where non-zero hatchery-origin smolt releases to population $j$ could have explained non-zero hatchery-origin adult returns in year $y$ at age $k$.
 We denote the age composition of these strays by $p^{G}_{k,j}$ (where $\sum_k^{n_k} p^{G}_{k,j} = 1$) and apportioned $G_{y,o,j}$ to age-specific values by $G_{y,k,o,j}=G_{y,o,j} \cdot p^{G}_{k,j}$.
 
 We can now define the abundance of adults arriving to their natal spawning tributaries by age and origin ($R^{a}_{y,k,o,j}$) as:
@@ -553,24 +560,28 @@ R^{a}_{y,k,o,j} = R^{b}_{y,k,o,j} \cdot \phi^{SL}_{y,j} \cdot (1 - U_{y,k,o}) \c
 (\#eq:get-Ra)
 \end{equation}
 
-Upon arrival in the tributary, populations with a weir and hatchery program (all populations except the Minam River, indexed by $j = \mathrm{MIN}$) have some number of adults removed each year for broodstock and as a means to minimize natural spawning of hatchery-origin fish.
-These weir removals (denoted by $B_{y,k,o,j}$) were passed to the model as perfectly known values and $B_{y,k,o,j=\mathrm{MIN}} = 0$.
-Thus, the abundance of fish passed upstream of the weir and that would have a chance to spawn each year was (the maximum constraint was used to ensure all $S^{b}_{y,k,o,j} > 0$):
+\todo{Include note that no mortality is assumed between LGR and the natal tributary.}
+
+### Processes in Natal Tributary
+
+Upon arrival to the natal tributary, populations with a weir and hatchery program (all populations except the Minam River, indexed by $j = \mathrm{MIN}$) have some number of adults removed each year for broodstock and as a means to minimize natural spawning of hatchery-origin fish.
+We supplied these weir removals (denoted by $B_{y,k,o,j}$) to the model as known without error and set all $B_{y,k,o,j=\mathrm{MIN}} = 0$.
+Thus, the abundance of adults that would have a chance to spawn each year was (the maximum constraint was used to ensure all $S^{b}_{y,k,o,j} > 0$):
 
 \begin{equation}
 S^{b}_{y,k,o,j} = \max\left(R^{a}_{y,k,o,j} - B_{y,k,o,j}, 1\right)
 (\#eq:get-Sb)
 \end{equation}
 
-As a final step before spawning, these fish on the spawning grounds must survive the challenges of finding adequate spawning habitat and avoid succumbing to stress and mortality prior to spawning.
-We term this phenomenon "pre-spawn survival", denoted by $\phi^{S^{b} \rightarrow S^{a}}_{y,j}$, which we assume are multivariate logit-normal random variables around a time-constant and density-independent deterministic value ($\dot{\phi}^{S^{b} \rightarrow S^{a}}_{j}$) with covariance matrix $\Sigma_{\phi^{S^{b} \rightarrow S^{a}}}$ (constructed of $\sigma_{\phi^{S^{b} \rightarrow S^{a}}_j}$ and $\rho_{\phi^{S^{b} \rightarrow S^{a}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
+As a final step prior to spawning, these adults must survive the challenges of finding adequate spawning habitat and avoid succumbing to stress and mortality prior to spawning.
+We treated these "pre-spawn survival" outcomes, denoted by $\phi^{S^{b} \rightarrow S^{a}}_{y,j}$, as multivariate logit-normal random variables around a time-constant expected value ($\dot{\phi}^{S^{b} \rightarrow S^{a}}_{j}$) with covariance matrix $\Sigma_{\phi^{S^{b} \rightarrow S^{a}}}$ (constructed of $\sigma_{\phi^{S^{b} \rightarrow S^{a}}_j}$ and $\rho_{\phi^{S^{b} \rightarrow S^{a}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{S^{b} \rightarrow S^{a}}_{y,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{S^{b} \rightarrow S^{a}}_{1:n_j}\right), \Sigma_{\phi^{S^{b} \rightarrow S^{a}}}\right]
 (\#eq:phi-Sb-Sa-random)
 \end{equation}
 
-Thus, the abundance of total successfully spawning individuals ($S^{a}_{y,k,o,j}$) was:
+Thus, the abundance of successfully spawning individuals ($S^{a}_{y,k,o,j}$) was:
 
 \begin{equation}
 S^{a}_{y,k,o,j} = S^{b}_{y,k,o,j} \cdot \phi^{S^{b} \rightarrow S^{a}}_{y,j}
@@ -585,7 +596,7 @@ The adult observation model relies on three primary data types: (_i_) total abun
 
 ### Abundance Data Source
 
-Total return abundance is estimated annually external to the model using a combination of weir counts, mark-recapture methods, and spawning ground surveys.
+Total return abundance is estimated annually external to the model using a combination of weir counts, mark-recapture methods, and spawning ground surveys\todo{Insert reference about adult return monitoring methods}.
 For each population and year, these have been compiled into a point estimate ($\hat{R}^{a}_{y,j}$; note the lack of $o$ or $k$ indices -- this indicates the estimate is aggregated across these dimensions) and an estimate of observation uncertainty ($\hat{\sigma}_{R^{a}_{y,j}}$, expressed as a log-normal standard error).
 We assumed the point estimate is made with log-normal observation error around the model-predicted total returns to the tributary to build the likelihood for this component:
 
@@ -596,7 +607,7 @@ We assumed the point estimate is made with log-normal observation error around t
 
 ### Survival Data Sources
 
-For the observation model component informing migration survival upstream through the hydropower system, we relied on counts of PIT tag detections of known Grande Ronde-origin fish passing BON ($\hat{x}^{\mathrm{BON}}_{y,o}$) and LGR ($\hat{x}^{\mathrm{LGR}}_{y,o}$).
+For the observation model component informing migration survival upstream from BON to LGR, we relied on counts of PIT tag detections of known Grande Ronde-origin fish passing BON ($\hat{x}^{\mathrm{BON}}_{y,o}$) and LGR ($\hat{x}^{\mathrm{LGR}}_{y,o}$)\todo{Insert reference to DART website where we obtained the BON to LGR PIT tag count data}.
 We assumed the latter was a binomial random variable to build the likelihood component for this data set:
 
 \begin{equation}
@@ -605,8 +616,8 @@ We assumed the latter was a binomial random variable to build the likelihood com
 \end{equation}
 
 The other survival data set informing the freshwater adult observation model was for spawning success, i.e., pre-spawn survival.
-In annual spawning ground carcass surveys, surveyors record the counts of total females encountered ($\hat{x}^{\mathrm{carcass,total}}_{y,j}$) and counts of those found to have successfully spawned ($\hat{x}^{\mathrm{carcass,spawned}}_{y,j}$).
-Females are counted this way because it is too difficult to tell if a male has successfully spawned based on their gonads alone, thus we assumed that males and females experience the same pre-spawn survival.
+In annual spawning ground carcass surveys, surveyors record the counts of total females encountered ($\hat{x}^{\mathrm{carcass,total}}_{y,j}$) and counts of those found to have successfully spawned ($\hat{x}^{\mathrm{carcass,spawned}}_{y,j}$; \todo{Insert reference about carcass/spawning success data monitoring methods}).
+Only females are counted this way because it is too difficult to tell if a male has successfully spawned based on their gonads alone, thus we assumed that males and females experience the same pre-spawn survival.
 We assumed these counts were gathered using binomial sampling to build the likelihood:
 
 \begin{equation}
@@ -618,7 +629,7 @@ We assumed these counts were gathered using binomial sampling to build the likel
 
 Since the model is both age- and origin-structured, we required data to inform the relative abundance of adults returning according to these different classes.
 These took the form of two sources: (_i_) those collected at the weirs located within three of the four populations we model ($\hat{x}^{R^{a}}_{y,ko,j}$) and (_ii_) those collected during carcass surveys ($\hat{x}^{S^{a^{\prime}}}_{y,ko,j}$), given the Minam River population does not have a weir.
-We assumed the weir sampled fish representatively with respect to age and origin composition, however we discovered there was an age sampling bias for carcass surveys relative to the weir.
+We assumed the weir sampled fish representatively with respect to age and origin composition, however we discovered there was an age sampling bias for carcass surveys relative to the weir which required a correction factor (see eqs. \@ref(eq:z-random) -- \@ref(eq:get-pSa-prime), below).
 We fitted to these data assuming multinomial sampling in which there were $n_{ko} = 6$ possible outcomes: $n_k = 3$ ages of return by $n_o = 2$ origins.
 Further, we chose to use the observed sample size ($\sum_{ko}^{n_{ko}} \hat{x}^{R^{a}}_{y,ko,j}$) as the multinomial sample size rather than attempting to adjust it for non-independent sampling.
 The model-expected composition by age and origin ($p^{R^{a}}_{y,ko,j}$) was calculated from the return abundance by age and origin, reorganized such that age and origin fell along the same array dimension ($R^{a}_{y,ko,j}$) rather than along two dimensions as shown in the process model ($R^{a}_{y,k,o,j}$):
