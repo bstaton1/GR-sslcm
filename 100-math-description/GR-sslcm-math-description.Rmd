@@ -57,8 +57,6 @@ library(knitr)
 library(kableExtra)
 ```
 
-\listoftodos
-
 \pagenumbering{gobble}
 \clearpage
 \pagenumbering{arabic}
@@ -885,6 +883,13 @@ kable(tab[,2:4], "latex", booktabs = TRUE, linesep = "", caption = equation_tab_
   column_spec(3, width = "365px") %>%
   collapse_rows(1, valign = "bottom", latex_hline = "major")
 ```
+
+\clearpage
+
+
+\clearpage
+
+\listoftodos
 
 \clearpage
 
