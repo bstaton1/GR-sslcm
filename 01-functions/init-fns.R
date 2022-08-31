@@ -491,10 +491,10 @@ gen_initials = function(CHAIN, jags_data) {
       Lphi_O0_O1 = Lphi_O0_O1_init,
       
       # second year ocean survival
-      mu_phi_O1_O2 = mu_phi_O1_O2_init,
+      # mu_phi_O1_O2 = mu_phi_O1_O2_init,
       
       # third year ocean survival
-      mu_phi_O2_O3 = mu_phi_O2_O3_init,
+      # mu_phi_O2_O3 = mu_phi_O2_O3_init,
       
       # NOR:HOR ocean survival scalers
       delta_O0_O1 = delta_O0_O1_init,

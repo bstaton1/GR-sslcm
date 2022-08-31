@@ -33,3 +33,10 @@
 
 # ignore the test Rmd script
 03-post-process/test-rmd.Rmd
+
+# ignore intermediate LaTeX files in math description subdirectory
+100-math-description/*.log
+100-math-description/*.aux
+100-math-description/*.bbl
+100-math-description/*.tex
+100-math-description/*.tdo

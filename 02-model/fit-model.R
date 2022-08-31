@@ -27,7 +27,7 @@ do_pp_check = TRUE
 do_lppd = FALSE
 
 # specify a scenario name
-scenario = "base"
+scenario = "survival-edits-no-O1-prior-fix-ocean-surv"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -42,7 +42,7 @@ if (is.na(rmd)) {
 }
 
 if (is.na(mcmc_length)) {
-  mcmc_length = "very_short"
+  mcmc_length = "short"
   cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, "will be used.")
 }
 
@@ -51,6 +51,9 @@ if (is.na(mcmc_length)) {
 # build JAGS data object
 jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"))
 jags_data = append_no_na_indices(jags_data)
+
+# reduce assumed survival past sea lions in the early years
+jags_data$phi_SL[as.character(1991:2000),] = 0.85
 
 # 1995 UGR spring tagging has mean length but no SE?
 # is.na(jags_data$L_Pb_obs) == is.na(jags_data$sig_L_Pb_obs)
@@ -102,6 +105,13 @@ add_jags_data = append(add_jags_data, list(
   L_Pb_scale = apply(jags_data$L_Pb_obs, 2, sd, na.rm = TRUE),
   L_Mb_center = apply(jags_data$L_Mb_obs, 2, mean, na.rm = TRUE),
   L_Mb_scale = apply(jags_data$L_Mb_obs, 2, sd, na.rm = TRUE)
+))
+
+# add hyperparameters of priors on ocean survival parameters
+add_jags_data = append(add_jags_data, list(
+  mu_phi_O0_O1_prior = c(1, 1),
+  mu_phi_O1_O2_prior = c(60, 40),
+  mu_phi_O2_O3_prior = c(70, 30)
 ))
 
 # append all of this additional content to the data object
@@ -273,6 +283,7 @@ jags_params = c(
   
   # misc derived quantities
   "lambda_pop", "Pb_per_Sa_tot", "Pb_per_E", "Mb_per_Sa_tot", "Sa_tot_per_Sa_tot", "Ra_per_Ma", "phi_O0_Rb_BON",
+  "E_per_Sa",
   
   # residuals: process model
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
@@ -544,3 +555,4 @@ if (rmd & last_yr > 2019) {
   setwd("../")
   cat("\n\nDone.")
 }
+

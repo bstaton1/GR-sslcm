@@ -578,13 +578,13 @@ prep_derived_ratios = function(x, q) {
   
   # reorder rows
   x$Class = factor(x$Class, levels = c("Abundance", "Production Rates", "SAR", "Adult Composition"))
-  x$Type = factor(x$Type, levels = c("Total Adults (Estuary)", "Total Adults (To Tributary)", "Total Spawners", "Total Egg Production", "Total Parr Recruitment", "Total LGR Smolt", "Aggregate Total Adult Return (To Tributary)", "Aggregate Total Smolt (At LGR)", "Parr per Spawner", "Smolt in Tributary per Spawner", "Spawners per Spawner", "Smolt in Tributary per Parr", "Smolt at LGR per Parr", "BON to BON", "LGR to LGR", "Proportion Hatchery Return", "Proportion Age-3 Return", "Proportion Age-4 Return", "Proportion Age-5 Return"))
+  x$Type = factor(x$Type, levels = c("Total Adults (Estuary)", "Total Adults (To Tributary)", "Total Spawners", "Total Egg Production", "Total Parr Recruitment", "Total LGR Smolt", "Aggregate Total Adult Return (To Tributary)", "Aggregate Total Smolt (At LGR)", "Eggs per Spawner", "Parr per Spawner", "Smolt in Tributary per Spawner", "Spawners per Spawner", "Smolt in Tributary per Parr", "Smolt at LGR per Parr", "BON to BON", "LGR to LGR", "Proportion Hatchery Return", "Proportion Age-3 Return", "Proportion Age-4 Return", "Proportion Age-5 Return"))
   x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
   x$origin = factor(x$origin, levels = c("Combined", "NOR", "HOR"))
   x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
   
   colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
-  colnames(x)[which(colnames(x) == "Origin")] = "Origin"
+  colnames(x)[which(colnames(x) == "origin")] = "Origin"
   
   return(x)
 }
@@ -941,6 +941,16 @@ derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "SAR", Type =
 
 ### Production Rates {.tabset .tabset-pills}
 
+#### Eggs per Spawner
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("E_per_Sa[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Eggs per Spawner: Estimates")
+ratio_plots(x, "Eggs per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Eggs per Spawner"))
+```
+
 #### Parr per Spawner
 
 ```{r}
@@ -1238,7 +1248,7 @@ pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 1)
 ##### HOR
 
 ```{r}
-pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 1)
+pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 2)
 ```
 
 #### Age-3 Maturity {.tabset .tabset-pills}
@@ -1252,7 +1262,7 @@ pop_ts_plots("^psi_O1[year,origin,pop]", origin = 1)
 ##### HOR
 
 ```{r}
-pop_ts_plots("^psi_O1[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O1[year,origin,pop]", origin = 2)
 ```
 
 #### Age-4 Maturity {.tabset .tabset-pills}
@@ -1266,7 +1276,7 @@ pop_ts_plots("^psi_O2[year,origin,pop]", origin = 1)
 ##### HOR
 
 ```{r}
-pop_ts_plots("^psi_O2[year,origin,pop]", origin = 1)
+pop_ts_plots("^psi_O2[year,origin,pop]", origin = 2)
 ```
 
 ### Freshwater Adult Phase {.tabset .tabset-pills}
@@ -1394,6 +1404,12 @@ pop_ts_plots("Ra_per_Ma[year,origin,pop]", obs_y_use = obs_sar_y, sim_y_use = si
 ```
 
 ### Production Rates {.tabset .tabset-pills}
+
+#### Eggs per Spawner
+
+```{r}
+pop_ts_plots("E_per_Sa[year,pop]")
+```
 
 #### Parr per Spawner
 

@@ -4,9 +4,11 @@ Phase,Type,Symbol,Eqs.,Description,Footnote
 1,state,"$P^{a}_{y,i,j}$","get-Pa, get-phi-Pa-Mb-dot, get-Mb-NOR, fall-surv-data, winter-surv-data",Parr abundance \\textit{after} migratory strategy apportionment,NA
 1,state,"$M^{b}_{y,i,o,j}$","get-Mb-NOR, get-Ma, spring-count-data","In-basin smolt abundance, immediately following over-winter mortality and \\textit{before} migration out of basin; hatchery-origin smolt releases introduced here",NA
 1,state,"$M^{a}_{y,i,o,j}$","get-Ma, get-O0, summer-surv-data, fall-surv-data, winter-surv-data, spring-surv-data, spring-surv-HOR-data",Smolt abundance at Lower Granite Dam \\textit{after} migration out of basin,NA
-1,rate,"$\\phi^{E \\rightarrow P^{b}}_{y,j}$","phi-E-Pb-random, get-Pb",Survival rate from egg to end of summer parr; density-dependent,NA
+1,state,"$L^{P^{b}}_{y,j}$","L-Pb-random,get-phi-Pa-Mb-dot,  get-Delta-L-Pb-L-Mb-dot, get-L-Mb, L-Pb-data","Parr mean length at end of summer ($L^{*P^{b}}_{y,j}$ is scaled and centered on the observed time series $\\hat{L}^{P^{b}}_{y,j}$)",NA
+1,state,"$L^{M^{b}}_{y,j}$","get-L-Mb, get-phi-Mb-Ma-dot, L-Mb-data","Smolt mean length before migration out of basin ($L^{*M^{b}}_{y,j}$ is scaled and centered on the observed time series $\\hat{L}^{M^{b}}_{y,j}$)",NA
+1,rate,"$\\phi^{E \\rightarrow P^{b}}_{y,j}$","phi-E-Pb-random, get-Pb",Survival rate from egg to end of summer parr,NA
 1,rate,"$\\pi_{y,i,j}$","get-Pa, pi-random",Proportion of parr at end of summer that have migratory strategy $i$,NA
-1,rate,"$\\phi^{P^{a} \\rightarrow M^{b}}_{y,i,j}$","phi-Pa-Mb-random, get-Mb-NOR","Overwinter survival from parr year to smolt year; i.e., to move from total age-1 to total age-2; density-dependent",NA
+1,rate,"$\\phi^{P^{a} \\rightarrow M^{b}}_{y,i,j}$","phi-Pa-Mb-random, get-Mb-NOR","Overwinter survival from parr year to smolt year; i.e., to move from total age-1 to total age-2",NA
 1,rate,"$\\phi^{M^{b} \\rightarrow M^{a}}_{y,i,o,j}$","phi-Mb-Ma-random, get-Ma, spring-surv-data, spring-surv-HOR-data",Migration survival from within basin to Lower Granite Dam,NA
 1,rate,"$\\phi^{M^{a} \\rightarrow O^{0}}_{y,o}$","phi-Ma-O0-random, get-O0, hydro-surv-data",Migration survival downstream through hydrosystem to reach ocean,NA
 2,state,"$O^{w}_{y,o,j}$","get-O0, get-Os, get-Rbs","Abundance of ocean juveniles after experiencing $w$ winter(s) at sea, where $w \\in [0,1,2,3]$",NA

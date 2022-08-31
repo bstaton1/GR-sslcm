@@ -236,24 +236,24 @@ diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Year 2 ocean survival
-L1 = "Year 2 Ocean Survival"
-L2 = c("Mean")
-base = c("mu_phi_O1_O2[origin,pop]")
-match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
-tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
-tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
-diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
-summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+# L1 = "Year 2 Ocean Survival"
+# L2 = c("Mean")
+# base = c("mu_phi_O1_O2[origin,pop]")
+# match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+# tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+# tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+# diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+# summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Year 2 ocean survival
-L1 = "Year 3 Ocean Survival"
-L2 = c("Mean")
-base = c("mu_phi_O2_O3[origin,pop]")
-match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
-tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
-tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
-diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
-summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+# L1 = "Year 3 Ocean Survival"
+# L2 = c("Mean")
+# base = c("mu_phi_O2_O3[origin,pop]")
+# match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+# tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+# tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+# diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+# summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Misc ocean survival
 L1 = "Misc Ocean Survival"
@@ -443,7 +443,7 @@ rhat_hist = function(rhat) {
 
 There were **`r length(rhat_1_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes with $\hat{R}$ in this group. Here is their distribution:
   
-  ```{r rhat-hist-1, fig.width = 6, fig.height = 4}
+```{r rhat-hist-1, fig.width = 6, fig.height = 4}
 rhat_hist(rhat_1)
 ```
 
@@ -461,7 +461,7 @@ diag_plots(post_sub_1, "", show_diags = "never")
 
 There were **`r length(rhat_2_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. Here is their distribution:
   
-  ```{r rhat-hist-2, fig.width = 6, fig.height = 4}
+```{r rhat-hist-2, fig.width = 6, fig.height = 4}
 rhat_hist(rhat_2)
 ```
 
@@ -479,7 +479,7 @@ diag_plots(post_sub_2, "", show_diags = "never")
 
 There were **`r length(rhat_3_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. Here is their distribution:
   
-  ```{r rhat-hist-3, fig.width = 6, fig.height = 4}
+```{r rhat-hist-3, fig.width = 6, fig.height = 4}
 rhat_hist(rhat_3)
 ```
 
