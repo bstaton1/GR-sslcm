@@ -380,80 +380,59 @@ juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 ##### JUVENILE LENGTH DATA #####
 
 # read the data
-tmp = read.csv("98-scratch/juv-length.csv")
+tmp = read.csv(file.path(data_dir, "09-juv-mean-length.csv"))
 
-# rename populations
-tmp$pop = ifelse(tmp$pop == "Catherine", "CAT", tmp$pop)
-tmp$pop = ifelse(tmp$pop == "Lostine", "LOS", tmp$pop)
-tmp$pop = ifelse(tmp$pop == "Minam", "MIN", tmp$pop)
+# retain only rows corresponding to all fish measured (tagged and untagged)
+# FIXME: the spring portion MUST be removed when the "all" spring data are added
+# for now, the model uses the PIT-only spring mean length
+tmp = tmp[tmp$fish_subset == "all" | tmp$season == "spring",]
 
-# discard below-trap CAT data
-tmp = tmp[tmp$pop %in% c("CAT", "LOS", "MIN", "UGR"),]
-
-# calculate brood year
-tmp$brood_year = tmp$mig.year - 2
+# set any mean lengths with sample size less than 30 to NA
+tmp[tmp$n_length < 30,c("len_mean", "len_sd")] = NA
 
 # keep only summer and spring length measurements
 tmp = tmp[tmp$season %in% c("summer", "spring"),]
 tmp$season = factor(tmp$season, levels = c("summer", "spring"))
 
+# calculate standard error in mean length
+tmp$len_se = tmp$len_sd/sqrt(tmp$n_length)
+
+# ensure the data are ordered by population and year
+tmp = tmp[order(tmp$population, tmp$season, tmp$brood_year),]
+
+# calculate adjusted mean length for summer
+# corrects for capture date variability among years
+length_mean_adj = lapply(unique(tmp$population), function(pop) {
+  tmp_sub = subset(tmp, population == pop & season == "summer")
+  standardize_mean_length(tmp_sub$len_mean, tmp_sub$jday_med, resid_type = "mult")
+})
+tmp$len_mean_adj = NA
+tmp$len_mean_adj[tmp$season == "summer"] = unlist(length_mean_adj)
+
+# calculate standard error in adjusted mean length
+# (assume the CV is the same)
+tmp$len_se_adj = tmp$len_se/tmp$len_mean * tmp$len_mean_adj
+
+# set the adjusted mean lengths & SEs for spring equal to the observed mean lengths & SEs
+# allows using the same column name for extracting below; not adjusting the spring length data b/c passive capture
+tmp[tmp$season == "spring",c("len_mean_adj", "len_se_adj")] = tmp[tmp$season == "spring",c("len_mean", "len_se")]
+
 # retain only needed columns
-tmp = tmp[,c("pop", "season", "brood_year", "n.length", "len.mean", "len.sd", "len.se")]
+tmp = tmp[,c("population", "season", "brood_year", "n_length", "len_mean", "len_se", "len_mean_adj", "len_se_adj")]
 
 # extract and format mean length
-length_mean = dcast(tmp, brood_year + pop ~ season, value.var = "len.mean")
+length_mean = dcast(tmp, brood_year + population ~ season, value.var = "len_mean_adj")
 colnames(length_mean)[3:ncol(length_mean)] = paste0("length_mean_", colnames(length_mean)[3:ncol(length_mean)])
 
 # extract and format se mean length
-length_se = dcast(tmp, brood_year + pop ~ season, value.var = "len.se")
+length_se = dcast(tmp, brood_year + population ~ season, value.var = "len_se_adj")
 colnames(length_se)[3:ncol(length_se)] = paste0("length_se_", colnames(length_se)[3:ncol(length_se)])
 
 # combine into one data set
-tmp = merge(length_mean, length_se, by = c("pop", "brood_year"), all = TRUE)
-
-# rename columns
-colnames(tmp)[1] = "population"
-
-# loop through all records, and if the length measurement is NA, set mean length to mean of other years
-# missing_vals_filled = t(sapply(1:nrow(tmp), function(i) {
-#   
-#   # handle summer mean length
-#   if (is.na(tmp$length_mean_summer[i])) {
-#     length_mean_summer = round(mean(tmp$length_mean_summer[tmp$population == tmp$population[i]], na.rm = TRUE), 1)
-#   } else {
-#     length_mean_summer = tmp$length_mean_summer[i]
-#   }
-#   
-#   # handle spring mean length
-#   if (is.na(tmp$length_mean_spring[i])) {
-#     length_mean_spring = round(mean(tmp$length_mean_spring[tmp$population == tmp$population[i]], na.rm = TRUE), 1)
-#   } else {
-#     length_mean_spring = tmp$length_mean_spring[i]
-#   }
-#   
-#   # handle summer mean length se: make have a 20% CV if missing
-#   if (is.na(tmp$length_se_summer[i])) {
-#     length_se_summer = length_mean_summer * 0.2
-#   } else {
-#     length_se_summer = tmp$length_se_summer[i]
-#   }
-#   
-#   # handle summer mean length se: make have a 20% CV if missing
-#   if (is.na(tmp$length_se_spring[i])) {
-#     length_se_spring = length_mean_spring * 0.2
-#   } else {
-#     length_se_spring = tmp$length_se_spring[i]
-#   }
-#   
-#   c(length_mean_summer = length_mean_summer,
-#     length_mean_spring = length_mean_spring,
-#     length_se_summer = length_se_summer,
-#     length_se_spring = length_se_spring)
-# }))
-# tmp[,colnames(missing_vals_filled)] = missing_vals_filled
+tmp = merge(length_mean, length_se, by = c("population", "brood_year"), all = TRUE)
 
 # rename the data frame and remove "tmp" objects
-juvenile_length = tmp; rm("tmp", "length_mean", "length_se")
+juvenile_length = tmp; rm("tmp", "length_mean", "length_se", "length_mean_adj")
 
 ##### HATCHERY RELEASES OF SMOLTS AND SURVIVAL TO LGD #####
 
