@@ -20,6 +20,42 @@ get_logit_se = function(p_mean, p_se, p_lwr, p_upr, alpha) {
 }
 
 
+
+##### STANDARDIZE MEAN LENGTH DATA BASED ON MEDIAN CAPTURE DATE #####
+
+# the median capture date varies widely within populations
+# and in general, sampling occured later in the year in the earlier years
+# b/c fish are growing over this whole period, this caused an apparent declining trend in mean length over time
+
+# this function standardizes mean length based on the median capture date
+# by fitting a growth function, obtaining the expected value if all years had the same median date, and adding the growth residual
+
+# ARGUMENTS
+# len_mean: numeric vector of observed mean lengths, elements represent years
+# jday_med: numeric vector of median capture dates, elements represent years
+# resid_type: character; either "mult" or "add"; do you wish to use additive or multiplicative residuals
+standardize_mean_length = function(len_mean, jday_med, resid_type) {
+  
+  # step 1: fit a regression model; approximates average daily growth function
+  fit = lm(len_mean ~ jday_med)
+  
+  # step 2: calculate residuals for each year
+  if (resid_type != "mult" & resid_type != "add") stop ("resid_type must be one of 'mult' or 'add'")
+  if (resid_type == "mult") r = len_mean/fitted(fit)
+  if (resid_type == "add") r = len_mean - fitted(fit)
+  
+  # step 3: calculate expected length on the average sampling day each year
+  mu_len_mean = predict(fit, data.frame(jday_med = mean(jday_med, na.rm = TRUE)))
+  
+  # step 4: calculate the sampling-date-adjusted mean length each year by applying the
+  # year-specific residuals to the standardized expected mean length
+  if (resid_type == "mult") len_mean_adj = mu_len_mean * r
+  if (resid_type == "add") len_mean_adj = mu_len_mean + r
+  
+  # return the sampling date-adjusted mean length vector
+  return(len_mean_adj)
+}
+
 ##### CREATE NAMES FOR A SPECIFIC COMPOSITION DATA SET #####
 # o_names = c("NOR", "HOR")
 # k_names = c(3, 4, 5)
