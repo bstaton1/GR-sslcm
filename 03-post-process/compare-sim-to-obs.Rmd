@@ -20,7 +20,7 @@ editor_options:
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = FALSE, fig.align = "center", fig.width = 8, fig.height = 4)
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", fig.width = 8, fig.height = 4, warning = FALSE)
 knitr::opts_knit$set(root.dir = "../")
 ```
 
@@ -47,6 +47,16 @@ if (params$thin_percent < 1) {
 
 # extract the model data 
 jags_data = model_info$jags_data
+
+o_nor = 1   # o = 1 is NOR
+o_hor = 2   # o = 2 is HOR
+k_3 = 1     # k = 1 is age-3
+k_4 = 2     # k = 2 is age-4
+k_5 = 3     # k = 3 is age-5
+j_cat = 1   # j = 1 is CAT
+j_los = 2   # j = 2 is LOS
+j_min = 3   # j = 3 is MIN
+j_ugr = 4   # j = 4 is UGR
 ```
 
 ```{r select-years}
@@ -96,17 +106,59 @@ out = out[,na_ind]
 post = post_bind(post, out)
 ```
 
-```{r add-Rb-tot}
+```{r add-p-hos-age}
 # extract spawners returning to tributary
-Rb = post_subset(post, "^Rb[", matrix = TRUE)
+Ra = post_subset(post, "^Ra[", matrix = TRUE)
 
 # for each posterior sample, calculate the fraction that are hatchery origin
-out = NULL
+out_3 = out_4 = out_5 = NULL
+for (i in 1:nrow(Ra)) {
+  Ra_i = array_format(Ra[i,])
+  
+  p_hor_3 = Ra_i[,k_3,o_hor,]/(Ra_i[,k_3,o_nor,] + Ra_i[,k_3,o_hor,])
+  p_hor_4 = Ra_i[,k_4,o_hor,]/(Ra_i[,k_4,o_nor,] + Ra_i[,k_4,o_hor,])
+  p_hor_5 = Ra_i[,k_5,o_hor,]/(Ra_i[,k_5,o_nor,] + Ra_i[,k_5,o_hor,])
+  
+  out_3 = rbind(out_3, as.numeric(p_hor_3))
+  out_4 = rbind(out_4, as.numeric(p_hor_4))
+  out_5 = rbind(out_5, as.numeric(p_hor_5))
+}
+
+# build the row indices for each element: the year
+r_ind = rep(1:nrow(p_hor_3), ncol(p_hor_3))
+
+# build the column indices for each element: the population
+c_ind = rep(1:ncol(p_hor_3), each = nrow(p_hor_3))
+
+# make element names
+colnames(out_3) = paste0("p_hor_a[", r_ind, ",1,", c_ind, "]")
+colnames(out_4) = paste0("p_hor_a[", r_ind, ",2,", c_ind, "]")
+colnames(out_5) = paste0("p_hor_a[", r_ind, ",3,", c_ind, "]")
+out = cbind(out_3, out_4, out_5)
+
+# drop out those that have NA values (first k_max years)
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
+```
+
+```{r add-Rb-tot-origin}
+# extract returns to estuary
+Rb = post_subset(post, "^Rb[", matrix = TRUE)
+
+# for each posterior sample, calculate the abundance by origin and total
+out_tot = out_nor = out_hor = NULL
 for (i in 1:nrow(Rb)) {
   Rb_i = array_format(Rb[i,])
   nor = Rb_i[,1,1,] + Rb_i[,2,1,] + Rb_i[,3,1,]
   hor = Rb_i[,1,2,] + Rb_i[,2,2,] + Rb_i[,3,2,]
-  out = rbind(out, as.numeric(nor + hor))
+  tot = nor + hor
+  
+  out_nor = rbind(out_nor, as.numeric(nor))
+  out_hor = rbind(out_hor, as.numeric(hor))
+  out_tot = rbind(out_tot, as.numeric(tot))
 }
 
 # build the row indices for each element: the year
@@ -116,7 +168,146 @@ r_ind = rep(1:nrow(nor), ncol(nor))
 c_ind = rep(1:ncol(nor), each = nrow(nor))
 
 # make element names
-colnames(out) = paste0("Rb_tot[", r_ind, ",", c_ind, "]")
+colnames(out_nor) = paste0("Rb_tot_org[", r_ind, ",1,", c_ind, "]")
+colnames(out_hor) = paste0("Rb_tot_org[", r_ind, ",2,", c_ind, "]")
+colnames(out_tot) = paste0("Rb_tot[", r_ind, ",", c_ind, "]")
+out = cbind(out_nor, out_hor, out_tot)
+
+# drop out those that have NA values (first k_max years)
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
+```
+
+```{r add-Ra-tot-origin}
+# extract returns to tributary
+Ra = post_subset(post, "^Ra[", matrix = TRUE)
+
+# for each posterior sample, calculate the abundance by origin and total
+out_nor = out_hor = NULL
+for (i in 1:nrow(Ra)) {
+  Ra_i = array_format(Ra[i,])
+  nor = Ra_i[,1,1,] + Ra_i[,2,1,] + Ra_i[,3,1,]
+  hor = Ra_i[,1,2,] + Ra_i[,2,2,] + Ra_i[,3,2,]
+
+  out_nor = rbind(out_nor, as.numeric(nor))
+  out_hor = rbind(out_hor, as.numeric(hor))
+}
+
+# build the row indices for each element: the year
+r_ind = rep(1:nrow(nor), ncol(nor))
+
+# build the column indices for each element: the population
+c_ind = rep(1:ncol(nor), each = nrow(nor))
+
+# make element names
+colnames(out_nor) = paste0("Ra_tot_org[", r_ind, ",1,", c_ind, "]")
+colnames(out_hor) = paste0("Ra_tot_org[", r_ind, ",2,", c_ind, "]")
+out = cbind(out_nor, out_hor)
+
+# drop out those that have NA values (first k_max years)
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
+```
+
+```{r add-Sa-tot-origin}
+# extract spawners
+Sa = post_subset(post, "^Sa[", matrix = TRUE)
+
+# for each posterior sample, calculate the abundance by origin and total
+out_nor = out_hor = NULL
+for (i in 1:nrow(Ra)) {
+  Sa_i = array_format(Sa[i,])
+  nor = Sa_i[,1,1,] + Sa_i[,2,1,] + Sa_i[,3,1,]
+  hor = Sa_i[,1,2,] + Sa_i[,2,2,] + Sa_i[,3,2,]
+
+  out_nor = rbind(out_nor, as.numeric(nor))
+  out_hor = rbind(out_hor, as.numeric(hor))
+}
+
+# build the row indices for each element: the year
+r_ind = rep(1:nrow(nor), ncol(nor))
+
+# build the column indices for each element: the population
+c_ind = rep(1:ncol(nor), each = nrow(nor))
+
+# make element names
+colnames(out_nor) = paste0("Sa_tot_org[", r_ind, ",1,", c_ind, "]")
+colnames(out_hor) = paste0("Sa_tot_org[", r_ind, ",2,", c_ind, "]")
+out = cbind(out_nor, out_hor)
+
+# drop out those that have NA values (first k_max years)
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
+```
+
+```{r add-E-origin}
+E = post_subset(post, "^E_sep[", matrix = TRUE)
+
+out_nor = out_hor = NULL
+for (i in 1:nrow(Ra)) {
+  E_i = array_format(E[i,])
+  E_nor_i = E_i[,1,1,] + E_i[,2,1,] + E_i[,3,1,]
+  E_hor_i = E_i[,1,2,] + E_i[,2,2,] + E_i[,3,2,]
+
+  out_nor = rbind(out_nor, as.numeric(E_nor_i))
+  out_hor = rbind(out_hor, as.numeric(E_hor_i))
+}
+
+# build the row indices for each element: the year
+r_ind = rep(1:nrow(nor), ncol(nor))
+
+# build the column indices for each element: the population
+c_ind = rep(1:ncol(nor), each = nrow(nor))
+
+# make element names
+colnames(out_nor) = paste0("E_org[", r_ind, ",1,", c_ind, "]")
+colnames(out_hor) = paste0("E_org[", r_ind, ",2,", c_ind, "]")
+out = cbind(out_nor, out_hor)
+
+# drop out those that have NA values (first k_max years)
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
+```
+
+```{r add-E-per-Sa-origin}
+Sa = post_subset(post, "^Sa[", matrix = TRUE)
+E = post_subset(post, "^E_sep[", matrix = TRUE)
+
+out_nor = out_hor = NULL
+for (i in 1:nrow(Ra)) {
+  Sa_i = array_format(Sa[i,])
+  Sa_nor_i = Sa_i[,1,1,] + Sa_i[,2,1,] + Sa_i[,3,1,]
+  Sa_hor_i = Sa_i[,1,2,] + Sa_i[,2,2,] + Sa_i[,3,2,]
+  E_i = array_format(E[i,])
+  E_nor_i = E_i[,1,1,] + E_i[,2,1,] + E_i[,3,1,]
+  E_hor_i = E_i[,1,2,] + E_i[,2,2,] + E_i[,3,2,]
+
+  out_nor = rbind(out_nor, as.numeric(E_nor_i/Sa_nor_i))
+  out_hor = rbind(out_hor, as.numeric(E_hor_i/Sa_hor_i))
+}
+
+# build the row indices for each element: the year
+r_ind = rep(1:nrow(nor), ncol(nor))
+
+# build the column indices for each element: the population
+c_ind = rep(1:ncol(nor), each = nrow(nor))
+
+# make element names
+colnames(out_nor) = paste0("E_per_Sa_org[", r_ind, ",1,", c_ind, "]")
+colnames(out_hor) = paste0("E_per_Sa_org[", r_ind, ",2,", c_ind, "]")
+out = cbind(out_nor, out_hor)
 
 # drop out those that have NA values (first k_max years)
 na_ind = which(!is.na(out[1,]))
@@ -200,6 +391,49 @@ colnames(p4_hor_out) = paste0("Ra_comp[", r_ind, ",", "2", ",", "2", ",", c_ind,
 colnames(p5_hor_out) = paste0("Ra_comp[", r_ind, ",", "3", ",", "2", ",", c_ind, "]")
 
 out = cbind(p3_nor_out, p4_nor_out, p5_nor_out, p3_hor_out, p4_hor_out, p5_hor_out)
+
+# drop out those that have NA values (first k_max years)
+out[out == "NaN"] = 0
+na_ind = which(!is.na(out[1,]))
+out = out[,na_ind]
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, out)
+```
+
+```{r add-age-comp-combined}
+Ra = post_subset(post, "^Ra[", matrix = TRUE)
+
+p3_out = p4_out = p5_out = NULL
+for (i in 1:nrow(Ra)) {
+  Ra_i = array_format(Ra[i,])
+  
+  a3_tot = Ra_i[,1,1,] + Ra_i[,1,2,]
+  a4_tot = Ra_i[,2,1,] + Ra_i[,2,2,]
+  a5_tot = Ra_i[,3,1,] + Ra_i[,3,2,]
+  tot = a3_tot + a4_tot + a5_tot
+  
+  p3 = Ra_i[,1,1,]/tot
+  p4 = Ra_i[,2,1,]/tot
+  p5 = Ra_i[,3,1,]/nor_tot
+
+  p3_out = rbind(p3_out, as.numeric(p3))
+  p4_out = rbind(p4_out, as.numeric(p4))
+  p5_out = rbind(p5_out, as.numeric(p5))
+}
+
+# build the row indices for each element: the year
+r_ind = rep(1:nrow(p3), ncol(p3))
+
+# build the column indices for each element: the population
+c_ind = rep(1:ncol(p3), each = nrow(p3))
+
+# make element names
+colnames(p3_out) = paste0("Ra_comp_a[", r_ind, ",", "1", ",", c_ind, "]")
+colnames(p4_out) = paste0("Ra_comp_a[", r_ind, ",", "2", ",", c_ind, "]")
+colnames(p5_out) = paste0("Ra_comp_a[", r_ind, ",", "3", ",", c_ind, "]")
+
+out = cbind(p3_out, p4_out, p5_out)
 
 # drop out those that have NA values (first k_max years)
 out[out == "NaN"] = 0
@@ -547,7 +781,7 @@ prep_est_ratios = function(x, q) {
   x$Class = factor(x$Class, levels = c("FW Juvenile", "SW Juvenile", "FW Adult"))
   x$Type = factor(x$Type, levels = c("Egg to Parr Survival", "Parr Mean Size", "Proportion Fall Migrants", "Overwinter Survival", "Parr to Smolt Mean Size 'Growth Factor'", "Smolt Mean Size", "Migration to LGR Survival", "LGR to Ocean Survival", "First Year Ocean Survival", "Age-3 Maturity", "Age-4 Maturity", "BON to LGR Survival", "Pre-Spawn Survival"))
   x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
-  x$origin = factor(x$origin, levels = c("Combined", "NOR", "HOR"))
+  x$origin = factor(x$origin, levels = c("NOR", "HOR", "Combined"))
   x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
   
   colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
@@ -578,9 +812,9 @@ prep_derived_ratios = function(x, q) {
   
   # reorder rows
   x$Class = factor(x$Class, levels = c("Abundance", "Production Rates", "SAR", "Adult Composition"))
-  x$Type = factor(x$Type, levels = c("Total Adults (Estuary)", "Total Adults (To Tributary)", "Total Spawners", "Total Egg Production", "Total Parr Recruitment", "Total LGR Smolt", "Aggregate Total Adult Return (To Tributary)", "Aggregate Total Smolt (At LGR)", "Eggs per Spawner", "Parr per Spawner", "Smolt in Tributary per Spawner", "Spawners per Spawner", "Smolt in Tributary per Parr", "Smolt at LGR per Parr", "BON to BON", "LGR to LGR", "Proportion Hatchery Return", "Proportion Age-3 Return", "Proportion Age-4 Return", "Proportion Age-5 Return"))
+  x$Type = factor(x$Type, levels = c("Total Adults (Estuary)", "Total Adults (To Tributary)", "Total Spawners", "Total Egg Production", "Total Parr Recruitment", "Total LGR Smolt", "Aggregate Total Adult Return (To Tributary)", "Aggregate Total Smolt (At LGR)", "Eggs per Spawner", "Parr per Spawner", "Smolt in Tributary per Spawner", "Spawners per Spawner", "Smolt in Tributary per Parr", "Smolt at LGR per Parr", "BON to BON", "LGR to LGR", "Proportion Hatchery Return (Age-3)", "Proportion Hatchery Return (Age-4)", "Proportion Hatchery Return (Age-5)", "Proportion Hatchery Return (All Ages)", "Proportion Age-3 Return", "Proportion Age-4 Return", "Proportion Age-5 Return"))
   x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
-  x$origin = factor(x$origin, levels = c("Combined", "NOR", "HOR"))
+  x$origin = factor(x$origin, levels = c("NOR", "HOR", "Combined"))
   x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
   
   colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
@@ -617,9 +851,10 @@ make_ratios_table = function(ratios, q) {
 }
 ```
 
-For us to use the state-space model as a simulation model, it would be desirable if several characteristics of the distribution of stochastic and derived quantities were similar between the time periods with and without observations.
+For us to use the state-space model as a simulation model (which is the ultimate intent), it would be desirable if several characteristics of the distribution of stochastic and derived quantities were similar between the time periods with and without observations.
 
-This document is intended to identify whether simulated outcomes are similar to observed outcomes. It looks at two primary types of quantities: stochastic time series parameters that are directly estimated by the model (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes calculated as derived quantities from stochastic parameters (e.g., total adult return abundance, BON to BON SAR rates, etc.). Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
+This document is intended to identify whether outcomes simulated from the state-space model are similar to observed outcomes.
+It looks at two primary types of quantities: stochastic time series parameters that are directly estimated by the model (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes calculated as derived quantities from stochastic parameters (e.g., total adult return abundance, BON to BON SAR rates, etc.). Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
 
 The JAGS model was altered to carry out the life cycle processes through brood year `r max(all_yrs)`. This means for each posterior sample we have an observed and simulated time series. The simulated time series picks up where the observed one left off, and assumes the same random processes for all components as used in the observed time series.
 
@@ -825,40 +1060,84 @@ derived_ratios = NULL
 #### Total Adult Return (To Estuary)
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^Rb_tot[year,pop]", obs_y, sim_y, pop = j))
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Rb_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Rb_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Adults (Estuary): Estimates")
 ratio_plots(x, "Total Adults (Estuary): Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (Estuary)"))
 ```
 
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Rb_tot[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (Estuary)"))
+```
+
 #### Total Adult Return (To Tributary)
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^Ra_tot[year,pop]", obs_y, sim_y, pop = j))
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Ra_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Ra_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Adults (Tributary): Estimates")
 ratio_plots(x, "Total Adults (Tributary): Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (To Tributary)"))
 ```
 
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_tot[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (To Tributary)"))
+```
+
 #### Total Spawners
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^Sa_tot[year,pop]", obs_y, sim_y, pop = j))
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Sa_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Sa_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Spawners: Estimates")
 ratio_plots(x, "Total Spawners: Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Spawners"))
 ```
 
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Sa_tot[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Spawners"))
+```
+
 #### Total Egg Production
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("^E[year,pop]", obs_y, sim_y, pop = j))
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("^E_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("^E_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Total Egg Production: Estimates")
 ratio_plots(x, "Total Egg Production: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Egg Production"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^E[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Egg Production"))
 ```
 
@@ -944,10 +1223,21 @@ derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "SAR", Type =
 #### Eggs per Spawner
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("E_per_Sa[year,pop]", obs_y, sim_y, pop = j))
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("E_per_Sa_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("E_per_Sa_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
 x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "Eggs per Spawner: Estimates")
 ratio_plots(x, "Eggs per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Eggs per Spawner"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^E_per_Sa[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Eggs per Spawner"))
 ```
 
@@ -1009,19 +1299,52 @@ derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production R
 
 ### Adult Composition {.tabset .tabset-pills}
 
-#### Proportion Hatchery Return
+#### Proportion Hatchery Return {.tabset .tabset-pills}
+
+##### Age-3
 
 ```{r}
-x = lapply(1:4, function(j) get_ratio("p_hor[year,pop]", obs_y, sim_y, pop = j))
+x = lapply(1:4, function(j) get_ratio("p_hor_a[year,age,pop]", obs_y, sim_y, age = 1, pop = j))
 x = do.call(abind, append(x, list(along = 4)))
-vals_plots(x, "Proportion Hatchery Return: Estimates")
-ratio_plots(x, "Proportion Hatchery Return: Ratios")
-derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return"))
+vals_plots(x, "Proportion Hatchery Return (Age-3): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (Age-3): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (Age-3)"))
+```
+
+##### Age-4
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("p_hor_a[year,age,pop]", obs_y, sim_y, age = 2, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Hatchery Return (Age-4): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (Age-4): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (Age-4)"))
+```
+
+##### Age-5
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("p_hor_a[year,age,pop]", obs_y, sim_y, age = 3, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Hatchery Return (Age-5): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (Age-5): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (Age-5)"))
+```
+
+##### All Ages
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("p_hor[year,pop]", obs_y, sim_y,  pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Hatchery Return (All Ages): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (All Ages): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (All Ages)"))
 ```
 
 #### Proportion Age-3 Return
 
 ```{r}
+# by origin: plot and table
 x = append(
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 1, origin = 1, pop = j)),
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 1, origin = 2, pop = j))
@@ -1033,9 +1356,17 @@ ratio_plots(x, "Proportion Age-3 Return: Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-3 Return"))
 ```
 
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_comp_a[year,age,pop]", obs_y, sim_y, pop = j, age = 1))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-3 Return"))
+```
+
 #### Proportion Age-4 Return
 
 ```{r}
+# by origin: plot and table
 x = append(
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 2, origin = 1, pop = j)),
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 2, origin = 2, pop = j))
@@ -1047,9 +1378,17 @@ ratio_plots(x, "Proportion Age-4 Return: Ratios")
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-4 Return"))
 ```
 
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_comp_a[year,age,pop]", obs_y, sim_y, pop = j, age = 2))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-4 Return"))
+```
+
 #### Proportion Age-5 Return
 
 ```{r}
+# by origin: plot and table
 x = append(
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 3, origin = 1, pop = j)),
   lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 3, origin = 2, pop = j))
@@ -1058,6 +1397,13 @@ x = do.call(abind, append(x, list(along = 4)))
 x[x == "Inf"] = 1; x[x == "NaN"] = 1
 vals_plots(x, "Proportion Age-5 Return: Estimates")
 ratio_plots(x, "Proportion Age-5 Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-5 Return"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_comp_a[year,age,pop]", obs_y, sim_y, pop = j, age = 3))
+x = do.call(abind, append(x, list(along = 4)))
 derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-5 Return"))
 ```
 
@@ -1301,25 +1647,81 @@ pop_ts_plots("^phi_Sb_Sa[year,pop]")
 
 ### Abundance Quantities {.tabset .tabset-pills}
 
-#### Total Adult Return (To Estuary)
+#### Total Adult Return (To Estuary) {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^Rb_tot_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^Rb_tot_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
 
 ```{r}
 pop_ts_plots("^Rb_tot[year,pop]")
 ```
 
-#### Total Adult Return (To Tributary)
+#### Total Adult Return (To Tributary) {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^Ra_tot_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^Ra_tot_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
 
 ```{r}
 pop_ts_plots("^Ra_tot[year,pop]")
 ```
 
-#### Total Spawners
+#### Total Spawners {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^Sa_tot_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^Sa_tot_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
 
 ```{r}
 pop_ts_plots("^Sa_tot[year,pop]")
 ```
 
-#### Total Egg Production
+#### Total Egg Production {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^E_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^E_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
 
 ```{r}
 pop_ts_plots("^E[year,pop]")
@@ -1405,10 +1807,24 @@ pop_ts_plots("Ra_per_Ma[year,origin,pop]", obs_y_use = obs_sar_y, sim_y_use = si
 
 ### Production Rates {.tabset .tabset-pills}
 
-#### Eggs per Spawner
+#### Eggs per Spawner {.tabset .tabset-pills}
+
+##### NOR
 
 ```{r}
-pop_ts_plots("E_per_Sa[year,pop]")
+pop_ts_plots("^E_per_Sa_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^E_per_Sa_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("^E_per_Sa[year,pop]")
 ```
 
 #### Parr per Spawner
@@ -1459,7 +1875,27 @@ pop_ts_plots("Sa_tot_per_Sa_tot[year,pop]", obs_y_use = obs_sar_y, sim_y_use = s
 
 ### Adult Composition {.tabset .tabset-pills}
 
-#### Proportion Hatchery Return
+#### Proportion Hatchery Return {.tabset .tabset-pills}
+
+##### Age-3
+
+```{r}
+pop_ts_plots("p_hor_a[year,age,pop]", age = 1)
+```
+
+##### Age-4
+
+```{r}
+pop_ts_plots("p_hor_a[year,age,pop]", age = 2)
+```
+
+##### Age-5
+
+```{r}
+pop_ts_plots("p_hor_a[year,age,pop]", age = 3)
+```
+
+##### Combined
 
 ```{r}
 pop_ts_plots("p_hor[year,pop]")
@@ -1479,6 +1915,12 @@ pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 1, origin = 1)
 pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 1, origin = 2)
 ```
 
+##### Combined
+
+```{r}
+pop_ts_plots("Ra_comp_a[year,age,pop]", age = 1)
+```
+
 #### Proportion Age-4 Return {.tabset .tabset-pills}
 
 ##### NOR
@@ -1493,6 +1935,12 @@ pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 2, origin = 1)
 pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 2, origin = 2)
 ```
 
+##### Combined
+
+```{r}
+pop_ts_plots("Ra_comp_a[year,age,pop]", age = 2)
+```
+
 #### Proportion Age-5 Return {.tabset .tabset-pills}
 
 ##### NOR
@@ -1505,4 +1953,10 @@ pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 3, origin = 1)
 
 ```{r}
 pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 3, origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("Ra_comp_a[year,age,pop]", age = 3)
 ```
