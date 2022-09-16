@@ -697,8 +697,8 @@ mtext(side = 1, outer = T, line = 0.25, "Brood Year")
 mtext(side = 2, outer = T, line = 0.25, "Mean Length at Spring Tagging (mm)")
 ```
 
-```{r pp-check-output, child = "03a-pp-checks.Rmd", eval = model_info$do_pp_check}
+```{r pp-check-output, child = "output-plots-children/03a-pp-checks.Rmd", eval = model_info$do_pp_check}
 ```
 
-```{r waic-output, child = "03b-waic.Rmd", eval = model_info$do_lppd}
+```{r waic-output, child = "output-plots-children/03b-waic.Rmd", eval = model_info$do_lppd}
 ```
