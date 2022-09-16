@@ -265,7 +265,7 @@ jags_params = c(
   
   # states
   "Pb", "Pa", "Mb", "Ma", "O0", "O", "Rb",
-  "Ra", "Sb", "Sa", "p_Ra", "p_Sa_prime", "Sa_tot", "Ra_tot", "E", "L_Pb", "L_Mb",
+  "Ra", "Sb", "Sa", "p_Ra", "p_Sa_prime", "Sa_tot", "Ra_tot", "E", "E_sep", "L_Pb", "L_Mb",
   
   # carcass vs. weir correction
   "z", "zeta", "mu_z", "sig_z",

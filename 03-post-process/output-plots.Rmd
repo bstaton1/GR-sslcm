@@ -57,7 +57,7 @@ editor_options:
 
 ```{r directories, include = F}
 # set root directory to the project directory: one level up from this location
-# knitr::opts_knit$set(root.dir = "../")
+knitr::opts_knit$set(root.dir = "C:/Users/bstaton/Desktop/Staton/1_critfc/analyses/GR-sslcm/03-post-process")
 ```
 
 ```{r setup, include = FALSE}

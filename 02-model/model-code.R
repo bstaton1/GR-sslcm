@@ -76,8 +76,8 @@ jags_model_code = function() {
     
     # log odds ratio between natural and hatchery origin
     delta_O0_O1[j] ~ dt(0, 1/1.566^2, 7.763)
-    delta_O1_O2[j] <- delta_O0_O1[j]
-    delta_O2_O3[j] <- delta_O0_O1[j]
+    delta_O1_O2[j] <- 0
+    delta_O2_O3[j] <- 0
     
     # AR(1) coefficient for first year ocean survival
     kappa_phi_O0_O1[j] ~ dunif(-0.99,0.99)
@@ -103,7 +103,7 @@ jags_model_code = function() {
     for (i in 1:n_stray_yrs[j]) {
       G[stray_yrs[i,j],o_nor,j] <- 0
       G_random1[stray_yrs[i,j],o_hor,j] ~ dunif(0, 500)  # prior if an observed year
-      G_random2[stray_yrs[i,j],o_hor,j] ~ dunif(50, 150) # prior if a simulated year, only applies for MIN
+      G_random2[stray_yrs[i,j],o_hor,j] ~ dunif(20,130) # prior if a simulated year, only applies for MIN
       G[stray_yrs[i,j],o_hor,j] <- ifelse(stray_yrs[i,j] <= ny_obs, G_random1[stray_yrs[i,j],o_hor,j], G_random2[stray_yrs[i,j],o_hor,j])
     }
     
