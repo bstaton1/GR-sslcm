@@ -415,7 +415,7 @@ for (i in 1:nrow(Ra)) {
   
   p3 = Ra_i[,1,1,]/tot
   p4 = Ra_i[,2,1,]/tot
-  p5 = Ra_i[,3,1,]/nor_tot
+  p5 = Ra_i[,3,1,]/tot
 
   p3_out = rbind(p3_out, as.numeric(p3))
   p4_out = rbind(p4_out, as.numeric(p4))
