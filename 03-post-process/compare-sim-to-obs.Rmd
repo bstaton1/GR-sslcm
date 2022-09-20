@@ -785,7 +785,7 @@ prep_est_ratios = function(x, q) {
   x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
   
   colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
-  colnames(x)[which(colnames(x) == "Origin")] = "Origin"
+  colnames(x)[which(colnames(x) == "origin")] = "Origin"
   
   return(x)
 }
