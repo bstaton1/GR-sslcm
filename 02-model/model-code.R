@@ -505,9 +505,9 @@ jags_model_code = function() {
     # spawners per spawner -- can't be calculated for all brood years in model
     for (y in 2:(ny-kmax)) {
       Sa_tot_per_Sa_tot[y,j] <- (
-        sum(Sa[y+kmin+1-1,1,1:no,j]) +       # age 3 adults produced by spawners in brood year y
-          sum(Sa[y+kmin+2-1,2,1:no,j]) +     # age 4 adults produced by spawners in brood year y
-          sum(Sa[y+kmin+3-1,3,1:no,j]))/     # age 5 adults produced by spawners in brood year y
+        sum(Sa[y+kmin+1-1,1,o_nor,j]) +       # age 3 adults produced by spawners in brood year y
+          sum(Sa[y+kmin+2-1,2,o_nor,j]) +     # age 4 adults produced by spawners in brood year y
+          sum(Sa[y+kmin+3-1,3,o_nor,j]))/     # age 5 adults produced by spawners in brood year y
         Sa_tot[y,j]                          # total spawners in brood year y
     }
     
