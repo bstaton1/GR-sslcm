@@ -284,7 +284,7 @@ jags_model_code = function() {
     Lphi_O2_O3[y,o_hor,1:nj] <- Lphi_O2_O3[y,o_nor,1:nj] + delta_O2_O3[1:nj]
     
     # pre-spawn survival
-    Lphi_Sb_Sa[y,1:nj] ~ dmnorm.vcov(logit(mu_phi_Sb_Sa[1:nj]), Sig_Lphi_Sb_Sa[1:nj,1:nj])
+    Lphi_Sb_Sa_random[y,1:nj] ~ dmnorm.vcov(logit(mu_phi_Sb_Sa[1:nj]), Sig_Lphi_Sb_Sa[1:nj,1:nj])
 
     # movement survival (juveniles LGR to BON)
     Lphi_Ma_O0[y,1:no] ~ dmnorm.vcov(logit(mu_phi_Ma_O0[1:no]), Sig_Lphi_Ma_O0[1:no,1:no])
@@ -338,6 +338,7 @@ jags_model_code = function() {
       phi_Mb_Ma[y,i_fall,o_nor,j] <- phi_Mb_Ma[y,i_spring,o_nor,j]
       
       # pre-spawn survival
+      Lphi_Sb_Sa[y,j] <- ifelse(Lphi_Sb_Sa_random[y,j] < logit(0.6), logit(0.6), Lphi_Sb_Sa_random[y,j])
       phi_Sb_Sa[y,j] <- ilogit(Lphi_Sb_Sa[y,j])
     }
     
