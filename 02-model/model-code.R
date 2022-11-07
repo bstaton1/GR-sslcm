@@ -238,6 +238,18 @@ jags_model_code = function() {
   zeta[2,3] <- (zeta[2,1] + zeta[2,2] + zeta[2,4])/3
   zeta[3,3] <- (zeta[3,1] + zeta[3,2] + zeta[3,4])/3
   
+  # brood stock removals for simulated years
+  for (j in 1:nj) {
+    for (o in 1:no) {
+      for (k in 1:nk) {
+        mean_p_remove[k,o,j] <- mean(B[12:ny_obs,k,o,j]/Ra[12:ny_obs,k,o,j])
+        for (y in (ny_obs+1):ny) {
+          B[y,k,o,j] <- Ra[y,k,o,j] * mean_p_remove[k,o,j]
+        }
+      }
+    }
+  }
+  
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in 2:ny) {
     

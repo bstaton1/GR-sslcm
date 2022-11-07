@@ -138,19 +138,11 @@ if (ny_sim > 0) {
   jags_data$Mb_obs = abind(jags_data$Mb_obs, Mb_obs_new, along = 1)
   
   # append hypothetical future weir removal numbers (by age/origin/population)
+  # calculate this inside the model based on average proportion removed in observed years
   weir_remove_yrs = as.character(2001:2019)
   B_new = array(NA, dim = c(ny_sim, jags_data$nk, jags_data$no, jags_data$nj))
   dimnames(B_new)[[1]] = 1:ny_sim + last_obs_yr
   dimnames(B_new)[2:4] = dimnames(jags_data$B)[2:4]
-  for (j in 1:jags_data$nj) {
-    for (o in 1:jags_data$no) {
-      for (k in 1:jags_data$nk) {
-        for (y in 1:ny_sim) {
-          B_new[y,k,o,j] = sample(jags_data$B[weir_remove_yrs,k,o,j], 1)
-        }
-      }
-    }
-  }
   jags_data$B = abind(jags_data$B, B_new, along = 1)
   
   # append years that do not need straying accounted for for future years (by population)
