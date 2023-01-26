@@ -383,9 +383,7 @@ juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 tmp = read.csv(file.path(data_dir, "09-juv-mean-length.csv"))
 
 # retain only rows corresponding to all fish measured (tagged and untagged)
-# FIXME: the spring portion MUST be removed when the "all" spring data are added
-# for now, the model uses the PIT-only spring mean length
-tmp = tmp[tmp$fish_subset == "all" | tmp$season == "spring",]
+tmp = tmp[tmp$fish_subset == "all",]
 
 # set any mean lengths with sample size less than 30 to NA
 tmp[tmp$n_length < 30,c("len_mean", "len_sd")] = NA
