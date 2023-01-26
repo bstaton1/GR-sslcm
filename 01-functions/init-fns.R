@@ -288,10 +288,12 @@ gen_initials = function(CHAIN, jags_data) {
   with(jags_data, {
     # create random BH parameters
     BH_params = get_BH_params(jags_data)
+    rownames(BH_params) = c("CAT", "LOS", "MIN", "UGR")
+    colnames(BH_params) = c("alpha", "beta", "sig_Lphi_E_Pb")
     alpha_init = plogis(qlogis(BH_params[,"alpha"]) + rnorm(nj, 0, 0.1))
     lbeta_init = log(BH_params[,"beta"]) + rnorm(nj, 0, 0.1)
     sig_Lphi_E_Pb_init = exp(log(BH_params[,"sig_Lphi_E_Pb"]) + rnorm(nj, 0, 0.05))
-    
+
     # create random egg-to-parr survival values
     phi_E_Pb = get_phi_E_Pb_obs(jags_data, TRUE, TRUE)
     Lphi_E_Pb_init = qlogis(phi_E_Pb) + matrix(rnorm(prod(dim(phi_E_Pb)), 0, 0.1), nrow(phi_E_Pb), ncol(phi_E_Pb))
