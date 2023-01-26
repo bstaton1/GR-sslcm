@@ -1,3 +1,7 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
 
 # Length-Based Quantities {.tabset .tabset-dropdown}
 
@@ -13,9 +17,9 @@ plot_f = function(j) {
   post_E = post_convert(cbind(postpack:::id_mat(post), E_scaled))
   
   # summarize scaled egg abundance
-  E_scaled_mean = post_summ(post_E, "")["mean",]
-  E_scaled_lwr = post_summ(post_E, "")["2.5%",]
-  E_scaled_upr = post_summ(post_E, "")["97.5%",]
+  E_scaled_mean = post_summ(post_E, ".")["mean",]
+  E_scaled_lwr = post_summ(post_E, ".")["2.5%",]
+  E_scaled_upr = post_summ(post_E, ".")["97.5%",]
   
   # create a vector of scaled egg abundances to calculate at
   E_scaled_seq = seq(min(E_scaled_lwr), max(E_scaled_upr), length = 30)
@@ -41,9 +45,9 @@ plot_f = function(j) {
   post_pred_L_Pb = post_convert(cbind(postpack:::id_mat(post), pred_L_Pb))
   
   # extract summarize predicted length
-  pred_L_Pb_mean = post_summ(post_pred_L_Pb, "")["mean",]
-  pred_L_Pb_lwr = post_summ(post_pred_L_Pb, "")["2.5%",]
-  pred_L_Pb_upr = post_summ(post_pred_L_Pb, "")["97.5%",]
+  pred_L_Pb_mean = post_summ(post_pred_L_Pb, ".")["mean",]
+  pred_L_Pb_lwr = post_summ(post_pred_L_Pb, ".")["2.5%",]
+  pred_L_Pb_upr = post_summ(post_pred_L_Pb, ".")["97.5%",]
   
   # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
@@ -111,9 +115,9 @@ plot_f = function(j) {
   post_pred_Delta_L_Pb_Mb = post_convert(cbind(postpack:::id_mat(post), pred_Delta_L_Pb_Mb))
   
   # extract summarize predicted growth
-  pred_Delta_L_Pb_Mb_mean = post_summ(post_pred_Delta_L_Pb_Mb, "")["mean",]
-  pred_Delta_L_Pb_Mb_lwr = post_summ(post_pred_Delta_L_Pb_Mb, "")["2.5%",]
-  pred_Delta_L_Pb_Mb_upr = post_summ(post_pred_Delta_L_Pb_Mb, "")["97.5%",]
+  pred_Delta_L_Pb_Mb_mean = post_summ(post_pred_Delta_L_Pb_Mb, ".")["mean",]
+  pred_Delta_L_Pb_Mb_lwr = post_summ(post_pred_Delta_L_Pb_Mb, ".")["2.5%",]
+  pred_Delta_L_Pb_Mb_upr = post_summ(post_pred_Delta_L_Pb_Mb, ".")["97.5%",]
   
   # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
@@ -199,9 +203,9 @@ plot_fn = function(j, i) {
   post_pred_phi_Pa_Mb = post_convert(cbind(postpack:::id_mat(post), pred_phi_Pa_Mb))
   
   # extract summarize predicted length
-  pred_phi_Pa_Mb_mean = post_summ(post_pred_phi_Pa_Mb, "")["mean",]
-  pred_phi_Pa_Mb_lwr = post_summ(post_pred_phi_Pa_Mb, "")["2.5%",]
-  pred_phi_Pa_Mb_upr = post_summ(post_pred_phi_Pa_Mb, "")["97.5%",]
+  pred_phi_Pa_Mb_mean = post_summ(post_pred_phi_Pa_Mb, ".")["mean",]
+  pred_phi_Pa_Mb_lwr = post_summ(post_pred_phi_Pa_Mb, ".")["2.5%",]
+  pred_phi_Pa_Mb_upr = post_summ(post_pred_phi_Pa_Mb, ".")["97.5%",]
   
   # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
@@ -276,9 +280,9 @@ plot_fn = function(j, i) {
   post_pred_phi_Mb_Ma = post_convert(cbind(postpack:::id_mat(post), pred_phi_Mb_Ma))
   
   # extract summarize predicted length
-  pred_phi_Mb_Ma_mean = post_summ(post_pred_phi_Mb_Ma, "")["mean",]
-  pred_phi_Mb_Ma_lwr = post_summ(post_pred_phi_Mb_Ma, "")["2.5%",]
-  pred_phi_Mb_Ma_upr = post_summ(post_pred_phi_Mb_Ma, "")["97.5%",]
+  pred_phi_Mb_Ma_mean = post_summ(post_pred_phi_Mb_Ma, ".")["mean",]
+  pred_phi_Mb_Ma_lwr = post_summ(post_pred_phi_Mb_Ma, ".")["2.5%",]
+  pred_phi_Mb_Ma_upr = post_summ(post_pred_phi_Mb_Ma, ".")["97.5%",]
   
   # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))

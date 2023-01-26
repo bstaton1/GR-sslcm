@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # MCMC Diagnostics {.tabset .tabset-pills}
 
 ```{r make-diag-post}
@@ -257,8 +262,8 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Misc ocean survival
 L1 = "Misc Ocean Survival"
-L2 = c("Yr1 NOR:HOR Scaler", "Yr2 NOR:HOR Scaler", "Yr3 NOR:HOR Scaler", "Yr1 Initial Residual", "Yr 1 AR(1) Coefficient")
-base = c("delta_O0_O1[pop]", "delta_O1_O2[pop]", "delta_O2_O3[pop]", "Lphi_O0_O1_resid[5,1,pop]", "kappa_phi_O0_O1[pop]")
+L2 = c("Yr1 NOR:HOR Scaler", "Yr1 Initial Residual", "Yr 1 AR(1) Coefficient")
+base = c("delta_O0_O1[pop]", "Lphi_O0_O1_resid[1,1,pop]", "kappa_phi_O0_O1[pop]")
 match = sub_index(base, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -321,7 +326,7 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 # Straying
 L1 = "Strays"
 L2 = c("Realized Total Number", "Age Comp")
-match = c(sub_index("G[.,origin,pop]", origin = o_hor, pop = "."), sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = "."))
+match = c(sub_index("^G[.,origin,pop]", origin = o_hor, pop = "."), sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = "."))
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
@@ -452,7 +457,7 @@ rhat_hist(rhat_1)
 Density and trace plots by chain for the `r min(n_max_draw, length(rhat_1_params))` parameters with the highest $\hat{R}$ values in this group are shown.
 
 ```{r mcmc-diag-plots-1, fig.width = 11, fig.height = 8.5}
-diag_plots(post_sub_1, "", show_diags = "never")
+diag_plots(post_sub_1, ".", show_diags = "never")
 ```
 
 ### $1.05 < \hat{R} < 1.1$ {.tabset .tabset-pills}
@@ -470,7 +475,7 @@ rhat_hist(rhat_2)
 Density and trace plots by chain for the `r min(n_max_draw, length(rhat_2_params))` parameters with the highest $\hat{R}$ values in this group are shown.
 
 ```{r mcmc-diag-plots-2, fig.width = 11, fig.height = 8.5}
-diag_plots(post_sub_2, "", show_diags = "never")
+diag_plots(post_sub_2, ".", show_diags = "never")
 ```
 
 ### $\hat{R} > 1.1$ {.tabset .tabset-pills}
@@ -488,6 +493,6 @@ rhat_hist(rhat_3)
 Density and trace plots by chain for the `r min(n_max_draw, length(rhat_3_params))` parameters with the highest $\hat{R}$ values in this group are shown.
 
 ```{r mcmc-diag-plots-3, fig.width = 11, fig.height = 8.5}
-diag_plots(post_sub_3, "", show_diags = "never")
+diag_plots(post_sub_3, ".", show_diags = "never")
 ```
 

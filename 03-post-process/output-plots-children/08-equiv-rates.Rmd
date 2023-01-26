@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # Equivilency Rates {.tabset .tabset-pills}
 
 ## Smolt-to-Adult Rates {.tabset .tabset-pills}

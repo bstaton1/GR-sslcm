@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # Egg-to-Parr Survival {.tabset .tabset-pills}
 
 ## Beverton-Holt

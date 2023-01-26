@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # Model Info {.tabset .tabset-pills}
 
 **Scenario Name:** `r params$scenario`
@@ -56,6 +61,3 @@ kable(df, caption = "Run time for MCMC sampling. Includes any time the computer 
   kable_styling(full_width = F, bootstrap_options = "condensed") %>%
   column_spec(1, bold = TRUE)
 ```
-
-
-

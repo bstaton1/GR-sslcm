@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # Parr Capacity vs. Habitat Relationship {.tabset .tabset-pills}
 
 ## Scatterplot
