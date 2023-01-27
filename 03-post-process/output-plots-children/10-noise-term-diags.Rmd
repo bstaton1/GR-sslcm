@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # Random Noise Diagnostics {.tabset .tabset-pills}
 
 ```{r misc-resid-fns}

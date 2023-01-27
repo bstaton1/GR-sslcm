@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 ## WAIC
 
 WAIC is a measure of model parsimony.

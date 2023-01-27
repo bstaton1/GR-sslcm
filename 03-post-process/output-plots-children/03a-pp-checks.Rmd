@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 ## Posterior Predictive Checks
 
 This output is a diagnostic of the consistency of variability in the data with the variability assumed by the model.

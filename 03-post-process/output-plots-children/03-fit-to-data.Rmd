@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # Fit to Data {.tabset .tabset-pills}
 
 ## Figures {.tabset .tabset-dropdown}

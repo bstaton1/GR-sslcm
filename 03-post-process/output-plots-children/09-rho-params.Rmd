@@ -1,3 +1,8 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
 # Correlation Parameters
 
 ```{r rho_plot, fig.width = 6, fig.height = 7}

@@ -34,6 +34,7 @@ get_logit_se = function(p_mean, p_se, p_lwr, p_upr, alpha) {
 # len_mean: numeric vector of observed mean lengths, elements represent years
 # jday_med: numeric vector of median capture dates, elements represent years
 # resid_type: character; either "mult" or "add"; do you wish to use additive or multiplicative residuals
+
 standardize_mean_length = function(len_mean, jday_med, resid_type) {
   
   # step 1: fit a regression model; approximates average daily growth function
@@ -41,10 +42,10 @@ standardize_mean_length = function(len_mean, jday_med, resid_type) {
   
   # step 2: calculate residuals for each year
   if (resid_type != "mult" & resid_type != "add") stop ("resid_type must be one of 'mult' or 'add'")
-  if (resid_type == "mult") r = len_mean/fitted(fit)
+  if (resid_type == "mult") r = len_mean/predict(fit, newdata = data.frame(jday_med))
   if (resid_type == "add") r = len_mean - fitted(fit)
   
-  # step 3: calculate expected length on the average sampling day each year
+  # step 3: calculate expected length on the average sampling day across years
   mu_len_mean = predict(fit, data.frame(jday_med = mean(jday_med, na.rm = TRUE)))
   
   # step 4: calculate the sampling-date-adjusted mean length each year by applying the

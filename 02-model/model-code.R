@@ -69,14 +69,12 @@ jags_model_code = function() {
     ### PRIORS: OCEAN SURVIVAL ###
     # mean survival by ocean year transition for natural origin
     mu_phi_O0_O1[o_nor,j] ~ dbeta(mu_phi_O0_O1_prior[1], mu_phi_O0_O1_prior[2]) # first winter at sea: to become SWA1
-    # mu_phi_O1_O2[o_nor,j] ~ dbeta(mu_phi_O1_O2_prior[1], mu_phi_O1_O2_prior[2]) # second winter at sea: to become SWA2
-    # mu_phi_O2_O3[o_nor,j] ~ dbeta(mu_phi_O2_O3_prior[1], mu_phi_O2_O3_prior[2]) # third winter at sea: to become SW3
-    mu_phi_O1_O2[o_nor,j] <- 0.6
-    mu_phi_O2_O3[o_nor,j] <- 0.7
-    
+    mu_phi_O1_O2[o_nor,j] ~ dbeta(mu_phi_O1_O2_prior[1], mu_phi_O1_O2_prior[2]) # second winter at sea: to become SWA2
+    mu_phi_O2_O3[o_nor,j] ~ dbeta(mu_phi_O2_O3_prior[1], mu_phi_O2_O3_prior[2]) # third winter at sea: to become SW3
+
     # log odds ratio between natural and hatchery origin
     delta_O0_O1[j] ~ dt(0, 1/1.566^2, 7.763)
-    delta_O1_O2[j] <- 0
+    delta_O1_O2[j] <- delta_O0_O1[j] * 0.5
     delta_O2_O3[j] <- 0
     
     # AR(1) coefficient for first year ocean survival
@@ -103,7 +101,7 @@ jags_model_code = function() {
     for (i in 1:n_stray_yrs[j]) {
       G[stray_yrs[i,j],o_nor,j] <- 0
       G_random1[stray_yrs[i,j],o_hor,j] ~ dunif(0, 500)  # prior if an observed year
-      G_random2[stray_yrs[i,j],o_hor,j] ~ dunif(20,130) # prior if a simulated year, only applies for MIN
+      G_random2[stray_yrs[i,j],o_hor,j] ~ dunif(20,110) # prior if a simulated year, only applies for MIN
       G[stray_yrs[i,j],o_hor,j] <- ifelse(stray_yrs[i,j] <= ny_obs, G_random1[stray_yrs[i,j],o_hor,j], G_random2[stray_yrs[i,j],o_hor,j])
     }
     
@@ -237,6 +235,18 @@ jags_model_code = function() {
   zeta[1,3] <- (zeta[1,1] + zeta[1,2] + zeta[1,4])/3
   zeta[2,3] <- (zeta[2,1] + zeta[2,2] + zeta[2,4])/3
   zeta[3,3] <- (zeta[3,1] + zeta[3,2] + zeta[3,4])/3
+  
+  # brood stock removals for simulated years
+  for (j in 1:nj) {
+    for (o in 1:no) {
+      for (k in 1:nk) {
+        mean_p_remove[k,o,j] <- mean(B[12:ny_obs,k,o,j]/Ra[12:ny_obs,k,o,j])
+        for (y in (ny_obs+1):ny) {
+          B[y,k,o,j] <- Ra[y,k,o,j] * mean_p_remove[k,o,j]
+        }
+      }
+    }
+  }
   
   ### PRIORS: BROOD-YEAR-SPECIFIC PARAMETERS ###
   for (y in 2:ny) {
@@ -505,9 +515,9 @@ jags_model_code = function() {
     # spawners per spawner -- can't be calculated for all brood years in model
     for (y in 2:(ny-kmax)) {
       Sa_tot_per_Sa_tot[y,j] <- (
-        sum(Sa[y+kmin+1-1,1,1:no,j]) +       # age 3 adults produced by spawners in brood year y
-          sum(Sa[y+kmin+2-1,2,1:no,j]) +     # age 4 adults produced by spawners in brood year y
-          sum(Sa[y+kmin+3-1,3,1:no,j]))/     # age 5 adults produced by spawners in brood year y
+        sum(Sa[y+kmin+1-1,1,o_nor,j]) +       # age 3 adults produced by spawners in brood year y
+          sum(Sa[y+kmin+2-1,2,o_nor,j]) +     # age 4 adults produced by spawners in brood year y
+          sum(Sa[y+kmin+3-1,3,o_nor,j]))/     # age 5 adults produced by spawners in brood year y
         Sa_tot[y,j]                          # total spawners in brood year y
     }
     
