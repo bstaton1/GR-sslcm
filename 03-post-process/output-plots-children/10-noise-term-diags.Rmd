@@ -529,8 +529,8 @@ plot_obs_qresid = function(qresid_param, year = ".+", pop = NULL, origin = NULL,
   y_last = (max(y_first) + 1):length(observable)
   i_first = as.character(na.omit(empty_names[y_first]))
   i_last = as.character(na.omit(empty_names[y_last]))
-  mn_post_first = apply(qresid_post[,i_first], 1, mean)
-  mn_post_last = apply(qresid_post[,i_last], 1, mean)
+  mn_post_first = apply(as.matrix(qresid_post[,i_first]), 1, mean)
+  mn_post_last = apply(as.matrix(qresid_post[,i_last]), 1, mean)
   first_last_mn_diff_post = mn_post_last - mn_post_first
 
   # set the y-axis limits: leave room at top for legend
