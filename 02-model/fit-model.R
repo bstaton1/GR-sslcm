@@ -56,13 +56,11 @@ jags_data = append_no_na_indices(jags_data)
 # jags_data$phi_SL[as.character(1991:2000),] = 0.85
 
 # proportion of spawners by age and population that are female
-Omega = array(NA, dim = c(jags_data$nk, jags_data$nj))
+# assume 50% female for all fish aged 4 or 5; 0% for age-3
+# constant for all years/populations/origin types
+Omega = array(0.5, dim = c(jags_data$nk, jags_data$nj))
 dimnames(Omega) = list(jags_data$kmin:jags_data$kmax, colnames(jags_data$Ra_obs))
 Omega["3",] = 0
-Omega["4","CAT"] = 0.55; Omega["4","LOS"] = 0.53; Omega["4","UGR"] = 0.57 
-Omega["5","CAT"] = 0.43; Omega["5","LOS"] = 0.41; Omega["5","UGR"] = 0.48 
-Omega["4","MIN"] = round(mean(Omega["4",], na.rm = TRUE), 2)
-Omega["5","MIN"] = round(mean(Omega["5",], na.rm = TRUE), 2)
 
 add_jags_data = list(
   f = c(1904, 3971, 4846),  # fecundity [female age]
