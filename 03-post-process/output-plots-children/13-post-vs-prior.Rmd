@@ -1,0 +1,250 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# Prior vs. Posterior {.tabset .tabset-pills}
+
+```{r post-v-prior-fig-sizes}
+# set global knitting options
+knitr::opts_chunk$set(fig.width = 6, fig.height = 5)
+```
+
+```{r post-v-prior-fn}
+# argument list:
+# post_samps & prior_samps: samples from their respective PDFs
+# post_col & prior_col: (non-transparent) colors for each PDF (will be made transparent for bar fills based on the alpha argument)
+# main: plot title
+# y_max: maximum bin probability height to display; should be [0,1]
+# legend_loc: position of the legend (e.g., "topright")
+# n_bins: the number of bins
+# alpha: transparency setting for bar fills
+
+post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col = "royalblue",
+                        main = NULL, y_max = 0.3, xlim = NULL, legend_loc = NA, n_bins = 50, alpha = 0.5) {
+  
+  # get the range of all samples
+  rng = range(post_samps, prior_samps)
+  
+  # if xlim was provided, take it into consideration when creating breaks
+  if (is.null(xlim)) {
+    breaks = seq(rng[1], rng[2], length = n_bins)
+  } else {
+    breaks = seq(min(rng[1], xlim[1]), max(rng[2], xlim[2]), length = n_bins)
+  }
+ 
+  # calculate the data for the histogram
+  prior_hist = hist(prior_samps, plot = FALSE, breaks = breaks)
+  post_hist = hist(post_samps, plot = FALSE, breaks = breaks)
+  
+  # convert bin counts to probabilities
+  prior_probs = prior_hist$counts/sum(prior_hist$counts)
+  post_probs = post_hist$counts/sum(post_hist$counts)
+  
+  # graphics parameters
+  par(xaxs = "i", yaxs = "i", mgp = c(2,0.2,0), cex.axis = 0.8, tcl = -0.15, mar = c(1.5,1,1.5,0.5), lend = "square", ljoin = "mitre")
+  
+  # create a y_max if not supplied
+  if (is.null(y_max)) {
+    y_max = max(prior_probs, post_probs)
+  }
+  
+  # create the histogram for prior PDF
+  # barplot where height is equal to bin prob
+  mp = barplot(
+    prior_probs, ylim = c(0,y_max), space = 0, border = prior_col, col = scales::alpha(prior_col, alpha), axes = FALSE
+    )
+  
+  # create the histogram for posterior PDF
+  mp = barplot(
+    post_probs, ylim = c(0,y_max), space = 0, border = post_col, col = scales::alpha(post_col, alpha), axes = FALSE, add = TRUE
+    )
+  
+  # draw the x-axis
+  at_x = axisTicks(par("usr")[1:2], log = FALSE)
+  axis(side = 1, at = mp[at_x], labels = round(prior_hist$breaks[at_x], 1))
+  
+  # draw the y-axis
+  axis(side = 2)
+  
+  # draw segments to connect axes at origin
+  usr = par("usr")
+  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
+  segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE)
+  
+  # add a legend in the desired location if not NULL
+  if (!is.na(legend_loc)) {
+    legend(legend_loc, legend = c("Prior", "Posterior"), bty = "n", pch = 22, pt.cex = 1.75, cex = 0.8, col = c(prior_col, post_col), pt.bg = scales::alpha(c(prior_col, post_col), 0.5))
+  }
+}
+```
+
+```{r}
+# wrapper to create plot for all populations
+post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", xlim = NULL, ...) {
+  # function to plot one population
+  plot_f = function(j) {
+    post_v_prior(
+      post_samps = post_subset(post, sub_index(post_param, pop = j, ...), matrix = TRUE),
+      prior_samps = post_subset(post, prior_param, matrix = TRUE),
+      main = pops[j], 
+      legend_loc = ifelse(j == 1, legend_loc, NA),
+      xlim = xlim
+    )
+  }
+  
+  # apply to each population
+  par(mfrow = c(2,2), oma = c(1,1.5,0,0))
+  junk = sapply(1:jags_data$nj, plot_f)
+  mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
+  mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
+}
+```
+
+## "Location" Parameters {.tabset .tabset-dropdown}
+
+### Max. Egg-to-Parr Survival
+
+**Prior Used**: `dbeta(`r jags_data$alpha_prior[1]`, `r jags_data$alpha_prior[2]`)`
+
+```{r alpha-post-v-prior}
+post_v_prior_pops(post_param = "alpha[pop]", prior_param = "alpha_pr", xlim = c(0,1))
+```
+
+### Mean Ocean Survival (NOR) {.tabset .tabset-pills}
+
+#### Yr1
+
+**Prior Used**: `dbeta(`r jags_data$mu_phi_O0_O1[1]`, `r jags_data$mu_phi_O0_O1[2]`)`
+
+```{r mu_phi_O0_O1-post-v-prior}
+post_v_prior_pops(post_param = "mu_phi_O0_O1[origin,pop]", prior_param = "mu_phi_O0_O1_pr",
+                  origin = o_nor, xlim = c(0,1)
+)
+```
+
+#### Yr2
+
+**Prior Used**: `dbeta(`r jags_data$mu_phi_O1_O2[1]`, `r jags_data$mu_phi_O1_O2[2]`)`
+
+```{r mu_phi_O1_O2-post-v-prior}
+post_v_prior_pops(post_param = "mu_phi_O1_O2[origin,pop]", prior_param = "mu_phi_O1_O2_pr",
+                  origin = o_nor, xlim = c(0,1), legend_loc = "topleft"
+)
+```
+
+#### Yr3
+
+**Prior Used**: `dbeta(`r jags_data$mu_phi_O2_O3[1]`, `r jags_data$mu_phi_O2_O3[2]`)`
+
+```{r mu_phi_O2_O3-post-v-prior}
+post_v_prior_pops(post_param = "mu_phi_O2_O3[origin,pop]", prior_param = "mu_phi_O2_O3_pr",
+                  origin = o_nor, xlim = c(0,1), legend_loc = "topleft"
+)
+```
+
+### Mean Maturation {.tabset .tabset-pills}
+
+#### Age-3 {.tabset .tabset-pills}
+
+**Prior Used**: `dbeta(`r jags_data$mu_psi_O1[1]`, `r jags_data$mu_psi_O1[2]`)`
+
+##### NOR
+
+```{r mu_psi_O1_nor-post-v-prior}
+post_v_prior_pops(post_param = "mu_psi_O1[origin,pop]", prior_param = "mu_psi_O1_pr",
+                  origin = o_nor, xlim = c(0,1)
+)
+```
+
+##### HOR
+
+```{r mu_psi_O1_hor-post-v-prior}
+post_v_prior_pops(post_param = "mu_psi_O1[origin,pop]", prior_param = "mu_psi_O1_pr",
+                  origin = o_hor, xlim = c(0,1)
+)
+```
+
+#### Age-4 {.tabset .tabset-pills}
+
+**Prior Used**: `dbeta(`r jags_data$mu_psi_O2[1]`, `r jags_data$mu_psi_O2[2]`)`
+
+##### NOR
+
+```{r mu_psi_O2_nor-post-v-prior}
+post_v_prior_pops(post_param = "mu_psi_O2[origin,pop]", prior_param = "mu_psi_O2_pr",
+                  origin = o_nor, xlim = c(0,1), legend_loc = "topleft"
+)
+```
+
+##### HOR
+
+```{r mu_psi_O2_hor-post-v-prior}
+post_v_prior_pops(post_param = "mu_psi_O2[origin,pop]", prior_param = "mu_psi_O2_pr",
+                  origin = o_hor, xlim = c(0,1), legend_loc = "topleft"
+)
+```
+
+## "Scale" Parameters {.tabset .tabset-dropdown}
+
+### SD Logit Egg-to-Parr Survival
+
+**Prior Used**: `dt(0, 1/`r jags_data$sig_Lphi_E_Pb_prior`^2, 1) T(0, `r jags_data$dt_upr`)`
+
+```{r sig_Lphi_E_Pb-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lphi_E_Pb[pop]", prior_param = "sig_Lphi_E_Pb_pr",
+                  xlim = c(0, jags_data$dt_upr)
+)
+```
+
+### SD Logit Yr1 Ocean Survival
+
+**Prior Used**: `dt(0, 1/`r jags_data$sig_Lphi_O0_O1_prior`^2, 1) T(0, `r jags_data$dt_upr`)`
+
+```{r sig_Lphi_O0_O1-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lphi_O0_O1[pop]", prior_param = "sig_Lphi_O0_O1_pr",
+                  xlim = c(0, jags_data$dt_upr)
+)
+```
+
+### SD Logit Maturation {.tabset .tabset-pills}
+
+#### Age-3 {.tabset .tabset-pills}
+
+**Prior Used**: `dt(0, 1/`r jags_data$sig_Lpsi_O1`^2, 1) T(0, `r jags_data$dt_upr`)`
+
+##### NOR
+
+```{r sig_Lpsi_O1_nor-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lpsi_O1[pop,origin]", prior_param = "sig_Lpsi_O1_pr",
+                  origin = o_nor, xlim = c(0, jags_data$dt_upr)
+)
+```
+
+##### HOR
+
+```{r sig_Lpsi_O1_hor-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lpsi_O1[pop,origin]", prior_param = "sig_Lpsi_O1_pr",
+                  origin = o_hor, xlim = c(0, jags_data$dt_upr)
+)
+```
+
+#### Age-4 {.tabset .tabset-pills}
+
+**Prior Used**: `dt(0, 1/`r jags_data$sig_Lpsi_O2`^2, 1) T(0, `r jags_data$dt_upr`)`
+
+##### NOR
+
+```{r sig_Lpsi_O2_nor-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lpsi_O2[pop,origin]", prior_param = "sig_Lpsi_O2_pr",
+                  origin = o_nor, xlim = c(0, jags_data$dt_upr)
+)
+```
+
+##### HOR
+
+```{r sig_Lpsi_O2_hor-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lpsi_O2[pop,origin]", prior_param = "sig_Lpsi_O2_pr",
+                  origin = o_hor, xlim = c(0, jags_data$dt_upr)
+)
+```
