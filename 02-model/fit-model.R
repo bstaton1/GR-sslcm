@@ -102,9 +102,17 @@ add_jags_data = append(add_jags_data, list(
 
 # add hyperparameters of priors on ocean survival parameters
 add_jags_data = append(add_jags_data, list(
-  mu_phi_O0_O1_prior = c(1, 1),
+  alpha_prior = c(2,8),
+  mu_phi_O0_O1_prior = c(1.5, 8.5),
   mu_phi_O1_O2_prior = c(60, 40),
-  mu_phi_O2_O3_prior = c(70, 30)
+  mu_phi_O2_O3_prior = c(70, 30),
+  mu_psi_O1_prior = c(0.5, 9.5),
+  mu_psi_O2_prior = c(8, 2),
+  sig_Lphi_E_Pb_prior = 0.5,
+  sig_Lphi_O0_O1_prior = 0.15,
+  sig_Lpsi_O1_prior = 0.15,
+  sig_Lpsi_O2_prior = 0.35,
+  dt_upr = 2
 ))
 
 # append all of this additional content to the data object
@@ -312,7 +320,16 @@ lppd_params = c(
   "Lphi_obs_Ma_O0_lppd", "x_carcass_spawned_lppd", "x_LGR_lppd"
 )
 
+# nodes for monitoring potentially non-vague prior densities
+prior_params = c(
+  "alpha_pr", "mu_phi_O0_O1_pr", "mu_phi_O1_O2_pr", "mu_phi_O2_O3_pr",
+  "mu_psi_O1_pr", "mu_psi_O2_pr",
+  "sig_Lphi_E_Pb_pr", "sig_Lphi_O0_O1_pr", 
+  "sig_Lpsi_O1_pr", "sig_Lpsi_O2_pr"
+)
+
 # add these additional nodes if included in JAGS model
+jags_params = c(jags_params, prior_params)
 if (do_pp_check) jags_params = c(jags_params, pp_check_params)
 if (do_lppd) jags_params = c(jags_params, lppd_params)
 

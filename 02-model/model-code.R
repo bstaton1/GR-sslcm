@@ -7,10 +7,10 @@ jags_model_code = function() {
   for (j in 1:nj) {
     ### PRIORS: RECRUITMENT FUNCTION ###
     # total egg production to aggregate parr recruitment function
-    alpha[j] ~ dbeta(1, 1)
+    alpha[j] ~ dbeta(alpha_prior[1], alpha_prior[2])
     lbeta[j] ~ dnorm(log(lambda * wul[j]), 1/sig_lbeta^2) %_% T(,15) # log capacity. bound to prevent nonsensically large draws
     beta[j] <- exp(lbeta[j])
-    sig_Lphi_E_Pb[j] ~ dunif(0, 1)
+    sig_Lphi_E_Pb[j] ~ dt(0,1/sig_Lphi_E_Pb_prior^2,1) %_% T(0,dt_upr)
     lambda_pop[j] <- beta[j]/wul[j]  # derived pop-specific lambda, includes process noise in regression
 
     # length at end of summer vs. eggs relationship: density-dependent spring/summer growth
@@ -58,12 +58,12 @@ jags_model_code = function() {
     for (o in 1:no) {
       
       # pr(return at SWA1)
-      mu_psi_O1[o,j] ~ dbeta(1, 1)
-      sig_Lpsi_O1[o,j] ~ dunif(0, 2)
+      mu_psi_O1[o,j] ~ dbeta(mu_psi_O1_prior[1], mu_psi_O1_prior[2])
+      sig_Lpsi_O1[o,j] ~ dt(0,1/sig_Lpsi_O1_prior^2,1) %_% T(0,dt_upr)
       
       # pr(return at SWA2|not returned at SWA1)
-      mu_psi_O2[o,j] ~ dbeta(1, 1)
-      sig_Lpsi_O2[o,j] ~ dunif(0, 2)
+      mu_psi_O2[o,j] ~ dbeta(mu_psi_O2_prior[1], mu_psi_O2_prior[2])
+      sig_Lpsi_O2[o,j] ~ dt(0,1/sig_Lpsi_O2_prior^2,1) %_% T(0,dt_upr)
     }
     
     ### PRIORS: OCEAN SURVIVAL ###
@@ -81,7 +81,7 @@ jags_model_code = function() {
     kappa_phi_O0_O1[j] ~ dunif(-0.99,0.99)
     
     # standard deviation of white noise residuals
-    sig_Lphi_O0_O1[j] ~ dunif(0, 1)
+    sig_Lphi_O0_O1[j] ~ dt(0,1/sig_Lphi_O0_O1_prior^2,1) %_% T(0,dt_upr)
     
     # standard deviation of total year 1 residual (i.e., includes autocorrelation)
     sig_Lphi_O0_O1_init[j] <- sqrt(sig_Lphi_O0_O1[j]^2/(1 - kappa_phi_O0_O1[j]^2))
@@ -888,4 +888,19 @@ jags_model_code = function() {
       Lphi_Rb_Ra_qresid[y,o] <- pnorm(Lphi_Rb_Ra[y,o], logit(mu_phi_Rb_Ra[o]), 1/sig_Lphi_Rb_Ra[o]^2)
     }
   }
+  
+  # for parameters that may have non-vague priors, sample the prior without a link to likelihood
+  # for comparison of posterior vs. prior density
+  alpha_pr ~ dbeta(alpha_prior[1], alpha_prior[2])
+  mu_psi_O1_pr ~ dbeta(mu_psi_O1_prior[1], mu_psi_O1_prior[2])
+  mu_psi_O2_pr ~ dbeta(mu_psi_O2_prior[1], mu_psi_O2_prior[2])
+  mu_phi_O0_O1_pr ~ dbeta(mu_phi_O0_O1_prior[1], mu_phi_O0_O1_prior[2])
+  mu_phi_O1_O2_pr ~ dbeta(mu_phi_O1_O2_prior[1], mu_phi_O1_O2_prior[2])
+  mu_phi_O2_O3_pr ~ dbeta(mu_phi_O2_O3_prior[1], mu_phi_O2_O3_prior[2])
+  
+  sig_Lphi_E_Pb_pr ~ dt(0,1/sig_Lphi_E_Pb_prior^2,1) %_% T(0,dt_upr)
+  sig_Lpsi_O1_pr ~ dt(0,1/sig_Lpsi_O1_prior^2,1) %_% T(0,dt_upr)
+  sig_Lpsi_O2_pr ~ dt(0,1/sig_Lpsi_O2_prior^2,1) %_% T(0,dt_upr)
+  sig_Lphi_O0_O1_pr ~ dt(0,1/sig_Lphi_O0_O1_prior^2,1) %_% T(0,dt_upr)
+  
 }
