@@ -9,11 +9,11 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base"
+    value: "tack-on-all-priors"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
-    value: 1
+    value: 0.5
     input: numeric
 editor_options: 
   chunk_output_type: console
@@ -48,15 +48,19 @@ if (params$thin_percent < 1) {
 # extract the model data 
 jags_data = model_info$jags_data
 
-o_nor = 1   # o = 1 is NOR
-o_hor = 2   # o = 2 is HOR
-k_3 = 1     # k = 1 is age-3
-k_4 = 2     # k = 2 is age-4
-k_5 = 3     # k = 3 is age-5
-j_cat = 1   # j = 1 is CAT
-j_los = 2   # j = 2 is LOS
-j_min = 3   # j = 3 is MIN
-j_ugr = 4   # j = 4 is UGR
+o_nor = 1     # o = 1 is NOR
+o_hor = 2     # o = 2 is HOR
+k_3 = 1       # k = 1 is age-3
+k_4 = 2       # k = 2 is age-4
+k_5 = 3       # k = 3 is age-5
+j_cat = 1     # j = 1 is CAT
+j_los = 2     # j = 2 is LOS
+j_min = 3     # j = 3 is MIN
+j_ugr = 4     # j = 4 is UGR
+i_fall = 1    # i = 1 is fall migrants
+i_spring = 2  # i = 2 is spring migrants
+
+rm(model_info)
 ```
 
 ```{r select-years}
@@ -77,509 +81,709 @@ sim_sar_y = with(jags_data, (ny_obs-kmax+1):(ny-kmax))
 ```
 
 ```{r add-p-hos}
-# extract spawners returning to tributary
-Ra = post_subset(post, "^Ra[", matrix = TRUE)
-
-# for each posterior sample, calculate the fraction that are hatchery origin
-out = NULL
-for (i in 1:nrow(Ra)) {
-  Ra_i = array_format(Ra[i,])
-  nor = Ra_i[,1,1,] + Ra_i[,2,1,] + Ra_i[,3,1,]
-  hor = Ra_i[,1,2,] + Ra_i[,2,2,] + Ra_i[,3,2,]
-  out = rbind(out, as.numeric(hor/(nor + hor)))
+f = function() {
+  # extract adults returning to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
+  
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  nor_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_4,o_nor,] + Ra_1[,k_5,o_nor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    hor = Ra_i[,k_3,o_hor,] + Ra_i[,k_4,o_hor,] + Ra_i[,k_5,o_hor,]
+    nor = Ra_i[,k_3,o_nor,] + Ra_i[,k_4,o_nor,] + Ra_i[,k_5,o_nor,]
+    as.numeric(hor/(nor + hor))
+  }
+  
+  # apply to each posterior sample
+  out = t(sapply(1:nrow(Ra), g))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # make element names
+  colnames(out) = paste0("p_hor[", y_ind, ",", j_ind, "]")
+  
+  # drop out those that have NA values (first k_max years)
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(nor), ncol(nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(nor), each = nrow(nor))
-
-# make element names
-colnames(out) = paste0("p_hor[", r_ind, ",", c_ind, "]")
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-p-hos-age}
-# extract spawners returning to tributary
-Ra = post_subset(post, "^Ra[", matrix = TRUE)
+f = function() {
+  # extract adults returning to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
+  
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  p_hor_3_1 = Ra_1[,k_3,o_hor,]/(Ra_1[,k_3,o_nor,] + Ra_1[,k_3,o_hor,])
+  p_hor_4_1 = Ra_1[,k_4,o_hor,]/(Ra_1[,k_4,o_nor,] + Ra_1[,k_4,o_hor,])
+  p_hor_5_1 = Ra_1[,k_5,o_hor,]/(Ra_1[,k_5,o_nor,] + Ra_1[,k_5,o_hor,])
 
-# for each posterior sample, calculate the fraction that are hatchery origin
-out_3 = out_4 = out_5 = NULL
-for (i in 1:nrow(Ra)) {
-  Ra_i = array_format(Ra[i,])
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    p_hor_3 = Ra_i[,k_3,o_hor,]/(Ra_i[,k_3,o_nor,] + Ra_i[,k_3,o_hor,])
+    p_hor_4 = Ra_i[,k_4,o_hor,]/(Ra_i[,k_4,o_nor,] + Ra_i[,k_4,o_hor,])
+    p_hor_5 = Ra_i[,k_5,o_hor,]/(Ra_i[,k_5,o_nor,] + Ra_i[,k_5,o_hor,])
+    c(as.numeric(p_hor_3), as.numeric(p_hor_4), as.numeric(p_hor_5))
+  }
   
-  p_hor_3 = Ra_i[,k_3,o_hor,]/(Ra_i[,k_3,o_nor,] + Ra_i[,k_3,o_hor,])
-  p_hor_4 = Ra_i[,k_4,o_hor,]/(Ra_i[,k_4,o_nor,] + Ra_i[,k_4,o_hor,])
-  p_hor_5 = Ra_i[,k_5,o_hor,]/(Ra_i[,k_5,o_nor,] + Ra_i[,k_5,o_hor,])
+  # apply to each posterior sample
+  out = t(sapply(1:nrow(Ra), g))
   
-  out_3 = rbind(out_3, as.numeric(p_hor_3))
-  out_4 = rbind(out_4, as.numeric(p_hor_4))
-  out_5 = rbind(out_5, as.numeric(p_hor_5))
+  # build element indices: the year
+  y_ind = rep(rep(1:nrow(p_hor_3_1), ncol(p_hor_3_1)), 3)
+  
+  # build element indices: the population
+  j_ind = rep(rep(1:ncol(p_hor_3_1), each = nrow(p_hor_3_1)), 3)
+  
+  # build element indices: the age
+  k3_ind = rep(1, nrow(p_hor_3_1) * ncol(p_hor_3_1))
+  k4_ind = rep(2, nrow(p_hor_3_1) * ncol(p_hor_3_1))
+  k5_ind = rep(3, nrow(p_hor_3_1) * ncol(p_hor_3_1))
+  k_ind = c(k3_ind, k4_ind, k5_ind)
+  
+  # build element names
+  colnames(out) = paste0("p_hor_a[", y_ind, ",", k_ind, ",", j_ind, "]")
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(p_hor_3), ncol(p_hor_3))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(p_hor_3), each = nrow(p_hor_3))
-
-# make element names
-colnames(out_3) = paste0("p_hor_a[", r_ind, ",1,", c_ind, "]")
-colnames(out_4) = paste0("p_hor_a[", r_ind, ",2,", c_ind, "]")
-colnames(out_5) = paste0("p_hor_a[", r_ind, ",3,", c_ind, "]")
-out = cbind(out_3, out_4, out_5)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
 # combine this with the rest of the posterior samples
-post = post_bind(post, out)
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-Rb-tot-origin}
-# extract returns to estuary
-Rb = post_subset(post, "^Rb[", matrix = TRUE)
+f = function() {
+  # extract returns to estuary
+  Rb = post_subset(post, "^Rb[", matrix = TRUE)
 
-# for each posterior sample, calculate the abundance by origin and total
-out_tot = out_nor = out_hor = NULL
-for (i in 1:nrow(Rb)) {
-  Rb_i = array_format(Rb[i,])
-  nor = Rb_i[,1,1,] + Rb_i[,2,1,] + Rb_i[,3,1,]
-  hor = Rb_i[,1,2,] + Rb_i[,2,2,] + Rb_i[,3,2,]
-  tot = nor + hor
+  # perform basic operations for one iteration -- for making dimension names later
+  Rb_1 = array_format(Rb[1,])
+  nor_1 = Rb_1[,k_3,o_nor,] + Rb_1[,k_4,o_nor,] + Rb_1[,k_5,o_nor,]
+  hor_1 = Rb_1[,k_3,o_hor,] + Rb_1[,k_4,o_hor,] + Rb_1[,k_5,o_hor,]
+  tot_1 = nor_1 + hor_1
   
-  out_nor = rbind(out_nor, as.numeric(nor))
-  out_hor = rbind(out_hor, as.numeric(hor))
-  out_tot = rbind(out_tot, as.numeric(tot))
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Rb_i = array_format(Rb[i,])
+    nor = Rb_i[,k_3,o_nor,] + Rb_i[,k_4,o_nor,] + Rb_i[,k_5,o_nor,]
+    hor = Rb_i[,k_3,o_hor,] + Rb_i[,k_4,o_hor,] + Rb_i[,k_5,o_hor,]
+    tot = nor + hor
+    
+    list(nor = as.numeric(nor), hor = as.numeric(hor), tot = as.numeric(tot))
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Rb), g)
+
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  tot_out = do.call(rbind, lapply(out, function(x) x$tot))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Rb_tot_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Rb_tot_org[", y_ind, ",", "2", ",", j_ind, "]")
+  colnames(tot_out) = paste0("Rb_tot[", y_ind, ",", j_ind, "]")
+  
+  # combine matrices
+  out = cbind(nor_out, hor_out, tot_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(nor), ncol(nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(nor), each = nrow(nor))
-
-# make element names
-colnames(out_nor) = paste0("Rb_tot_org[", r_ind, ",1,", c_ind, "]")
-colnames(out_hor) = paste0("Rb_tot_org[", r_ind, ",2,", c_ind, "]")
-colnames(out_tot) = paste0("Rb_tot[", r_ind, ",", c_ind, "]")
-out = cbind(out_nor, out_hor, out_tot)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-Ra-tot-origin}
-# extract returns to tributary
-Ra = post_subset(post, "^Ra[", matrix = TRUE)
+f = function() {
+  # extract returns to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
 
-# for each posterior sample, calculate the abundance by origin and total
-out_nor = out_hor = NULL
-for (i in 1:nrow(Ra)) {
-  Ra_i = array_format(Ra[i,])
-  nor = Ra_i[,1,1,] + Ra_i[,2,1,] + Ra_i[,3,1,]
-  hor = Ra_i[,1,2,] + Ra_i[,2,2,] + Ra_i[,3,2,]
-
-  out_nor = rbind(out_nor, as.numeric(nor))
-  out_hor = rbind(out_hor, as.numeric(hor))
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  nor_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_4,o_nor,] + Ra_1[,k_5,o_nor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    list(
+      nor = as.numeric(Ra_i[,k_3,o_nor,] + Ra_i[,k_4,o_nor,] + Ra_i[,k_5,o_nor,]),
+      hor = as.numeric(Ra_i[,k_3,o_hor,] + Ra_i[,k_4,o_hor,] + Ra_i[,k_5,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Ra_tot_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Ra_tot_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(nor), ncol(nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(nor), each = nrow(nor))
-
-# make element names
-colnames(out_nor) = paste0("Ra_tot_org[", r_ind, ",1,", c_ind, "]")
-colnames(out_hor) = paste0("Ra_tot_org[", r_ind, ",2,", c_ind, "]")
-out = cbind(out_nor, out_hor)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-Sa-tot-origin}
-# extract spawners
-Sa = post_subset(post, "^Sa[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of spawners
+  Sa = post_subset(post, "^Sa[", matrix = TRUE)
 
-# for each posterior sample, calculate the abundance by origin and total
-out_nor = out_hor = NULL
-for (i in 1:nrow(Ra)) {
-  Sa_i = array_format(Sa[i,])
-  nor = Sa_i[,1,1,] + Sa_i[,2,1,] + Sa_i[,3,1,]
-  hor = Sa_i[,1,2,] + Sa_i[,2,2,] + Sa_i[,3,2,]
-
-  out_nor = rbind(out_nor, as.numeric(nor))
-  out_hor = rbind(out_hor, as.numeric(hor))
+  # perform basic operations for one iteration -- for making dimension names later
+  Sa_1 = array_format(Sa[1,])
+  nor_1 = Sa_1[,k_3,o_nor,] + Sa_1[,k_4,o_nor,] + Sa_1[,k_5,o_nor,]
+  hor_1 = Sa_1[,k_3,o_hor,] + Sa_1[,k_4,o_hor,] + Sa_1[,k_5,o_hor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Sa_i = array_format(Sa[i,])
+    list(
+      nor = as.numeric(Sa_i[,k_3,o_nor,] + Sa_i[,k_4,o_nor,] + Sa_i[,k_5,o_nor,]),
+      hor = as.numeric(Sa_i[,k_3,o_hor,] + Sa_i[,k_4,o_hor,] + Sa_i[,k_5,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Sa), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Sa_tot_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Sa_tot_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(nor), ncol(nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(nor), each = nrow(nor))
-
-# make element names
-colnames(out_nor) = paste0("Sa_tot_org[", r_ind, ",1,", c_ind, "]")
-colnames(out_hor) = paste0("Sa_tot_org[", r_ind, ",2,", c_ind, "]")
-out = cbind(out_nor, out_hor)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-E-origin}
-E = post_subset(post, "^E_sep[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of egg production
+  E = post_subset(post, "^E_sep[", matrix = TRUE)
 
-out_nor = out_hor = NULL
-for (i in 1:nrow(Ra)) {
-  E_i = array_format(E[i,])
-  E_nor_i = E_i[,1,1,] + E_i[,2,1,] + E_i[,3,1,]
-  E_hor_i = E_i[,1,2,] + E_i[,2,2,] + E_i[,3,2,]
-
-  out_nor = rbind(out_nor, as.numeric(E_nor_i))
-  out_hor = rbind(out_hor, as.numeric(E_hor_i))
+  # perform basic operations for one iteration -- for making dimension names later
+  E_1 = array_format(E[1,])
+  nor_1 = E_1[,k_3,o_nor,] + E_1[,k_4,o_nor,] + E_1[,k_5,o_nor,]
+  hor_1 = E_1[,k_3,o_hor,] + E_1[,k_4,o_hor,] + E_1[,k_5,o_hor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    E_i = array_format(E[i,])
+    list(
+      nor = as.numeric(E_i[,k_3,o_nor,] + E_i[,k_4,o_nor,] + E_i[,k_5,o_nor,] + 1),
+      hor = as.numeric(E_i[,k_3,o_hor,] + E_i[,k_4,o_hor,] + E_i[,k_5,o_hor,] + 1)
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(E), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("E_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("E_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(nor), ncol(nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(nor), each = nrow(nor))
-
-# make element names
-colnames(out_nor) = paste0("E_org[", r_ind, ",1,", c_ind, "]")
-colnames(out_hor) = paste0("E_org[", r_ind, ",2,", c_ind, "]")
-out = cbind(out_nor, out_hor)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-E-per-Sa-origin}
-Sa = post_subset(post, "^Sa[", matrix = TRUE)
-E = post_subset(post, "^E_sep[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of egg production
+  E_org = post_subset(post, "^E_org[", matrix = TRUE)
+  Sa_org = post_subset(post, "^Sa_tot_org[", matrix = TRUE)
 
-out_nor = out_hor = NULL
-for (i in 1:nrow(Ra)) {
-  Sa_i = array_format(Sa[i,])
-  Sa_nor_i = Sa_i[,1,1,] + Sa_i[,2,1,] + Sa_i[,3,1,]
-  Sa_hor_i = Sa_i[,1,2,] + Sa_i[,2,2,] + Sa_i[,3,2,]
-  E_i = array_format(E[i,])
-  E_nor_i = E_i[,1,1,] + E_i[,2,1,] + E_i[,3,1,]
-  E_hor_i = E_i[,1,2,] + E_i[,2,2,] + E_i[,3,2,]
+  # perform basic operations for one iteration -- for making dimension names later
+  E_org_1 = array_format(E_org[1,])
+  Sa_org_1 = array_format(Sa_org[1,])
+  nor_1 = E_org_1[,o_nor,]/Sa_org_1[,o_nor,]
+  hor_1 = E_org_1[,o_hor,]/Sa_org_1[,o_hor,]
 
-  out_nor = rbind(out_nor, as.numeric(E_nor_i/Sa_nor_i))
-  out_hor = rbind(out_hor, as.numeric(E_hor_i/Sa_hor_i))
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    E_org_i = array_format(E_org[i,])
+    Sa_org_i = array_format(Sa_org[i,])
+    
+    list(
+      nor = as.numeric(E_org_i[,o_nor,]/Sa_org_i[,o_nor,]),
+      hor = as.numeric(E_org_i[,o_hor,]/Sa_org_i[,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(E_org), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("E_per_Sa_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("E_per_Sa_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(nor), ncol(nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(nor), each = nrow(nor))
-
-# make element names
-colnames(out_nor) = paste0("E_per_Sa_org[", r_ind, ",1,", c_ind, "]")
-colnames(out_hor) = paste0("E_per_Sa_org[", r_ind, ",2,", c_ind, "]")
-out = cbind(out_nor, out_hor)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-Ma-tot}
-# extract smolt at LGR
-Ma = post_subset(post, "^Ma[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of smolt at LGR
+  Ma = post_subset(post, "^Ma[", matrix = TRUE)
 
-# for each posterior sample, calculate the number of NOR and HOR smolt at LGR
-out_nor = NULL
-out_hor = NULL
-for (i in 1:nrow(Ma)) {
-  Ma_i = array_format(Ma[i,])
-  nor = Ma_i[,1,1,] + Ma_i[,2,1,]
-  hor = Ma_i[,2,2,]
-  out_nor = rbind(out_nor, as.numeric(nor))
-  out_hor = rbind(out_hor, as.numeric(hor))
+  # perform basic operations for one iteration -- for making dimension names later
+  Ma_1 = array_format(Ma[1,])
+  nor_1 = Ma_1[,i_fall,o_nor,] + Ma_1[,i_spring,o_nor,]
+  hor_1 = Ma_1[,i_spring,o_hor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ma_i = array_format(Ma[i,])
+    list(
+      nor = as.numeric(Ma_i[,i_fall,o_nor,] + Ma_i[,i_spring,o_nor,]),
+      hor = as.numeric(Ma_i[,i_spring,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ma), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Ma_tot[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Ma_tot[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(nor), ncol(nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(nor), each = nrow(nor))
-
-# make element names
-colnames(out_nor) = paste0("Ma_tot[", r_ind, ",", "1", ",", c_ind, "]")
-colnames(out_hor) = paste0("Ma_tot[", r_ind, ",", "2", ",", c_ind, "]")
-out = cbind(out_nor, out_hor)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-age-comp}
-Ra = post_subset(post, "^Ra[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of smolt at LGR
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
 
-# for each posterior sample, calculate the fraction that of each age by origin
-p3_nor_out = p4_nor_out = p5_nor_out = p3_hor_out = p4_hor_out = p5_hor_out = NULL
-for (i in 1:nrow(Ra)) {
-  Ra_i = array_format(Ra[i,])
-  nor_tot = Ra_i[,1,1,] + Ra_i[,2,1,] + Ra_i[,3,1,]
-  hor_tot = Ra_i[,1,2,] + Ra_i[,2,2,] + Ra_i[,3,2,]
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  nor_tot_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_4,o_nor,] + Ra_1[,k_5,o_nor,]
+  hor_tot_1 = Ra_1[,k_3,o_hor,] + Ra_1[,k_4,o_hor,] + Ra_1[,k_5,o_hor,]
+  p3_nor_1 = Ra_1[,k_3,o_nor,]/nor_tot_1
+  p4_nor_1 = Ra_1[,k_4,o_nor,]/nor_tot_1
+  p5_nor_1 = Ra_1[,k_5,o_nor,]/nor_tot_1
+  p3_hor_1 = Ra_1[,k_3,o_hor,]/hor_tot_1
+  p4_hor_1 = Ra_1[,k_4,o_hor,]/hor_tot_1
+  p5_hor_1 = Ra_1[,k_5,o_hor,]/hor_tot_1
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    nor_tot_i = Ra_i[,k_3,o_nor,] + Ra_i[,k_4,o_nor,] + Ra_i[,k_5,o_nor,]
+    hor_tot_i = Ra_i[,k_3,o_hor,] + Ra_i[,k_4,o_hor,] + Ra_i[,k_5,o_hor,]
+    list(
+      p3_nor = as.numeric(Ra_i[,k_3,o_nor,]/nor_tot_i),
+      p4_nor = as.numeric(Ra_i[,k_4,o_nor,]/nor_tot_i),
+      p5_nor = as.numeric(Ra_i[,k_5,o_nor,]/nor_tot_i),
+      p3_hor = as.numeric(Ra_i[,k_3,o_hor,]/hor_tot_i),
+      p4_hor = as.numeric(Ra_i[,k_4,o_hor,]/hor_tot_i),
+      p5_hor = as.numeric(Ra_i[,k_5,o_hor,]/hor_tot_i)
+    )
+  }
   
-  p3_nor = Ra_i[,1,1,]/nor_tot
-  p4_nor = Ra_i[,2,1,]/nor_tot
-  p5_nor = Ra_i[,3,1,]/nor_tot
-  p3_hor = Ra_i[,1,2,]/hor_tot
-  p4_hor = Ra_i[,2,2,]/hor_tot
-  p5_hor = Ra_i[,3,2,]/hor_tot
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra), g)
   
-  p3_nor_out = rbind(p3_nor_out, as.numeric(p3_nor))
-  p4_nor_out = rbind(p4_nor_out, as.numeric(p4_nor))
-  p5_nor_out = rbind(p5_nor_out, as.numeric(p5_nor))
-  p3_hor_out = rbind(p3_hor_out, as.numeric(p3_hor))
-  p4_hor_out = rbind(p4_hor_out, as.numeric(p4_hor))
-  p5_hor_out = rbind(p5_hor_out, as.numeric(p5_hor))
+  # convert these to their own matrices for easier element construction
+  p3_nor_out = do.call(rbind, lapply(out, function(x) x$p3_nor))
+  p4_nor_out = do.call(rbind, lapply(out, function(x) x$p4_nor))
+  p5_nor_out = do.call(rbind, lapply(out, function(x) x$p5_nor))
+  p3_hor_out = do.call(rbind, lapply(out, function(x) x$p3_hor))
+  p4_hor_out = do.call(rbind, lapply(out, function(x) x$p4_hor))
+  p5_hor_out = do.call(rbind, lapply(out, function(x) x$p5_hor))
+
+  # build element indices: the year
+  y_ind = rep(1:nrow(p3_nor_1), ncol(p3_nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(p3_nor_1), each = nrow(p3_nor_1))
+  
+  # build element names
+  colnames(p3_nor_out) = paste0("Ra_comp[", y_ind, ",", "1", ",", "1", ",", j_ind, "]")
+  colnames(p4_nor_out) = paste0("Ra_comp[", y_ind, ",", "2", ",", "1", ",", j_ind, "]")
+  colnames(p5_nor_out) = paste0("Ra_comp[", y_ind, ",", "3", ",", "1", ",", j_ind, "]")
+  colnames(p3_hor_out) = paste0("Ra_comp[", y_ind, ",", "1", ",", "2", ",", j_ind, "]")
+  colnames(p4_hor_out) = paste0("Ra_comp[", y_ind, ",", "2", ",", "2", ",", j_ind, "]")
+  colnames(p5_hor_out) = paste0("Ra_comp[", y_ind, ",", "3", ",", "2", ",", j_ind, "]")
+
+  # combine
+  out = cbind(p3_nor_out, p4_nor_out, p5_nor_out, p3_hor_out, p4_hor_out, p5_hor_out)
+  
+  # drop out those that have NA values
+  out[out == "NaN"] = 0
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(p3_nor), ncol(p3_nor))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(p3_nor), each = nrow(p3_nor))
-
-# make element names
-colnames(p3_nor_out) = paste0("Ra_comp[", r_ind, ",", "1", ",", "1", ",", c_ind, "]")
-colnames(p4_nor_out) = paste0("Ra_comp[", r_ind, ",", "2", ",", "1", ",", c_ind, "]")
-colnames(p5_nor_out) = paste0("Ra_comp[", r_ind, ",", "3", ",", "1", ",", c_ind, "]")
-colnames(p3_hor_out) = paste0("Ra_comp[", r_ind, ",", "1", ",", "2", ",", c_ind, "]")
-colnames(p4_hor_out) = paste0("Ra_comp[", r_ind, ",", "2", ",", "2", ",", c_ind, "]")
-colnames(p5_hor_out) = paste0("Ra_comp[", r_ind, ",", "3", ",", "2", ",", c_ind, "]")
-
-out = cbind(p3_nor_out, p4_nor_out, p5_nor_out, p3_hor_out, p4_hor_out, p5_hor_out)
-
-# drop out those that have NA values (first k_max years)
-out[out == "NaN"] = 0
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-age-comp-combined}
-Ra = post_subset(post, "^Ra[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of return to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
 
-p3_out = p4_out = p5_out = NULL
-for (i in 1:nrow(Ra)) {
-  Ra_i = array_format(Ra[i,])
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  a3_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_3,o_hor,]
+  a4_1 = Ra_1[,k_4,o_nor,] + Ra_1[,k_4,o_hor,]
+  a5_1 = Ra_1[,k_5,o_nor,] + Ra_1[,k_5,o_hor,]
+  tot_1 = a3_1 + a4_1 + a5_1
+  p3_1 = a3_1/tot_1
+  p4_1 = a4_1/tot_1
+  p5_1 = a5_1/tot_1
   
-  a3_tot = Ra_i[,1,1,] + Ra_i[,1,2,]
-  a4_tot = Ra_i[,2,1,] + Ra_i[,2,2,]
-  a5_tot = Ra_i[,3,1,] + Ra_i[,3,2,]
-  tot = a3_tot + a4_tot + a5_tot
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    a3_i = Ra_i[,k_3,o_nor,] + Ra_i[,k_3,o_hor,]
+    a4_i = Ra_i[,k_4,o_nor,] + Ra_i[,k_4,o_hor,]
+    a5_i = Ra_i[,k_5,o_nor,] + Ra_i[,k_5,o_hor,]
+    tot_i = a3_i + a4_i + a5_i
+    list(
+      p3 = as.numeric(a3_i/tot_i),
+      p4 = as.numeric(a4_i/tot_i),
+      p5 = as.numeric(a5_i/tot_i)
+    )
+  }
   
-  p3 = Ra_i[,1,1,]/tot
-  p4 = Ra_i[,2,1,]/tot
-  p5 = Ra_i[,3,1,]/tot
-
-  p3_out = rbind(p3_out, as.numeric(p3))
-  p4_out = rbind(p4_out, as.numeric(p4))
-  p5_out = rbind(p5_out, as.numeric(p5))
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra), g)
+  
+  # convert these to their own matrices for easier element construction
+  p3_out = do.call(rbind, lapply(out, function(x) x$p3))
+  p4_out = do.call(rbind, lapply(out, function(x) x$p4))
+  p5_out = do.call(rbind, lapply(out, function(x) x$p5))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(p3_1), ncol(p3_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(p3_1), each = nrow(p3_1))
+  
+  # build element names
+  colnames(p3_out) = paste0("Ra_comp_a[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(p4_out) = paste0("Ra_comp_a[", y_ind, ",", "2", ",", j_ind, "]")
+  colnames(p5_out) = paste0("Ra_comp_a[", y_ind, ",", "3", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(p3_out, p4_out, p5_out)
+  
+  # drop out those that have NA values
+  out[out == "NaN"] = 0
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:nrow(p3), ncol(p3))
-
-# build the column indices for each element: the population
-c_ind = rep(1:ncol(p3), each = nrow(p3))
-
-# make element names
-colnames(p3_out) = paste0("Ra_comp_a[", r_ind, ",", "1", ",", c_ind, "]")
-colnames(p4_out) = paste0("Ra_comp_a[", r_ind, ",", "2", ",", c_ind, "]")
-colnames(p5_out) = paste0("Ra_comp_a[", r_ind, ",", "3", ",", c_ind, "]")
-
-out = cbind(p3_out, p4_out, p5_out)
-
-# drop out those that have NA values (first k_max years)
-out[out == "NaN"] = 0
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-trib-smolt-per-parr}
-Mb = post_subset(post, "^Mb[", matrix = TRUE)
-Pa = post_subset(post, "^Pa[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of tributary smolt and parr
+  Mb = post_subset(post, "^Mb[", matrix = TRUE)
+  Pa = post_subset(post, "^Pa[", matrix = TRUE)
 
-# for each posterior sample, calculate survival from parr to lgr smolt by LH type
-out_fall = out_spring = NULL
+  # perform basic operations for one iteration -- for making dimension names later
+  Mb_1 = array_format(Mb[1,])
+  Pa_1 = array_format(Pa[1,])
+  Mb_per_Pa_1 = Mb_1[,,o_nor,]/Pa_1
+  fall_1 = Mb_per_Pa_1[,i_fall,]
+  spring_1 = Mb_per_Pa_1[,i_spring,]
 
-for (i in 1:nrow(Mb)) {
-  Mb_i = array_format(Mb[i,])
-  Pa_i = array_format(Pa[i,])
-
-  Mb_per_Pa = Mb_i[,,1,]/Pa_i
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Mb_i = array_format(Mb[i,])
+    Pa_i = array_format(Pa[i,])
+    Mb_per_Pa_i = Mb_i[,,o_nor,]/Pa_i
+    list(
+      fall = as.numeric(Mb_per_Pa_i[,i_fall,]),
+      spring = as.numeric(Mb_per_Pa_i[,i_spring,])
+    )
+  }
   
-  out_fall = rbind(out_fall, as.numeric(Mb_per_Pa[,1,]))
-  out_spring = rbind(out_spring, as.numeric(Mb_per_Pa[,2,]))
+  # apply to each posterior sample
+  out = lapply(1:nrow(Mb), g)
+  
+  # convert these to their own matrices for easier element construction
+  fall_out = do.call(rbind, lapply(out, function(x) x$fall))
+  spring_out = do.call(rbind, lapply(out, function(x) x$spring))
+
+  # build element indices: the year
+  y_ind = rep(1:nrow(fall_1), ncol(fall_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(fall_1), each = nrow(fall_1))
+  
+  # build element names
+  colnames(fall_out) = paste0("Mb_per_Pa[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(spring_out) = paste0("Mb_per_Pa[", y_ind, ",", "2", ",", j_ind, "]")
+
+  # combine
+  out = cbind(fall_out, spring_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:dim(Mb_per_Pa)[1], dim(Mb_per_Pa)[3])
-
-# build the column indices for each element: the population
-c_ind = rep(1:dim(Mb_per_Pa)[3], each = dim(Mb_per_Pa)[1])
-
-# make element names
-colnames(out_fall) = paste0("Mb_per_Pa[", r_ind, ",", "1", ",", c_ind, "]")
-colnames(out_spring) = paste0("Mb_per_Pa[", r_ind, ",", "2", ",", c_ind, "]")
-
-out = cbind(out_fall, out_spring)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-lgr-smolt-per-parr}
-Ma = post_subset(post, "^Ma[", matrix = TRUE)
-Pa = post_subset(post, "^Pa[", matrix = TRUE)
+f = function() {
+  # extract posterior samples of tributary smolt and parr
+  Ma = post_subset(post, "^Ma[", matrix = TRUE)
+  Pa = post_subset(post, "^Pa[", matrix = TRUE)
 
-# for each posterior sample, calculate survival from parr to lgr smolt by LH type
-out_fall = out_spring = NULL
+  # perform basic operations for one iteration -- for making dimension names later
+  Ma_1 = array_format(Ma[1,])
+  Pa_1 = array_format(Pa[1,])
+  Ma_per_Pa_1 = Ma_1[,,o_nor,]/Pa_1
+  fall_1 = Ma_per_Pa_1[,i_fall,]
+  spring_1 = Ma_per_Pa_1[,i_spring,]
 
-for (i in 1:nrow(Ma)) {
-  Ma_i = array_format(Ma[i,])
-  Pa_i = array_format(Pa[i,])
-
-  Ma_per_Pa = Ma_i[,,1,]/Pa_i
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ma_i = array_format(Ma[i,])
+    Pa_i = array_format(Pa[i,])
+    Ma_per_Pa_i = Ma_i[,,o_nor,]/Pa_i
+    list(
+      fall = as.numeric(Ma_per_Pa_i[,i_fall,]),
+      spring = as.numeric(Ma_per_Pa_i[,i_spring,])
+    )
+  }
   
-  out_fall = rbind(out_fall, as.numeric(Ma_per_Pa[,1,]))
-  out_spring = rbind(out_spring, as.numeric(Ma_per_Pa[,2,]))
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ma), g)
+  
+  # convert these to their own matrices for easier element construction
+  fall_out = do.call(rbind, lapply(out, function(x) x$fall))
+  spring_out = do.call(rbind, lapply(out, function(x) x$spring))
+
+  # build element indices: the year
+  y_ind = rep(1:nrow(fall_1), ncol(fall_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(fall_1), each = nrow(fall_1))
+  
+  # build element names
+  colnames(fall_out) = paste0("Ma_per_Pa[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(spring_out) = paste0("Ma_per_Pa[", y_ind, ",", "2", ",", j_ind, "]")
+
+  # combine
+  out = cbind(fall_out, spring_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the row indices for each element: the year
-r_ind = rep(1:dim(Ma_per_Pa)[1], dim(Ma_per_Pa)[3])
-
-# build the column indices for each element: the population
-c_ind = rep(1:dim(Ma_per_Pa)[3], each = dim(Ma_per_Pa)[1])
-
-# make element names
-colnames(out_fall) = paste0("Ma_per_Pa[", r_ind, ",", "1", ",", c_ind, "]")
-colnames(out_spring) = paste0("Ma_per_Pa[", r_ind, ",", "2", ",", c_ind, "]")
-
-out = cbind(out_fall, out_spring)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
-
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-nor-lgr-smolt-aggregate}
-# extract smolt at LGR
-Ma = post_subset(post, "^Ma[", matrix = TRUE)
+f = function() {
+  # extract smolt at LGR
+  Ma_tot = post_subset(post, "^Ma_tot[", matrix = TRUE)
 
-# for each posterior sample, calculate the total aggregate return
-out_nor = out_hor = NULL
-for (i in 1:nrow(Ma)) {
-  Ma_i = array_format(Ma[i,])
-  nor = Ma_i[,1,1,] + Ma_i[,2,1,]
-  hor = Ma_i[,2,2,]
+  # perform basic operations for one iteration -- for making dimension names later
+  Ma_tot_1 = array_format(Ma_tot[1,])
+  Ma_nor_1 = rowSums(Ma_tot_1[,o_nor,])
+  Ma_hor_1 = rowSums(Ma_tot_1[,o_hor,])
 
-  out_nor = rbind(out_nor, rowSums(nor))
-  out_hor = rbind(out_hor, rowSums(hor))
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ma_tot_i = array_format(Ma_tot[i,])
+    list(
+      nor = rowSums(Ma_tot_i[,o_nor,]),
+      hor = rowSums(Ma_tot_i[,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ma_tot), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+
+  # build element indices: the year
+  y_ind = 1:length(Ma_nor_1)
+  
+  # build element names
+  colnames(nor_out) = paste0("Ma_aggregate[", y_ind, ",", "1", "]")
+  colnames(hor_out) = paste0("Ma_aggregate[", y_ind, ",", "2", "]")
+
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the indices for each element: the year
-r_ind = 1:nrow(nor)
-
-# make element names
-colnames(out_nor) = paste0("Ma_aggregate[", r_ind, ",", "1", "]")
-colnames(out_hor) = paste0("Ma_aggregate[", r_ind, ",", "2", "]")
-out = cbind(out_nor, out_hor)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r add-Ra-aggregate}
-# extract spawners returning to tributary
-Ra = post_subset(post, "^Ra[", matrix = TRUE)
+f = function() {
+  # extract smolt at LGR
+  Ra_tot = post_subset(post, "^Ra_tot_org[", matrix = TRUE)
 
-# for each posterior sample, calculate the total aggregate return
-out_nor = out_hor = NULL
-for (i in 1:nrow(Ra)) {
-  Ra_i = array_format(Ra[i,])
-  nor = Ra_i[,1,1,] + Ra_i[,2,1,] + Ra_i[,3,1,]
-  hor = Ra_i[,1,2,] + Ra_i[,2,2,] + Ra_i[,3,2,]
-  tot = nor + hor
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_tot_1 = array_format(Ra_tot[1,])
+  Ra_nor_1 = rowSums(Ra_tot_1[,o_nor,])
+  Ra_hor_1 = rowSums(Ra_tot_1[,o_hor,])
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_tot_i = array_format(Ra_tot[i,])
+    list(
+      nor = rowSums(Ra_tot_i[,o_nor,]),
+      hor = rowSums(Ra_tot_i[,o_hor,])
+    )
+  }
   
-  out_nor = rbind(out_nor, rowSums(nor))
-  out_hor = rbind(out_hor, rowSums(hor))
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra_tot), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+
+  # build element indices: the year
+  y_ind = 1:length(Ra_nor_1)
+  
+  # build element names
+  colnames(nor_out) = paste0("Ra_aggregate[", y_ind, ",", "1", "]")
+  colnames(hor_out) = paste0("Ra_aggregate[", y_ind, ",", "2", "]")
+
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
 }
 
-# build the indices for each element: the year
-r_ind = 1:nrow(nor)
-
-# make element names
-colnames(out_nor) = paste0("Ra_aggregate[", r_ind, ",", "1", "]")
-colnames(out_hor) = paste0("Ra_aggregate[", r_ind, ",", "2", "]")
-out = cbind(out_nor, out_hor)
-
-# drop out those that have NA values (first k_max years)
-na_ind = which(!is.na(out[1,]))
-out = out[,na_ind]
-
-# combine this with the rest of the posterior samples
-post = post_bind(post, out)
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
 ```
 
 ```{r dim_names fn}
