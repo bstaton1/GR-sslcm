@@ -49,7 +49,16 @@ if (is.na(mcmc_length)) {
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
-jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"))
+jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"), first_y = 1991, last_y = 2019)
+
+# remove trap abundance data in BY 2007 for UGR
+# estimates impossibly low, causing problems with model
+jags_data$Pa_obs["2007","fall-mig","UGR"] = NA
+jags_data$sig_Pa_obs["2007","fall-mig","UGR"] = NA
+jags_data$Mb_obs["2007","spring-mig","NOR","UGR"] = NA
+jags_data$sig_Mb_obs["2007","spring-mig","NOR","UGR"] = NA
+
+# add NA indices in the correct locations
 jags_data = append_no_na_indices(jags_data)
 
 # reduce assumed survival past sea lions in the early years
