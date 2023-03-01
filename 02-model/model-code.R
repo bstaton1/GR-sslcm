@@ -866,9 +866,7 @@ jags_model_code = function() {
         
         # ocean survival
         Lphi_O0_O1_resid[y,o,j] <- Lphi_O0_O1[y,o,j] - logit(mu_phi_O0_O1[o,j])
-        Lphi_O0_O1_qresid[y,o,j] <- pnorm(Lphi_O0_O1[y,o,j], logit(mu_phi_O0_O1[o,j]), 1/sig_Lphi_O0_O1_init[j]^2)
-        # Lphi_O1_O2_resid[y,o,j] <- Lphi_O1_O2[y,o,j] - logit(mu_phi_O1_O2[o,j])
-        # Lphi_O2_O3_resid[y,o,j] <- Lphi_O2_O3[y,o,j] - logit(mu_phi_O2_O3[o,j])
+        Lphi_O0_O1_qresid[y,o,j] <- pnorm(Lphi_O0_O1[y,o,j], logit(mu_phi_O0_O1[o,j]) + Lphi_O0_O1_resid[y-1,o_nor,j] * kappa_phi_O0_O1[j], 1/sig_Lphi_O0_O1[j]^2)
       }
       
       # pre-spawn survival
