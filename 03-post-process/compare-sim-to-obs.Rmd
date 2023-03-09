@@ -1672,8 +1672,8 @@ knitr::opts_chunk$set(echo = FALSE, fig.align = "center", fig.width = 6, fig.hei
 ```{r ts_plot fn}
 n_sim_draw = 5
 isim = sample(1:post_dim(post, "saved"), n_sim_draw, replace = FALSE)
-obs_y = 6:jags_data$ny_obs
-obs_sar_y = 6:(jags_data$ny_obs-jags_data$kmax)
+obs_y = 2:jags_data$ny_obs
+obs_sar_y = 2:(jags_data$ny_obs-jags_data$kmax)
 sim_sar_y = (jags_data$ny_obs-jags_data$kmax+1):(jags_data$ny-jags_data$kmax)
 
 ts_plot = function(param, main = NULL, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
@@ -1682,10 +1682,10 @@ ts_plot = function(param, main = NULL, obs_y_use = obs_y, sim_y_use = sim_y, ...
   sim_vals = post_subset(post, sub_index(param, year = sim_y_use, ...), matrix = TRUE)
 
   par(mar = c(1,2,2,1), mgp = c(2,0.35,0), tcl = -0.15)
-  plot(obs_vals["mean",] ~ obs_y_use, type = "n", xlim = range(6, sim_y_use),
+  plot(obs_vals["mean",] ~ obs_y_use, type = "n", xlim = range(obs_y_use, sim_y_use),
        ylim = range(obs_vals[c("2.5%", "97.5%"),], sim_vals[isim,]), xaxt = "n", xlab = "", ylab = "", main = main)
   usr = par("usr"); at_x = axisTicks(usr[1:2], log = FALSE)
-  at_x = c(6, at_x[!(at_x %in% c(0, 6, max(sim_y_use)))], max(sim_y_use))
+  at_x = c(2, at_x[!(at_x %in% c(0, 6, max(sim_y_use)))])
   axis(side = 1, at = at_x, labels = all_yrs[at_x])
 
   polygon(c(obs_y_use, rev(obs_y_use)), c(obs_vals["2.5%",], rev(obs_vals["97.5%",])), border = NA, col = alpha("salmon", 0.5))
