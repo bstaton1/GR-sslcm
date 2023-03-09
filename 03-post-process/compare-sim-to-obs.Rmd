@@ -1676,18 +1676,10 @@ obs_y = 6:jags_data$ny_obs
 obs_sar_y = 6:(jags_data$ny_obs-jags_data$kmax)
 sim_sar_y = (jags_data$ny_obs-jags_data$kmax+1):(jags_data$ny-jags_data$kmax)
 
-# param = "phi_O0_Rb_BON[year,origin,pop]"
-# obs_y_use = obs_sar_y
-# sim_y_use = sim_sar_y
-# origin = 1
-# main = "main"
-
 ts_plot = function(param, main = NULL, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
   
   obs_vals = post_summ(post, sub_index(param, year = obs_y_use, ...))
   sim_vals = post_subset(post, sub_index(param, year = sim_y_use, ...), matrix = TRUE)
-  # obs_vals = post_summ(post, sub_index(param, year = obs_y_use, pop = 1, origin = 1))
-  # sim_vals = post_subset(post, sub_index(param, year = sim_y_use, pop = 1, origin = 1), matrix = TRUE)
 
   par(mar = c(1,2,2,1), mgp = c(2,0.35,0), tcl = -0.15)
   plot(obs_vals["mean",] ~ obs_y_use, type = "n", xlim = range(6, sim_y_use),
