@@ -786,6 +786,10 @@ f = function() {
 post = post_bind(post, f()); rm(f)
 ```
 
+```{r geomean fn}
+geomean = function(x) exp(mean(log(x)))
+```
+
 ```{r dim_names fn}
 # function to create dimension names from numeric indicators
 dim_names = function(LH_type = NULL, age = NULL, origin = NULL, pop = NULL) {
@@ -847,10 +851,13 @@ get_ratio = function(param, obs_y, sim_y, ...) {
 ```
 
 ```{r ratio_plot fn}
-ratio_plot = function(ratios, line_y, ...) {
+ratio_plot = function(ratios, line_y, pt_fn = mean, ...) {
   
   # calculate summaries of the ratios
   summs = apply(ratios, 2, function(x) quantile(x, c(0.025, 0.25, 0.5, 0.75, 0.975), na.rm = TRUE))
+  
+  # replace median with output of supplied point estimate function
+  summs["50%",] = apply(ratios, 2, pt_fn)
   
   # set graphics parameters
   par(mar = c(7,1,1,1), mgp = c(2,0.35,0), tcl = -0.15, lend = "square", ljoin = "mitre")
@@ -877,9 +884,9 @@ ratio_plot = function(ratios, line_y, ...) {
 ```{r ratio_plots fn}
 ratio_plots = function(x, main) {
   par(mfrow = c(1,3), oma = c(0,2,2,0))
-  ratio_plot(x[,"sim-v-obs","cv",], main = "CV", line_y = 1)
-  ratio_plot(x[,"sim-v-obs","mean",], main = "Mean", line_y = 1)
-  ratio_plot(x[,"sim-v-obs","acf",], main = "ACF (Sim - Obs)", line_y = 0)
+  ratio_plot(x[,"sim-v-obs","cv",], main = "CV", pt_fn = geomean, line_y = 1)
+  ratio_plot(x[,"sim-v-obs","mean",], main = "Mean", pt_fn = geomean, line_y = 1)
+  ratio_plot(x[,"sim-v-obs","acf",], main = "ACF (Sim - Obs)", pt_fn = mean, line_y = 0)
   mtext(side = 2, outer = TRUE, adj = 0.75, line = 1, "Ratio (Sim:Obs)")
   mtext(side = 3, outer = TRUE, line = 0.5, main, cex = 1.25, font = 2)
 }
@@ -917,8 +924,13 @@ vals_plots = function(x, main) {
 ```
 
 ```{r summarize_ratios fn}
+# function to summarize a matrix of ratios
+col_summs = function(x) {
+  c(cv = geomean(x[,"cv"]), mean = geomean(x[,"mean"]), acf = mean(x[,"acf"]))
+}
+
 summarize_ratios = function(x, Class, Type) {
-  xsumm = as.data.frame(t(apply(x[,"sim-v-obs",,], 3, colMeans)))
+  xsumm = as.data.frame(t(apply(x[,"sim-v-obs",,], 3, col_summs)))
   xsumm = cbind(Class = Class, Type = Type, ID = rownames(xsumm), xsumm); rownames(xsumm) = NULL
   return(xsumm)
 }
@@ -1068,10 +1080,10 @@ Observed vs. simulated consistency is visualized in two ways: by comparing summa
 
 # Distribution Comparison Plots
 
-These plots show summaries of a quantity in the model:
+These plots show the distribution of a quantity in the model:
 
-1. **Inter-annual CV**: measures how variable the quantity is among years
-2. **Inter-annual mean**: measures the central tendency of the quantity across years
+1. **Inter-annual CV**: measures how variable the quantity is among years (uses arithmetic mean)
+2. **Inter-annual mean**: measures the central tendency of the quantity across years (uses arithmetic mean)
 3. **Lag-1 autocorrelation**: measures whether consecutive years are independent
 
 If these summary statistics are inconsistent among the observed and simulated time periods, that indicates that the state-space model has not sufficiently captured the random processes that have generated the observed outcomes and that we may have reason to question the reliability of its ability to simulate future outcomes, at least as a direct extension of the historical population dynamics.
@@ -1088,7 +1100,7 @@ For each quantity, two types of plots are shown:
 * **Estimates**: this shows the CV, mean, and autocorrelation coefficient for a quantity based on the time period (red = observed, blue = simulated)
 * **Ratios**: this shows a ratio between the summary statistic between simulated and observed periods. For CV and mean, this is simulated/observed, and for autocorrelation this is simulated - observed.
 
-These summary statistics were calculated for each posterior sample. In all plots, the cross mark represents the posterior median, the thick bar represents the central 50% of posterior samples, and the thin bar represents the central 95% of posterior samples.
+These summary statistics were calculated for each posterior sample. In estimate plots, the cross mark represents the posterior median, the thick bar represents the central 50% of posterior samples, and the thin bar represents the central 95% of posterior samples. The ratio plots have the same interpretation, except the cross mark represents the posterior geometric mean for the "CV" and "Mean" panels, and the posterior arithmetic mean for the "ACF" panels. The geometric mean is used to summarize central tendency of ratios across posterior samples because it is more appropriate for calculations based on multiplicative, rather than additive, variability (see issue [#168](https://github.com/bstaton1/GR-sslcm/issues/168) for more details).
 
 ```{r}
 est_ratios = NULL
@@ -1613,10 +1625,10 @@ derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Compos
 
 ## Summary Tables {.tabset .tabset-pills}
 
-These tables summarize the mean ratio values shown in the plots above, and are intended to be a quick visual for identifying areas where the simulated outcomes are systematically different in some way (central tendency, interannual variability, or temporal autocorrelation) from the observed outcomes. The number in each cell represents the posterior mean value of:
+These tables summarize the ratio values shown in the plots above, and are intended to be a quick visual for identifying areas where the simulated outcomes are systematically different in some way (central tendency, interannual variability, or temporal autocorrelation) from the observed outcomes. The number in each cell represents the posterior mean (geometric for across year mean and across year CV; arithmetic for lag-1 autocorrelation) value of:
 
 * **Across Year Mean** is the ratio `mean(simulated years)/mean(observed years)`. Values greater than 1 indicate the value in simulated years is larger in magnitude than in observed years.
-* **Across Year CV** is the ratio `cv(simulated years)/cv(observed years)`. Values greater than 1 indicate the variability from one year to the next is larger larger than in observed years.
+* **Across Year CV** is the ratio `cv(simulated years)/cv(observed years)`. Values greater than 1 indicate the variability from one year to the next is larger than in observed years.
 * **Lag-1 Autocorrelation** is the difference `acf(simulated years) - acf(observed years)`. Values greater than 0 indicate the quantity shows more autocorrelation in the simulated years than in observed years.
 
 Values close to 1 are ideal for the mean and CV ratios and cells are color-coded based on how far they fall from 1: less than 1 are blue and greater than 1 are red; values between 0.9 and 1.1 might be considered "good enough", and have been assigned no color.
