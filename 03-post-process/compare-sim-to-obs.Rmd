@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "tack-on-all-priors"
+    value: "base"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
