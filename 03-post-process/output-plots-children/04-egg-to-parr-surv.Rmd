@@ -64,7 +64,8 @@ plot_f = function(j) {
   # draw state pairs + uncertainty
   segments(E[4,], phi_E_Pb[3,], E[5,], phi_E_Pb[3,], col = alpha("red", 0.5))
   segments(E[3,], phi_E_Pb[4,], E[3,], phi_E_Pb[5,], col = alpha("red", 0.5))
-  points(phi_E_Pb[3,] ~ E[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  points(phi_E_Pb[3,] ~ E[3,], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(phi_E_Pb[3,] ~ E[3,], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -121,7 +122,8 @@ plot_f = function(j) {
   # draw state pairs + uncertainty
   segments(E[4,], Pb[3,], E[5,], Pb[3,], col = alpha("red", 0.5))
   segments(E[3,], Pb[4,], E[3,], Pb[5,], col = alpha("red", 0.5))
-  points(Pb[3,] ~ E[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  points(Pb[3,] ~ E[3,], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(Pb[3,] ~ E[3,], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -157,7 +159,9 @@ plot_f = function(j) {
   
   segments(Sa_tot["2.5%",], E["mean",], Sa_tot["97.5%",], E["mean",], col = alpha("red", 0.5))
   segments(Sa_tot["mean",], E["2.5%",], Sa_tot["mean",], E["97.5%",], col = alpha("red", 0.5))
-  points(E["mean",] ~ Sa_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  points(E["mean",] ~ Sa_tot["mean",], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(E["mean",] ~ Sa_tot["mean",], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+
   abline(c(0, 1000), lty = 1)
   abline(c(0, 1800), lty = 2)
   abline(c(0, 3600), lty = 3)

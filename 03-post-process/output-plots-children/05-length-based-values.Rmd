@@ -67,8 +67,8 @@ plot_f = function(j) {
   # realized pairs
   segments(E_scaled_lwr, L_Pb_mean, E_scaled_upr, L_Pb_mean, col = alpha("red", 0.5))
   segments(E_scaled_mean, L_Pb_lwr, E_scaled_mean, L_Pb_upr, col = alpha("red", 0.5))
-  points(L_Pb_mean ~ E_scaled_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
-  
+  points(L_Pb_mean ~ E_scaled_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(L_Pb_mean ~ E_scaled_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
 
 xlab = paste0("Eggs/WUL (", prettyNum(jags_data$E_scale, big.mark = ","), "s per km)")
@@ -136,14 +136,14 @@ plot_f = function(j) {
   # realized pairs
   segments(L_Pb_lwr, Delta_L_Pb_Mb_mean, L_Pb_upr, Delta_L_Pb_Mb_mean, col = alpha("red", 0.5))
   segments(L_Pb_mean, Delta_L_Pb_Mb_lwr, L_Pb_mean, Delta_L_Pb_Mb_upr, col = alpha("red", 0.5))
-  points(Delta_L_Pb_Mb_mean ~ L_Pb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
-  
+  points(Delta_L_Pb_Mb_mean ~ L_Pb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(Delta_L_Pb_Mb_mean ~ L_Pb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, TeX("$Mean\\,Length\\,at\\,Summer\\,Tagging\\,(mm)$"))
-mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr \\rightarrow Spring\\,Smolt\\,Growth\\, Factor$"))
+mtext(side = 2, outer = T, line = 0.25, TeX("$Summer\\,Parr\\,\\rightarrow\\, Spring\\,Smolt\\,Growth\\, Factor$"))
 ```
 
 ### "Growth Factor" Time Series
@@ -224,7 +224,8 @@ plot_fn = function(j, i) {
   # realized pairs
   segments(L_Pb_lwr, phi_Pa_Mb_mean, L_Pb_upr, phi_Pa_Mb_mean, col = alpha("red", 0.5))
   segments(L_Pb_mean, phi_Pa_Mb_lwr, L_Pb_mean, phi_Pa_Mb_upr, col = alpha("red", 0.5))
-  points(phi_Pa_Mb_mean ~ L_Pb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  points(phi_Pa_Mb_mean ~ L_Pb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(phi_Pa_Mb_mean ~ L_Pb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
 
 plot_fn2 = function(j) {
@@ -301,7 +302,8 @@ plot_fn = function(j, i) {
   # realized pairs
   segments(L_Mb_lwr, phi_Mb_Ma_mean, L_Mb_upr, phi_Mb_Ma_mean, col = alpha("red", 0.5))
   segments(L_Mb_mean, phi_Mb_Ma_lwr, L_Mb_mean, phi_Mb_Ma_upr, col = alpha("red", 0.5))
-  points(phi_Mb_Ma_mean ~ L_Mb_mean, pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  points(phi_Mb_Ma_mean ~ L_Mb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(phi_Mb_Ma_mean ~ L_Mb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -309,4 +311,3 @@ junk = sapply(1:jags_data$nj, plot_fn)
 mtext(side = 1, outer = T, line = 0.25, "Length at Spring Tagging (mm)")
 mtext(side = 2, outer = T, line = 0.25, "Migration to LGR Survival")
 ```
-
