@@ -158,11 +158,11 @@ We begin our description of the life cycle at the egg stage immediately after sp
 We assumed total egg production was the sum product of age-specific spawner abundance (from eq. \@ref(eq:get-Sa), below), proportion female, and fecundity:
 
 \begin{equation}
-E_{y,j} = \sum_o^{n_o} \sum_k^{n_k} S^{a}_{y,k,o,j} \cdot \Omega_{k,j} \cdot f_{k}
+E_{y,j} = \sum_o^{n_o} \sum_k^{n_k} S^{a}_{y,k,o,j} \cdot \Omega_{k} \cdot f_{k}
 (\#eq:get-E)
 \end{equation}
 
-We calculated the proportion of spawners at age that are female ($\Omega_{k,j}$) from carcass survey data and averaged across years and fecundity ($f_k$) from samples taken from Grande Ronde-origin hatchery broodstock.
+We assumed that spawners age-4 or age-5 were 50% female and age-3 spawners were all male (i.e., $\Omega_{k=1} = 0;\;\Omega_{k \in [2,3]} = 0.5$; approximately equal to values estimated from carcass data) and estimated fecundity ($f_k$) from samples taken from Grande Ronde-origin hatchery broodstock.
 We supplied both quantities to the model assuming no error or inter-annual variability.
 
 We assumed expected egg-to-parr survival was density-dependent following a Beverton-Holt relationship with productivity parameter $\alpha_j$ and capacity parameter $\beta_j$:
@@ -198,10 +198,10 @@ P^{b}_{y,j} = \phi^{E \rightarrow P^{b}}_{y,j} \cdot E_{y,j}
 
 In addition to density-dependent egg-to-parr survival (eq. \@ref(eq:get-phi-E-Pb-dot)), we also wished to model the size of parr at the end of summer as a function of density.
 It is well known that juvenile survival is related to body size \todo{Insert references about survival being related to size} and if parr size is density-dependent, that would provide the possibility of modeling variability in survival later in life (overwinter rearing and migration out-of-basin) based on a density-dependent process that occurred earlier.
-We modeled expected parr mean length ($\dot{L}^{P^{b}}_{y,j}$, mm fork length) as a log-linear function of egg density:
+We modeled expected parr mean length ($\dot{L}^{P^{b}}_{y,j}$, mm fork length) as a power function of egg density, which expressed on the logarithmic scale was:
 
 \begin{equation}
-\log\left(\dot{L}^{P^{b}}_{y,j}\right) = \omega_{0,j} + \omega_{1,j} \cdot \frac{E_{y,j}}{\mathrm{WUL}_j}
+\log\left(\dot{L}^{P^{b}}_{y,j}\right) = \omega_{0,j} + \omega_{1,j} \cdot \log\left(\frac{E_{y,j}}{\mathrm{WUL}_j}\right)
 (\#eq:get-L-Pb-dot)
 \end{equation}
 

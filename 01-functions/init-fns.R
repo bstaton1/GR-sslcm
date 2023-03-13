@@ -339,7 +339,7 @@ gen_initials = function(CHAIN, jags_data) {
     L_Pb_params = sapply(1:nj, function(j) {
       x = (get_E_obs(jags_data)/10000)[,j]/wul[j]
       y = L_Pb_obs[,j]
-      fit = lm(log(y) ~ x)
+      fit = lm(log(y) ~ log(x))
       out = c(coef(fit), summary(fit)$sigma)
       names(out) = c("omega0", "omega1", "sigma")
       out

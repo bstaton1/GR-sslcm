@@ -24,5 +24,5 @@ Phase,Type,Symbol,Eqs.,Description,Footnote
 3,rate,"$U_{y,k,o}$",get-Ra,Fishery harvest rate downstream of Bonneville Dam,NA
 3,rate,"$\\phi^{R^{b} \\rightarrow R^{a}}_{y,o}$","get-Ra, upstream-surv-data",Survival from all mortality sources during the migration between Bonneville Dam and arrival to natal tributaries,NA
 3,rate,"$\\phi^{S^{b} \\rightarrow S^{a}}_{y,j}$","get-Sa, prespawn-surv-data",Pre-spawn survival rate,NA
-3,rate,"$\\Omega_{k,j}$",get-E,Proportion of spawners that are female,NA
-3,rate,$f_{k}$,get-E,Fecundity per female spawner,NA
+3,rate,"$\\Omega_{k}$",get-E,Proportion of spawners that are female by age,NA
+3,rate,$f_{k}$,get-E,Fecundity per female spawner by age,NA

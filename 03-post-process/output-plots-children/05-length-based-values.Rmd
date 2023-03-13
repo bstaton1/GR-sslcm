@@ -35,7 +35,7 @@ plot_f = function(j) {
   
   # function to create predicted survival curves for one posterior sample
   pred_fn = function(i) {
-    pred_L_Pb = exp(omega0[i] + omega1[i] * E_scaled_seq)
+    pred_L_Pb = exp(omega0[i] + omega1[i] * log(E_scaled_seq))
     names(pred_L_Pb) = paste0("pred_L_Pb[", 1:30, "1]")
     pred_L_Pb
   }
