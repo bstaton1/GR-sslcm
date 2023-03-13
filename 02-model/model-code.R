@@ -255,7 +255,7 @@ jags_model_code = function() {
     Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(1/(1/alpha[1:nj] + E[y,1:nj]/beta[1:nj])), Sig_Lphi_E_Pb[1:nj,1:nj])
 
     # density-dependent length at end of summer
-    lL_Pb[y,1:nj] ~ dmnorm.vcov(omega0[1:nj] + omega1[1:nj] * ((E[y,1:nj]/E_scale)/wul[1:nj]), Sig_lL_Pb[1:nj,1:nj])
+    lL_Pb[y,1:nj] ~ dmnorm.vcov(omega0[1:nj] + omega1[1:nj] * log((E[y,1:nj]/E_scale)/wul[1:nj]), Sig_lL_Pb[1:nj,1:nj])
     
     # LH apportionment
     Lpi1[y,1:nj] ~ dmnorm.vcov(logit(mu_pi[i_fall,1:nj]), Sig_Lpi[1:nj,1:nj])
@@ -828,8 +828,8 @@ jags_model_code = function() {
       Lphi_E_Pb_qresid[y,j] <- pnorm(Lphi_E_Pb[y,j], logit(1/(1/alpha[j] + E[y,j]/beta[j])), 1/sig_Lphi_E_Pb[j]^2)
 
       # summer mean length
-      lL_Pb_resid[y,j] <- lL_Pb[y,j] - (omega0[j] + omega1[j] * ((E[y,j]/10000)/wul[j]))
-      lL_Pb_qresid[y,j] <- pnorm(lL_Pb[y,j], omega0[j] + omega1[j] * ((E[y,j]/10000)/wul[j]), 1/sig_lL_Pb[j]^2)
+      lL_Pb_resid[y,j] <- lL_Pb[y,j] - (omega0[j] + omega1[j] * log((E[y,j]/10000)/wul[j]))
+      lL_Pb_qresid[y,j] <- pnorm(lL_Pb[y,j], omega0[j] + omega1[j] * log((E[y,j]/10000)/wul[j]), 1/sig_lL_Pb[j]^2)
       
       # proportion of summer parr that become fall migrants
       Lpi_resid[y,j] <- logit(pi[y,i_fall,j]) - logit(mu_pi[i_fall,j])
