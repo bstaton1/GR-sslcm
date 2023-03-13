@@ -51,6 +51,9 @@ params:
   include_jags_info:
     label: "Include JAGS Code/Data?"
     value: TRUE
+  include_post_v_prior:
+    label: "Include Posterior vs. Prior Densities?"
+    value: TRUE
 editor_options: 
   chunk_output_type: console
 ---
@@ -185,4 +188,7 @@ vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
 ```
 
 ```{r jags-info, child = "output-plots-children/12-jags-model-info.Rmd", eval = params$include_jags_info}
+```
+
+```{r post-v-prior, child = "output-plots-children/13-post-vs-prior.Rmd", eval = params$include_post_v_prior}
 ```

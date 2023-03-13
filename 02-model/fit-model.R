@@ -49,20 +49,27 @@ if (is.na(mcmc_length)) {
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
-jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"))
+jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"), first_y = 1991, last_y = 2019)
+
+# remove trap abundance data in BY 2007 for UGR
+# estimates impossibly low, causing problems with model
+jags_data$Pa_obs["2007","fall-mig","UGR"] = NA
+jags_data$sig_Pa_obs["2007","fall-mig","UGR"] = NA
+jags_data$Mb_obs["2007","spring-mig","NOR","UGR"] = NA
+jags_data$sig_Mb_obs["2007","spring-mig","NOR","UGR"] = NA
+
+# add NA indices in the correct locations
 jags_data = append_no_na_indices(jags_data)
 
 # reduce assumed survival past sea lions in the early years
 # jags_data$phi_SL[as.character(1991:2000),] = 0.85
 
 # proportion of spawners by age and population that are female
-Omega = array(NA, dim = c(jags_data$nk, jags_data$nj))
+# assume 50% female for all fish aged 4 or 5; 0% for age-3
+# constant for all years/populations/origin types
+Omega = array(0.5, dim = c(jags_data$nk, jags_data$nj))
 dimnames(Omega) = list(jags_data$kmin:jags_data$kmax, colnames(jags_data$Ra_obs))
 Omega["3",] = 0
-Omega["4","CAT"] = 0.55; Omega["4","LOS"] = 0.53; Omega["4","UGR"] = 0.57 
-Omega["5","CAT"] = 0.43; Omega["5","LOS"] = 0.41; Omega["5","UGR"] = 0.48 
-Omega["4","MIN"] = round(mean(Omega["4",], na.rm = TRUE), 2)
-Omega["5","MIN"] = round(mean(Omega["5",], na.rm = TRUE), 2)
 
 add_jags_data = list(
   f = c(1904, 3971, 4846),  # fecundity [female age]
@@ -104,9 +111,17 @@ add_jags_data = append(add_jags_data, list(
 
 # add hyperparameters of priors on ocean survival parameters
 add_jags_data = append(add_jags_data, list(
-  mu_phi_O0_O1_prior = c(1, 1),
+  alpha_prior = c(2,8),
+  mu_phi_O0_O1_prior = c(1.5, 8.5),
   mu_phi_O1_O2_prior = c(60, 40),
-  mu_phi_O2_O3_prior = c(70, 30)
+  mu_phi_O2_O3_prior = c(70, 30),
+  mu_psi_O1_prior = c(0.5, 9.5),
+  mu_psi_O2_prior = c(8, 2),
+  sig_Lphi_E_Pb_prior = 0.5,
+  sig_Lphi_O0_O1_prior = 0.15,
+  sig_Lpsi_O1_prior = 0.15,
+  sig_Lpsi_O2_prior = 0.35,
+  dt_upr = 2
 ))
 
 # append all of this additional content to the data object
@@ -314,7 +329,16 @@ lppd_params = c(
   "Lphi_obs_Ma_O0_lppd", "x_carcass_spawned_lppd", "x_LGR_lppd"
 )
 
+# nodes for monitoring potentially non-vague prior densities
+prior_params = c(
+  "alpha_pr", "mu_phi_O0_O1_pr", "mu_phi_O1_O2_pr", "mu_phi_O2_O3_pr",
+  "mu_psi_O1_pr", "mu_psi_O2_pr",
+  "sig_Lphi_E_Pb_pr", "sig_Lphi_O0_O1_pr", 
+  "sig_Lpsi_O1_pr", "sig_Lpsi_O2_pr"
+)
+
 # add these additional nodes if included in JAGS model
+jags_params = c(jags_params, prior_params)
 if (do_pp_check) jags_params = c(jags_params, pp_check_params)
 if (do_lppd) jags_params = c(jags_params, lppd_params)
 

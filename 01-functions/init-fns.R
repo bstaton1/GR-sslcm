@@ -265,15 +265,40 @@ get_BH_params = function(jags_data) {
     parr = get_Pb_obs(jags_data)[,j]
     eggs = get_E_obs(jags_data)[,j]
     
-    # get logit(phi_E_Pb) for this population
-    logit_parr_per_egg = qlogis(parr/eggs)
+    # function to predict parr to egg survival based on BH params and egg abundance
+    BH = function(eggs, alpha, beta) 1/(1/alpha + eggs/beta)
     
-    # fit the BH model for this population
-    fit = nls(logit_parr_per_egg ~ qlogis(1/(1/plogis(logit_alpha) + eggs/exp(log_beta))),
-              start = c(logit_alpha = qlogis(0.1), log_beta = log(1e5)))
+    # negative log likelihood function to minimize with optim
+    nll = function(theta, parr, eggs) {
+      # transform parameters from estimated scale to useful scale
+      alpha = plogis(theta[1])
+      beta = exp(theta[2])
+      sigma = exp(theta[3])
+      
+      # produce predicted survival based on parameters
+      preds = BH(eggs, alpha, beta)
+      
+      # produce observed values
+      obs = parr/eggs
+      
+      # for CAT, one very large outcome prevented convergence
+      # remove the largest value for all populations prior to fitting
+      # remember, this is just for generating means for the initial value generator
+      obs[which.max(obs)] = NA
+      
+      # return the negative log likelihood
+      -sum(dnorm(qlogis(obs), qlogis(preds), sigma, log = TRUE), na.rm = TRUE)
+    }
     
+    # initial values for MLE
+    inits = c(qlogis(0.2), log(max(parr, na.rm = TRUE)), log(0.5))
+    
+    # minimize nll to fit the model
+    fit = optim(inits, nll, parr = parr, eggs = eggs, method = "L-BFGS-B",
+                lower = c(-3, log(50000), log(0.1)), upper = c(3, log(1e6), log(1)))
+
     # return point estimates for this population
-    c(alpha = unname(plogis(coef(fit)[1])), beta = unname(exp(coef(fit)[2])), sig_Lphi_E_Pb = summary(fit)$sigma)
+    c(alpha = plogis(fit$par[1]), beta = exp(fit$par[2]), sig_Lphi_E_Pb = exp(fit$par[3]))
   }))
   
   # assign rownames
@@ -287,7 +312,8 @@ gen_initials = function(CHAIN, jags_data) {
   
   with(jags_data, {
     # create random BH parameters
-    BH_params = get_BH_params(jags_data)
+    # BH_params = get_BH_params(jags_data)
+    BH_params = matrix(c(0.3, 0.25, 0.2, 0.2, 1e5, 3e5, 5e5, 1e5, 0.4, 0.6, 0.6, 0.8), nrow = 4, ncol = 3)
     rownames(BH_params) = c("CAT", "LOS", "MIN", "UGR")
     colnames(BH_params) = c("alpha", "beta", "sig_Lphi_E_Pb")
     alpha_init = plogis(qlogis(BH_params[,"alpha"]) + rnorm(nj, 0, 0.1))

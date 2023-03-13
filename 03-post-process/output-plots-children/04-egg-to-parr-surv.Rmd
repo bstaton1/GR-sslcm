@@ -5,9 +5,78 @@ editor_options:
 
 # Egg-to-Parr Survival {.tabset .tabset-pills}
 
-## Beverton-Holt
+## Survival Time Series
 
-All red components are posterior summaries (medians and 95% credible intervals). The black curve is from an `nls()` fit on reconstructed parr and roughly approximated total egg production -- the grey region is the confidence interval around this fit.
+```{r phi_E_Pb-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
+               yrs = all_yrs[ts_yrs],
+               main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+```
+
+## Survival vs. Total Egg Production
+
+This is the scale the Beverton-Holt recruitment function is estimated on.
+
+```{r egg-surv-vs-eggs, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  # extract posterior samples of the BH productivity and capacity parameters
+  alpha = post_subset(post, sub_index("alpha[pop]", pop = j), matrix = TRUE)
+  beta = post_subset(post, sub_index("beta[pop]", pop = j), matrix = TRUE)
+  
+  # extract posterior summaries of total egg production by brood year
+  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
+  
+  # extract posterior summaries egg-to-parr survival by brood year
+  phi_E_Pb = post_summ(post, sub_index("^phi_E_Pb[year,pop]", pop = j, year = ts_yrs))
+  
+  # predict egg-to-parr survival along a sequence of egg abundances
+  E_pred = seq(0, max(E[5,]), length = 30)
+  phi_E_Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) 1/(1/alpha[i,] + E_pred/beta[i,])))
+  colnames(phi_E_Pb_pred) = paste0("phi_E_Pb_pred[", 1:length(E_pred), "]")
+  phi_E_Pb_pred = post_convert(cbind(postpack:::id_mat(post), phi_E_Pb_pred))
+  phi_E_Pb_pred = post_summ(phi_E_Pb_pred, "Pb_pred")
+  
+  # graphical parameters
+  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
+  
+  # empty plot
+  plot(1, 1, type = "n", xlim = range(0, E[5,]), ylim = range(0, phi_E_Pb[5,], phi_E_Pb_pred[5,]),
+       xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = pops[j])
+  
+  x_ticks = axisTicks(par("usr")[1:2], log = FALSE)
+  y_ticks = axisTicks(par("usr")[3:4], log = FALSE)
+  axis(side = 1, at = x_ticks, labels = x_ticks/1e6)
+  axis(side = 2, at = y_ticks)
+  
+  # draw fitted relationship
+  polygon(c(E_pred, rev(E_pred)), c(phi_E_Pb_pred[4,], rev(phi_E_Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
+  lines(phi_E_Pb_pred[4,] ~ E_pred, col = "red", lty = 2)
+  lines(phi_E_Pb_pred[5,] ~ E_pred, col = "red", lty = 2)
+  lines(phi_E_Pb_pred[3,] ~ E_pred, col = "red", lwd = 2)
+  
+  # draw state pairs + uncertainty
+  segments(E[4,], phi_E_Pb[3,], E[5,], phi_E_Pb[3,], col = alpha("red", 0.5))
+  segments(E[3,], phi_E_Pb[4,], E[3,], phi_E_Pb[5,], col = alpha("red", 0.5))
+  points(phi_E_Pb[3,] ~ E[3,], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(phi_E_Pb[3,] ~ E[3,], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Total Egg Production (Millions)")
+mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+```
+
+## Parr vs. Total Egg Production
+
+Parr abundance is the product of egg-to-parr survival and total egg production; in this way we can back-out the standard Beverton-Holt function.
 
 ```{r eggs-to-parr, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
@@ -53,7 +122,8 @@ plot_f = function(j) {
   # draw state pairs + uncertainty
   segments(E[4,], Pb[3,], E[5,], Pb[3,], col = alpha("red", 0.5))
   segments(E[3,], Pb[4,], E[3,], Pb[5,], col = alpha("red", 0.5))
-  points(Pb[3,] ~ E[3,], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  points(Pb[3,] ~ E[3,], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(Pb[3,] ~ E[3,], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -89,7 +159,9 @@ plot_f = function(j) {
   
   segments(Sa_tot["2.5%",], E["mean",], Sa_tot["97.5%",], E["mean",], col = alpha("red", 0.5))
   segments(Sa_tot["mean",], E["2.5%",], Sa_tot["mean",], E["97.5%",], col = alpha("red", 0.5))
-  points(E["mean",] ~ Sa_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
+  points(E["mean",] ~ Sa_tot["mean",], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(E["mean",] ~ Sa_tot["mean",], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+
   abline(c(0, 1000), lty = 1)
   abline(c(0, 1800), lty = 2)
   abline(c(0, 3600), lty = 3)
@@ -105,79 +177,4 @@ par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
 junk = sapply(1:jags_data$nj, plot_f)
 mtext(side = 1, outer = T, line = 0.25, "Total Spawners")
 mtext(side = 2, outer = T, line = 0.25, "Total Egg Production (Millions)")
-```
-
-## Parr per Egg
-
-This figure shows the density dependence built in to the Beverton-Holt recruitment function: with increasing egg density, survival per egg decreases. The horizontal line/region shows the theoretical maximum ($\alpha_j$) in the absence of density dependence.
-
-```{r parr-per-egg-v-eggs, fig.width = 6, fig.height = 5}
-plot_f = function(j) {
-  # extract posterior summaries of total egg production by brood year
-  E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
-  
-  # conversion rates
-  Pb_per_E = post_summ(post, sub_index("^Pb_per_E[year,pop]", pop = j, year = ts_yrs))
-  
-  # max survival
-  alpha = post_summ(post, sub_index("^alpha[pop]", pop = j))
-  
-  # graphical parameters
-  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
-  
-  # empty plot
-  plot(Pb_per_E["mean",] ~ E["mean",],
-       ylim = c(0, 1),
-       xlim = c(0, max(E["97.5%",])), type = "n",
-       ylab = "", xlab = "", las = 1, xaxt = "n", main = pops[j])
-  
-  # x-axis
-  x_ticks = axisTicks(par("usr")[1:2], log = F)
-  axis(side = 1, at = x_ticks, labels = x_ticks/1e6)
-  
-  segments(E["2.5%",], Pb_per_E["mean",], E["97.5%",], Pb_per_E["mean",], col = alpha("red", 0.5))
-  segments(E["mean",], Pb_per_E["2.5%",], E["mean",], Pb_per_E["97.5%",], col = alpha("red", 0.5))
-  points(Pb_per_E["mean",] ~ E["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
-  
-  rect(par("usr")[1], alpha["2.5%",], par("usr")[2], alpha["97.5%",], border = alpha("red", 0.5), col = alpha("salmon", 0.5))
-  abline(h = alpha["mean",], lwd = 2, col = "red")
-  box()
-}
-  
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
-junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Total Egg Production (Millions)")
-mtext(side = 2, outer = T, line = 0.25, "Parr per Egg")
-```
-
-## Parr per Spawner
-
-This figure is identical to above, but shows parr production per spawner instead of per egg.
-
-```{r parr-per-spawner-v-spawners, fig.width = 6, fig.height = 5}
-plot_f = function(j) {
-  # extract posterior summaries of total spawners by brood year
-  Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
-  
-  # conversion rates
-  Pb_per_Sa_tot = post_summ(post, sub_index("^Pb_per_Sa_tot[year,pop]", pop = j, year = ts_yrs))
-  
-  # graphical parameters
-  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
-  
-  # empty plot
-  plot(Pb_per_Sa_tot["mean",] ~ Sa_tot["mean",],
-       ylim = c(0, max(Pb_per_Sa_tot["97.5%",])),
-       xlim = c(0, max(Sa_tot["97.5%",])), type = "n",
-       ylab = "", xlab = "", las = 1)
-  
-  segments(Sa_tot["2.5%",], Pb_per_Sa_tot["mean",], Sa_tot["97.5%",], Pb_per_Sa_tot["mean",], col = alpha("red", 0.5))
-  segments(Sa_tot["mean",], Pb_per_Sa_tot["2.5%",], Sa_tot["mean",], Pb_per_Sa_tot["97.5%",], col = alpha("red", 0.5))
-  points(Pb_per_Sa_tot["mean",] ~ Sa_tot["mean",], pch = 21, col = "red", bg = alpha("salmon", 0.5), cex = 1.2)
-}
-
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
-junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Total Spawners")
-mtext(side = 2, outer = T, line = 0.25, "Parr per Spawner")
 ```
