@@ -158,11 +158,11 @@ We begin our description of the life cycle at the egg stage immediately after sp
 We assumed total egg production was the sum product of age-specific spawner abundance (from eq. \@ref(eq:get-Sa), below), proportion female, and fecundity:
 
 \begin{equation}
-E_{y,j} = \sum_o^{n_o} \sum_k^{n_k} S^{a}_{y,k,o,j} \cdot \Omega_{k,j} \cdot f_{k}
+E_{y,j} = \sum_o^{n_o} \sum_k^{n_k} S^{a}_{y,k,o,j} \cdot \Omega_{k} \cdot f_{k}
 (\#eq:get-E)
 \end{equation}
 
-We calculated the proportion of spawners at age that are female ($\Omega_{k,j}$) from carcass survey data and averaged across years and fecundity ($f_k$) from samples taken from Grande Ronde-origin hatchery broodstock.
+We assumed that spawners age-4 or age-5 were 50% female and age-3 spawners were all male (i.e., $\Omega_{k=1} = 0;\;\Omega_{k \in [2,3]} = 0.5$; approximately equal to values estimated from carcass data) and estimated fecundity ($f_k$) from samples taken from Grande Ronde-origin hatchery broodstock.
 We supplied both quantities to the model assuming no error or inter-annual variability.
 
 We assumed expected egg-to-parr survival was density-dependent following a Beverton-Holt relationship with productivity parameter $\alpha_j$ and capacity parameter $\beta_j$:
