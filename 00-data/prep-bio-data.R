@@ -59,21 +59,18 @@ tmp = tmp[!is.na(tmp$age_best2),]
 # discard records with age assigned as 2
 tmp = tmp[tmp$age_best2 > 2,]
 
-# discard records with unknown sex
-tmp = tmp[tmp$sex != "Unk",]
-
 # discard records with unknown origin
 tmp = tmp[tmp$origin != "Unk",]
 
 # keep only relevant columns
-tmp = tmp[,c("population", "year", "sex", "origin", "age_best2")]
+tmp = tmp[,c("population", "year", "origin", "age_best2")]
 tmp$count = 1
 
-# calculate the sum of the counts by population, year, sex, age, and origin
-tmp = aggregate(count ~ population + year + sex + origin + age_best2, data = tmp, FUN = sum)
+# calculate the sum of the counts by population, year, age, and origin
+tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN = sum)
 
 # reformat: to wide
-tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "count")
+tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
 
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets
@@ -110,9 +107,6 @@ tmp = tmp[!is.na(tmp$age_best2),]
 # discard records with age assigned as 2
 tmp = tmp[tmp$age_best2 > 2,]
 
-# discard records with unknown sex
-tmp = tmp[tmp$sex != "Unk",]
-
 # discard records with unknown origin
 tmp = tmp[tmp$origin != "Unk",]
 
@@ -123,13 +117,13 @@ tmp = tmp[-which(tmp$recapture),]
 colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
 
 # keep only relevant columns
-tmp = tmp[,c("population", "year", "sex", "origin", "age_best2", "count")]
+tmp = tmp[,c("population", "year", "origin", "age_best2", "count")]
 
-# calculate the sum of the counts by population, year, sex, age, and origin
-tmp = aggregate(count ~ population + year + sex + origin + age_best2, data = tmp, FUN = sum)
+# calculate the sum of the counts by population, year, age, and origin
+tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN = sum)
 
 # reformat: to wide
-tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "count")
+tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
 
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets
@@ -166,9 +160,6 @@ tmp = tmp[!is.na(tmp$age_best2),]
 # discard records with age assigned as 2
 tmp = tmp[tmp$age_best2 > 2,]
 
-# discard records with unknown sex
-tmp = tmp[tmp$sex != "Unk",]
-
 # discard records with unknown origin
 tmp = tmp[tmp$origin != "Unk",]
 
@@ -182,13 +173,13 @@ tmp = tmp[-which(tmp$recapture),]
 tmp = tmp[tmp$disposition == "removed",]
 
 # keep only relevant columns
-tmp = tmp[,c("population", "year", "sex", "origin", "age_best2", "count")]
+tmp = tmp[,c("population", "year", "origin", "age_best2", "count")]
 
-# calculate the sum of the counts by population, year, sex, age, and origin
-tmp = aggregate(count ~ population + year + sex + origin + age_best2, data = tmp, FUN = sum)
+# calculate the sum of the counts by population, year, age, and origin
+tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN = sum)
 
 # reformat: to wide
-tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "count")
+tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
 
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets
@@ -196,10 +187,6 @@ tmp = dcast(tmp, population + year ~ origin + sex + age_best2, value.var = "coun
 # just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
 colnames(tmp)[2] = "brood_year"
 colnames(tmp)[3:ncol(tmp)] = paste("rm", colnames(tmp)[3:ncol(tmp)], sep = "_")
-
-# add a column for rm_Nat_F3: none found in data set so column is missing and resort column names
-tmp$rm_Nat_F_3 = NA
-tmp = tmp[,c("population", "brood_year", sort(colnames(tmp)[3:ncol(tmp)]))]
 
 # rename the data frame, and remove "tmp" objects
 adult_rm_composition = tmp; rm(tmp)
@@ -209,7 +196,7 @@ adult_rm_composition = tmp; rm(tmp)
 # years with fewer carcasses sampled than this will be assigned
 # NA values for numbers of carcasses sampled and found with spawn status
 # intended to remove the effects of weakly informative data
-status_count_threshold = 0
+status_count_threshold = 10
 
 # read the data
 tmp = read.csv(file.path(data_dir, "02a-adult-indiv-carcass.csv"), stringsAsFactors = F)
@@ -254,7 +241,7 @@ adult_prespawn = tmp; rm(tmp)
 ##### ADULT SURVIVAL PAST SEA LIONS #####
 
 # read the data
-tmp = read.csv("00-data/sea-lion-surv.csv")
+tmp = read.csv(file.path(data_dir, "07-sea-lion-survival.csv"))
 
 # reformat to long format
 tmp = melt(tmp, id.vars = "year", value.name = "surv_est_sea_lions", variable.name = "population")
@@ -267,6 +254,46 @@ colnames(tmp)[1] = "brood_year"
 
 # rename object and remove "tmp" object
 sea_lion_survival = tmp; rm(tmp)
+
+##### ADULT HARVEST RATES BELOW BON #####
+
+# read the data
+tmp = read.csv("98-scratch/harvest-rates-below-BON.csv")
+
+# add a population variable
+tmp$population = "ALL"
+
+# update column names
+colnames(tmp) = c("brood_year", "HR_NOR", "HR_HOR", "population")
+
+# rename object and remove "tmp" object
+harvest_rates = tmp; rm(tmp) 
+
+##### ADULT SURVIVAL BON -> LGR #####
+
+# read the data
+tmp = read.csv(file.path(data_dir, "08-BON-LGR-adult-PIT-detections.csv"))
+
+# reformat BON detection counts
+tmp_BON = dcast(tmp[,c("year", "origin", "BON_adult_detections")], year ~ origin, value.var = "BON_adult_detections")
+colnames(tmp_BON) = c("year", "HOR_BON_adults", "NOR_BON_adults")
+tmp_LGR = dcast(tmp[,c("year", "origin", "LGR_adult_detections")], year ~ origin, value.var = "LGR_adult_detections")
+colnames(tmp_LGR) = c("year", "HOR_LGR_adults", "NOR_LGR_adults")
+
+# merge into one data set
+tmp = merge(tmp_BON, tmp_LGR, by = "year")
+
+# add a population column
+tmp = cbind(population = "ALL", tmp)
+
+# update column names
+# note: year renamed to "brood_year" to allow merging with other data sets
+# and for consistent indexing in model.
+# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
+colnames(tmp)[2] = "brood_year"
+
+# rename the object and remove "tmp" object
+dam_adult_counts = tmp; rm(tmp)
 
 ##### JUVENILE ABUNDANCE #####
 
@@ -321,7 +348,7 @@ tmp$logit_surv_se = with(tmp, get_logit_se(surv_est, surv_se, surv_ci_low, surv_
 tmp = tmp[tmp$population %in% c("CAT", "LOS", "MIN", "UGR"),]
 
 # exclude some survival estimates: only keep summer, fall, and spring tagging to LGR
-tmp = tmp[tmp$season %in% c("summer", "fall", "spring"),]
+tmp = tmp[tmp$season %in% c("summer", "fall", "spring", "winter"),]
 
 # add a brood_year column: two years prior to migration year
 tmp$brood_year = tmp$mig_year - 2
@@ -330,7 +357,7 @@ tmp$brood_year = tmp$mig_year - 2
 tmp = tmp[,c("population", "season", "brood_year", "surv_est", "logit_surv_se")]
 
 # give season levels: for ordering purposes only
-tmp$season = factor(tmp$season, levels = c("summer", "fall", "spring"))
+tmp$season = factor(tmp$season, levels = c("summer", "fall", "winter", "spring"))
 
 # create two data frames: one for the point ests and one for SEs
 tmp_est = tmp[,c("population", "season", "brood_year", "surv_est")]
@@ -341,14 +368,69 @@ tmp_est = dcast(tmp_est, population + brood_year ~ season, value.var = "surv_est
 tmp_se = dcast(tmp_se, population + brood_year ~ season, value.var = "logit_surv_se")
 
 # improve column names
-colnames(tmp_est)[3:5] = paste0(colnames(tmp_est)[3:5], "_surv_est")
-colnames(tmp_se)[3:5] = paste0(colnames(tmp_se)[3:5], "_surv_logit_se")
+colnames(tmp_est)[3:6] = paste0(colnames(tmp_est)[3:6], "_surv_est")
+colnames(tmp_se)[3:6] = paste0(colnames(tmp_se)[3:6], "_surv_logit_se")
 
 # combine back into one data set
 tmp = merge(tmp_est, tmp_se, by = c("population", "brood_year"))
 
 # rename the data frame and remove "tmp" objects
 juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
+
+##### JUVENILE LENGTH DATA #####
+
+# read the data
+tmp = read.csv(file.path(data_dir, "09-juv-mean-length.csv"))
+
+# retain only rows corresponding to all fish measured (tagged and untagged)
+tmp = tmp[tmp$fish_subset == "all",]
+
+# set any mean lengths with sample size less than 30 to NA
+tmp[tmp$n_length < 30,c("len_mean", "len_sd")] = NA
+
+# keep only summer and spring length measurements
+tmp = tmp[tmp$season %in% c("summer", "spring"),]
+tmp$season = factor(tmp$season, levels = c("summer", "spring"))
+
+# calculate standard error in mean length
+tmp$len_se = tmp$len_sd/sqrt(tmp$n_length)
+
+# ensure the data are ordered by population and year
+tmp = tmp[order(tmp$population, tmp$season, tmp$brood_year),]
+
+# calculate adjusted mean length for summer
+# corrects for capture date variability among years
+length_mean_adj = lapply(unique(tmp$population), function(pop) {
+  tmp_sub = subset(tmp, population == pop & season == "summer")
+  standardize_mean_length(tmp_sub$len_mean, tmp_sub$jday_med, resid_type = "mult")
+})
+tmp$len_mean_adj = NA
+tmp$len_mean_adj[tmp$season == "summer"] = unlist(length_mean_adj)
+
+# calculate standard error in adjusted mean length
+# (assume the CV is the same)
+tmp$len_se_adj = tmp$len_se/tmp$len_mean * tmp$len_mean_adj
+
+# set the adjusted mean lengths & SEs for spring equal to the observed mean lengths & SEs
+# allows using the same column name for extracting below; not adjusting the spring length data b/c passive capture
+tmp[tmp$season == "spring",c("len_mean_adj", "len_se_adj")] = tmp[tmp$season == "spring",c("len_mean", "len_se")]
+
+# retain only needed columns
+tmp = tmp[,c("population", "season", "brood_year", "n_length", "len_mean", "len_se", "len_mean_adj", "len_se_adj")]
+
+# extract and format mean length
+length_mean = dcast(tmp, brood_year + population ~ season, value.var = "len_mean_adj")
+colnames(length_mean)[3:ncol(length_mean)] = paste0("length_mean_", colnames(length_mean)[3:ncol(length_mean)])
+
+# extract and format se mean length
+length_se = dcast(tmp, brood_year + population ~ season, value.var = "len_se_adj")
+colnames(length_se)[3:ncol(length_se)] = paste0("length_se_", colnames(length_se)[3:ncol(length_se)])
+
+# combine into one data set
+tmp = merge(length_mean, length_se, by = c("population", "brood_year"), all = TRUE)
+
+# rename the data frame and remove "tmp" objects
+juvenile_length = tmp; rm("tmp", "length_mean", "length_se", "length_mean_adj")
 
 ##### HATCHERY RELEASES OF SMOLTS AND SURVIVAL TO LGD #####
 
@@ -423,6 +505,7 @@ hydro_surv = tmp; rm(tmp)
 
 # merge together the various data sets
 bio_dat = merge(juvenile_abundance, juvenile_survival, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, juvenile_length, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_abundance, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
@@ -431,6 +514,8 @@ bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all
 bio_dat = merge(bio_dat, sea_lion_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hydro_surv, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, dam_adult_counts, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, harvest_rates, by = c("population", "brood_year"), all = T)
 
 # create an empty data frame for merging
 # this ensures all populations have rows for every year
@@ -439,6 +524,9 @@ bio_dat = merge(bio_dat, empty_df, by = c("population", "brood_year"), all = T)
 
 # make hatchery releases be zero if NA
 bio_dat$hatchery_smolt[is.na(bio_dat$hatchery_smolt) & bio_dat$population != "ALL"] = 0
+
+colnames(bio_dat) = stringr::str_replace(colnames(bio_dat), "Nat", "NOR")
+colnames(bio_dat) = stringr::str_replace(colnames(bio_dat), "Hat", "HOR")
 
 # remove unnecessary objects from workspace, retain only bio_dat
 rm(list = setdiff(ls(), "bio_dat"))

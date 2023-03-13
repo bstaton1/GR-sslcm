@@ -136,3 +136,195 @@ find_no_na_indices = function(x) {
 BH = function(x, alpha, beta) {
   x/((1/alpha) + (x/beta))
 }
+
+##### REPLACE PLACEHOLDER INDEX #####
+# x: a string like "psi_O1[year,sex,origin,pop]
+# other arguments: a number to replace
+# e.g., sub_index("psi_O1[year,sex,origin,pop]", year = ".+", sex = 1, origin = 2, pop = ".")
+# returns "psi_O1[.+,1,2,.]"
+# this reduces how much hardcoding is required in generating output summaries
+
+sub_index = function(x, year = NULL, LH_type = NULL, age = NULL, origin = NULL, pop = NULL) {
+  # create a duplicate object
+  newx = x
+  
+  # if one of the dimensions was specified, perform replacement
+  if (!is.null(year)) newx = stringr::str_replace(newx, "year", as.character(year))
+  if (!is.null(age)) newx = stringr::str_replace(newx, "age", as.character(age))
+  if (!is.null(LH_type)) newx = stringr::str_replace(newx, "LH_type", as.character(LH_type))
+  if (!is.null(origin)) newx = stringr::str_replace(newx, "origin", as.character(origin))
+  if (!is.null(pop)) newx = stringr::str_replace(newx, "pop", as.character(pop))
+  
+  # return the version with placeholders replaced by index values
+  newx
+}
+
+##### OBTAIN PARAMETER DIMENSION ID #####
+# E.G., dim_IDs("alpha[pop]", pop = 1) gives "CAT"
+# used for labeling in figures
+
+dim_IDs = function(param, ...) {
+  
+  # function to convert sub_index() output into named dimensions
+  dim_names = function(LH_type = NULL, age = NULL, origin = NULL, pop = NULL) {
+    
+    # empty list
+    out = list()
+    
+    # combine the dimention names for each type supplied
+    if (!is.null(LH_type)) out = append(out, list(LH_type = c("fall", "spring")[LH_type]))
+    if (!is.null(age)) out = append(out, list(age = c("age3", "age4", "age5")[age]))
+    if (!is.null(origin)) out = append(out, list(origin = c("NOR", "HOR")[origin]))
+    if (!is.null(pop)) out = append(out, list(pop = c("CAT", "LOS", "MIN", "UGR")[pop]))
+    
+    return(out)
+  }
+  
+  named_param = do.call(sub_index, append(list(x = param), dim_names(...)))
+  named_param = stringr::str_remove(named_param, "year,")
+  named_param = stringr::str_extract(named_param, "\\[.+\\]")
+  named_param = stringr::str_remove(named_param, "age[:digit:],")
+  named_param = stringr::str_remove(named_param, "\\[")
+  named_param = stringr::str_remove(named_param, "\\]")
+  return(named_param)
+}
+
+
+##### COMBINE A LIST OF DATA FRAMES #####
+# list: a list with data frames to be rbind-ed stored as elements
+
+unlist_dfs = function(list) {
+  # empty object
+  output = NULL
+  
+  # loop through list elements, combining the data frame in each with all previous
+  for (i in 1:length(list)) output = rbind(output, list[[i]])
+  
+  # return the output
+  return(output)
+}
+
+##### ADD A NEW INDEX #####
+
+# changes the name of quantities (param) stored in mcmc.list object (post)
+# adds a new dimension and index value
+# e.g., add_index(post, "alpha[1]", 2)
+# turns "alpha[1]" node name to "alpha[1,2]"
+
+add_index = function(post, param, index_value) {
+  # extract the names of all quantities that match param
+  matches = match_params(post, param)
+  
+  # convert samples to matrix format while retaining the chain and iter ID
+  post_m = as.matrix(post, chains = TRUE, iters = TRUE)
+  
+  # determine which elements that match param
+  which_matches = which(colnames(post_m) %in% matches)
+  
+  # extract them in the order they are found in the object
+  name_matches = colnames(post_m)[which_matches]
+  
+  # append a new index dimension and value on the back of the quantity name
+  new_names = stringr::str_replace(name_matches, "\\]$", paste0(",", index_value, "]"))
+  
+  # replace the old names with new names
+  colnames(post_m)[which_matches] = new_names
+  
+  # convert back to mcmc.list format
+  post_convert(post_m)
+}
+
+##### DROP AN INDEX #####
+
+# changes the name of quantities (param) stored in mcmc.list object (post)
+# removes the last dimension and index value
+# e.g., rm_index(post, "Pb[1,1]")
+# turns "Pb[1,1]" node name to "Pb[1]", and returns only posterior samples that match "Pb[1,1]"
+# allows using vcov_decomp() on a covariance matrix stored as a >2d array
+
+rm_index = function(post, param) {
+  post_sub = post_subset(post, param, matrix = TRUE, chains = TRUE, iters = TRUE)
+  colnames(post_sub) = stringr::str_replace(colnames(post_sub), ",[:digit:]+\\]$", "]")
+  post_convert(post_sub)
+}
+
+##### CREATE A JAGS MODEL FILE FROM AN R FUNCTION #####
+
+# this function does the same thing as postpack::write_model or R2OpenBUGS::write.model
+# except that it retains the comments contained in the source function
+
+# function to write function to file
+write_model_code = function(fun_file, out_file) {
+  
+  # extract the function body, including comments
+  # code = attr(fun, "srcref")
+  # code = as.character(code)
+  code = readLines(fun_file)
+  
+  # replace the first line
+  code[1] = "model {"
+  
+  # replace the last line
+  code[length(code)] = "}  # END OF MODEL"
+  
+  # remove any instances of "%_%"
+  code = stringr::str_remove(code, "%_%\\s?")
+  
+  # write the code to a file
+  writeLines(code, out_file)
+}
+
+##### TOGGLE ON THE ESTIMATION OF A CORRELATION PARAMETER #####
+
+# the default JAGS model code has all correlation parameters (i.e., as part of covariance terms)
+# fixed at zero. If the user wishes to estimate these with a dunif(-0.99, 0.99) prior, they should
+# use this function in the model fitting script rather than editing the JAGS model code by hand
+
+toggle_rho_estimation = function(rho_term, jags_file = "02-model/model.txt") {
+  # read in the existing jags model code
+  # has all rho terms <- 0
+  model_lines = readLines(jags_file)
+  
+  # find the line numbers where the rho term is defined
+  which_matches = stringr::str_which(model_lines, paste0("^[:space:]*", rho_term))
+  
+  # replace the "<- 0" with a prior to turn on the estimation of the rho term
+  model_lines[which_matches] = stringr::str_replace(model_lines[which_matches], "<- 0", "~ dunif(-1, 1)")
+  
+  # write over the old jags model code
+  writeLines(model_lines, jags_file)
+}
+
+##### TOGGLE THE CALCULATION OF DATA CHECKS #####
+
+# the default JAGS model code includes data simulation for the observed period (for posterior predictive checks)
+# and calculates log posterior predictive density (for WAIC)
+# these are calculated separately for all observed stochastic nodes
+# given these calculations may add some computation time, use this function to turn them off when fitting the model
+
+toggle_data_diagnostics = function(do_lppd = FALSE, do_ppd_check = FALSE, jags_file = "02-model/model.txt") {
+  
+  # read in the existing jags model code (after running write_model_code())
+  # has all data diagnostics toggled on
+  model_lines = readLines(jags_file)
+  
+  # toggle off WAIC calculations if requested
+  if (!do_lppd) {
+    which_matches = stringr::str_which(model_lines, "_lppd")
+    spaces = stringr::str_remove(stringr::str_extract(model_lines[which_matches], "^[:space:]+[:alpha:]"), "[:alpha:]")
+    model_lines[which_matches] = paste0(spaces, "# WAIC Calculations Toggled Off")
+  }
+  
+  # toggle off posterior predictive check calculations
+  if (!do_ppd_check) {
+    which_matches = stringr::str_which(model_lines, "expected_|_new|_dev")
+    spaces = stringr::str_remove(stringr::str_extract(model_lines[which_matches], "^[:space:]+[:alpha:]"), "[:alpha:]")
+    model_lines[which_matches] = paste0(spaces, "# Posterior Predictive Check Calculations Toggled Off")
+  }
+  
+  # write over the old jags model code
+  if (!do_lppd | !do_ppd_check) {
+    writeLines(model_lines, jags_file)
+  }
+  
+}

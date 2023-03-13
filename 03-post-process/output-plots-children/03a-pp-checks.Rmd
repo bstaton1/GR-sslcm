@@ -1,0 +1,266 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+## Posterior Predictive Checks
+
+This output is a diagnostic of the consistency of variability in the data with the variability assumed by the model.
+For each observed data point and MCMC iteration, a value was simulated from the model.
+The fit of the observed and simulated data was calculated, and the proportion of MCMC iterations in which the observed data fitted more poorly than the simulated data (i.e., a Bayesian p-value) was calculated.
+
+P-values close to 0.5 are ideal (0.4 -- 0.6 have no color below), values closer to 1 (red below) indicate over-dispersion (i.e., model fits real data worse than expected), and values closer to 0 (blue below) indicate under-dispersion (i.e., model fits real data better than expected).
+
+Across years within a data set, p-values were summarized as the median and central 95% intervals. 
+The left two columns show the percent of years that had extreme p-values, providing another indication of how often the model fit the real data far better (<0.05) or worse (>0.95) than expected.
+
+The fit criterion differed depending on the likelihood function used to fit the model to the data set:
+  
+  * **Log-normal**: squared difference of the log-scale observation and log-scale expectation. This applies to all abundance data.
+* **Logit-normal**: squared difference of the logit-scale observation and logit-scale expectation. This applies to all survival data, except the BON to LGR and the pre-spawn survival which were fitted using binomial distributions.
+* **Binomial/Multinomial**: Freeman-Tukey fit statistic, which is similar to the $\chi^2$ statistic but better handles small bin probabilities by performing calculations on the square root of observed and expected counts..
+This applies to all composition data, the survival from BON to LGR data, and the spawn status data.
+
+```{r calculate-bayesian-pvals}
+# function to summarize bayesian p-values within a data source
+summarize_bp = function(bp) {
+  data.frame(
+    "N" = apply(bp, 2, function(x) sum(!is.na(x))),
+    "median" = apply(bp, 2, median, na.rm = TRUE),
+    "q2.5" = apply(bp, 2, function(x) quantile(x, 0.025, na.rm = TRUE)),
+    "q97.5" = apply(bp, 2, function(x) quantile(x, 0.975, na.rm = TRUE)),
+    "p_lt_0.05" = apply(bp, 2, function(x) sum(x < 0.05 & !is.na(x))/sum(!is.na(x))),
+    "p_gt_0.95" = apply(bp, 2, function(x) sum(x > 0.95 & !is.na(x))/sum(!is.na(x)))
+  )
+}
+
+### CALCULATE BAYESIAN P-VALUES: ABUNDANCE DATA SOURCES ###
+
+# fall trap
+new = post_subset(post, "Pa_obs_new_dev", TRUE)
+obs = post_subset(post, "Pa_obs_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], "fall-mig", pops)
+bp = bp[,"fall-mig",]
+Pa_bp = data.frame(
+  name = rep("Juveniles", 4), pop = pops,
+  origin = rep("NOR", 4), LH_type = rep("Fall Migrants", 4),
+  summarize_bp(bp)
+)
+rownames(Pa_bp) = NULL
+
+# spring trap
+new = post_subset(post, "^Mb_obs_new_dev", TRUE)
+obs = post_subset(post, "^Mb_obs_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("fall-mig", "spring-mig"), "NOR", pops)
+bp = bp[,"spring-mig","NOR",]
+Mb_bp = data.frame(
+  name = rep("Juveniles", 4), pop = pops,
+  origin = rep("NOR", 4), LH_type = rep("Spring Migrants", 4),
+  summarize_bp(bp)
+)
+rownames(Mb_bp) = NULL
+
+# adult abundance
+new = post_subset(post, "Ra_obs_new_dev", TRUE)
+obs = post_subset(post, "Ra_obs_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+Ra_bp = data.frame(
+  name = rep("Adults", 4), pop = pops,
+  origin = rep("Combined", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(Ra_bp) = NULL
+
+### CALCULATE BAYESIAN P-VALUES: SURVIVAL DATA SOURCES ###
+
+# summer tagging survival
+new = post_subset(post, "Lphi_obs_new_Pb_Ma_dev", TRUE)
+obs = post_subset(post, "Lphi_obs_Pb_Ma_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+phi_Pb_Ma_bp = data.frame(
+  name = rep("Summer Tagging to LGR", 4), pop = pops,
+  origin = rep("NOR", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(phi_Pb_Ma_bp) = NULL
+
+# fall & winter trap survival
+new = post_subset(post, "Lphi_obs_new_Pa_Ma_dev", TRUE)
+obs = post_subset(post, "Lphi_obs_Pa_Ma_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("fall-mig", "spring-mig"), pops)
+bp = cbind(CAT_fall = bp[,"fall-mig","CAT"], CAT_spring = bp[,"spring-mig","CAT"],
+           LOS_fall = bp[,"fall-mig","LOS"], LOS_spring = bp[,"spring-mig","LOS"],
+           MIN_fall = bp[,"fall-mig","MIN"], MIN_spring = bp[,"spring-mig","MIN"],
+           UGR_fall = bp[,"fall-mig","UGR"], UGR_spring = bp[,"spring-mig","UGR"])
+phi_Pa_Ma_bp = data.frame(
+  name = rep(c("Fall Trap to LGR", "Winter Tagging"), each = 4), pop = rep(pops, 2),
+  origin = rep("NOR", 8),   LH_type = rep(c("Fall Migrants", "Spring Migrants"), each = 4),
+  summarize_bp(bp)
+)
+rownames(phi_Pa_Ma_bp) = NULL
+
+# trib to lgr survival
+new = post_subset(post, "Lphi_obs_new_Mb_Ma_dev", TRUE)
+obs = post_subset(post, "Lphi_obs_Mb_Ma_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], c("fall-mig", "spring-mig"), origins, pops)
+bp = bp[,"spring-mig",,]
+bp = cbind(CAT_NOR = bp[,"NOR","CAT"], CAT_HOR = bp[,"HOR","CAT"],
+           LOS_NOR = bp[,"NOR","LOS"], LOS_HOR = bp[,"HOR","LOS"],
+           MIN_NOR = bp[,"NOR","MIN"], MIN_HOR = bp[,"HOR","MIN"],
+           UGR_NOR = bp[,"NOR","UGR"], UGR_HOR = bp[,"HOR","UGR"])
+phi_Mb_Ma_bp = data.frame(
+  name = rep("Spring Trap/Release to LGR", 8), pop = rep(pops, each = 2),
+  origin = rep(origins, 4), LH_type = rep("Spring Migrants", 8),
+  summarize_bp(bp)
+)
+rownames(phi_Mb_Ma_bp) = NULL
+
+# hydropower survival
+new = post_subset(post, "Lphi_obs_new_Ma_O0_dev", TRUE)
+obs = post_subset(post, "Lphi_obs_Ma_O0_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], origins)
+phi_Ma_O0_bp = data.frame(
+  name = rep("Hydrosystem (Downstream)", 2), pop = rep("Combined", 2),
+  origin = origins, LH_type = rep("Combined", 2),
+  summarize_bp(bp)
+)
+rownames(phi_Ma_O0_bp) = NULL
+
+### CALCULATE BAYESIAN P-VALUES: LENGTH DATA SOURCES ###
+
+# summer length
+new = post_subset(post, "L_Pb_obs_new_dev", TRUE)
+obs = post_subset(post, "L_Pb_obs_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+L_Pb_bp = data.frame(
+  name = rep("Summer Length", 4), pop = pops,
+  origin = rep("NOR", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(L_Pb_bp) = NULL
+
+# spring length
+new = post_subset(post, "L_Mb_obs_new_dev", TRUE)
+obs = post_subset(post, "L_Mb_obs_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+L_Mb_bp = data.frame(
+  name = rep("Spring Length", 4), pop = pops,
+  origin = rep("NOR", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(L_Mb_bp) = NULL
+
+### CALCULATE BAYESIAN P-VALUES: COMPOSITION DATA SOURCES ###
+
+# weir composition
+new = post_subset(post, "x_Ra_new_dev", TRUE)
+obs = post_subset(post, "x_Ra_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+bp[jags_data$nx_Ra == 0 | is.na(jags_data$nx_Ra)] = NA
+x_Ra_bp = data.frame(
+  name = rep("Weir", 4), pop = pops,
+  origin = rep("Combined", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(x_Ra_bp) = NULL
+
+# carcass composition
+new = post_subset(post, "x_Sa_prime_new_dev", TRUE)
+obs = post_subset(post, "x_Sa_prime_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+bp[jags_data$nx_Sa_prime == 0 | is.na(jags_data$nx_Sa_prime)] = NA
+x_Sa_prime_bp = data.frame(
+  name = rep("Carcasses", 4), pop = pops,
+  origin = rep("Combined", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(x_Sa_prime_bp) = NULL
+
+# pre-spawn survival
+new = post_subset(post, "x_carcass_spawned_new_dev", TRUE)
+obs = post_subset(post, "x_carcass_spawned_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
+x_carcass_spawned_bp = data.frame(
+  name = rep("Prespawn", 4), pop = pops,
+  origin = rep("Combined", 4), LH_type = rep("Combined", 4),
+  summarize_bp(bp)
+)
+rownames(x_carcass_spawned_bp) = NULL
+
+# movement survival from BON to LGR
+new = post_subset(post, "x_LGR_new_dev", TRUE)
+obs = post_subset(post, "x_LGR_dev", TRUE)
+bp = array_format(colMeans(obs > new))
+dimnames(bp) = list(all_yrs[1:dim(bp)[1]], origins)
+x_LGR_bp = data.frame(
+  name = rep("Hydrosystem (Upstream)", 2), pop = rep("Combined", 2),
+  origin = origins, LH_type = rep("Combined", 2),
+  summarize_bp(bp)
+)
+rownames(x_LGR_bp) = NULL
+
+### COMBINE INTO ONE TABLE ###
+bp_tab = rbind(
+  Pa_bp, Mb_bp, Ra_bp,
+  phi_Pb_Ma_bp, phi_Pa_Ma_bp, phi_Mb_Ma_bp,
+  phi_Ma_O0_bp, L_Pb_bp, L_Mb_bp, x_Ra_bp, x_Sa_prime_bp, x_carcass_spawned_bp, x_LGR_bp
+)
+
+# add a main data category variable
+category = rep(NA, nrow(bp_tab))
+category = ifelse(bp_tab$name %in% c("Adults", "Juveniles"), "Abundance", category)
+category = ifelse(bp_tab$name %in% c("Weir", "Carcasses"), "Composition", category)
+category = ifelse(bp_tab$name %in% c("Summer Length", "Spring Length"), "Mean Length", category)
+category[is.na(category)] = "Survival"
+bp_tab = data.frame(category = category, bp_tab)
+
+# drop the several cases with no data
+# MIN HOR survival to LGR and MIN weir data
+bp_tab = bp_tab[bp_tab$N > 0,]
+
+# re-order output/misc formatting
+bp_tab = bp_tab[order(bp_tab$category, bp_tab$name, bp_tab$pop, bp_tab$origin),]
+bp_tab = bp_tab[,c("category", "name", "pop", "LH_type", "origin", "N", "median", "q2.5", "q97.5", "p_lt_0.05", "p_gt_0.95")]
+bp_tab$p_lt_0.05 = paste0(round(bp_tab$p_lt_0.05 * 100), "%")
+bp_tab$p_gt_0.95 = paste0(round(bp_tab$p_gt_0.95 * 100), "%")
+rownames(bp_tab) = NULL
+```
+
+```{r bayesian-pvals-table}
+# a function to color cells depending on the value
+assign_color = function(x) {
+  red_pal = colorRampPalette(c("white", "red"))
+  blue_pal = colorRampPalette(c("blue", "white"))
+  red_cols = red_pal(5)
+  blue_cols = blue_pal(5)
+  cols = c(blue_cols, red_cols)
+  bin_names = levels(cut(rbeta(1e6, 1, 1), breaks = seq(0,1,0.1), include.lowest = TRUE))
+  names(cols) = bin_names
+  bins = cut(x, breaks = seq(0,1,0.1), include.lowest = TRUE)
+  cols_use = cols[as.character(bins)]
+  alpha(unname(cols_use), 0.5)
+}
+
+# produce the kable
+bp_tab %>%
+  kbl(digits = 2, col.names = c("Class", "Lifestage", "Population", "Migratory Type", "Origin", "Years w/Data", "Median", "2.5%", "97.5%", "<0.05", ">0.95"),
+      align = c("lllllcccccc")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
+  add_header_above(c("Data Type Information" = 5, "P-value Summaries" = 4, "% of Extreme P-values" = 2)) %>%
+  column_spec(7, background = assign_color(bp_tab[,7])) %>%
+  column_spec(8, background = assign_color(bp_tab[,8])) %>%
+  column_spec(9, background = assign_color(bp_tab[,9])) %>%
+  collapse_rows(1:5) 
+```

@@ -1,0 +1,52 @@
+Phase,Symbol,Prior,Eqs.,Description
+1,$\\alpha_j$,"$b(1,1)$",get-phi-E-Pb-dot,Maximum expected egg-to-parr survival rate; Beverton-Holt productivity 
+1,$\\sigma_{\\beta}$,"$\\mathcal{U}(0,5)$",beta-random,Among-population SD of parr capacity not explained by $\\mathrm{WUL}_{j}$
+1,$\\lambda$,"$\\mathcal{N}(0, 1 \\times 10^{-8})$",beta-random,"Expected change in parr capacity per 1 km change in $\\mathrm{WUL}_j$; prior bounded by $(0,\\infty)$"
+1,$\\sigma_{\\phi^{E \\rightarrow P^{b}}_j}$,"$\\mathcal{U}(0,1)$",phi-E-Pb-random,Among-year SD of egg-to-parr survival rate
+1,$\\rho_{\\phi^{E \\rightarrow P^{b}}}$,"$\\mathcal{U}(-1,1)$",phi-E-Pb-random,Among-population correlation of egg-to-parr survival rate
+1,"$\\omega_{0,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-L-Pb-dot,Intercept of density-dependent parr size relationship
+1,"$\\omega_{1,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-L-Pb-dot,Slope of density-dependent parr size relationship
+1,$\\sigma_{L_{j}^{P^{b}}}$,"$\\mathcal{U}(0,0.5)$",L-Pb-random,Among-year SD of parr size variability not explained by egg density
+1,$\\rho_{L^{P^{b}}}$,"$\\mathcal{U}(-1,1)$",L-Pb-random,Among-population correlation in parr size variability 
+1,"$\\dot{\\pi}_{i=\\mathrm{fall},j}$","$b(1,1)$",pi-random,Expected proportion of summer parr that are fall migrants
+1,"$\\sigma_{\\pi_{i=\\mathrm{fall},j}}$","$\\mathcal{U}(0,1)$",pi-random,Among-year SD of proportion of summer parr that are fall migrants
+1,$\\rho_{\\pi_{i=\\mathrm{fall}}}$,"$\\mathcal{U}(-1,1)$",pi-random,Among-population correlation of proportion of summer parr that are fall migrants
+1,$\\phi^{P^{b} \\rightarrow P^{a}}_{j}$,"$b(1,1)$",winter-surv-data,Survival from summer tagging to winter tagging for parr that become spring migrants
+1,"$\\gamma_{0,i,j}$","$t(0,1.57^{-2}, 7.76)$",get-phi-Pa-Mb-dot,Intercept of overwinter survival vs. parr size relationship
+1,"$\\gamma_{1,i,j}$","$t(0,1.57^{-2}, 7.76)$",get-phi-Pa-Mb-dot,Slope of overwinter survival vs. parr size relationship
+1,"$\\sigma_{\\phi^{P^{a} \\rightarrow M^{b}}_{i,j}}$","$\\mathcal{U}(0,1)$",phi-Pa-Mb-random,Among-year SD of overwinter survival rate for migratory strategy $i$
+1,$\\rho_{\\phi^{P^{a} \\rightarrow M^{b}}_{i}}$,"$\\mathcal{U}(-1,1)$",phi-Pa-Mb-random,Among-population correlation of overwinter survival rate for migratory strategy $i$
+1,"$\\theta_{0,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-Delta-L-Pb-L-Mb-dot,Intercept of change in parr to smolt mean length vs. parr mean length relationship
+1,"$\\theta_{1,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-Delta-L-Pb-L-Mb-dot,Slope of change in parr to smolt mean length vs. parr mean length relationship
+1,$\\sigma_{\\Delta_{j}^{L^{P^{b}} \\rightarrow L^{M^{b}}}}$,"$\\mathcal{U}(0,0.5)$",Delta-L-Pb-L-Mb-random,Among-year SD of the change in parr to smolt mean length not explained by parr mean length
+1,$\\rho_{\\Delta^{L^{P^{b}} \\rightarrow L^{M^{b}}}}$,"$\\mathcal{U}(-1,1)$",Delta-L-Pb-L-Mb-random,Among-population correlation of variability in the change in parr to smolt mean length 
+1,"$\\tau_{0,j}$","$t(0,1.57^{-2}, 7.76)$",get-phi-Mb-Ma-dot,Intercept of migration survival from in-basin to LGR vs. smolt mean length relationship
+1,"$\\tau_{1,j}$","$t(0,1.57^{-2}, 7.76)$",get-phi-Mb-Ma-dot,Slope of migration survival from in-basin to LGR vs. smolt mean length relationship
+1,"$\\sigma_{\\phi^{M^{b} \\rightarrow M^{a}}_{o,j}}$","$\\mathcal{U}(0,1)$",phi-Mb-Ma-random,Among-year SD of migration survival from in-basin to LGR
+1,$\\rho_{\\phi^{M^{b} \\rightarrow M^{a}}_{o}}$,"$\\mathcal{U}(-1,1)$",phi-Mb-Ma-random,Among-population correlation of migration survival from in-basin to LGR
+1,$\\dot{\\phi}^{M^{a} \\rightarrow O^{0}}_{o}$,"$b(1,1)$",phi-Ma-O0-random,Expected migration survival from LGR to ocean
+1,$\\sigma_{\\phi^{M^{a} \\rightarrow O^{0}}_{o}}$,"$\\mathcal{U}(0,1)$",phi-Ma-O0-random,Among-year SD of migration survival from LGR to ocean
+1,$\\rho_{\\phi^{M^{a} \\rightarrow O^{0}}}$,"$\\mathcal{U}(-1,1)$",phi-Ma-O0-random,Among-origin correlation of migration survival from LGR to ocean
+2,"$\\dot{\\phi}^{O^{0} \\rightarrow O^{1}}_{o=\\mathrm{NOR},j}$","$b(1,1)$",phi-O0-O1-random,Expected first year ocean survival for natural origin fish
+2,$\\sigma_{\\phi^{O^{0} \\rightarrow O^{1}}_{j}}$,"$\\mathcal{U}(0,1)$",phi-O0-O1-random,Among-year SD of first year ocean survival
+2,$\\rho_{\\phi^{O^{0} \\rightarrow O^{1}}}$,"$\\mathcal{U}(-1,1)$",phi-O0-O1-random,Among-population correlation in first year ocean survival
+2,$\\kappa^{O^{0} \\rightarrow O^{1}}_{j}$,"$\\mathcal{U}(-1,1)$",phi-O0-O1-random,Lag-1 autoregressive coefficient for first year ocean survival
+2,"$\\dot{\\phi}^{O^{1} \\rightarrow O^{2}}_{o=\\mathrm{NOR},j}$","$b(60,15)$",,Expected second year ocean survival for natural origin fish
+2,"$\\dot{\\phi}^{O^{2} \\rightarrow O^{3}}_{o=\\mathrm{NOR},j}$","$b(60,15)$",,Expected third year ocean survival for natural origin fish
+2,$\\delta_j$,"$t(0,1.57^{-2}, 7.76)$",get-phi-O-HOR,Log-odds ratio to convert natural origin to hatchery origin ocean survival
+2,"$\\dot{\\psi}^{O^{w}}_{o,j}$","$b(1,1)$",psi-random,"Expected maturation rate after $w$ winter(s) at sea ($w \\in [1,2]$)"
+2,"$\\sigma_{\\psi^{O^{w}}_{o,j}}$","$\\mathcal{U}(0,2)$",psi-random,"Among-year SD of maturation rate after $w$ winter(s) at sea ($w \\in [1,2]$)"
+2,$\\rho_{\\psi^{O^{w}}_{o}}$,"$\\mathcal{U}(-1,1)$",psi-random,"Among-population correlation in maturation rate after $w$ winter(s) at sea ($w \\in [1,2]$)"
+3,"$R^{b}_{y,k=1,y,o,j}$","$\\mathcal{U}(0,50)$",,"Return abundance of natural-origin age-3 fish in years without process model link; only for $y \\in [1,2,3]$ and $o=\\mathrm{NOR}$"
+3,"$R^{b}_{y,k=2,y,o,j}$","$\\mathcal{U}(0,200)$",,"Return abundance of natural-origin age-4 fish in years without process model link; only for $y \\in [1,2,3,4]$ and $o=\\mathrm{NOR}$"
+3,"$R^{b}_{y,k=3,y,o,j}$","$\\mathcal{U}(0,200)$",,"Return abundance of natural-origin age-5 fish in years without process model link; only for $y \\in [1,2,3,4,5]$ and $o=\\mathrm{NOR}$"
+3,$\\dot{\\phi}^{R^{b} \\rightarrow R^{a}}_{o}$,"$b(1,1)$",phi-Rb-Ra-random,Expected migration survival from BON to LGR
+3,$\\sigma_{\\phi^{R^{b} \\rightarrow R^{a}}_o}$,"$\\mathcal{U}(0,1)$",phi-Rb-Ra-random,Among-year SD of migration survival from BON to LGR
+3,$\\rho_{\\phi^{R^{b} \\rightarrow R^{a}}}$,"$\\mathcal{U}(-1,1)$",phi-Rb-Ra-random,Among-origin correlation of migration survival from BON to LGR
+3,"$G_{y,o,j}$","$\\mathcal{U}(0,500)$",get-Ra,Total hatchery-origin ``strays''; only for $o = \\mathrm{HOR}$ and $y$ where presence of HOR adults could not be explained by non-zero smolt releases
+3,"$p^{G}_{k,j}$","$\\mathcal{D}(1,1,1)$",get-Ra,Age composition of hatchery-origin ``strays''
+3,$\\dot{\\phi}^{S^{b} \\rightarrow S^{a}}_{j}$,"$b(1,1)$",phi-Sb-Sa-random,Expected pre-spawn survival
+3,$\\sigma_{\\phi^{S^{b} \\rightarrow S^{a}}_j}$,"$\\mathcal{U}(0,1)$",phi-Sb-Sa-random,Among-year SD of pre-spawn survival
+3,$\\rho_{\\phi^{S^{b} \\rightarrow S^{a}}}$,"$\\mathcal{U}(-1,1)$",phi-Sb-Sa-random,Among-population correlation of pre-spawn survival
+3,$\\dot{z}_k$,"$\\mathcal{U}(-10,10)$",z-random,"Across-population expected coefficient of log-linear carcass composition correction model; only for $k \\in [1,3]$"
+3,$\\sigma_{z_k}$,"$\\mathcal{U}(0,5)$",z-random,"Across-population SD for coefficients of log-linear carcass composition correction model; only for $k \\in [1,3]$"

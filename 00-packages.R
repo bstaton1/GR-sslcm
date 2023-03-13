@@ -8,5 +8,6 @@ suppressPackageStartupMessages({
   library(postpack)       # for processing posterior samples; install.packages("postpack")
   library(scales)         # for transparent colors in plots; install.packages("scales")
   library(mvtnorm)        # for sampling multivariate normal random variables; install.packages("mvtnorm")
-  library(latex2exp)      # for creating nice plot labels
+  library(latex2exp)      # for creating nice plot labels; install.packages("latex2exp"))
+  library(posterior)      # for calculating updated MCMC diagnostics; install.packages("posterior")
 })

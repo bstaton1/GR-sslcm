@@ -1,0 +1,24 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# JAGS Model and Data {.tabset .tabset-pills}
+
+## JAGS Model Code
+
+```{r jags-model, comment = NA}
+# print the JAGS model code
+cat(model_info$jags_model_code, sep = "\n")
+```
+
+## JAGS Model Data
+
+```{r jags-data, comment = NA}
+# print the JAGS model data
+model_info$jags_data
+```
+
+
+
+

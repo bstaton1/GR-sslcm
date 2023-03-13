@@ -1,0 +1,32 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+## WAIC
+
+WAIC is a measure of model parsimony.
+The quantity `pD` is an index of model complexity (i.e., "effective parameters") and `deviance` is an index of model fit to the data.
+There are two methods of calculating `pD`, both are shown below.
+As for other measures like AIC or BIC, these numbers are really only relevant for comparing among models fitted to the same data set.
+
+```{r calculate-waic, eval = model_info$do_lppd}
+summarize_lppd = function(param, LH_type = NULL, origin = NULL, pop = NULL) {
+  # calculate total lppd summed across all data sets within a given year
+  total_lppd = sapply(observable, function(y) rowSums(post_subset(post, sub_index(param, year = y, LH_type = LH_type, origin = origin, pop = pop), matrix = TRUE)))
+  
+  tmp_log = log(apply(exp(total_lppd), 2, mean))
+  tmp_sum = -2 * sum(tmp_log)
+  
+  pD1 = 2 * sum(tmp_log - apply(total_lppd, 2, mean))
+  pD2 = sum(apply(total_lppd, 2, var))
+  round(c(deviance = tmp_sum, pD1 = pD1, pD2 = pD2, WAIC1 = tmp_sum + 2 * pD1, WAIC2 = tmp_sum + 2 * pD2))
+}
+
+waic_out = summarize_lppd("_lppd[year,.+]$")
+
+waic_out = as.data.frame(as.list(waic_out))
+waic_out %>%
+  kbl(format.args = list(big.mark = ",")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
+```

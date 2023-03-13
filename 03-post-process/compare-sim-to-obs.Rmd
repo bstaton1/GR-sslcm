@@ -1,0 +1,2170 @@
+---
+title: "Observed vs. Simulated Year Comparison"
+subtitle: "`r paste0('Model Scenario: ', params$scenario)`"
+date: "`r paste0('Date Rendered: ', Sys.Date())`"
+output:
+   html_document:
+    toc: true
+    toc_float: true
+params:
+  scenario:
+    label: "Scenario"
+    value: "base"
+    input: text
+  thin_percent:
+    label: "Proportion of Posterior Samples to Retain?"
+    value: 0.5
+    input: numeric
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", fig.width = 8, fig.height = 4, warning = FALSE)
+knitr::opts_knit$set(root.dir = "../")
+```
+
+```{r load}
+# load packages
+source("00-packages.R")
+
+# load all necessary functions
+invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
+
+# set the input directory
+in_dir = "02-model/model-output"
+
+# read information from this model
+model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds")))
+
+# extract the posterior samples
+# post-MCMC thinning allowed to reduce run time of this document
+if (params$thin_percent < 1) {
+  post = post_thin(model_info$post, keep_percent = params$thin_percent)
+} else {
+  post = model_info$post
+}
+
+# extract the model data 
+jags_data = model_info$jags_data
+
+o_nor = 1     # o = 1 is NOR
+o_hor = 2     # o = 2 is HOR
+k_3 = 1       # k = 1 is age-3
+k_4 = 2       # k = 2 is age-4
+k_5 = 3       # k = 3 is age-5
+j_cat = 1     # j = 1 is CAT
+j_los = 2     # j = 2 is LOS
+j_min = 3     # j = 3 is MIN
+j_ugr = 4     # j = 4 is UGR
+i_fall = 1    # i = 1 is fall migrants
+i_spring = 2  # i = 2 is spring migrants
+
+rm(model_info)
+```
+
+```{r select-years}
+# all of the years included in the model
+all_yrs = as.numeric(rownames(jags_data$phi_SL))
+
+# which is the first year of observation period?
+# may want to use 2001 to cut off years without hatchery supplementation
+fy_obs = which(all_yrs == 2001)
+
+# for non sar values, which years correspond to observed and simulated years?
+obs_y = with(jags_data, fy_obs:ny_obs)
+sim_y = with(jags_data, (ny_obs+1):ny)
+
+# same but for sar values. A bit different because not all adults have returned from the last brood year.
+obs_sar_y = with(jags_data, fy_obs:(ny_obs-kmax))
+sim_sar_y = with(jags_data, (ny_obs-kmax+1):(ny-kmax))
+```
+
+```{r add-p-hos}
+f = function() {
+  # extract adults returning to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
+  
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  nor_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_4,o_nor,] + Ra_1[,k_5,o_nor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    hor = Ra_i[,k_3,o_hor,] + Ra_i[,k_4,o_hor,] + Ra_i[,k_5,o_hor,]
+    nor = Ra_i[,k_3,o_nor,] + Ra_i[,k_4,o_nor,] + Ra_i[,k_5,o_nor,]
+    as.numeric(hor/(nor + hor))
+  }
+  
+  # apply to each posterior sample
+  out = t(sapply(1:nrow(Ra), g))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # make element names
+  colnames(out) = paste0("p_hor[", y_ind, ",", j_ind, "]")
+  
+  # drop out those that have NA values (first k_max years)
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-p-hos-age}
+f = function() {
+  # extract adults returning to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
+  
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  p_hor_3_1 = Ra_1[,k_3,o_hor,]/(Ra_1[,k_3,o_nor,] + Ra_1[,k_3,o_hor,])
+  p_hor_4_1 = Ra_1[,k_4,o_hor,]/(Ra_1[,k_4,o_nor,] + Ra_1[,k_4,o_hor,])
+  p_hor_5_1 = Ra_1[,k_5,o_hor,]/(Ra_1[,k_5,o_nor,] + Ra_1[,k_5,o_hor,])
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    p_hor_3 = Ra_i[,k_3,o_hor,]/(Ra_i[,k_3,o_nor,] + Ra_i[,k_3,o_hor,])
+    p_hor_4 = Ra_i[,k_4,o_hor,]/(Ra_i[,k_4,o_nor,] + Ra_i[,k_4,o_hor,])
+    p_hor_5 = Ra_i[,k_5,o_hor,]/(Ra_i[,k_5,o_nor,] + Ra_i[,k_5,o_hor,])
+    c(as.numeric(p_hor_3), as.numeric(p_hor_4), as.numeric(p_hor_5))
+  }
+  
+  # apply to each posterior sample
+  out = t(sapply(1:nrow(Ra), g))
+  
+  # build element indices: the year
+  y_ind = rep(rep(1:nrow(p_hor_3_1), ncol(p_hor_3_1)), 3)
+  
+  # build element indices: the population
+  j_ind = rep(rep(1:ncol(p_hor_3_1), each = nrow(p_hor_3_1)), 3)
+  
+  # build element indices: the age
+  k3_ind = rep(1, nrow(p_hor_3_1) * ncol(p_hor_3_1))
+  k4_ind = rep(2, nrow(p_hor_3_1) * ncol(p_hor_3_1))
+  k5_ind = rep(3, nrow(p_hor_3_1) * ncol(p_hor_3_1))
+  k_ind = c(k3_ind, k4_ind, k5_ind)
+  
+  # build element names
+  colnames(out) = paste0("p_hor_a[", y_ind, ",", k_ind, ",", j_ind, "]")
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine this with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-Rb-tot-origin}
+f = function() {
+  # extract returns to estuary
+  Rb = post_subset(post, "^Rb[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Rb_1 = array_format(Rb[1,])
+  nor_1 = Rb_1[,k_3,o_nor,] + Rb_1[,k_4,o_nor,] + Rb_1[,k_5,o_nor,]
+  hor_1 = Rb_1[,k_3,o_hor,] + Rb_1[,k_4,o_hor,] + Rb_1[,k_5,o_hor,]
+  tot_1 = nor_1 + hor_1
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Rb_i = array_format(Rb[i,])
+    nor = Rb_i[,k_3,o_nor,] + Rb_i[,k_4,o_nor,] + Rb_i[,k_5,o_nor,]
+    hor = Rb_i[,k_3,o_hor,] + Rb_i[,k_4,o_hor,] + Rb_i[,k_5,o_hor,]
+    tot = nor + hor
+    
+    list(nor = as.numeric(nor), hor = as.numeric(hor), tot = as.numeric(tot))
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Rb), g)
+
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  tot_out = do.call(rbind, lapply(out, function(x) x$tot))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Rb_tot_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Rb_tot_org[", y_ind, ",", "2", ",", j_ind, "]")
+  colnames(tot_out) = paste0("Rb_tot[", y_ind, ",", j_ind, "]")
+  
+  # combine matrices
+  out = cbind(nor_out, hor_out, tot_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-Ra-tot-origin}
+f = function() {
+  # extract returns to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  nor_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_4,o_nor,] + Ra_1[,k_5,o_nor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    list(
+      nor = as.numeric(Ra_i[,k_3,o_nor,] + Ra_i[,k_4,o_nor,] + Ra_i[,k_5,o_nor,]),
+      hor = as.numeric(Ra_i[,k_3,o_hor,] + Ra_i[,k_4,o_hor,] + Ra_i[,k_5,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Ra_tot_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Ra_tot_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-Sa-tot-origin}
+f = function() {
+  # extract posterior samples of spawners
+  Sa = post_subset(post, "^Sa[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Sa_1 = array_format(Sa[1,])
+  nor_1 = Sa_1[,k_3,o_nor,] + Sa_1[,k_4,o_nor,] + Sa_1[,k_5,o_nor,]
+  hor_1 = Sa_1[,k_3,o_hor,] + Sa_1[,k_4,o_hor,] + Sa_1[,k_5,o_hor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Sa_i = array_format(Sa[i,])
+    list(
+      nor = as.numeric(Sa_i[,k_3,o_nor,] + Sa_i[,k_4,o_nor,] + Sa_i[,k_5,o_nor,]),
+      hor = as.numeric(Sa_i[,k_3,o_hor,] + Sa_i[,k_4,o_hor,] + Sa_i[,k_5,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Sa), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Sa_tot_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Sa_tot_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-E-origin}
+f = function() {
+  # extract posterior samples of egg production
+  E = post_subset(post, "^E_sep[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  E_1 = array_format(E[1,])
+  nor_1 = E_1[,k_3,o_nor,] + E_1[,k_4,o_nor,] + E_1[,k_5,o_nor,]
+  hor_1 = E_1[,k_3,o_hor,] + E_1[,k_4,o_hor,] + E_1[,k_5,o_hor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    E_i = array_format(E[i,])
+    list(
+      nor = as.numeric(E_i[,k_3,o_nor,] + E_i[,k_4,o_nor,] + E_i[,k_5,o_nor,] + 1),
+      hor = as.numeric(E_i[,k_3,o_hor,] + E_i[,k_4,o_hor,] + E_i[,k_5,o_hor,] + 1)
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(E), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("E_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("E_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-E-per-Sa-origin}
+f = function() {
+  # extract posterior samples of egg production
+  E_org = post_subset(post, "^E_org[", matrix = TRUE)
+  Sa_org = post_subset(post, "^Sa_tot_org[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  E_org_1 = array_format(E_org[1,])
+  Sa_org_1 = array_format(Sa_org[1,])
+  nor_1 = E_org_1[,o_nor,]/Sa_org_1[,o_nor,]
+  hor_1 = E_org_1[,o_hor,]/Sa_org_1[,o_hor,]
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    E_org_i = array_format(E_org[i,])
+    Sa_org_i = array_format(Sa_org[i,])
+    
+    list(
+      nor = as.numeric(E_org_i[,o_nor,]/Sa_org_i[,o_nor,]),
+      hor = as.numeric(E_org_i[,o_hor,]/Sa_org_i[,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(E_org), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("E_per_Sa_org[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("E_per_Sa_org[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-Ma-tot}
+f = function() {
+  # extract posterior samples of smolt at LGR
+  Ma = post_subset(post, "^Ma[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Ma_1 = array_format(Ma[1,])
+  nor_1 = Ma_1[,i_fall,o_nor,] + Ma_1[,i_spring,o_nor,]
+  hor_1 = Ma_1[,i_spring,o_hor,]
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ma_i = array_format(Ma[i,])
+    list(
+      nor = as.numeric(Ma_i[,i_fall,o_nor,] + Ma_i[,i_spring,o_nor,]),
+      hor = as.numeric(Ma_i[,i_spring,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ma), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(nor_1), ncol(nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(nor_1), each = nrow(nor_1))
+  
+  # build element names
+  colnames(nor_out) = paste0("Ma_tot[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(hor_out) = paste0("Ma_tot[", y_ind, ",", "2", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-age-comp}
+f = function() {
+  # extract posterior samples of smolt at LGR
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  nor_tot_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_4,o_nor,] + Ra_1[,k_5,o_nor,]
+  hor_tot_1 = Ra_1[,k_3,o_hor,] + Ra_1[,k_4,o_hor,] + Ra_1[,k_5,o_hor,]
+  p3_nor_1 = Ra_1[,k_3,o_nor,]/nor_tot_1
+  p4_nor_1 = Ra_1[,k_4,o_nor,]/nor_tot_1
+  p5_nor_1 = Ra_1[,k_5,o_nor,]/nor_tot_1
+  p3_hor_1 = Ra_1[,k_3,o_hor,]/hor_tot_1
+  p4_hor_1 = Ra_1[,k_4,o_hor,]/hor_tot_1
+  p5_hor_1 = Ra_1[,k_5,o_hor,]/hor_tot_1
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    nor_tot_i = Ra_i[,k_3,o_nor,] + Ra_i[,k_4,o_nor,] + Ra_i[,k_5,o_nor,]
+    hor_tot_i = Ra_i[,k_3,o_hor,] + Ra_i[,k_4,o_hor,] + Ra_i[,k_5,o_hor,]
+    list(
+      p3_nor = as.numeric(Ra_i[,k_3,o_nor,]/nor_tot_i),
+      p4_nor = as.numeric(Ra_i[,k_4,o_nor,]/nor_tot_i),
+      p5_nor = as.numeric(Ra_i[,k_5,o_nor,]/nor_tot_i),
+      p3_hor = as.numeric(Ra_i[,k_3,o_hor,]/hor_tot_i),
+      p4_hor = as.numeric(Ra_i[,k_4,o_hor,]/hor_tot_i),
+      p5_hor = as.numeric(Ra_i[,k_5,o_hor,]/hor_tot_i)
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra), g)
+  
+  # convert these to their own matrices for easier element construction
+  p3_nor_out = do.call(rbind, lapply(out, function(x) x$p3_nor))
+  p4_nor_out = do.call(rbind, lapply(out, function(x) x$p4_nor))
+  p5_nor_out = do.call(rbind, lapply(out, function(x) x$p5_nor))
+  p3_hor_out = do.call(rbind, lapply(out, function(x) x$p3_hor))
+  p4_hor_out = do.call(rbind, lapply(out, function(x) x$p4_hor))
+  p5_hor_out = do.call(rbind, lapply(out, function(x) x$p5_hor))
+
+  # build element indices: the year
+  y_ind = rep(1:nrow(p3_nor_1), ncol(p3_nor_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(p3_nor_1), each = nrow(p3_nor_1))
+  
+  # build element names
+  colnames(p3_nor_out) = paste0("Ra_comp[", y_ind, ",", "1", ",", "1", ",", j_ind, "]")
+  colnames(p4_nor_out) = paste0("Ra_comp[", y_ind, ",", "2", ",", "1", ",", j_ind, "]")
+  colnames(p5_nor_out) = paste0("Ra_comp[", y_ind, ",", "3", ",", "1", ",", j_ind, "]")
+  colnames(p3_hor_out) = paste0("Ra_comp[", y_ind, ",", "1", ",", "2", ",", j_ind, "]")
+  colnames(p4_hor_out) = paste0("Ra_comp[", y_ind, ",", "2", ",", "2", ",", j_ind, "]")
+  colnames(p5_hor_out) = paste0("Ra_comp[", y_ind, ",", "3", ",", "2", ",", j_ind, "]")
+
+  # combine
+  out = cbind(p3_nor_out, p4_nor_out, p5_nor_out, p3_hor_out, p4_hor_out, p5_hor_out)
+  
+  # drop out those that have NA values
+  out[out == "NaN"] = 0
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-age-comp-combined}
+f = function() {
+  # extract posterior samples of return to tributary
+  Ra = post_subset(post, "^Ra[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_1 = array_format(Ra[1,])
+  a3_1 = Ra_1[,k_3,o_nor,] + Ra_1[,k_3,o_hor,]
+  a4_1 = Ra_1[,k_4,o_nor,] + Ra_1[,k_4,o_hor,]
+  a5_1 = Ra_1[,k_5,o_nor,] + Ra_1[,k_5,o_hor,]
+  tot_1 = a3_1 + a4_1 + a5_1
+  p3_1 = a3_1/tot_1
+  p4_1 = a4_1/tot_1
+  p5_1 = a5_1/tot_1
+  
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_i = array_format(Ra[i,])
+    a3_i = Ra_i[,k_3,o_nor,] + Ra_i[,k_3,o_hor,]
+    a4_i = Ra_i[,k_4,o_nor,] + Ra_i[,k_4,o_hor,]
+    a5_i = Ra_i[,k_5,o_nor,] + Ra_i[,k_5,o_hor,]
+    tot_i = a3_i + a4_i + a5_i
+    list(
+      p3 = as.numeric(a3_i/tot_i),
+      p4 = as.numeric(a4_i/tot_i),
+      p5 = as.numeric(a5_i/tot_i)
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra), g)
+  
+  # convert these to their own matrices for easier element construction
+  p3_out = do.call(rbind, lapply(out, function(x) x$p3))
+  p4_out = do.call(rbind, lapply(out, function(x) x$p4))
+  p5_out = do.call(rbind, lapply(out, function(x) x$p5))
+  
+  # build element indices: the year
+  y_ind = rep(1:nrow(p3_1), ncol(p3_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(p3_1), each = nrow(p3_1))
+  
+  # build element names
+  colnames(p3_out) = paste0("Ra_comp_a[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(p4_out) = paste0("Ra_comp_a[", y_ind, ",", "2", ",", j_ind, "]")
+  colnames(p5_out) = paste0("Ra_comp_a[", y_ind, ",", "3", ",", j_ind, "]")
+  
+  # combine
+  out = cbind(p3_out, p4_out, p5_out)
+  
+  # drop out those that have NA values
+  out[out == "NaN"] = 0
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-trib-smolt-per-parr}
+f = function() {
+  # extract posterior samples of tributary smolt and parr
+  Mb = post_subset(post, "^Mb[", matrix = TRUE)
+  Pa = post_subset(post, "^Pa[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Mb_1 = array_format(Mb[1,])
+  Pa_1 = array_format(Pa[1,])
+  Mb_per_Pa_1 = Mb_1[,,o_nor,]/Pa_1
+  fall_1 = Mb_per_Pa_1[,i_fall,]
+  spring_1 = Mb_per_Pa_1[,i_spring,]
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Mb_i = array_format(Mb[i,])
+    Pa_i = array_format(Pa[i,])
+    Mb_per_Pa_i = Mb_i[,,o_nor,]/Pa_i
+    list(
+      fall = as.numeric(Mb_per_Pa_i[,i_fall,]),
+      spring = as.numeric(Mb_per_Pa_i[,i_spring,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Mb), g)
+  
+  # convert these to their own matrices for easier element construction
+  fall_out = do.call(rbind, lapply(out, function(x) x$fall))
+  spring_out = do.call(rbind, lapply(out, function(x) x$spring))
+
+  # build element indices: the year
+  y_ind = rep(1:nrow(fall_1), ncol(fall_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(fall_1), each = nrow(fall_1))
+  
+  # build element names
+  colnames(fall_out) = paste0("Mb_per_Pa[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(spring_out) = paste0("Mb_per_Pa[", y_ind, ",", "2", ",", j_ind, "]")
+
+  # combine
+  out = cbind(fall_out, spring_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-lgr-smolt-per-parr}
+f = function() {
+  # extract posterior samples of tributary smolt and parr
+  Ma = post_subset(post, "^Ma[", matrix = TRUE)
+  Pa = post_subset(post, "^Pa[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Ma_1 = array_format(Ma[1,])
+  Pa_1 = array_format(Pa[1,])
+  Ma_per_Pa_1 = Ma_1[,,o_nor,]/Pa_1
+  fall_1 = Ma_per_Pa_1[,i_fall,]
+  spring_1 = Ma_per_Pa_1[,i_spring,]
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ma_i = array_format(Ma[i,])
+    Pa_i = array_format(Pa[i,])
+    Ma_per_Pa_i = Ma_i[,,o_nor,]/Pa_i
+    list(
+      fall = as.numeric(Ma_per_Pa_i[,i_fall,]),
+      spring = as.numeric(Ma_per_Pa_i[,i_spring,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ma), g)
+  
+  # convert these to their own matrices for easier element construction
+  fall_out = do.call(rbind, lapply(out, function(x) x$fall))
+  spring_out = do.call(rbind, lapply(out, function(x) x$spring))
+
+  # build element indices: the year
+  y_ind = rep(1:nrow(fall_1), ncol(fall_1))
+  
+  # build element indices: the population
+  j_ind = rep(1:ncol(fall_1), each = nrow(fall_1))
+  
+  # build element names
+  colnames(fall_out) = paste0("Ma_per_Pa[", y_ind, ",", "1", ",", j_ind, "]")
+  colnames(spring_out) = paste0("Ma_per_Pa[", y_ind, ",", "2", ",", j_ind, "]")
+
+  # combine
+  out = cbind(fall_out, spring_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-nor-lgr-smolt-aggregate}
+f = function() {
+  # extract smolt at LGR
+  Ma_tot = post_subset(post, "^Ma_tot[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Ma_tot_1 = array_format(Ma_tot[1,])
+  Ma_nor_1 = rowSums(Ma_tot_1[,o_nor,])
+  Ma_hor_1 = rowSums(Ma_tot_1[,o_hor,])
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ma_tot_i = array_format(Ma_tot[i,])
+    list(
+      nor = rowSums(Ma_tot_i[,o_nor,]),
+      hor = rowSums(Ma_tot_i[,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ma_tot), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+
+  # build element indices: the year
+  y_ind = 1:length(Ma_nor_1)
+  
+  # build element names
+  colnames(nor_out) = paste0("Ma_aggregate[", y_ind, ",", "1", "]")
+  colnames(hor_out) = paste0("Ma_aggregate[", y_ind, ",", "2", "]")
+
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r add-Ra-aggregate}
+f = function() {
+  # extract smolt at LGR
+  Ra_tot = post_subset(post, "^Ra_tot_org[", matrix = TRUE)
+
+  # perform basic operations for one iteration -- for making dimension names later
+  Ra_tot_1 = array_format(Ra_tot[1,])
+  Ra_nor_1 = rowSums(Ra_tot_1[,o_nor,])
+  Ra_hor_1 = rowSums(Ra_tot_1[,o_hor,])
+
+  # function to perform the calculation for one MCMC sample
+  g = function(i) {
+    Ra_tot_i = array_format(Ra_tot[i,])
+    list(
+      nor = rowSums(Ra_tot_i[,o_nor,]),
+      hor = rowSums(Ra_tot_i[,o_hor,])
+    )
+  }
+  
+  # apply to each posterior sample
+  out = lapply(1:nrow(Ra_tot), g)
+  
+  # convert these to their own matrices for easier element construction
+  nor_out = do.call(rbind, lapply(out, function(x) x$nor))
+  hor_out = do.call(rbind, lapply(out, function(x) x$hor))
+
+  # build element indices: the year
+  y_ind = 1:length(Ra_nor_1)
+  
+  # build element names
+  colnames(nor_out) = paste0("Ra_aggregate[", y_ind, ",", "1", "]")
+  colnames(hor_out) = paste0("Ra_aggregate[", y_ind, ",", "2", "]")
+
+  # combine
+  out = cbind(nor_out, hor_out)
+  
+  # drop out those that have NA values
+  na_ind = which(!is.na(out[1,]))
+  out[,na_ind]
+}
+
+# combine with the rest of the posterior samples
+post = post_bind(post, f()); rm(f)
+```
+
+```{r geomean fn}
+geomean = function(x) exp(mean(log(x)))
+```
+
+```{r dim_names fn}
+# function to create dimension names from numeric indicators
+dim_names = function(LH_type = NULL, age = NULL, origin = NULL, pop = NULL) {
+  
+  # empty list
+  out = list()
+  
+  # combine the dimention names for each type supplied
+  if (!is.null(LH_type)) out = append(out, list(LH_type = c("fall", "spring")[LH_type]))
+  if (!is.null(age)) out = append(out, list(age = c("age3", "age4", "age5")[age]))
+  if (!is.null(origin)) out = append(out, list(origin = c("NOR", "HOR")[origin]))
+  if (!is.null(pop)) out = append(out, list(pop = c("CAT", "LOS", "MIN", "UGR")[pop]))
+  
+  return(out)
+}
+```
+
+```{r get_ratio fn}
+# function to calculate the ratio of mean and CV between simulated and observed years
+get_ratio = function(param, obs_y, sim_y, ...) {
+  
+  # get node names for the observed years
+  obs_param = sub_index(param, year = obs_y, ...)
+  
+  # get node names for the simulated years
+  sim_param = sub_index(param, year = sim_y, ...)
+  
+  # extract posterior samples of these
+  obs_x = post_subset(post, obs_param, matrix = TRUE)
+  sim_x = post_subset(post, sim_param, matrix = TRUE)
+
+  # obtain a nicely formatted parameter identifier
+  named_param = do.call(sub_index, append(list(x = param), dim_names(...)))
+  named_param = stringr::str_remove(named_param, "year,")
+  named_param = stringr::str_extract(named_param, "\\[.+\\]")
+  named_param = stringr::str_remove(named_param, "age[:digit:],")
+  named_param = stringr::str_remove(named_param, "\\[")
+  named_param = stringr::str_remove(named_param, "\\]")
+  
+  # function calculate lag-1 autocorrelation coefficient
+  get_1_acf = function(x) acf(x, lag.max = 1, plot = FALSE)$acf[2,1,1]
+  
+  # calculate and return the summary statistics for each posterior sample and period
+  vals_out = array(NA, dim = c(nrow(obs_x), 3, 3, 1))
+  dimnames(vals_out) = list(iter = 1:nrow(obs_x), period = c("obs", "sim", "sim-v-obs"), stat = c("cv", "mean", "acf"), dims = named_param)
+  vals_out[,"obs","mean",] = sapply(1:nrow(obs_x), function(i) mean(obs_x[i,]))
+  vals_out[,"sim","mean",] = sapply(1:nrow(sim_x), function(i) mean(sim_x[i,]))
+  vals_out[,"obs","cv",] = sapply(1:nrow(obs_x), function(i) sd(obs_x[i,])/mean(obs_x[i,]))
+  vals_out[,"sim","cv",] = sapply(1:nrow(sim_x), function(i) sd(sim_x[i,])/mean(sim_x[i,]))
+  vals_out[,"obs","acf",] = sapply(1:nrow(obs_x), function(i) get_1_acf(obs_x[i,]))
+  vals_out[,"sim","acf",] = sapply(1:nrow(sim_x), function(i) get_1_acf(sim_x[i,]))
+  vals_out[,"sim-v-obs","cv",] = vals_out[,"sim","cv",]/vals_out[,"obs","cv",]
+  vals_out[,"sim-v-obs","mean",] = vals_out[,"sim","mean",]/vals_out[,"obs","mean",]
+  vals_out[,"sim-v-obs","acf",] = vals_out[,"sim","acf",] - vals_out[,"obs","acf",]
+  
+  return(vals_out)
+}
+
+```
+
+```{r ratio_plot fn}
+ratio_plot = function(ratios, line_y, pt_fn = mean, ...) {
+  
+  # calculate summaries of the ratios
+  summs = apply(ratios, 2, function(x) quantile(x, c(0.025, 0.25, 0.5, 0.75, 0.975), na.rm = TRUE))
+  
+  # replace median with output of supplied point estimate function
+  summs["50%",] = apply(ratios, 2, pt_fn)
+  
+  # set graphics parameters
+  par(mar = c(7,1,1,1), mgp = c(2,0.35,0), tcl = -0.15, lend = "square", ljoin = "mitre")
+  
+  # make an empty plot with the right dimensions
+  mp = barplot(summs["50%",], col = "white", ylab = "", border = "white", las = 2,
+               ylim = c(min(0, min(summs, na.rm = TRUE)), max(summs, na.rm = TRUE)) * 1.1, ...)
+  
+  # draw tick labels
+  axis(side = 1, at = mp, labels = F)
+  
+  # create an "acceptable region"
+  usr = par("usr"); rect(usr[1], line_y - 0.25, usr[2], line_y + 0.25, col = "grey90", border = NA)
+  abline(h = line_y, lty = 2, col = "grey")
+  
+  # draw the ratio summaries
+  segments(mp, summs["2.5%",], mp, summs["97.5%",])
+  segments(mp, summs["25%",], mp, summs["75%",], lwd = 6)
+  points(summs["50%",] ~ mp, pch = 3, cex = 1.5)
+  box()
+}
+```
+
+```{r ratio_plots fn}
+ratio_plots = function(x, main) {
+  par(mfrow = c(1,3), oma = c(0,2,2,0))
+  ratio_plot(x[,"sim-v-obs","cv",], main = "CV", pt_fn = geomean, line_y = 1)
+  ratio_plot(x[,"sim-v-obs","mean",], main = "Mean", pt_fn = geomean, line_y = 1)
+  ratio_plot(x[,"sim-v-obs","acf",], main = "ACF (Sim - Obs)", pt_fn = mean, line_y = 0)
+  mtext(side = 2, outer = TRUE, adj = 0.75, line = 1, "Ratio (Sim:Obs)")
+  mtext(side = 3, outer = TRUE, line = 0.5, main, cex = 1.25, font = 2)
+}
+```
+
+```{r vals_plot fn}
+vals_plot = function(vals, ...) {
+  f = function(x) quantile(x, c(0.025, 0.25, 0.5, 0.75, 0.975), na.rm = TRUE) 
+  
+  summs = array(NA, dim = c(2,5,dim(vals)[3]))
+  dimnames(summs) = list(c("obs", "sim"), names(f(rnorm(10))), dimnames(x)[[4]])
+  
+  summs["obs",,] = apply(vals[,"obs",], 2, f)
+  summs["sim",,] = apply(vals[,"sim",], 2, f)
+  
+  par(mar = c(7,1,1,1), mgp = c(2,0.35,0), tcl = -0.15, lend = "square", ljoin = "mitre")
+  mp = barplot(summs[,"50%",], beside = TRUE, col = "white", border = "white", ylim = range(summs, na.rm = TRUE) + diff(range(summs, na.rm = TRUE)) * c(-0.05,0.05), xaxt = "n", ...)
+  segments(mp, summs[,"2.5%",], mp, summs[,"97.5%",], col = c("red", "blue"))
+  segments(mp, summs[,"25%",], mp, summs[,"75%",], col = c("red", "blue"), lwd = 6)
+  points(y = summs[,"50%",], x = mp, col = c("red", "blue"), pch = 3, cex = 1.5)
+  axis(side = 1, at = colSums(mp)/2, labels = dimnames(summs)[[3]], las = 2)
+  box()
+}
+```
+
+```{r vals_plots fn}
+vals_plots = function(x, main) {
+  par(mfrow = c(1,3), oma = c(0,2,2,0))
+  vals_plot(x[,c("obs", "sim"),"cv",], main = "CV")
+  vals_plot(x[,c("obs", "sim"),"mean",], main = "Mean")
+  vals_plot(x[,c("obs", "sim"),"acf",], main = "ACF")
+  mtext(side = 2, outer = TRUE, adj = 0.75, line = 1, "Value")
+  mtext(side = 3, outer = TRUE, line = 0.5, main, cex = 1.25, font = 2)
+}
+```
+
+```{r summarize_ratios fn}
+# function to summarize a matrix of ratios
+col_summs = function(x) {
+  c(cv = geomean(x[,"cv"]), mean = geomean(x[,"mean"]), acf = mean(x[,"acf"]))
+}
+
+summarize_ratios = function(x, Class, Type) {
+  xsumm = as.data.frame(t(apply(x[,"sim-v-obs",,], 3, col_summs)))
+  xsumm = cbind(Class = Class, Type = Type, ID = rownames(xsumm), xsumm); rownames(xsumm) = NULL
+  return(xsumm)
+}
+```
+
+```{r assign_color fns}
+# functions to assign a color based on a numeric value
+
+# values close to 1 will be closer to white; values closer to 0 will be blue; values closer to 2 will be red
+assign_color_1 = function(x) {
+  red_pal = colorRampPalette(c("white", "red"))
+  blue_pal = colorRampPalette(c("blue", "white"))
+  red_cols = red_pal(5)
+  blue_cols = blue_pal(5)
+  cols = c(blue_cols, red_cols)
+  
+  breaks = c(0, 0.25, 0.5, 0.75, 0.9, 1.1, 1.25, 1.5, 1.75, 100)
+  bin_names = levels(cut(runif(1e6, 0, 2), breaks = breaks, include.lowest = TRUE))
+  names(cols) = c(bin_names[1:5], bin_names[5:9])
+  bins = cut(x, breaks = breaks, include.lowest = TRUE)
+  cols_use = cols[as.character(bins)]
+  cols_use[is.na(cols_use)] = cols[5]
+  alpha(unname(cols_use), 0.5)
+}
+
+# values close to 0 will be closer to white; values closer to -1 will be blue; values closer to 1 will be red
+assign_color_0 = function(x) {
+  red_pal = colorRampPalette(c("white", "red"))
+  blue_pal = colorRampPalette(c("blue", "white"))
+  red_cols = red_pal(5)
+  blue_cols = blue_pal(5)
+  cols = c(blue_cols, red_cols)
+  
+  breaks = c(-1, -0.75, -0.5, -0.25, -0.1, 0.1, 0.25, 0.5, 0.75, 1)
+  bin_names = levels(cut(runif(1e6, -1, 1), breaks = breaks, include.lowest = TRUE))
+  names(cols) = c(bin_names[1:5], bin_names[5:9])
+  bins = cut(x, breaks = breaks, include.lowest = TRUE)
+  cols_use = cols[as.character(bins)]
+  cols_use[is.na(cols_use)] = cols[5]
+  alpha(unname(cols_use), 0.5)
+}
+```
+
+```{r prep_est_ratios fn}
+# function to prepare ratios for table-making
+prep_est_ratios = function(x, q) {
+  # add/format additional column IDs
+  x$origin = stringr::str_extract(x$ID, "NOR|HOR")
+  x$pop = stringr::str_extract(x$ID, "CAT|LOS|MIN|UGR")
+  x$LH_type = stringr::str_extract(x$ID, "fall|spring")
+  x$LH_type[x$LH_type == "spring"] = "Spring"
+  x$LH_type[x$LH_type == "fall"] = "Fall"
+  x$pop = ifelse(is.na(x$pop), "Combined", x$pop)
+  x$origin = ifelse(is.na(x$origin), "Combined", x$origin)
+  x$LH_type = ifelse(is.na(x$LH_type), "Combined", x$LH_type)
+  
+  # make populations separate columns
+  x = dcast(x, Class + Type + origin + LH_type ~ pop, value.var = q)
+  
+  # reorder columns
+  x = x[,c("Class", "Type", "LH_type", "origin", "CAT", "LOS", "MIN", "UGR", "Combined")]
+  
+  # reorder rows
+  x$Class = factor(x$Class, levels = c("FW Juvenile", "SW Juvenile", "FW Adult"))
+  x$Type = factor(x$Type, levels = c("Egg to Parr Survival", "Parr Mean Size", "Proportion Fall Migrants", "Overwinter Survival", "Parr to Smolt Mean Size 'Growth Factor'", "Smolt Mean Size", "Migration to LGR Survival", "LGR to Ocean Survival", "First Year Ocean Survival", "Age-3 Maturity", "Age-4 Maturity", "BON to LGR Survival", "Pre-Spawn Survival"))
+  x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
+  x$origin = factor(x$origin, levels = c("NOR", "HOR", "Combined"))
+  x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
+  
+  colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
+  colnames(x)[which(colnames(x) == "origin")] = "Origin"
+  
+  return(x)
+}
+```
+
+```{r prep_derived_ratios fn}
+# function to prepare ratios for table-making
+prep_derived_ratios = function(x, q) {
+  # add/format additional column IDs
+  x$origin = stringr::str_extract(x$ID, "NOR|HOR")
+  x$pop = stringr::str_extract(x$ID, "CAT|LOS|MIN|UGR")
+  x$LH_type = stringr::str_extract(x$ID, "fall|spring")
+  x$LH_type[x$LH_type == "spring"] = "Spring"
+  x$LH_type[x$LH_type == "fall"] = "Fall"
+  x$pop = ifelse(is.na(x$pop), "Combined", x$pop)
+  x$origin = ifelse(is.na(x$origin), "Combined", x$origin)
+  x$LH_type = ifelse(is.na(x$LH_type), "Combined", x$LH_type)
+  
+  # make populations separate columns
+  x = dcast(x, Class + Type + origin + LH_type ~ pop, value.var = q)
+  
+  # reorder columns
+  x = x[,c("Class", "Type", "LH_type", "origin", "CAT", "LOS", "MIN", "UGR", "Combined")]
+  
+  # reorder rows
+  x$Class = factor(x$Class, levels = c("Abundance", "Production Rates", "SAR", "Adult Composition"))
+  x$Type = factor(x$Type, levels = c("Total Adults (Estuary)", "Total Adults (To Tributary)", "Total Spawners", "Total Egg Production", "Total Parr Recruitment", "Total LGR Smolt", "Aggregate Total Adult Return (To Tributary)", "Aggregate Total Smolt (At LGR)", "Eggs per Spawner", "Parr per Spawner", "Smolt in Tributary per Spawner", "Spawners per Spawner", "Smolt in Tributary per Parr", "Smolt at LGR per Parr", "BON to BON", "LGR to LGR", "Proportion Hatchery Return (Age-3)", "Proportion Hatchery Return (Age-4)", "Proportion Hatchery Return (Age-5)", "Proportion Hatchery Return (All Ages)", "Proportion Age-3 Return", "Proportion Age-4 Return", "Proportion Age-5 Return"))
+  x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
+  x$origin = factor(x$origin, levels = c("NOR", "HOR", "Combined"))
+  x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
+  
+  colnames(x)[which(colnames(x) == "LH_type")] = "Mig. Type"
+  colnames(x)[which(colnames(x) == "origin")] = "Origin"
+  
+  return(x)
+}
+```
+
+```{r make_ratios_table fn}
+# function to make the table
+make_ratios_table = function(ratios, q) {
+  
+  x = ratios
+  table_x = x
+  table_x[,5:9] = round(table_x[,5:9],2)
+  table_x[is.na(table_x)] = ""
+  
+  # select the correct color rule
+  if (q %in% c("mean", "cv")) {
+    assign_color = assign_color_1
+  } else {
+    assign_color = assign_color_0
+  }
+  
+  kable(table_x, "html", digits = 2, row.names = FALSE, align = "llllccccc") %>%
+    kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
+    column_spec(5, background = assign_color(x[,5])) %>%
+    column_spec(6, background = assign_color(x[,6])) %>%
+    column_spec(7, background = assign_color(x[,7])) %>%
+    column_spec(8, background = assign_color(x[,8])) %>%
+    column_spec(9, background = assign_color(x[,9])) %>%
+    collapse_rows(1:4)
+}
+```
+
+For us to use the state-space model as a simulation model (which is the ultimate intent), it would be desirable if several characteristics of the distribution of stochastic and derived quantities were similar between the time periods with and without observations.
+
+This document is intended to identify whether outcomes simulated from the state-space model are similar to observed outcomes.
+It looks at two primary types of quantities: stochastic time series parameters that are directly estimated by the model (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes calculated as derived quantities from stochastic parameters (e.g., total adult return abundance, BON to BON SAR rates, etc.). Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
+
+The JAGS model was altered to carry out the life cycle processes through brood year `r max(all_yrs)`. This means for each posterior sample we have an observed and simulated time series. The simulated time series picks up where the observed one left off, and assumes the same random processes for all components as used in the observed time series.
+
+Several quantities are supplied to the model as known without error in the observed time series (weir removals, hatchery smolt releases, harvest rates below BON, etc.). These time series were extended to the future years external to the model using basic averages or resampling from historical outcomes as appropriate. This exercise is purely for model validation.
+
+Observed vs. simulated consistency is visualized in two ways: by comparing summary statistics of the inter-annual variation and central tendency and by directly comparing the historical time series with 5 random simulated futures.
+
+# Distribution Comparison Plots
+
+These plots show the distribution of a quantity in the model:
+
+1. **Inter-annual CV**: measures how variable the quantity is among years (uses arithmetic mean)
+2. **Inter-annual mean**: measures the central tendency of the quantity across years (uses arithmetic mean)
+3. **Lag-1 autocorrelation**: measures whether consecutive years are independent
+
+If these summary statistics are inconsistent among the observed and simulated time periods, that indicates that the state-space model has not sufficiently captured the random processes that have generated the observed outcomes and that we may have reason to question the reliability of its ability to simulate future outcomes, at least as a direct extension of the historical population dynamics.
+
+In all figures in this section, these time periods were used:
+
+* **Observed**: `r paste0(all_yrs[min(obs_y)], " -- ", all_yrs[max(obs_y)])`
+* **Simulated**: `r paste0(all_yrs[min(sim_y)], " -- ", all_yrs[max(sim_y)])`
+
+The entire 1991 - 2019 period isn't used for the observed period because the early years did not have a hatchery program but the simulation has hatchery input in all years. Thus, including the non-hatchery years may throw off the inference.
+
+For each quantity, two types of plots are shown:
+
+* **Estimates**: this shows the CV, mean, and autocorrelation coefficient for a quantity based on the time period (red = observed, blue = simulated)
+* **Ratios**: this shows a ratio between the summary statistic between simulated and observed periods. For CV and mean, this is simulated/observed, and for autocorrelation this is simulated - observed.
+
+These summary statistics were calculated for each posterior sample. In estimate plots, the cross mark represents the posterior median, the thick bar represents the central 50% of posterior samples, and the thin bar represents the central 95% of posterior samples. The ratio plots have the same interpretation, except the cross mark represents the posterior geometric mean for the "CV" and "Mean" panels, and the posterior arithmetic mean for the "ACF" panels. The geometric mean is used to summarize central tendency of ratios across posterior samples because it is more appropriate for calculations based on multiplicative, rather than additive, variability (see issue [#168](https://github.com/bstaton1/GR-sslcm/issues/168) for more details).
+
+```{r}
+est_ratios = NULL
+```
+
+## Time Series Parameters {.tabset .tabset-pills}
+
+### Freshwater Juvenile Phase {.tabset .tabset-pills}
+
+#### Egg to Parr Survival
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^Pb_per_E[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Egg to Parr Survival: Estimates")
+ratio_plots(x, "Egg to Parr Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Egg to Parr Survival"))
+```
+
+#### Parr Mean Size
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^L_Pb[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Parr Mean Size: Estimates")
+ratio_plots(x, "Parr Mean Size: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Parr Mean Size"))
+```
+
+#### Proportion Fall Migrants
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^pi[year,LH_type,pop]", obs_y, sim_y, pop = j, LH_type = 1))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Fall Migrants: Estimates")
+ratio_plots(x, "Proportion Fall Migrants: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Proportion Fall Migrants"))
+```
+
+#### Overwinter Survival
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("^phi_Pa_Mb[year,LH_type,pop]", obs_y, sim_y, pop = j, LH_type = 1)),
+  lapply(1:4, function(j) get_ratio("^phi_Pa_Mb[year,LH_type,pop]", obs_y, sim_y, pop = j, LH_type = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Overwinter Survival: Estimates")
+ratio_plots(x, "Overwinter Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Overwinter Survival"))
+```
+
+#### Parr to Smolt Mean Size "Growth Factor"
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^Delta_L_Pb_Mb[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Parr to Smolt Mean Size 'Growth Factor': Estimates")
+ratio_plots(x, "Parr to Smolt Mean Size 'Growth Factor': Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Parr to Smolt Mean Size 'Growth Factor'"))
+```
+
+#### Smolt Size
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^L_Mb[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Smolt Mean Size: Estimates")
+ratio_plots(x, "Smolt Mean Size: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Smolt Mean Size"))
+```
+
+#### Migration to LGR Survival
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("^phi_Mb_Ma[year,LH_type,origin,pop]", obs_y, sim_y, pop = j, LH_type = 2, origin = 1)),
+  lapply(1:4, function(j) get_ratio("^phi_Mb_Ma[year,LH_type,origin,pop]", obs_y, sim_y, pop = j, LH_type = 2, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Migration to LGR Survival: Estimates")
+ratio_plots(x, "Migration to LGR Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "Migration to LGR Survival"))
+```
+
+#### LGR to Ocean Survival
+
+```{r}
+x = append(
+  list(get_ratio("^phi_Ma_O0[year,origin]", obs_y, sim_y, origin = 1)),
+  list(get_ratio("^phi_Ma_O0[year,origin]", obs_y, sim_y, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "LGR to Ocean Survival: Estimates")
+ratio_plots(x, "LGR to Ocean Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Juvenile", Type = "LGR to Ocean Survival"))
+```
+
+### Marine Juvenile Phase {.tabset .tabset-pills}
+
+#### Year 1 Ocean Survival
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("phi_O0_O1[year,origin,pop]", obs_y, sim_y, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("phi_O0_O1[year,origin,pop]", obs_y, sim_y, origin = 2, pop = j))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "First Year Ocean Survival: Estimates")
+ratio_plots(x, "First Year Ocean Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type = "First Year Ocean Survival"))
+```
+
+#### Age-3 Maturity
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("^psi_O1[year,origin,pop]", obs_y, sim_y, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("^psi_O1[year,origin,pop]", obs_y, sim_y, origin = 2, pop = j))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Age-3 Maturity: Estimates")
+ratio_plots(x, "Age-3 Maturity: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type = "Age-3 Maturity"))
+```
+
+#### Age-4 Maturity
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("^psi_O2[year,origin,pop]", obs_y, sim_y, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("^psi_O2[year,origin,pop]", obs_y, sim_y, origin = 2, pop = j))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Age-4 Maturity: Estimates")
+ratio_plots(x, "Age-4 Maturity: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "SW Juvenile", Type = "Age-4 Maturity"))
+```
+
+### Freshwater Adult Phase {.tabset .tabset-pills}
+
+#### BON to LGR Survival
+
+```{r}
+x = append(
+  list(get_ratio("^phi_Rb_Ra[year,origin]", obs_y, sim_y, origin = 1)),
+  list(get_ratio("^phi_Rb_Ra[year,origin]", obs_y, sim_y, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "BON to LGR Survival: Estimates")
+ratio_plots(x, "BON to LGR Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Adult", Type = "BON to LGR Survival"))
+```
+
+#### Pre-Spawn Survival
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^phi_Sb_Sa[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Pre-Spawn Survival: Estimates")
+ratio_plots(x, "Pre-Spawn Survival: Ratios")
+est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Adult", Type = "Pre-Spawn Survival"))
+```
+
+## Emergent Properties {.tabset .tabset-pills}
+
+```{r}
+derived_ratios = NULL
+```
+
+### Abundance Quantities {.tabset .tabset-pills}
+
+#### Total Adult Return (To Estuary)
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Rb_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Rb_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Total Adults (Estuary): Estimates")
+ratio_plots(x, "Total Adults (Estuary): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (Estuary)"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Rb_tot[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (Estuary)"))
+```
+
+#### Total Adult Return (To Tributary)
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Ra_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Ra_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Total Adults (Tributary): Estimates")
+ratio_plots(x, "Total Adults (Tributary): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (To Tributary)"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_tot[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Adults (To Tributary)"))
+```
+
+#### Total Spawners
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Sa_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Sa_tot_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Total Spawners: Estimates")
+ratio_plots(x, "Total Spawners: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Spawners"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Sa_tot[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Spawners"))
+```
+
+#### Total Egg Production
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("^E_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("^E_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Total Egg Production: Estimates")
+ratio_plots(x, "Total Egg Production: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Egg Production"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^E[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Egg Production"))
+```
+
+#### Total Parr Recruitment
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("^Pb[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Total Parr Recruitment: Estimates")
+ratio_plots(x, "Total Parr Recruitment: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total Parr Recruitment"))
+```
+
+#### Total LGR Smolt
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("Ma_tot[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Ma_tot[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Total LGR Smolt: Estimates")
+ratio_plots(x, "Total LGR Smolt: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Total LGR Smolt"))
+```
+
+#### Aggregate Total Adult Return (To Tributary)
+
+```{r}
+x = append(
+  list(get_ratio("Ra_aggregate[year,origin]", obs_y, sim_y, origin = 1)),
+  list(get_ratio("Ra_aggregate[year,origin]", obs_y, sim_y, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Aggregate Total Adult Return (To Tributary): Estimates")
+ratio_plots(x, "Aggregate Total Adult Return (To Tributary): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Aggregate Total Adult Return (To Tributary)"))
+```
+
+#### Aggregate Total Smolt (At LGR)
+
+```{r}
+x = append(
+  list(get_ratio("Ma_aggregate[year,origin]", obs_y, sim_y, origin = 1)),
+  list(get_ratio("Ma_aggregate[year,origin]", obs_y, sim_y, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Aggregate Total Smolt (At LGR): Estimates")
+ratio_plots(x, "Aggregate Total Smolt (At LGR): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Abundance", Type = "Aggregate Total Smolt (At LGR)"))
+```
+
+### SAR Rates {.tabset .tabset-pills}
+
+#### BON to BON SAR
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("phi_O0_Rb_BON[year,origin,pop]", obs_sar_y, sim_sar_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("phi_O0_Rb_BON[year,origin,pop]", obs_sar_y, sim_sar_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "BON to BON SAR: Estimates")
+ratio_plots(x, "BON to BON SAR: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "SAR", Type = "BON to BON"))
+```
+
+#### LGR to LGR SAR
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("Ra_per_Ma[year,origin,pop]", obs_sar_y, sim_sar_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("Ra_per_Ma[year,origin,pop]", obs_sar_y, sim_sar_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "LGR to LGR SAR: Estimates")
+ratio_plots(x, "LGR to LGR SAR: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "SAR", Type = "LGR to LGR"))
+```
+
+### Production Rates {.tabset .tabset-pills}
+
+#### Eggs per Spawner
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("E_per_Sa_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 1)),
+  lapply(1:4, function(j) get_ratio("E_per_Sa_org[year,origin,pop]", obs_y, sim_y, pop = j, origin = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Eggs per Spawner: Estimates")
+ratio_plots(x, "Eggs per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Eggs per Spawner"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^E_per_Sa[year,pop]", obs_y, sim_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Eggs per Spawner"))
+```
+
+#### Parr per Spawner
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("Pb_per_Sa_tot[year,pop]", obs_sar_y, sim_sar_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Parr per Spawner: Estimates")
+ratio_plots(x, "Parr per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Parr per Spawner"))
+```
+
+#### Smolt in Tributary per Spawner
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("Mb_per_Sa_tot[year,pop]", obs_sar_y, sim_sar_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Smolt per Spawner: Estimates")
+ratio_plots(x, "Smolt per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Smolt in Tributary per Spawner"))
+```
+
+#### Smolt in Tributary per Parr
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("Mb_per_Pa[year,LH_type,pop]", obs_y, sim_y, pop = j, LH_type = 1)),
+  lapply(1:4, function(j) get_ratio("Mb_per_Pa[year,LH_type,pop]", obs_y, sim_y, pop = j, LH_type = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Smolt in Tributary per Parr: Estimates")
+ratio_plots(x, "Smolt in Tributary per Parr: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Smolt in Tributary per Parr"))
+```
+
+#### Smolt at LGR per Parr
+
+```{r}
+x = append(
+  lapply(1:4, function(j) get_ratio("Ma_per_Pa[year,LH_type,pop]", obs_y, sim_y, pop = j, LH_type = 1)),
+  lapply(1:4, function(j) get_ratio("Ma_per_Pa[year,LH_type,pop]", obs_y, sim_y, pop = j, LH_type = 2))
+)
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Smolt at LGR per Parr: Estimates")
+ratio_plots(x, "Smolt at LGR per Parr: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Smolt at LGR per Parr"))
+```
+
+#### Spawners per Spawner
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("Sa_tot_per_Sa_tot[year,pop]", obs_sar_y, sim_sar_y, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Spawners per Spawner: Estimates")
+ratio_plots(x, "Spawners per Spawner: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Production Rates", Type = "Spawners per Spawner"))
+```
+
+### Adult Composition {.tabset .tabset-pills}
+
+#### Proportion Hatchery Return {.tabset .tabset-pills}
+
+##### Age-3
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("p_hor_a[year,age,pop]", obs_y, sim_y, age = 1, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Hatchery Return (Age-3): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (Age-3): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (Age-3)"))
+```
+
+##### Age-4
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("p_hor_a[year,age,pop]", obs_y, sim_y, age = 2, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Hatchery Return (Age-4): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (Age-4): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (Age-4)"))
+```
+
+##### Age-5
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("p_hor_a[year,age,pop]", obs_y, sim_y, age = 3, pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Hatchery Return (Age-5): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (Age-5): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (Age-5)"))
+```
+
+##### All Ages
+
+```{r}
+x = lapply(1:4, function(j) get_ratio("p_hor[year,pop]", obs_y, sim_y,  pop = j))
+x = do.call(abind, append(x, list(along = 4)))
+vals_plots(x, "Proportion Hatchery Return (All Ages): Estimates")
+ratio_plots(x, "Proportion Hatchery Return (All Ages): Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Hatchery Return (All Ages)"))
+```
+
+#### Proportion Age-3 Return
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 1, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 1, origin = 2, pop = j))
+)
+x = do.call(abind, append(x, list(along = 4)))
+x[x == "Inf"] = 1; x[x == "NaN"] = 1
+vals_plots(x, "Proportion Age-3 Return: Estimates")
+ratio_plots(x, "Proportion Age-3 Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-3 Return"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_comp_a[year,age,pop]", obs_y, sim_y, pop = j, age = 1))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-3 Return"))
+```
+
+#### Proportion Age-4 Return
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 2, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 2, origin = 2, pop = j))
+)
+x = do.call(abind, append(x, list(along = 4)))
+x[x == "Inf"] = 1; x[x == "NaN"] = 1
+vals_plots(x, "Proportion Age-4 Return: Estimates")
+ratio_plots(x, "Proportion Age-4 Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-4 Return"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_comp_a[year,age,pop]", obs_y, sim_y, pop = j, age = 2))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-4 Return"))
+```
+
+#### Proportion Age-5 Return
+
+```{r}
+# by origin: plot and table
+x = append(
+  lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 3, origin = 1, pop = j)),
+  lapply(1:4, function(j) get_ratio("Ra_comp[year,age,origin,pop]", obs_y, sim_y, age = 3, origin = 2, pop = j))
+)
+x = do.call(abind, append(x, list(along = 4)))
+x[x == "Inf"] = 1; x[x == "NaN"] = 1
+vals_plots(x, "Proportion Age-5 Return: Estimates")
+ratio_plots(x, "Proportion Age-5 Return: Ratios")
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-5 Return"))
+```
+
+```{r}
+# combined: table only
+x = lapply(1:4, function(j) get_ratio("^Ra_comp_a[year,age,pop]", obs_y, sim_y, pop = j, age = 3))
+x = do.call(abind, append(x, list(along = 4)))
+derived_ratios = rbind(derived_ratios, summarize_ratios(x, Class = "Adult Composition", Type = "Proportion Age-5 Return"))
+```
+
+## Summary Tables {.tabset .tabset-pills}
+
+These tables summarize the ratio values shown in the plots above, and are intended to be a quick visual for identifying areas where the simulated outcomes are systematically different in some way (central tendency, interannual variability, or temporal autocorrelation) from the observed outcomes. The number in each cell represents the posterior mean (geometric for across year mean and across year CV; arithmetic for lag-1 autocorrelation) value of:
+
+* **Across Year Mean** is the ratio `mean(simulated years)/mean(observed years)`. Values greater than 1 indicate the value in simulated years is larger in magnitude than in observed years.
+* **Across Year CV** is the ratio `cv(simulated years)/cv(observed years)`. Values greater than 1 indicate the variability from one year to the next is larger than in observed years.
+* **Lag-1 Autocorrelation** is the difference `acf(simulated years) - acf(observed years)`. Values greater than 0 indicate the quantity shows more autocorrelation in the simulated years than in observed years.
+
+Values close to 1 are ideal for the mean and CV ratios and cells are color-coded based on how far they fall from 1: less than 1 are blue and greater than 1 are red; values between 0.9 and 1.1 might be considered "good enough", and have been assigned no color.
+
+Values close to 0 are ideal for the autocorrelation differences and cells are color-coded based on how far they fall from zero: less than zero are blue and greater than zero are red; values between -0.1 and 0.1 might be considered "good enough", and have been assigned no color.
+
+### Estimated Quantities {.tabset .tabset-pills}
+
+#### Across Year Mean
+
+```{r est-mean-table}
+make_ratios_table(prep_est_ratios(est_ratios, "mean"), "mean")
+```
+
+#### Across Year CV
+
+```{r est-cv-table}
+make_ratios_table(prep_est_ratios(est_ratios, "cv"), "cv")
+```
+
+#### Lag-1 Autocorrelation
+
+```{r est-acf-table}
+make_ratios_table(prep_est_ratios(est_ratios, "acf"), "acf")
+```
+
+### Derived Quantities {.tabset .tabset-pills}
+
+#### Across Year Mean
+
+```{r derived-mean-table}
+make_ratios_table(prep_derived_ratios(derived_ratios, "mean"), "mean")
+```
+
+#### Across Year CV
+
+```{r derived-cv-table}
+make_ratios_table(prep_derived_ratios(derived_ratios, "cv"), "cv")
+```
+
+#### Lag-1 Autocorrelation
+
+```{r derived-acf-table}
+make_ratios_table(prep_derived_ratios(derived_ratios, "acf"), "acf")
+```
+
+# Time Series Plots
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", fig.width = 6, fig.height = 8)
+```
+
+```{r ts_plot fn}
+n_sim_draw = 5
+isim = sample(1:post_dim(post, "saved"), n_sim_draw, replace = FALSE)
+obs_y = 2:jags_data$ny_obs
+obs_sar_y = 2:(jags_data$ny_obs-jags_data$kmax)
+sim_sar_y = (jags_data$ny_obs-jags_data$kmax+1):(jags_data$ny-jags_data$kmax)
+
+ts_plot = function(param, main = NULL, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
+  
+  obs_vals = post_summ(post, sub_index(param, year = obs_y_use, ...))
+  sim_vals = post_subset(post, sub_index(param, year = sim_y_use, ...), matrix = TRUE)
+
+  par(mar = c(1,2,2,1), mgp = c(2,0.35,0), tcl = -0.15)
+  plot(obs_vals["mean",] ~ obs_y_use, type = "n", xlim = range(obs_y_use, sim_y_use),
+       ylim = range(obs_vals[c("2.5%", "97.5%"),], sim_vals[isim,]), xaxt = "n", xlab = "", ylab = "", main = main)
+  usr = par("usr"); at_x = axisTicks(usr[1:2], log = FALSE)
+  at_x = c(2, at_x[!(at_x %in% c(0, 6, max(sim_y_use)))])
+  axis(side = 1, at = at_x, labels = all_yrs[at_x])
+
+  polygon(c(obs_y_use, rev(obs_y_use)), c(obs_vals["2.5%",], rev(obs_vals["97.5%",])), border = NA, col = alpha("salmon", 0.5))
+  lines(obs_vals["mean",] ~ obs_y_use, col = "red", lwd = 2)
+
+  junk = sapply(isim, function(i) lines(sim_vals[i,] ~ sim_y_use, col = alpha("blue", 0.5)))
+}
+
+pop_ts_plots = function(param, obs_y_use = obs_y, sim_y_use = sim_y, ...) {
+  par(mfrow = c(4,1), oma = c(2,2,0,0))
+  ts_plot(param, main = "CAT", obs_y_use = obs_y_use, sim_y_use = sim_y_use, pop = 1, ...)
+  ts_plot(param, main = "LOS", obs_y_use = obs_y_use, sim_y_use = sim_y_use, pop = 2, ...)
+  ts_plot(param, main = "MIN", obs_y_use = obs_y_use, sim_y_use = sim_y_use, pop = 3, ...)
+  ts_plot(param, main = "UGR", obs_y_use = obs_y_use, sim_y_use = sim_y_use, pop = 4, ...)
+  mtext(side = 1, outer = TRUE, line = 0.5, "Year")
+  mtext(side = 2, outer = TRUE, line = 0.5, "Value")
+}
+```
+
+## Time Series Parameters {.tabset .tabset-pills}
+
+### Freshwater Juvenile Phase {.tabset .tabset-pills}
+
+#### Egg to Parr Survival
+
+```{r}
+pop_ts_plots("^Pb_per_E[year,pop]")
+```
+
+#### Parr Mean Size
+
+```{r}
+pop_ts_plots("^L_Pb[year,pop]")
+```
+
+#### Proportion Fall Migrants
+
+```{r}
+pop_ts_plots("^pi[year,LH_type,pop]", LH_type = 1)
+```
+
+#### Overwinter Survival {.tabset .tabset-pills}
+
+##### Fall Migrants
+
+```{r}
+pop_ts_plots("^phi_Pa_Mb[year,LH_type,pop]", LH_type = 1)
+```
+
+##### Spring Migrants
+
+```{r}
+pop_ts_plots("^phi_Pa_Mb[year,LH_type,pop]", LH_type = 2)
+```
+
+#### Parr to Smolt Mean Size "Growth Factor"
+
+```{r}
+pop_ts_plots("^Delta_L_Pb_Mb[year,pop]")
+```
+
+#### Smolt Mean Size
+
+```{r}
+pop_ts_plots("^L_Mb[year,pop]")
+```
+
+#### Migration to LGR Survival {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^phi_Mb_Ma[year,LH_type,origin,pop]", LH_type = 2, origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^phi_Mb_Ma[year,LH_type,origin,pop]", LH_type = 2, origin = 2)
+```
+
+#### LGR to Ocean Survival
+
+```{r}
+par(mfrow = c(2,1), oma = c(2,2,0,0))
+ts_plot("^phi_Ma_O0[year,origin]", main = "NOR", origin = 1)
+ts_plot("^phi_Ma_O0[year,origin]", main = "HOR", origin = 2)
+mtext(side = 1, outer = TRUE, line = 0.5, "Year")
+mtext(side = 2, outer = TRUE, line = 0.5, "Value")
+```
+
+### Marine Juvenile Phase {.tabset .tabset-pills}
+
+#### Year 1 Ocean Survival {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("phi_O0_O1[year,origin,pop]", origin = 2)
+```
+
+#### Age-3 Maturity {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^psi_O1[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^psi_O1[year,origin,pop]", origin = 2)
+```
+
+#### Age-4 Maturity {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^psi_O2[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^psi_O2[year,origin,pop]", origin = 2)
+```
+
+### Freshwater Adult Phase {.tabset .tabset-pills}
+
+#### BON to LGR Survival
+
+```{r}
+par(mfrow = c(2,1), oma = c(2,2,0,0))
+ts_plot("^phi_Rb_Ra[year,origin]", main = "NOR", origin = 1)
+ts_plot("^phi_Rb_Ra[year,origin]", main = "HOR", origin = 2)
+mtext(side = 1, outer = TRUE, line = 0.5, "Year")
+mtext(side = 2, outer = TRUE, line = 0.5, "Value")
+```
+
+#### Pre-Spawn Survival
+
+```{r}
+pop_ts_plots("^phi_Sb_Sa[year,pop]")
+```
+
+## Emergent Properties {.tabset .tabset-pills}
+
+### Abundance Quantities {.tabset .tabset-pills}
+
+#### Total Adult Return (To Estuary) {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^Rb_tot_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^Rb_tot_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("^Rb_tot[year,pop]")
+```
+
+#### Total Adult Return (To Tributary) {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^Ra_tot_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^Ra_tot_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("^Ra_tot[year,pop]")
+```
+
+#### Total Spawners {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^Sa_tot_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^Sa_tot_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("^Sa_tot[year,pop]")
+```
+
+#### Total Egg Production {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^E_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^E_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("^E[year,pop]")
+```
+
+#### Total Parr Recruitment
+
+```{r}
+pop_ts_plots("^Pb[year,pop]")
+```
+
+#### Total LGR Smolt {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("Ma_tot[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("Ma_tot[year,origin,pop]", origin = 2)
+```
+
+#### Aggregate Total Adult Return (To Tributary) {.tabset .tabset-pills}
+
+##### NOR
+
+```{r, fig.width = 7, fig.height = 4}
+ts_plot("Ra_aggregate[year,origin]", origin = 1)
+```
+
+##### HOR
+
+```{r, fig.width = 7, fig.height = 4}
+ts_plot("Ra_aggregate[year,origin]", origin = 2)
+```
+
+#### Aggregate Total Smolt (At LGR) {.tabset .tabset-pills}
+
+##### NOR
+
+```{r, fig.width = 7, fig.height = 4}
+ts_plot("Ma_aggregate[year,origin]", origin = 1)
+```
+
+##### HOR
+
+```{r, fig.width = 7, fig.height = 4}
+ts_plot("Ma_aggregate[year,origin]", origin = 2)
+```
+
+### SAR Rates {.tabset .tabset-pills}
+
+#### BON to BON SAR {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("phi_O0_Rb_BON[year,origin,pop]", obs_y_use = obs_sar_y, sim_y_use = sim_sar_y, origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("phi_O0_Rb_BON[year,origin,pop]", obs_y_use = obs_sar_y, sim_y_use = sim_sar_y, origin = 2)
+```
+
+#### LGR to LGR SAR {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("Ra_per_Ma[year,origin,pop]", obs_y_use = obs_sar_y, sim_y_use = sim_sar_y, origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("Ra_per_Ma[year,origin,pop]", obs_y_use = obs_sar_y, sim_y_use = sim_sar_y, origin = 2)
+```
+
+### Production Rates {.tabset .tabset-pills}
+
+#### Eggs per Spawner {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("^E_per_Sa_org[year,origin,pop]", origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("^E_per_Sa_org[year,origin,pop]", origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("^E_per_Sa[year,pop]")
+```
+
+#### Parr per Spawner
+
+```{r}
+pop_ts_plots("Pb_per_Sa_tot[year,pop]")
+```
+
+#### Smolt per Spawner
+
+```{r}
+pop_ts_plots("Mb_per_Sa_tot[year,pop]")
+```
+
+#### Smolt in Tributary per Parr {.tabset .tabset-pills}
+
+##### Fall Migrants
+
+```{r}
+pop_ts_plots("Mb_per_Pa[year,LH_type,pop]", LH_type = 1)
+```
+
+##### Fall Migrants
+
+```{r}
+pop_ts_plots("Mb_per_Pa[year,LH_type,pop]", LH_type = 2)
+```
+
+#### Smolt at LGR per Parr {.tabset .tabset-pills}
+
+##### Fall Migrants
+
+```{r}
+pop_ts_plots("Ma_per_Pa[year,LH_type,pop]", LH_type = 1)
+```
+
+##### Fall Migrants
+
+```{r}
+pop_ts_plots("Ma_per_Pa[year,LH_type,pop]", LH_type = 2)
+```
+
+#### Spawners per Spawner
+
+```{r}
+pop_ts_plots("Sa_tot_per_Sa_tot[year,pop]", obs_y_use = obs_sar_y, sim_y_use = sim_sar_y)
+```
+
+### Adult Composition {.tabset .tabset-pills}
+
+#### Proportion Hatchery Return {.tabset .tabset-pills}
+
+##### Age-3
+
+```{r}
+pop_ts_plots("p_hor_a[year,age,pop]", age = 1)
+```
+
+##### Age-4
+
+```{r}
+pop_ts_plots("p_hor_a[year,age,pop]", age = 2)
+```
+
+##### Age-5
+
+```{r}
+pop_ts_plots("p_hor_a[year,age,pop]", age = 3)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("p_hor[year,pop]")
+```
+
+#### Proportion Age-3 Return {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 1, origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 1, origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("Ra_comp_a[year,age,pop]", age = 1)
+```
+
+#### Proportion Age-4 Return {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 2, origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 2, origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("Ra_comp_a[year,age,pop]", age = 2)
+```
+
+#### Proportion Age-5 Return {.tabset .tabset-pills}
+
+##### NOR
+
+```{r}
+pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 3, origin = 1)
+```
+
+##### HOR
+
+```{r}
+pop_ts_plots("Ra_comp[year,age,origin,pop]", age = 3, origin = 2)
+```
+
+##### Combined
+
+```{r}
+pop_ts_plots("Ra_comp_a[year,age,pop]", age = 3)
+```

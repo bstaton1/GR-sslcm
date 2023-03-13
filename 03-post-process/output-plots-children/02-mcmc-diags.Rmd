@@ -1,0 +1,498 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# MCMC Diagnostics {.tabset .tabset-pills}
+
+```{r make-diag-post}
+# make a reduced diagnostic posterior: drop out all quantities associated with simulated years
+# there is no point in calculating diagnostic summaries for future years
+if (length(simulated) > 0) {
+  diag_post = suppressMessages(post_remove(post, paste0("[", simulated), ask = FALSE))
+} else {
+  diag_post = post
+}
+
+# discard duplicate correlation terms: all rho parameters for a given process are equal
+all_rho = match_params(post, "^rho")
+rho_keep = match_params(post, "^rho_.+[2,1")
+rho_discard = all_rho[!(all_rho %in% rho_keep)]
+diag_post = suppressMessages(post_remove(diag_post, rho_discard, ask = FALSE))
+```
+
+```{r mcmc-diag-function}
+# a function to get MCMC diagnoses for a group of parameters
+# params: a string to match with postpack::match_params()
+# L1: a "Level-1" group label; such as component of the model (e.g., LH apportionment)
+# L2: a "Level-2" group label; such as type of parameter (e.g., mean, sd, or year-specific value)
+# L3: a "Level-3" group label; such as NOR or HOR
+
+summarize_posterior = function(params, L1 = NA, L2 = NA, L3 = NA) {
+  # extract the posteriors of interest and format for 'posterior' package
+  post_sub = as_draws_df(post_subset(diag_post, params))
+  
+  # summarize the posteriors
+  diags = summarize_draws(post_sub, mean, ~quantile(.x, c(0.025, 0.975)), rhat, ess_mean, ~ess_quantile(.x, probs = c(0.025, 0.975)), mcse_mean, ~mcse_quantile(.x, probs = c(0.025, 0.975)))
+  
+  # discard any parameters that were the same value every MCMC iteration
+  # (will have an NA for rhat)
+  diags = diags[!is.na(diags$rhat),]
+  
+  # append the level names and return
+  cbind(
+    L1 = L1, L2 = L2, L3 = L3,
+    diags
+  )
+}
+
+summarize_diags = function(diags) {
+  
+  # add "Monte Carlo CV"
+  diags$mccv_mean = diags$mcse_mean/diags$mean
+  diags$mccv_q2.5 = diags$mcse_q2.5/diags$`2.5%`
+  diags$mccv_q97.5 = diags$mcse_q97.5/diags$`97.5%`
+  
+  # summarize the summaries
+  data.frame(
+    L1 = unique(diags$L1),
+    L2 = unique(diags$L2),
+    L3 = unique(diags$L3),
+    match = unique(postpack:::drop_index(diags$variable)),
+    n_params = nrow(diags),
+    Rhat_1.01 = sum(diags$rhat >= 1.01),
+    Rhat_1.05 = sum(diags$rhat >= 1.05),
+    Rhat_1.1 = sum(diags$rhat >= 1.1),
+    Rhat_1.2 = sum(diags$rhat >= 1.2),
+    ess_mean_400 = sum(diags$ess_mean < 400),
+    ess_q2.5_400 = sum(diags$ess_q2.5 < 400),
+    ess_q97.5_400 = sum(diags$ess_q97.5 < 400),
+    mccv_mean_0.05 = sum(diags$mccv_mean > 0.05),
+    mccv_q2.5_0.05 = sum(diags$mccv_q2.5 > 0.05),
+    mccv_q97.5_0.05 = sum(diags$mccv_q97.5 > 0.05)
+  )
+}
+```
+
+```{r calculate-mcmc-diagnostics}
+# containers
+diags_out = NULL
+summs_out = NULL
+
+# parr recruitment
+L1 = "Egg-to-Parr Survival"
+L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "Process SD", "Among-pop Correlation", "Realized")
+match = c("alpha", "^beta[", "^lambda$", "sig_lbeta", "sig_Lphi_E_Pb", "rho_Lphi_E_Pb", "^phi_E_Pb[")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# summer parr mean length
+L1 = "Density-Dependent Summer Length"
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+match = c("omega0", "omega1", "sig_lL_Pb", "rho_lL_Pb", "^L_Pb[")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# LH apportionment
+L1 = "Life History Apportionment"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+match = c("mu_pi[1,.]", "sig_Lpi", "rho_Lpi", "^pi[.+,1,.]")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# parr survival from summer to winter tagging
+L1 = "Survival From Summer to Winter"
+match = c("phi_Pb_Pa[2,.]")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Overwinter survival: Fall Migrants
+L1 = "Overwinter Survival"
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
+match = sub_index(base, year = ".+", LH_type = i_fall, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "Fall Migrants"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Overwinter survival: Spring Migrants
+L1 = "Overwinter Survival"
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
+match = sub_index(base, year = ".+", LH_type = i_spring, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "Spring Migrants"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# growth from summer to spring
+# summer parr mean length
+L1 = "Summer to Spring 'Growth Factor'"
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+match = c("theta0", "theta1", "sig_lDelta_L_Pb_Mb", "rho_lDelta_L_Pb_Mb", "^Delta_L_Pb_Mb[")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# trib to LGR Migration survival: NOR 
+L1 = "Migration Survival (Trib to LGR)"
+L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
+base = c("tau0", "tau1", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "^phi_Mb_Ma[.+,LH_type,origin,pop]")
+match = sub_index(base, LH_type = i_spring, origin = o_nor, pop = ".", year = ".+")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# trib to LGR Migration survival: HOR 
+L1 = "Migration Survival (Trib to LGR)"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "phi_Mb_Ma[year,LH_type,origin,pop]")
+match = sub_index(base, year = ".+", LH_type = i_spring, origin = o_hor, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# LGR to Ocean Migration survival: NOR
+L1 = "Migration Survival (LGR to Ocean)"
+L2 = c("Mean", "Process SD", "Realized")
+base = c("mu_phi_Ma_O0[origin]", "sig_Lphi_Ma_O0[origin]", "^phi_Ma_O0[year,origin]")
+match = sub_index(base, year = ".+", origin = o_nor)
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# LGR to Ocean Migration survival: HOR
+L1 = "Migration Survival (LGR to Ocean)"
+L2 = c("Mean", "Process SD", "Realized")
+base = c("mu_phi_Ma_O0[origin]", "sig_Lphi_Ma_O0[origin]", "^phi_Ma_O0[year,origin]")
+match = sub_index(base, year = ".+", origin = o_hor)
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# LGR to Ocean Migration survival correlation among origins
+tmp_diags = summarize_posterior("rho_Lphi_Ma_O0[2,1]", L1 = L1, L2 ="Among-origin Correlation")
+tmp_summ =  summarize_diags(tmp_diags)
+diags_out = rbind(diags_out, tmp_diags)
+summs_out = rbind(summs_out, tmp_summ)
+
+# Probability of Maturing at Age-3: NOR
+L1 = "Pr(Mature at Age-3)"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[pop,origin]", "rho_Lpsi_O1[.,.,origin]", "^psi_O1[.+,origin,pop]")
+match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Probability of Maturing at Age-3: HOR
+L1 = "Pr(Mature at Age-3)"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[pop,origin]", "rho_Lpsi_O1[.,.,origin]", "^psi_O1[.+,origin,pop]")
+match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Probability of Maturing at Age-4: NOR
+L1 = "Pr(Mature at Age-4)"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[pop,origin]", "rho_Lpsi_O2[.,.,origin]", "^psi_O2[.+,origin,pop]")
+match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Probability of Maturing at Age-4: HOR
+L1 = "Pr(Mature at Age-4)"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[pop,origin]", "rho_Lpsi_O2[.,.,origin]", "^psi_O2[.+,origin,pop]")
+match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Year 1 ocean survival
+L1 = "Year 1 Ocean Survival"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+base = c("mu_phi_O0_O1[origin,pop]", "sig_Lphi_O0_O1[pop]", "rho_Lphi_O0_O1", "phi_O0_O1[year,origin,pop]")
+match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Year 2 ocean survival
+# L1 = "Year 2 Ocean Survival"
+# L2 = c("Mean")
+# base = c("mu_phi_O1_O2[origin,pop]")
+# match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+# tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+# tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+# diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+# summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Year 2 ocean survival
+# L1 = "Year 3 Ocean Survival"
+# L2 = c("Mean")
+# base = c("mu_phi_O2_O3[origin,pop]")
+# match = sub_index(base, year = ".+", origin = o_nor, pop = ".+")
+# tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+# tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+# diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+# summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Misc ocean survival
+L1 = "Misc Ocean Survival"
+L2 = c("Yr1 NOR:HOR Scaler", "Yr2 NOR:HOR Scaler", "Yr1 Initial Residual", "Yr 1 AR(1) Coefficient")
+base = c("delta_O0_O1[pop]", "delta_O1_O2[pop]", "Lphi_O0_O1_resid[1,1,pop]", "kappa_phi_O0_O1[pop]")
+match = sub_index(base, pop = ".")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# BON to LGR Migration survival: NOR 
+L1 = "Migration Survival (BON to LGR)"
+L2 = c("Mean", "Process SD", "Realized")
+base = c("mu_phi_Rb_Ra[origin]", "sig_Lphi_Rb_Ra[origin]", "^phi_Rb_Ra[year,origin]")
+match = sub_index(base, year = ".+", origin = o_nor)
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# BON to LGR Migration survival: HOR 
+L1 = "Migration Survival (BON to LGR)"
+L2 = c("Mean", "Process SD", "Realized")
+base = c("mu_phi_Rb_Ra[origin]", "sig_Lphi_Rb_Ra[origin]", "^phi_Rb_Ra[year,origin]")
+match = sub_index(base, year = ".+", origin = o_hor)
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# LGR to Ocean Migration survival correlation among origins
+tmp_diags = summarize_posterior("rho_Lphi_Rb_Ra[2,1]", L1 = L1, L2 ="Among-origin Correlation")
+tmp_summ =  summarize_diags(tmp_diags)
+diags_out = rbind(diags_out, tmp_diags)
+summs_out = rbind(summs_out, tmp_summ)
+
+# Pre-spawn Survival
+L1 = "Pre-spawn Survival"
+L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
+match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "rho_Lphi_Sb_Sa", "^phi_Sb_Sa[.+,.]")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Carcass Correction
+L1 = "Carcass Correction Factor"
+L2 = c("Among-Pop Mean", "Among-Pop SD", "Pop-Specific")
+match = c("mu_z[.]", "sig_z[.]", "^z[.,.]")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Initial adult recruitment
+L1 = "Initial Adult Returns"
+L2 = c("Age-3", "Age-4", "Age-5")
+match = c("Rb\\[[2|3|4],1,1,.\\]", "Rb\\[[2|3|4|5],2,1,.\\]", "Rb\\[[2|3|4|5|6],3,1,.\\]")
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Straying
+L1 = "Strays"
+L2 = c("Realized Total Number", "Age Comp")
+match = c(sub_index("^G[.,origin,pop]", origin = o_hor, pop = "."), sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = "."))
+tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# remove any summaries for nodes that don't have diagnostics
+# e.g., if that "parameter" takes on a fixed value in the model
+diags_table = summs_out
+diags_table = diags_table[diags_table$n_params > 0,]
+```
+
+## Summary Table
+
+This table displays summaries of MCMC diagnostics for all unobserved stochastic nodes in the model. Values in cells represent the percentage of parameters of a given type that fail a diagnostic check. E.g., 50% in the "Rhat > 1.05" column means that half of the parameters of that type had $\hat{R}$ values greater than 1.05. Cells with no color indicate no offense and darker reds indicate greater frequency of an offense.
+
+* $\boldsymbol{\hat{R}}$ measures convergence of multiple chains to a common target distribution. Values close to 1 are ideal, greater than 1.1 are problematic but possibly passable, and greater than 1.2 should probably not be used for inference (general rules).
+* **ESS** measures the number of effective MCMC samples are available to estimate a given summary statistic of the posterior -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have fewer than 400 ESS -- which Vehtari et al. [2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full) suggest as a good rule of thumb.
+* **MCCV** is Monte Carlo Standard Error of a summary statistic divided by the estimated posterior summary statistic, intended to represent a measure of precision for estimating posterior summary statistics -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have greater than 5% MCCV -- which Staton has (arbitrarily and at this time) chosen as the greatest amount of acceptable imprecision.
+
+The calculations behind this table are implemented using the '[posterior](https://mc-stan.org/posterior/articles/posterior.html)' R package, which contains updated MCMC diagnostics (Vehtari et al. [2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full)).
+
+```{r mcmc-diag-table, warning = FALSE}
+# duplicate the diagnostic output
+kable_table = diags_table
+
+# order the rows
+kable_table$L1 = factor(kable_table$L1, levels = unique(kable_table$L1))
+kable_table = diags_table[order(kable_table$L1, kable_table$L2, kable_table$L3),]
+
+# keep only relevant columns for kable
+kable_table = kable_table[,-which(colnames(diags_table) %in% c("match", "mean_value", "Rhat_mean", "ess_bulk_mean"))]
+
+# convert counts of offending parameters to percentages
+kable_table$Rhat_1.01 = paste0(round(kable_table$Rhat_1.01/kable_table$n_params, 2) * 100, "%")
+kable_table$Rhat_1.05 = paste0(round(kable_table$Rhat_1.05/kable_table$n_params, 2) * 100, "%")
+kable_table$Rhat_1.1 = paste0(round(kable_table$Rhat_1.1/kable_table$n_params, 2) * 100, "%")
+kable_table$Rhat_1.2 = paste0(round(kable_table$Rhat_1.2/kable_table$n_params, 2) * 100, "%")
+kable_table$ess_mean_400 = paste0(round(kable_table$ess_mean_400/kable_table$n_params, 2) * 100, "%")
+kable_table$ess_q2.5_400 = paste0(round(kable_table$ess_q2.5_400/kable_table$n_params, 2) * 100, "%")
+kable_table$ess_q97.5_400 = paste0(round(kable_table$ess_q97.5_400/kable_table$n_params, 2) * 100, "%")
+kable_table$mccv_mean_0.05 = paste0(round(kable_table$mccv_mean_0.05/kable_table$n_params, 2) * 100, "%")
+kable_table$mccv_q2.5_0.05 = paste0(round(kable_table$mccv_q2.5_0.05/kable_table$n_params, 2) * 100, "%")
+kable_table$mccv_q97.5_0.05 = paste0(round(kable_table$mccv_q97.5_0.05/kable_table$n_params, 2) * 100, "%")
+
+# add basic formatting
+colnames(kable_table) = c("Model Component", "Parameter Type", "Group", "N", "> 1.01", "> 1.05", "> 1.1", "> 1.2", "Mean", "q2.5", "q97.5", "Mean", "q2.5", "q97.5")
+kable_table$Group[is.na(kable_table$Group)] = " "
+kable_table$`Parameter Type`[is.na(kable_table$`Parameter Type`)] = " "
+
+assign_color = function(x, colors = c("white","red")) {
+  pal = colorRampPalette(colors)
+  cols = pal(6)
+  bin_names = levels(cut(rbeta(1e6, 1, 1) * 100, breaks = c(0,0.001,20,40,60,80,100), include.lowest = TRUE))
+  names(cols) = bin_names
+  x[is.na(x)] = 0
+  bins = cut(x, breaks = c(0,0.001,20,40,60,80,100), include.lowest = TRUE)
+  cols_use = cols[as.character(bins)]
+  alpha(unname(cols_use), 0.5)
+}
+
+# produce the kable
+kable(kable_table, row.names = FALSE, align = c("lllcccccccccc")) %>%
+  kable_styling(full_width = TRUE, fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
+  add_header_above(c(" " = 4, "Rhat" = 4, "ESS < 400" = 3, "MCCV > 5%" = 3)) %>%
+  column_spec(2:3, width = "150px") %>%
+  column_spec(c(4,8,11), border_right = TRUE) %>%
+  column_spec(5, background = assign_color(as.numeric(stringr::str_remove(kable_table[,5], "%")))) %>%
+  column_spec(6, background = assign_color(as.numeric(stringr::str_remove(kable_table[,6], "%")))) %>%
+  column_spec(7, background = assign_color(as.numeric(stringr::str_remove(kable_table[,7], "%")))) %>%
+  column_spec(8, background = assign_color(as.numeric(stringr::str_remove(kable_table[,8], "%")))) %>%
+  column_spec(9, background = assign_color(as.numeric(stringr::str_remove(kable_table[,9], "%")))) %>%
+  column_spec(10, background = assign_color(as.numeric(stringr::str_remove(kable_table[,10], "%")))) %>%
+  column_spec(11, background = assign_color(as.numeric(stringr::str_remove(kable_table[,11], "%")))) %>%
+  column_spec(12, background = assign_color(as.numeric(stringr::str_remove(kable_table[,12], "%")))) %>%
+  column_spec(13, background = assign_color(as.numeric(stringr::str_remove(kable_table[,13], "%")))) %>%
+  column_spec(14, background = assign_color(as.numeric(stringr::str_remove(kable_table[,14], "%")))) %>%
+  collapse_rows(columns = 1:2)
+```
+
+## Figures {.tabset .tabset-pills}
+
+```{r mcmc-diag-plots-prep}
+n_max_draw = 30
+
+# which parameters fall in each Rhat bin
+rhat_1_params = subset(diags_out, rhat >= 0.8 & rhat < 1.05)$variable
+rhat_2_params = subset(diags_out, rhat >= 1.05 & rhat < 1.1)$variable
+rhat_3_params = subset(diags_out, rhat >= 1.1 & rhat < 1.5)$variable
+
+# extract the Rhat values and the names of the parameters with the 
+# worst Rhat values by bin
+rhat_1 = diags_out$rhat[diags_out$variable %in% rhat_1_params]
+rhat_1_params_draw = rhat_1_params[order(rhat_1, decreasing = TRUE)][1:min(n_max_draw, length(rhat_1_params))]
+rhat_2 = diags_out$rhat[diags_out$variable %in% rhat_2_params]
+rhat_2_params_draw = rhat_2_params[order(rhat_2, decreasing = TRUE)][1:min(n_max_draw, length(rhat_2_params))]
+rhat_3 = diags_out$rhat[diags_out$variable %in% rhat_3_params]
+rhat_3_params_draw = rhat_3_params[order(rhat_3, decreasing = TRUE)][1:min(n_max_draw, length(rhat_3_params))]
+
+# subset out these parameters: makes postpack::diag_plots() much faster
+post_sub_1 = post_subset(post, rhat_1_params_draw)
+post_sub_2 = post_subset(post, rhat_2_params_draw)
+post_sub_3 = post_subset(post, rhat_3_params_draw)
+
+# function to plot a histogram of rhat values
+rhat_hist = function(rhat) {
+  par(mgp = c(2,0.35, 0), tcl = -0.15, xaxs = "i", yaxs = "i", mar = c(3,3,1,1))
+  breaks = seq(min(rhat), max(rhat), length = 20)
+  max_count = max(hist(rhat, breaks = breaks, plot = FALSE)$count)
+  hist(rhat, breaks = breaks, col = "grey50", border = "white", ylim = c(0, max_count) * 1.025, xlab = TeX("$\\hat{R}$"), main = "")
+  usr = par("usr")
+  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
+  segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE)
+}
+```
+
+### $1 < \hat{R} < 1.05$ {.tabset .tabset-pills}
+
+#### Distribution
+
+There were **`r length(rhat_1_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes with $\hat{R}$ in this group. Here is their distribution:
+  
+```{r rhat-hist-1, fig.width = 6, fig.height = 4}
+rhat_hist(rhat_1)
+```
+
+#### Least Converged
+
+Density and trace plots by chain for the `r min(n_max_draw, length(rhat_1_params))` parameters with the highest $\hat{R}$ values in this group are shown.
+
+```{r mcmc-diag-plots-1, fig.width = 11, fig.height = 8.5}
+diag_plots(post_sub_1, ".", show_diags = "never")
+```
+
+### $1.05 < \hat{R} < 1.1$ {.tabset .tabset-pills}
+
+#### Distribution
+
+There were **`r length(rhat_2_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. Here is their distribution:
+  
+```{r rhat-hist-2, fig.width = 6, fig.height = 4}
+rhat_hist(rhat_2)
+```
+
+#### Least Converged
+
+Density and trace plots by chain for the `r min(n_max_draw, length(rhat_2_params))` parameters with the highest $\hat{R}$ values in this group are shown.
+
+```{r mcmc-diag-plots-2, fig.width = 11, fig.height = 8.5}
+diag_plots(post_sub_2, ".", show_diags = "never")
+```
+
+### $\hat{R} > 1.1$ {.tabset .tabset-pills}
+
+#### Distribution
+
+There were **`r length(rhat_3_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. Here is their distribution:
+  
+```{r rhat-hist-3, fig.width = 6, fig.height = 4}
+rhat_hist(rhat_3)
+```
+
+#### Least Converged
+
+Density and trace plots by chain for the `r min(n_max_draw, length(rhat_3_params))` parameters with the highest $\hat{R}$ values in this group are shown.
+
+```{r mcmc-diag-plots-3, fig.width = 11, fig.height = 8.5}
+diag_plots(post_sub_3, ".", show_diags = "never")
+```
+
