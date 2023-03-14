@@ -2,17 +2,29 @@ jags_model_code = function() {
   
   ### PRIORS: capacity vs. weighted usable habitat length relationship ###
   lambda ~ dnorm(0, 1e-8) %_% T(0,)
+  lambda_pop[1:nj] <- beta[1:nj]/wul[1:nj]
   sig_lbeta ~ dunif(0, 5)
   
   for (j in 1:nj) {
     ### PRIORS: RECRUITMENT FUNCTION ###
     # total egg production to aggregate parr recruitment function
+    # max egg-to-parr survival
     alpha[j] ~ dbeta(alpha_prior[1], alpha_prior[2])
+    
+    # max parr recruitment
     lbeta[j] ~ dnorm(log(lambda * wul[j]), 1/sig_lbeta^2) %_% T(,15) # log capacity. bound to prevent nonsensically large draws
     beta[j] <- exp(lbeta[j])
+    
+    # AR(1) coefficient for egg-to-parr survival
+    kappa_phi_E_Pb[j] ~ dunif(-0.99,0.99)
+    
+    # SD of process white noise on egg-to-parr survival
     sig_Lphi_E_Pb[j] ~ dt(0,1/sig_Lphi_E_Pb_prior^2,1) %_% T(0,dt_upr)
-    lambda_pop[j] <- beta[j]/wul[j]  # derived pop-specific lambda, includes process noise in regression
-
+    
+    # SD of process noise on egg-to-parr survival for year 0
+    sig_Lphi_E_Pb_init[j] <- sqrt(sig_Lphi_E_Pb[j]^2/(1 - kappa_phi_E_Pb[j]^2))
+    
+    ### PRIORS: DENSITY-DEPENDENT GROWTH ###
     # length at end of summer vs. eggs relationship: density-dependent spring/summer growth
     omega0[j] ~ dnorm(0, 1e-3)  # intercept
     omega1[j] ~ dnorm(0, 1e-3)  # slope
@@ -151,8 +163,11 @@ jags_model_code = function() {
   # construct all population covariance matrices
   for (i in 1:nj) {
     for (j in 1:nj) {
-      # covariance matrix of parr recruitment
+      # covariance matrix of white noise portion of egg-to-parr survival
       Sig_Lphi_E_Pb[i,j] <- sig_Lphi_E_Pb[i] * sig_Lphi_E_Pb[j] * ifelse(i == j, 1, rho_Lphi_E_Pb)
+      
+      # covariance matrix of total noise in egg-to-parr survival (used to draw year 0 noise term)
+      Sig_Lphi_E_Pb_init[i,j] <- sig_Lphi_E_Pb_init[i] * sig_Lphi_E_Pb_init[j] * ifelse(i == j, 1, rho_Lphi_E_Pb)
       
       # covariance matrix of summer length
       Sig_lL_Pb[i,j] <- sig_lL_Pb[i] * sig_lL_Pb[j] * ifelse(i == j, 1, rho_lL_Pb)
@@ -182,7 +197,7 @@ jags_model_code = function() {
       # covariance matrix of white noise portion of yr1 ocean survival
       Sig_Lphi_O0_O1[i,j] <- sig_Lphi_O0_O1[i] * sig_Lphi_O0_O1[j] * ifelse(i == j, 1, rho_Lphi_O0_O1)
       
-      # covariance matrix of total process noise in yr1 ocean survival
+      # covariance matrix of total process noise in yr1 ocean survival (used to draw year 0 noise term)
       Sig_Lphi_O0_O1_init[i,j] <- sig_Lphi_O0_O1_init[i] * sig_Lphi_O0_O1_init[j] * ifelse(i == j, 1, rho_Lphi_O0_O1)
       
       # covariance matrix of pre-spawn survival
@@ -201,7 +216,8 @@ jags_model_code = function() {
     }
   }
   
-  # year 0 residuals for yr1 ocean survival (needed for AR(1) process)
+  # year 0 residuals for process that include AR(1)
+  Lphi_E_Pb_resid[1,1:nj] ~ dmnorm.vcov(rep(0, nj), Sig_Lphi_E_Pb_init[1:nj,1:nj])
   Lphi_O0_O1_resid[1,o_nor,1:nj] ~ dmnorm.vcov(rep(0, nj), Sig_Lphi_O0_O1_init[1:nj,1:nj])
 
   # migration survival adults from BON to LGR
@@ -252,7 +268,8 @@ jags_model_code = function() {
   for (y in 2:ny) {
     
     # egg to parr survival: Beverton-Holt relationship
-    Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(1/(1/alpha[1:nj] + E[y,1:nj]/beta[1:nj])), Sig_Lphi_E_Pb[1:nj,1:nj])
+    phi_E_Pb_dot[y,1:nj] <- 1/(1/alpha[1:nj] + E[y,1:nj]/beta[1:nj])
+    Lphi_E_Pb[y,1:nj] ~ dmnorm.vcov(logit(phi_E_Pb_dot[y,1:nj]) + Lphi_E_Pb_resid[y-1,1:nj] * kappa_phi_E_Pb[1:nj], Sig_Lphi_E_Pb[1:nj,1:nj])
 
     # density-dependent length at end of summer
     lL_Pb[y,1:nj] ~ dmnorm.vcov(omega0[1:nj] + omega1[1:nj] * log((E[y,1:nj]/E_scale)/wul[1:nj]), Sig_lL_Pb[1:nj,1:nj])
@@ -824,8 +841,8 @@ jags_model_code = function() {
     for (j in 1:nj) {
       
       # total summer parr recruitment
-      Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(1/(1/alpha[j] + E[y,j]/beta[j]))
-      Lphi_E_Pb_qresid[y,j] <- pnorm(Lphi_E_Pb[y,j], logit(1/(1/alpha[j] + E[y,j]/beta[j])), 1/sig_Lphi_E_Pb[j]^2)
+      Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(phi_E_Pb_dot[y,j])
+      Lphi_E_Pb_qresid[y,j] <- pnorm(Lphi_E_Pb[y,j], logit(phi_E_Pb_dot[y,j]) + Lphi_E_Pb_resid[y-1,j] * kappa_phi_E_Pb[j], 1/sig_Lphi_E_Pb[j]^2)
 
       # summer mean length
       lL_Pb_resid[y,j] <- lL_Pb[y,j] - (omega0[j] + omega1[j] * log((E[y,j]/10000)/wul[j]))
