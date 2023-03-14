@@ -843,7 +843,8 @@ jags_model_code = function() {
       # total summer parr recruitment
       Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(phi_E_Pb_dot[y,j])
       Lphi_E_Pb_qresid[y,j] <- pnorm(Lphi_E_Pb[y,j], logit(phi_E_Pb_dot[y,j]) + Lphi_E_Pb_resid[y-1,j] * kappa_phi_E_Pb[j], 1/sig_Lphi_E_Pb[j]^2)
-
+      logit(phi_E_Pb_dot2[y,j]) <- logit(phi_E_Pb_dot[y,j]) + kappa_phi_E_Pb[j] * Lphi_E_Pb_resid[y-1,j]
+      
       # summer mean length
       lL_Pb_resid[y,j] <- lL_Pb[y,j] - (omega0[j] + omega1[j] * log((E[y,j]/10000)/wul[j]))
       lL_Pb_qresid[y,j] <- pnorm(lL_Pb[y,j], omega0[j] + omega1[j] * log((E[y,j]/10000)/wul[j]), 1/sig_lL_Pb[j]^2)

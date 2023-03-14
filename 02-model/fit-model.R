@@ -239,7 +239,7 @@ toggle_data_diagnostics(do_lppd, do_pp_check)
 # nodes to monitor for any model
 jags_params = c(
   # reproduction
-  "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", "phi_E_Pb_dot",
+  "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", "phi_E_Pb_dot", "phi_E_Pb_dot2",
 
   # length-related quantities
   "omega0", "omega1", "Sig_lL_Pb", 
