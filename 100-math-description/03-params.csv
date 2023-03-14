@@ -2,7 +2,8 @@ Phase,Symbol,Prior,Eqs.,Description
 1,$\\alpha_j$,"$b(1,1)$",get-phi-E-Pb-dot,Maximum expected egg-to-parr survival rate; Beverton-Holt productivity 
 1,$\\sigma_{\\beta}$,"$\\mathcal{U}(0,5)$",beta-random,Among-population SD of parr capacity not explained by $\\mathrm{WUL}_{j}$
 1,$\\lambda$,"$\\mathcal{N}(0, 1 \\times 10^{-8})$",beta-random,"Expected change in parr capacity per 1 km change in $\\mathrm{WUL}_j$; prior bounded by $(0,\\infty)$"
-1,$\\sigma_{\\phi^{E \\rightarrow P^{b}}_j}$,"$\\mathcal{U}(0,1)$",phi-E-Pb-random,Among-year SD of egg-to-parr survival rate
+1,$\\sigma_{\\phi^{E \\rightarrow P^{b}}_j}$,"$\\mathcal{U}(0,1)$",phi-E-Pb-random,Among-year SD of egg-to-parr survival rate (white noise portion only)
+1,$\\kappa^{E \\rightarrow P^{b}}_j$,"$\\mathcal{U}(-1,1)$",phi-E-Pb-random,Lag-1 autoregressive coefficient for egg-to-parr survival rate
 1,$\\rho_{\\phi^{E \\rightarrow P^{b}}}$,"$\\mathcal{U}(-1,1)$",phi-E-Pb-random,Among-population correlation of egg-to-parr survival rate
 1,"$\\omega_{0,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-L-Pb-dot,Intercept of density-dependent parr size relationship
 1,"$\\omega_{1,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-L-Pb-dot,Slope of density-dependent parr size relationship
@@ -28,9 +29,9 @@ Phase,Symbol,Prior,Eqs.,Description
 1,$\\sigma_{\\phi^{M^{a} \\rightarrow O^{0}}_{o}}$,"$\\mathcal{U}(0,1)$",phi-Ma-O0-random,Among-year SD of migration survival from LGR to ocean
 1,$\\rho_{\\phi^{M^{a} \\rightarrow O^{0}}}$,"$\\mathcal{U}(-1,1)$",phi-Ma-O0-random,Among-origin correlation of migration survival from LGR to ocean
 2,"$\\dot{\\phi}^{O^{0} \\rightarrow O^{1}}_{o=\\mathrm{NOR},j}$","$b(1,1)$",phi-O0-O1-random,Expected first year ocean survival for natural origin fish
-2,$\\sigma_{\\phi^{O^{0} \\rightarrow O^{1}}_{j}}$,"$\\mathcal{U}(0,1)$",phi-O0-O1-random,Among-year SD of first year ocean survival
-2,$\\rho_{\\phi^{O^{0} \\rightarrow O^{1}}}$,"$\\mathcal{U}(-1,1)$",phi-O0-O1-random,Among-population correlation in first year ocean survival
+2,$\\sigma_{\\phi^{O^{0} \\rightarrow O^{1}}_{j}}$,"$\\mathcal{U}(0,1)$",phi-O0-O1-random,Among-year SD of first year ocean survival (white noise portion only)
 2,$\\kappa^{O^{0} \\rightarrow O^{1}}_{j}$,"$\\mathcal{U}(-1,1)$",phi-O0-O1-random,Lag-1 autoregressive coefficient for first year ocean survival
+2,$\\rho_{\\phi^{O^{0} \\rightarrow O^{1}}}$,"$\\mathcal{U}(-1,1)$",phi-O0-O1-random,Among-population correlation in first year ocean survival
 2,"$\\dot{\\phi}^{O^{1} \\rightarrow O^{2}}_{o=\\mathrm{NOR},j}$","$b(60,15)$",,Expected second year ocean survival for natural origin fish
 2,"$\\dot{\\phi}^{O^{2} \\rightarrow O^{3}}_{o=\\mathrm{NOR},j}$","$b(60,15)$",,Expected third year ocean survival for natural origin fish
 2,$\\delta_j$,"$t(0,1.57^{-2}, 7.76)$",get-phi-O-HOR,Log-odds ratio to convert natural origin to hatchery origin ocean survival

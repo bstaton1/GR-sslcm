@@ -319,6 +319,7 @@ gen_initials = function(CHAIN, jags_data) {
     alpha_init = plogis(qlogis(BH_params[,"alpha"]) + rnorm(nj, 0, 0.1))
     lbeta_init = log(BH_params[,"beta"]) + rnorm(nj, 0, 0.1)
     sig_Lphi_E_Pb_init = exp(log(BH_params[,"sig_Lphi_E_Pb"]) + rnorm(nj, 0, 0.05))
+    kappa_phi_E_Pb_init = runif(nj, 0.2, 0.5)
 
     # create random egg-to-parr survival values
     phi_E_Pb = get_phi_E_Pb_obs(jags_data, TRUE, TRUE)
@@ -472,6 +473,7 @@ gen_initials = function(CHAIN, jags_data) {
       alpha = alpha_init,
       lbeta = lbeta_init,
       sig_Lphi_E_Pb = sig_Lphi_E_Pb_init,
+      kappa_phi_E_Pb = kappa_phi_E_Pb_init,
       Lphi_E_Pb = Lphi_E_Pb_init,
       
       # habitat capacity parameters

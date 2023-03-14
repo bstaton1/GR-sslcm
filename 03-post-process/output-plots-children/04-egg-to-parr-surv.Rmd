@@ -5,13 +5,73 @@ editor_options:
 
 # Egg-to-Parr Survival {.tabset .tabset-pills}
 
-## Survival Time Series
+## Survival Time Series {.tabset .tabset-pills}
+
+These figures show the realized time series of egg-to-parr survival that include all sources of variability in red: that explained by Beverton-Holt dynamics and that not explained by it.
+
+### Realized Alone
+
+Just the realized time series shown.
 
 ```{r phi_E_Pb-plots, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
   plot_tseries(post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
                yrs = all_yrs[ts_yrs],
                main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+```
+
+### Realized & BH
+
+The blue shows the time series with variability explained only by Beverton-Holt dynamics.
+
+```{r phi_E_Pb_dot-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
+               yrs = all_yrs[ts_yrs],
+               main = pops[j])
+  
+  # draw on the posterior time series that includes BH prediction only
+  dot_col = "royalblue"
+  dot = post_summ(post, sub_index("^phi_E_Pb_dot[year,pop]", pop = j, year = ts_yrs))
+  polygon(x = c(all_yrs[ts_yrs], rev(all_yrs[ts_yrs])),
+          y = c(dot["2.5%",], rev(dot["97.5%",])),
+          col = scales::alpha(dot_col, 0.15), border = NA)
+  lines(dot["mean",] ~ all_yrs[ts_yrs], col = dot_col, lwd = 2)
+  lines(dot["2.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
+  lines(dot["97.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+```
+
+### Realized & [BH + AR(1)]
+
+The blue shows the time series with variability explained by Beverton-Holt dynamics and the carry-over residual.
+
+```{r phi_E_Pb_dot2-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
+               yrs = all_yrs[ts_yrs],
+               main = pops[j])
+  
+  # draw on the posterior time series that includes BH prediction and the carry over residual from last year
+  dot_col = "royalblue"
+  dot = post_summ(post, sub_index("^phi_E_Pb_dot2[year,pop]", pop = j, year = ts_yrs))
+  polygon(x = c(all_yrs[ts_yrs], rev(all_yrs[ts_yrs])),
+          y = c(dot["2.5%",], rev(dot["97.5%",])),
+          col = scales::alpha(dot_col, 0.15), border = NA)
+  lines(dot["mean",] ~ all_yrs[ts_yrs], col = dot_col, lwd = 2)
+  lines(dot["2.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
+  lines(dot["97.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))

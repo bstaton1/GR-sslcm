@@ -28,10 +28,11 @@ my_boxplot = function(params, ylab = NULL, ticklabs = pops, ylim = NULL, boxfill
 ## Parr Recruitment
 
 ```{r recruit-bxp, fig.width = 8, fig.height = 3.5}
-par(mfrow = c(1,4))
+par(mfrow = c(1,5))
 my_boxplot("^alpha[.]$", "Productivity")
 my_boxplot("^beta[.]$", "Capacity")
 my_boxplot("^sig_Lphi_E_Pb[.]$", "Process SD")
+my_boxplot("^kappa_phi_E_Pb[.]$", "AR(1) Coef.")
 my_boxplot("^rho_Lphi_E_Pb", "Among-pop Correlation", ticklabs = vcov_labels, las = 3)
 ```
 
