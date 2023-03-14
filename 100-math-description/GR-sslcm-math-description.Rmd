@@ -182,10 +182,11 @@ We modeled parr recruitment capacity ($\beta_j$) as a function of this $\mathrm{
 
 where $\lambda$ is the expected change in parr capacity per 1 km change in weighted usable habitat length, and $\sigma_{\beta}$ is the log-normal standard deviation of variability in this relationship not captured by $\mathrm{WUL}$ values.
 
-We modeled realized (i.e., with process noise) egg-to-parr survival as a multivariate logit-normal random variable around the expected value ($\dot{\phi}^{E \rightarrow P^{b}}_{y,j}$) from eq. \@ref(eq:get-phi-E-Pb-dot) with covariance matrix $\Sigma_{\phi^{E \rightarrow P^{b}}}$ (constructed of $\sigma_{\phi^{E \rightarrow P^{b}}_j}$ and $\rho_{\phi^{E \rightarrow P^{b}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
+We modeled realized (i.e., with process noise) egg-to-parr survival as a multivariate logit-normal random variable around the expected value ($\dot{\phi}^{E \rightarrow P^{b}}_{y,j}$) from eq. \@ref(eq:get-phi-E-Pb-dot).
+Rather than assume that inter-annual variability in egg-to-parr survival beyond that explained by density-dependence is completely random across years, we allowed the model to account for serial autocorrelation in egg survival anomalies via a lag-1 autoregressive process [AR(1); coefficient denoted $\kappa^{E \rightarrow P^{b}}_{j}$], wherein the white noise portion of the anomaly has covariance matrix $\Sigma_{\phi^{E \rightarrow P^{b}}}$ (constructed of $\sigma_{\phi^{E \rightarrow P^{b}}_j}$ and $\rho_{\phi^{E \rightarrow P^{b}}}$ following eq. \@ref(eq:generic-Sigma4by4)):
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{E \rightarrow P^{b}}_{y,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{E \rightarrow P^{b}}_{y,1:n_j}\right), \Sigma_{\phi^{E \rightarrow P^{b}}}\right]
+\logit\left(\boldsymbol{\phi}^{E \rightarrow P^{b}}_{y,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{E \rightarrow P^{b}}_{y,1:n_j}\right) + \boldsymbol{\kappa}^{E \rightarrow P^{b}}_{1:n_j} \cdot \left[\logit\left(\boldsymbol{\phi}^{E \rightarrow P^{b}}_{y-1,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{E \rightarrow P^{b}}_{y-1,1:n_j}\right)\right], \Sigma_{\phi^{E \rightarrow P^{b}}} \right\}
 (\#eq:phi-E-Pb-random)
 \end{equation}
 
