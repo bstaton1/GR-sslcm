@@ -61,8 +61,9 @@ jags_data$sig_Mb_obs["2007","spring-mig","NOR","UGR"] = NA
 # add NA indices in the correct locations
 jags_data = append_no_na_indices(jags_data)
 
-# reduce assumed survival past sea lions in the early years
-# jags_data$phi_SL[as.character(1991:2000),] = 0.85
+# set assumed survival past sea lions to 1 in all years
+# past time-trending patterns were causing problems with ocean survival estimation/simulation
+jags_data$phi_SL[2:nrow(jags_data$phi_SL),] = 1
 
 # proportion of spawners by age and population that are female
 # assume 50% female for all fish aged 4 or 5; 0% for age-3
@@ -112,11 +113,11 @@ add_jags_data = append(add_jags_data, list(
 # add hyperparameters of priors on ocean survival parameters
 add_jags_data = append(add_jags_data, list(
   alpha_prior = c(2,8),
-  mu_phi_O0_O1_prior = c(1.5, 8.5),
+  mu_phi_O0_O1_prior = c(1, 9),
   mu_phi_O1_O2_prior = c(60, 40),
   mu_phi_O2_O3_prior = c(70, 30),
-  mu_psi_O1_prior = c(0.5, 9.5),
-  mu_psi_O2_prior = c(8, 2),
+  mu_psi_O1_prior = c(1, 9),
+  mu_psi_O2_prior = c(8.5, 1.5),
   sig_Lphi_E_Pb_prior = 0.5,
   sig_Lphi_O0_O1_prior = 0.15,
   sig_Lpsi_O1_prior = 0.15,
