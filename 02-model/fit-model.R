@@ -113,11 +113,11 @@ add_jags_data = append(add_jags_data, list(
 # add hyperparameters of priors on ocean survival parameters
 add_jags_data = append(add_jags_data, list(
   alpha_prior = c(2,8),
-  mu_phi_O0_O1_prior = c(1.5, 8.5),
+  mu_phi_O0_O1_prior = c(1, 9),
   mu_phi_O1_O2_prior = c(60, 40),
   mu_phi_O2_O3_prior = c(70, 30),
-  mu_psi_O1_prior = c(0.5, 9.5),
-  mu_psi_O2_prior = c(8, 2),
+  mu_psi_O1_prior = c(1, 9),
+  mu_psi_O2_prior = c(8.5, 1.5),
   sig_Lphi_E_Pb_prior = 0.5,
   sig_Lphi_O0_O1_prior = 0.15,
   sig_Lpsi_O1_prior = 0.15,
