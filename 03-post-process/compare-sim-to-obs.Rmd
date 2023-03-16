@@ -69,7 +69,7 @@ all_yrs = as.numeric(rownames(jags_data$phi_SL))
 
 # which is the first year of observation period?
 # may want to use 2001 to cut off years without hatchery supplementation
-fy_obs = which(all_yrs == 2001)
+fy_obs = which(all_yrs == 2000)
 
 # for non sar values, which years correspond to observed and simulated years?
 obs_y = with(jags_data, fy_obs:ny_obs)
