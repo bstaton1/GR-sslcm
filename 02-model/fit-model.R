@@ -17,7 +17,7 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 out_dir = "02-model/model-output"
 
 # include a forward simulation to compare to observed values as a validation?
-do_sim_vs_obs = TRUE
+do_sim_vs_obs = FALSE
 
 # include posterior predictive checks in JAGS code?
 do_pp_check = TRUE
@@ -26,7 +26,7 @@ do_pp_check = TRUE
 do_lppd = FALSE
 
 # specify a scenario name
-scenario = "base"
+scenario = "base-vshort"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -37,12 +37,12 @@ mcmc_length = args[2]
 
 if (is.na(rmd)) {
   rmd = TRUE
-  cat("\n\n'rmd' was not supplied as a command line argument.", rmd, "will be used.")
+  cat("'rmd' was not supplied as a command line argument. '", rmd, "' will be used.\n", sep = "")
 }
 
 if (is.na(mcmc_length)) {
-  mcmc_length = "very_short"
-  cat("\n\n'mcmc_length' was not supplied as a command line argument.", mcmc_length, "will be used.")
+  mcmc_length = "medium"
+  cat("'mcmc_length' was not supplied as a command line argument. '", mcmc_length, "' will be used.\n", sep = "")
 }
 
 ##### STEP 1: PREPARE DATA FOR JAGS #####
@@ -280,7 +280,7 @@ if (do_lppd) jags_params = c(jags_params, lppd_params)
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "very_short" = 100, "short" = 2000, "medium" = 24000, "long" = 50000, "very_long" = 100000),
+  n_post = switch(mcmc_length,  "very_short" = 50,  "short" = 2000, "medium" = 24000, "long" = 50000, "very_long" = 100000),
   n_burn = switch(mcmc_length,  "very_short" = 5,   "short" = 1000, "medium" = 20000, "long" = 30000, "very_long" = 50000),
   n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 10,    "very_long" = 25),
   n_chain = switch(mcmc_length, "very_short" = 4,   "short" = 4,    "medium" = 4,     "long" = 4,     "very_long" = 4),
@@ -295,9 +295,13 @@ jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data = jags_data)
 ##### STEP 6: CALL THE JAGS SAMPLER #####
 
 # print a start message
-cat("\n\nRunning JAGS on Multi-Population Model")
+cat("Running JAGS on Multi-Population Model\n")
+cat("  MCMC Length Selected: ", mcmc_length, "\n", sep = "")
+cat("  Simulating years for validation: ", ifelse(do_sim_vs_obs, "Yes", "No"), "\n", sep = "")
+cat("  Simulating data for posterior predictive check: ", ifelse(do_pp_check, "Yes", "No"), "\n", sep = "")
+cat("  Monitoring log posterior predictive density for WAIC: ", ifelse(do_lppd, "Yes", "No"), "\n", sep = "")
 starttime = Sys.time()
-cat("\nMCMC started:", format(starttime))
+cat("  MCMC started:", format(starttime), "\n")
 
 # call JAGS
 post = jags.basic(
@@ -316,8 +320,8 @@ post = jags.basic(
 
 # print a stop message
 stoptime = Sys.time()
-cat("\nMCMC ended:", format(stoptime))
-cat("\nMCMC elapsed:", format(round(stoptime - starttime, 2)))
+cat("  MCMC ended:", format(stoptime), "\n")
+cat("  MCMC elapsed:", format(round(stoptime - starttime, 2)), "\n")
 
 ##### STEP 7: PROCESS COVARIANCE MATRICES #####
 
@@ -326,7 +330,7 @@ cat("\nMCMC elapsed:", format(round(stoptime - starttime, 2)))
 # postpack::vcov_decomp() does this for all posterior samples
 # do this here so these quantities can be easily compared across models
 
-cat("\nDecomposing all covariance matrices")
+cat("Decomposing all covariance matrices\n")
 
 # Convert the precision/covariance matrices monitored by JAGS into the marginal SD and correlation matrix terms
 suppressMessages({
@@ -418,9 +422,9 @@ out_obj = list(
   jags_dims = jags_dims,
   do_lppd = do_lppd,
   do_pp_check = do_pp_check,
+  do_sim_vs_obs = do_sim_vs_obs,
   jags_time = c(starttime = format(starttime), stoptime = format(stoptime), elapsed = format(round(stoptime - starttime,2))),
   post = post,
-  last_yr = last_yr,
   scenario = scenario
 )
 
@@ -428,7 +432,7 @@ out_obj = list(
 out_file = paste0("output-", scenario, ".rds")
 
 # save the file
-cat("\nSaving rds Output")
+cat("Saving rds Output\n")
 saveRDS(out_obj, file.path(out_dir, out_file))
 
 # delete the text file that contains the JAGS code
@@ -442,7 +446,7 @@ if (rmd) {
   starttime = Sys.time()
   
   # print a progress message
-  cat("\nRendering Rmd Output")
+  cat("Rendering Rmd Output\n")
   
   # set working dir to post-processing directory
   setwd("03-post-process")
@@ -470,7 +474,7 @@ if (rmd) {
 }
 
 # render the simulation vs. observed time series plots if requested and applicable
-if (rmd & last_yr > 2019) {
+if (rmd & do_sim_vs_obs) {
   # start a timer, this can take a while
   starttime = Sys.time()
   
