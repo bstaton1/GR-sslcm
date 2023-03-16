@@ -163,6 +163,12 @@ toggle_rho_estimation("rho_Lphi_Sb_Sa")    # pre-spawn survival process noise
 # toggle on/off the calculation of pp checks and lppd
 toggle_data_diagnostics(do_lppd, do_pp_check)
 
+# toggle Rb_init for HOR fish
+# (this is only for the sim vs. obs)
+if (do_sim_vs_obs) {
+  toggle_HOR_Rb_init()
+}
+
 ##### STEP 3: SELECT NODES TO MONITOR #####
 
 # nodes to monitor for any model
