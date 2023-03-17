@@ -328,3 +328,18 @@ toggle_data_diagnostics = function(do_lppd = FALSE, do_ppd_check = FALSE, jags_f
   }
   
 }
+
+toggle_HOR_Rb_init = function(jags_file = "02-model/model.txt") {
+  # read in the existing jags model code
+  # has Rb[y,k,o_hor,j] <- 0 for the init years
+  model_lines = readLines(jags_file)
+  
+  # find the line numbers where Rb in init years is defined
+  which_matches = stringr::str_which(model_lines, "^[:space:]*Rb\\[y,k,o_hor,j\\] <- 0")
+  
+  # replace the "<- 0" with a prior to turn on the estimation of the Rb params in these years
+  model_lines[which_matches] = stringr::str_replace(model_lines[which_matches], "<- 0", "~ dunif(0, max_Rb_init[k])")
+  
+  # write over the old jags model code
+  writeLines(model_lines, jags_file)
+}

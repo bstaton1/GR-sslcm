@@ -314,6 +314,7 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     
     ### DIMENSIONAL VARIABLES ###
     ny = ny,        # number of tracked brood years
+    ny_obs = ny,    # number of tracked brood years
     nk = nk,        # number of ages of return
     nko = nko,    # number of age/origin classes of return
     ni = ni,        # number of life history strategies
@@ -427,7 +428,7 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
   names(main_list) = pops
   
   # extract the dimension variables from one of the populations
-  dims_list = main_list[[1]][c("ny", "nk", "nko", "ni", "no", "kmin", "kmax")]
+  dims_list = main_list[[1]][c("ny", "ny_obs", "nk", "nko", "ni", "no", "kmin", "kmax")]
   
   # add on nj to dimensions: number of populations
   dims_list = append(dims_list, list(nj = length(pops)))
@@ -562,4 +563,103 @@ append_no_na_indices = function(jags_data) {
   
   # return the output list: now ready for JAGS
   return(out)
+}
+
+append_values_for_sim = function(jags_data) {
+  
+  # last year in the observed time period
+  last_obs_yr = max(as.numeric(rownames(jags_data$Pa_obs)))
+  
+  # how many years in the simulated period
+  ny_sim = jags_data$ny
+  
+  # last year including the simulated period
+  last_yr = ny_sim + last_obs_yr
+  
+  # bump up the total number of years to include the simulated period
+  jags_data$ny = jags_data$ny + ny_sim
+  
+  ### KNOWN VALUES SOURCE 1: HATCHERY SMOLT RELEASES ###
+  # extract the values in the observed period
+  x = jags_data$Mb_obs
+  
+  # duplicate values for brood years not in data set
+  take_yrs = as.character(last_obs_yr + c(-3,-2))
+  fill_yrs = as.character(last_obs_yr + c(-1, 0))
+  x[fill_yrs,"spring-mig","HOR",] = x[take_yrs,"spring-mig","HOR",]
+  
+  # duplicate whole object and change year names
+  y = x
+  dimnames(y)[[1]] = 1:ny_sim + last_obs_yr
+  
+  # insert a value in the old "year-0" position
+  y[as.character(last_obs_yr + 1),"spring-mig","HOR",] = x[jags_data$ny_obs,"spring-mig","HOR",]
+  
+  # append with observed period to be passed to the model
+  jags_data$Mb_obs = abind(x, y, along = 1)
+  
+  ### KNOWN VALUES SOURCE X: WEIR REMOVALS ###
+  
+  # extract the values from the observed period
+  x = jags_data$B
+  
+  # insert a value in the old "year-0" position
+  x[1,,,] = jags_data$B[jags_data$ny_obs,,,]
+  
+  # change year names
+  dimnames(x)[[1]] = 1:ny_sim + last_obs_yr
+  
+  # append with observed period to be passed to the model
+  jags_data$B = abind(jags_data$B, x, along = 1)
+  
+  ### KNOWN VALUES SOURCE X: STRAY YEARS ###
+  
+  jags_data$stray_yrs[,c("CAT","LOS","UGR")] = NA
+  fill_yrs = (max(jags_data$stray_yrs[,"MIN"], na.rm = TRUE) + 1):jags_data$ny
+  fill = matrix(NA, length(fill_yrs), jags_data$nj)
+  colnames(fill) = colnames(jags_data$stray_yrs)
+  fill[,"MIN"] = fill_yrs
+  jags_data$stray_yrs = rbind(jags_data$stray_yrs[-(1:jags_data$kmax),], fill)
+  jags_data$n_stray_yrs = apply(jags_data$stray_yrs, 2, function(x) sum(!is.na(x)))
+  
+  fill = matrix(2:6, 5, jags_data$nj)
+  colnames(fill) = colnames(jags_data$not_stray_yrs)
+  jags_data$not_stray_yrs = rbind(fill, jags_data$not_stray_yrs)
+  fill = matrix(fill_yrs, length(fill_yrs), jags_data$nj)
+  colnames(fill) = colnames(jags_data$not_stray_yrs)
+  fill[,"MIN"] = NA
+  jags_data$not_stray_yrs = rbind(jags_data$not_stray_yrs, fill)
+  jags_data$n_not_stray_yrs = apply(jags_data$not_stray_yrs, 2, function(x) sum(!is.na(x)))
+  
+  ### KNOWN VALUES SOURCE X: SURVIVAL PAST SEA LIONS ###
+  
+  # homogenize and extract the values from the observed period
+  jags_data$phi_SL["2000",] = jags_data$phi_SL["2001",]
+  x = jags_data$phi_SL
+  
+  # insert a value in the old "year-0" position
+  x[1,] = jags_data$phi_SL["2001",]
+  
+  # change year names
+  dimnames(x)[[1]] = 1:ny_sim + last_obs_yr
+  
+  # append with observed period to be passed to the model
+  jags_data$phi_SL = abind(jags_data$phi_SL, x, along = 1)
+  
+  ### KNOWN VALUES SOURCE X: HARVEST RATES ###
+  
+  # extract the values from the observed period
+  x = jags_data$U
+  
+  # insert a value in the old "year-0" position
+  x[1,,] = x[2,,]
+  
+  # change year names
+  dimnames(x)[[1]] = 1:ny_sim + last_obs_yr
+  
+  # append with observed period to be passed to the model
+  jags_data$U = abind(jags_data$U, x, along = 1)
+  
+  # return the updated jags_data object
+  return(jags_data)
 }
