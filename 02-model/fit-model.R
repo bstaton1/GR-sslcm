@@ -144,22 +144,6 @@ jags_source = "02-model/model-code.R"
 jags_file = "02-model/model.txt"
 write_model_code(jags_source, jags_file)
 
-# toggle on the estimation of various rho terms
-# this function alters the contents of jags_file to
-# replace the appropriate "rho <- 0" with "rho ~ dunif(-1, 1)
-# i.e., defines which components should have non-zero covariance
-toggle_rho_estimation("rho_Lphi_E_Pb")     # parr recruitment process noise
-toggle_rho_estimation("rho_lL_Pb")         # mean length at end of summer process noise
-toggle_rho_estimation("rho_Lpi")           # parr apportionment to LH type process noise
-toggle_rho_estimation("rho_Lphi_Pa_Mb")    # parr -> smolt overwinter survival process noise (both LH types)
-toggle_rho_estimation("rho_lDelta_L_Pb_Mb")# growth factor from summer mean length to spring mean length
-toggle_rho_estimation("rho_Lphi_Mb_Ma")    # migration to LGR survival process noise
-toggle_rho_estimation("rho_Lphi_Ma_O0")    # migration from LGR to ocean survival process noise
-toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival process noise
-toggle_rho_estimation("rho_Lpsi_O.")       # all maturity process noise
-toggle_rho_estimation("rho_Lphi_Rb_Ra")    # migration BON to LGR survival process noise
-toggle_rho_estimation("rho_Lphi_Sb_Sa")    # pre-spawn survival process noise
-
 # toggle on/off the calculation of pp checks and lppd
 toggle_data_diagnostics(do_lppd, do_pp_check)
 
