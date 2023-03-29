@@ -193,7 +193,6 @@ jags_model_code = function() {
     
     # egg to parr survival: Beverton-Holt relationship
     phi_E_Pb_dot[y,1:nj] <- 1/(1/alpha[1:nj] + E[y,1:nj]/beta[1:nj])
-    logit(phi_E_Pb_dot2[y,1:nj]) <- logit(phi_E_Pb_dot[y,1:nj]) + kappa_phi_E_Pb[1:nj] * Lphi_E_Pb_resid[y-1,1:nj]
     Lphi_E_Pb[y,1:nj] ~ dmnorm(logit(phi_E_Pb_dot[y,1:nj]) + Lphi_E_Pb_resid[y-1,1:nj] * kappa_phi_E_Pb[1:nj], Tau_Lphi_E_Pb[1:nj,1:nj])
 
     # density-dependent length at end of summer
@@ -771,6 +770,7 @@ jags_model_code = function() {
       
       # total summer parr recruitment
       Lphi_E_Pb_resid[y,j] <- Lphi_E_Pb[y,j] - logit(phi_E_Pb_dot[y,j])
+      logit(phi_E_Pb_dot2[y,j]) <- logit(phi_E_Pb_dot[y,j]) + kappa_phi_E_Pb[j] * Lphi_E_Pb_resid[y-1,j]
       
       # summer mean length
       lL_Pb_resid[y,j] <- lL_Pb[y,j] - (omega0[j] + omega1[j] * log((E[y,j]/10000)/wul[j]))
