@@ -125,7 +125,8 @@ add_jags_data = append(add_jags_data, list(
   sig_Lphi_O0_O1_prior = 0.15,
   sig_Lpsi_O1_prior = 0.15,
   sig_Lpsi_O2_prior = 0.35,
-  dt_upr = 2
+  dt_upr = 2,
+  isw_df = 10
 ))
 
 # append all of this additional content to the data object
