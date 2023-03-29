@@ -266,11 +266,11 @@ if (do_lppd) jags_params = c(jags_params, lppd_params)
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "very_short" = 50,  "short" = 2000, "medium" = 24000, "long" = 50000, "very_long" = 100000),
-  n_burn = switch(mcmc_length,  "very_short" = 5,   "short" = 1000, "medium" = 20000, "long" = 30000, "very_long" = 50000),
+  n_post = switch(mcmc_length,  "very_short" = 100,  "short" = 2000, "medium" = 24000, "long" = 50000, "very_long" = 100000),
+  n_burn = switch(mcmc_length,  "very_short" = 10,  "short" = 1000, "medium" = 20000, "long" = 30000, "very_long" = 50000),
   n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 10,    "very_long" = 25),
-  n_chain = switch(mcmc_length, "very_short" = 4,   "short" = 4,    "medium" = 4,     "long" = 4,     "very_long" = 4),
-  n_adapt = switch(mcmc_length, "very_short" = 10,  "short" = 100,  "medium" = 3000,  "long" = 3000,  "very_long" = 5000),
+  n_chain = switch(mcmc_length, "very_short" = 2,   "short" = 2,    "medium" = 4,     "long" = 4,     "very_long" = 4),
+  n_adapt = switch(mcmc_length, "very_short" = 100,  "short" = 10,  "medium" = 1000,  "long" = 3000,  "very_long" = 5000),
   parallel = TRUE
 )
 
