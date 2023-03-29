@@ -26,7 +26,7 @@ do_pp_check = TRUE
 do_lppd = FALSE
 
 # specify a scenario name
-scenario = "base-vshort"
+scenario = "scaled-wishart"
 
 # handle command line arguments
 # run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
@@ -41,7 +41,7 @@ if (is.na(rmd)) {
 }
 
 if (is.na(mcmc_length)) {
-  mcmc_length = "medium"
+  mcmc_length = "short"
   cat("'mcmc_length' was not supplied as a command line argument. '", mcmc_length, "' will be used.\n", sep = "")
 }
 
