@@ -308,6 +308,73 @@ get_BH_params = function(jags_data) {
   return(BH_params)
 }
 
+# simulate a covariance matrix
+# create a vcov matrix, supply the standard deviation vect (sqrt(diag(vcov))), and a type of correlation
+sim_Sigma = function(sig, correlation) {
+  
+  # other functions
+  cor_fns = list(
+    none = function(n) {
+      m = matrix(runif(n^2, 0, 0), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    low = function(n) {
+      m = matrix(runif(n^2, 0.01, 0.29), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    moderate = function(n) {
+      m = matrix(runif(n^2, 0.3, 0.49), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    high = function(n) {
+      m = matrix(runif(n^2, 0.5, 0.95), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    near_perfect = function(n) {
+      m = matrix(runif(n^2, 0.96, 0.99999), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    }
+  )
+  
+  cor2cov = function(cor, sig) {
+    n = length(sig)
+    cov = matrix(NA, n, n)
+    for (i in 1:n) {
+      for (j in 1:n) {
+        cov[i,j] = sig[i] * sig[j] * cor[i,j]
+      }
+    }
+    cov
+  }
+  
+  if (!(correlation %in% names(cor_fns))) {
+    stop("invalid correlation type specified. The accepted values are: \n\n  ", 
+         paste(paste(paste0("'", names(cor_fns), "'"), c(rep(", ", length(names(cor_fns)) - 2), ", or ", ""), sep = ""), collapse = "")
+    )
+  }
+  
+  # how many elements  
+  n = length(sig)
+  
+  # continue creating matrices until one is found that's positive definite
+  cor = cor_fns[[correlation]](length(sig))
+  Sigma = cor2cov(cor, sig)
+  while(!matrixcalc::is.positive.definite(Sigma)) {
+    Sigma = cor2cov(cor_fns[[correlation]](length(sig)), sig)
+  }
+  Sigma
+}
+
 gen_initials = function(CHAIN, jags_data) {
   
   with(jags_data, {
