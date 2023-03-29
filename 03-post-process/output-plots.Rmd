@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base"
+    value: "scaled-wishart"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
@@ -20,7 +20,7 @@ params:
     value: FALSE
   include_mcmc_diags:
     label: "Include MCMC Diagnostic Output?"
-    value: TRUE
+    value: FALSE
   include_fit_to_data:
     label: "Include Model Fit Output?"
     value: TRUE
@@ -41,19 +41,19 @@ params:
     value: TRUE
   include_rho_params:
     label: "Include Process Model Correlation Output?"
-    value: TRUE
+    value: FALSE
   include_noise_term_diags:
     label: "Include Noise Term Diagnostic Output?"
-    value: TRUE
+    value: FALSE
   include_param_summaries:
     label: "Include Posterior Boxplot Output?"
-    value: TRUE
+    value: FALSE
   include_jags_info:
     label: "Include JAGS Code/Data?"
     value: TRUE
   include_post_v_prior:
     label: "Include Posterior vs. Prior Densities?"
-    value: TRUE
+    value: FALSE
 editor_options: 
   chunk_output_type: console
 ---
