@@ -158,11 +158,11 @@ if (do_sim_vs_obs) {
 # nodes to monitor for any model
 jags_params = c(
   # reproduction
-  "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", "phi_E_Pb_dot", "phi_E_Pb_dot2",
+  "alpha", "beta", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", "phi_E_Pb_dot", "phi_E_Pb_dot2",
 
   # length-related quantities
-  "omega0", "omega1", "Sig_lL_Pb", 
-  "theta0", "theta1", "Sig_lDelta_L_Pb_Mb", "tau0", "tau1",
+  "omega0", "omega1", 
+  "theta0", "theta1", "tau0", "tau1",
   
   # overwinter survival coefficients
   "gamma0", "gamma1",
@@ -171,11 +171,6 @@ jags_params = c(
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_O0",
   "mu_psi_O1", "mu_psi_O2", "mu_phi_Sb_Sa",
   "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
-  
-  # hyperparameters: inter-annual sd
-  "Sig_Lpi", "Sig_Lphi_Pa_Mb", "Sig_Lphi_Mb_Ma", "Sig_Lphi_Ma_O0",
-  "Sig_Lpsi_O1", "Sig_Lpsi_O2", "Sig_Lphi_Sb_Sa",
-  "Sig_Lphi_O0_O1", "Sig_Lphi_Rb_Ra",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
@@ -256,8 +251,15 @@ prior_params = c(
   "sig_Lpsi_O1_pr", "sig_Lpsi_O2_pr"
 )
 
+# nodes for Tau matrices
+Tau_params = c(
+  "Tau_Lphi_E_Pb", "Tau_lL_Pb", "Tau_Lpi", "Tau_Lphi_Pa_Mb", "Tau_lDelta_L_Pb_Mb", 
+  "Tau_Lphi_Mb_Ma", "Tau_Lphi_Ma_O0", "Tau_Lphi_O0_O1", "Tau_Lpsi_O1", "Tau_Lpsi_O2",
+  "Tau_Lphi_Rb_Ra", "Tau_Lphi_Sb_Sa"
+)
+
 # add these additional nodes if included in JAGS model
-jags_params = c(jags_params, prior_params)
+jags_params = c(jags_params, prior_params, Tau_params)
 if (do_pp_check) jags_params = c(jags_params, pp_check_params)
 if (do_lppd) jags_params = c(jags_params, lppd_params)
 
