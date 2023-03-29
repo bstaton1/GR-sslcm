@@ -311,89 +311,33 @@ cat("  MCMC elapsed:", format(round(stoptime - starttime, 2)), "\n")
 
 ##### STEP 7: PROCESS COVARIANCE MATRICES #####
 
-# decompose all covariance matrices ("^Sig.+" nodes)
-# into an SD vector and a correlation matrix
-# postpack::vcov_decomp() does this for all posterior samples
-# do this here so these quantities can be easily compared across models
+cat("Decomposing all Precision Matrices\n")
 
-cat("Decomposing all covariance matrices\n")
+# a function to get the posterior of the vcov components (sig and rhos) from a precision matrix
+process_Tau = function(Tau_name) {
+  cat("  Precision Matrix:", Tau_name)
+  suppressMessages({
+    vcov_decomp(
+      post, param = Tau_name, invert = TRUE,
+      sigma_base_name = stringr::str_replace(Tau_name, "Tau", "sig"),
+      rho_base_name = stringr::str_replace(Tau_name, "Tau", "rho")
+    )
+  })
+}
 
-# Convert the precision/covariance matrices monitored by JAGS into the marginal SD and correlation matrix terms
-suppressMessages({
-  Sig_Lphi_E_Pb = vcov_decomp(post, "Sig_Lphi_E_Pb", sigma_base_name = "sig_Lphi_E_Pb", rho_base_name = "rho_Lphi_E_Pb")
-  Sig_lL_Pb = vcov_decomp(post, "Sig_lL_Pb", sigma_base_name = "sig_lL_Pb", rho_base_name = "rho_lL_Pb")
-  Sig_Lpi = vcov_decomp(post, "Sig_Lpi", sigma_base_name = "sig_Lpi", rho_base_name = "rho_Lpi")
-  Sig_Lphi_Pa_Mb1 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,1]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
-  Sig_Lphi_Pa_Mb2 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,2]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
-  Sig_lDelta_L_Pb_Mb = vcov_decomp(post, "Sig_lDelta_L_Pb_Mb", sigma_base_name = "sig_lDelta_L_Pb_Mb", rho_base_name = "rho_lDelta_L_Pb_Mb")
-  Sig_Lphi_Mb_Ma1 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,1]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
-  Sig_Lphi_Mb_Ma2 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,2]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
-  Sig_Lphi_Ma_O0 = vcov_decomp(post, "Sig_Lphi_Ma_O0", sigma_base_name = "sig_Lphi_Ma_O0", rho_base_name = "rho_Lphi_Ma_O0")
-  Sig_Lphi_O0_O1 = vcov_decomp(post, "Sig_Lphi_O0_O1", sigma_base_name = "sig_Lphi_O0_O1", rho_base_name = "rho_Lphi_O0_O1")
-  Sig_Lpsi_O1_1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1[.,.,1]"), "Sig_Lpsi_O1", sigma_base_name = "sig_Lpsi_O1", rho_base_name = "rho_Lpsi_O1")
-  Sig_Lpsi_O1_2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1[.,.,2]"), "Sig_Lpsi_O1", sigma_base_name = "sig_Lpsi_O1", rho_base_name = "rho_Lpsi_O1")
-  Sig_Lpsi_O2_1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2[.,.,1]"), "Sig_Lpsi_O2", sigma_base_name = "sig_Lpsi_O2", rho_base_name = "rho_Lpsi_O2")
-  Sig_Lpsi_O2_2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2[.,.,2]"), "Sig_Lpsi_O2", sigma_base_name = "sig_Lpsi_O2", rho_base_name = "rho_Lpsi_O2")
-  Sig_Lphi_Rb_Ra = vcov_decomp(post, "Sig_Lphi_Rb_Ra", sigma_base_name = "sig_Lphi_Rb_Ra", rho_base_name = "rho_Lphi_Rb_Ra")
-  Sig_Lphi_Sb_Sa = vcov_decomp(post, "Sig_Lphi_Sb_Sa", sigma_base_name = "sig_Lphi_Sb_Sa", rho_base_name = "rho_Lphi_Sb_Sa")
-})
+# extract the names of all Tau nodes
+Tau_names = match_params(post, "^Tau", type = "base_only")
 
-# update node names for quantities that have a third dimension to the covariance matrix (origin or LH type)
-Sig_Lphi_Pa_Mb1 = add_index(Sig_Lphi_Pa_Mb1, c("sig", "rho"), 1)
-Sig_Lphi_Pa_Mb2 = add_index(Sig_Lphi_Pa_Mb2, c("sig", "rho"), 2)
-Sig_Lphi_Mb_Ma1 = add_index(Sig_Lphi_Mb_Ma1, c("sig", "rho"), 1)
-Sig_Lphi_Mb_Ma2 = add_index(Sig_Lphi_Mb_Ma2, c("sig", "rho"), 2)
-Sig_Lpsi_O1_1 = add_index(Sig_Lpsi_O1_1, c("sig", "rho"), 1)
-Sig_Lpsi_O1_2 = add_index(Sig_Lpsi_O1_2, c("sig", "rho"), 2)
-Sig_Lpsi_O2_1 = add_index(Sig_Lpsi_O2_1, c("sig", "rho"), 1)
-Sig_Lpsi_O2_2 = add_index(Sig_Lpsi_O2_2, c("sig", "rho"), 2)
+# apply the above function to each one
+Sig_components = lapply(Tau_names, function(x) {out = process_Tau(x); cat("\n"); return(out)})
 
-# make the labels/indices for which elements of the vcov matrices contain unique covariances
-# no point in summarizing/displaying both off-diagonal triangles
-dummy_cols = matrix(rep(1:jags_data$nj, each = jags_data$nj), jags_data$nj, jags_data$nj)
-dummy_rows = matrix(rep(1:jags_data$nj, jags_data$nj), jags_data$nj, jags_data$nj)
-vcov_cols = dummy_cols[lower.tri(dummy_cols)]
-vcov_rows = dummy_rows[lower.tri(dummy_rows)]
-vcov_indices = paste0("[", vcov_rows, ",", vcov_cols, "(,.)?]")
+# combine with other posterior samples
+Sig_components = lapply(Sig_components, as.matrix)
+Sig_components = do.call(cbind, Sig_components)
+post = post_bind(post, Sig_components)
 
-# subset out only the unique elements
-Sig_Lphi_E_Pb = post_subset(Sig_Lphi_E_Pb, c("sig", paste0("rho.+", vcov_indices)))
-Sig_lL_Pb = post_subset(Sig_lL_Pb, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpi = post_subset(Sig_Lpi, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Pa_Mb1 = post_subset(Sig_Lphi_Pa_Mb1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Pa_Mb2 = post_subset(Sig_Lphi_Pa_Mb2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_lDelta_L_Pb_Mb = post_subset(Sig_lDelta_L_Pb_Mb, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Mb_Ma1 = post_subset(Sig_Lphi_Mb_Ma1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Mb_Ma2 = post_subset(Sig_Lphi_Mb_Ma2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Ma_O0 = post_subset(Sig_Lphi_Ma_O0, c("sig", "rho.+"))
-Sig_Lphi_O0_O1 = post_subset(Sig_Lphi_O0_O1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O1_1 = post_subset(Sig_Lpsi_O1_1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O1_2 = post_subset(Sig_Lpsi_O1_2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O2_1 = post_subset(Sig_Lpsi_O2_1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O2_2 = post_subset(Sig_Lpsi_O2_2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Rb_Ra = post_subset(Sig_Lphi_Rb_Ra, c("sig", "rho.+"))
-Sig_Lphi_Sb_Sa = post_subset(Sig_Lphi_Sb_Sa, c("sig", paste0("rho.+", vcov_indices)))
-
-# combine these derived posterior samples with the main object
-post = post_bind(post, Sig_Lphi_E_Pb)
-post = post_bind(post, Sig_lL_Pb)
-post = post_bind(post, Sig_lDelta_L_Pb_Mb)
-post = post_bind(post, Sig_Lpi)
-post = post_bind(post, Sig_Lphi_Pa_Mb1)
-post = post_bind(post, Sig_Lphi_Pa_Mb2)
-post = post_bind(post, Sig_Lphi_Mb_Ma1)
-post = post_bind(post, Sig_Lphi_Mb_Ma2)
-post = post_bind(post, Sig_Lphi_Ma_O0)
-post = post_bind(post, Sig_Lphi_O0_O1)
-post = post_bind(post, Sig_Lpsi_O1_1)
-post = post_bind(post, Sig_Lpsi_O1_2)
-post = post_bind(post, Sig_Lpsi_O2_1)
-post = post_bind(post, Sig_Lpsi_O2_2)
-post = post_bind(post, Sig_Lphi_Rb_Ra)
-post = post_bind(post, Sig_Lphi_Sb_Sa)
-
-# remove all covariance matrix nodes: no longer needed
-post = suppressMessages(post_remove(post, "^Sig", ask = FALSE))
+# remove all precision matrix nodes: no longer needed
+post = suppressMessages(post_remove(post, "^Tau", ask = FALSE))
 
 ##### STEP 8: SAVE THE OUTPUT #####
 
