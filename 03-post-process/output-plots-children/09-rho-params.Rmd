@@ -3,63 +3,91 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Correlation Parameters
+# Correlation Parameters {.tabset .tabset-pills}
 
-```{r rho_plot, fig.width = 6, fig.height = 7}
-# get the names of all rho parameters
-# these are elements of a correlation matrix
-# but because the rho term is the same for all population pairs, it is sufficient 
-# to summarize just one element from each matrix
-rho_params = c(
-  match_params(post, "rho_.+[2,1]"),
-  match_params(post, "rho_.+[2,1,1]"),
-  match_params(post, "rho_.+[2,1,2]")
+## Summary Across Processes
+
+```{r summarize-rho-means}
+# get posterior summaries of the mean correlation across all pop pairs
+# for each process separately
+rho_params1 = match_params(post, "rho", type = "base_only")
+rho_params2 = match_params(post, "rho_.+_pr", type = "base_only")
+rho_params = rho_params1[!(rho_params1 %in% rho_params2)]
+f = function(p) {
+  x = rowMeans(post_subset(post, p, matrix = TRUE))
+  c(mean = mean(x), sd = sd(x), quantile(x, c(0.1, 0.25, 0.5, 0.75, 0.9)))
+}
+rho_mean_out = t(sapply(rho_params, f))
+rho_mean_out = rho_mean_out[order(rho_mean_out[,"mean"]),]
+
+# assign names to the different rho parameters
+rho_labels = c(
+  "rho_Lphi_E_Pb" = "Egg-to-Parr Survival",
+  "rho_Lphi_O0_O1" = "Yr1 Ocean Survival",
+  "rho_Lpsi_O1" = "Pr(Mature Age-3)",
+  "rho_Lpsi_O2" = "Pr(Mature Age-4)",
+  "rho_lDelta_L_Pb_Mb" = "'Growth' Factor",
+  "rho_Lphi_Mb_Ma" = "Trib. to LGR Survival",
+  "rho_lL_Pb" = "Mean Parr Length",
+  "rho_Lphi_Pa_Mb" = "Overwinter Survival",
+  "rho_Lphi_Sb_Sa" = "Pre-spawn Survival",
+  "rho_Lphi_Rb_Ra" = "BON -> UGR Survival",
+  "rho_Lpi" = "Pr(Fall Migrant)",
+  "rho_Lphi_Ma_O0" = "LGR -> Ocean Survival"
 )
+```
 
-# calculate/format posterior summaries
-rho_summs = t(post_summ(post, rho_params, probs = c(0.025, 0.25, 0.5, 0.75, 0.975)))
-rho_summs = as.data.frame(rho_summs)
-rho_summs = cbind(param = rownames(rho_summs), rho_summs)
-rownames(rho_summs) = NULL
+Posterior summaries of the correlation matrices for all process model components that used a multivariate (logit- or log-) normal distribution model inter-annual variability.
+All processes assumed covariance among population pairs except "LGR to Ocean" and "BON to LGR", which had equal values for all populations but covaried across origin types.
 
-# make prettier names for each term
-rho_names = c(
-  "rho_Lphi_E_Pb[2,1]" = "Egg-to-Parr Survival",
-  "rho_lL_Pb[2,1]" = "Summer Mean Length",
-  "rho_lDelta_L_Pb_Mb[2,1]" = "Summer to Spring 'Growth Factor'",
-  "rho_Lpi[2,1]" = "Mig. Strategy Apportionment",
-  "rho_Lphi_Ma_O0[2,1]" = "LGR to Ocean Survival",
-  "rho_Lphi_O0_O1[2,1]" = "Yr1 Ocean Survival",
-  "rho_Lphi_Rb_Ra[2,1]" = "BON to LGR Survival",
-  "rho_Lphi_Sb_Sa[2,1]" = "Pre-spawn Survival",
-  "rho_Lphi_Pa_Mb[2,1,1]" = "Overwinter Survival (Fall)",
-  "rho_Lphi_Pa_Mb[2,1,2]" = "Overwinter Survival (Spring)",
-  "rho_Lphi_Mb_Ma[2,1,1]" = "Trib to LGR Survival (NOR)",
-  "rho_Lphi_Mb_Ma[2,1,2]" = "Trib to LGR Survival (HOR)",
-  "rho_Lpsi_O1[2,1,1]" = "Age-3 Maturation (NOR)",
-  "rho_Lpsi_O1[2,1,2]" = "Age-3 Maturation (HOR)",
-  "rho_Lpsi_O2[2,1,1]" = "Age-4 Maturation (NOR)",
-  "rho_Lpsi_O2[2,1,2]" = "Age-4 Maturation (HOR)"
-  )
-rho_summs$name = rho_names[rho_summs$param]
+Notation:
 
-# reorder by decreasing mean correlation
-rho_summs = rho_summs[order(rho_summs$mean, decreasing = TRUE),]
-at_y = nrow(rho_summs):1
+* Blue: Mean of all population pairs ("+" = posterior mean, thick lines = 50% CRI, thin lines = 80% CRI)
+* Red: Individual population pairs ("+" = posterior mean, lines = 50% CRI)
+* Grey: Prior distribution (95%, 80%, and 50% CRIs in increasing darkness)
 
-# use different colors for correlations that are between origins vs. between populations
-col = ifelse(rho_summs$param %in% c("rho_Lphi_Ma_O0[2,1]", "rho_Lphi_Rb_Ra[2,1]"), "red", "black")
+```{r rho-mean-plot, fig.width = 5, fig.height = 5}
+# plot to show summary of correlation parameters across processes
+# mean across pairs shown as blue
+# individual population pairs shown as red
 
-# make the plot
-par(lend = "square", mar = c(3,10,1,1), tcl = -0.15, mgp = c(1.5,0.35,0))
-plot(1,1, type = "n", xlim = c(-1,1), ylim = c(1,nrow(rho_summs)), xlab = "Correlation", ylab = "", yaxt = "n")
+# set up empty plotting region
+par(mar = c(2,8,1,1), cex.axis = 0.8, lend = "square", tcl = -0.15, mgp = c(2,0.35,0), yaxs = "i", lend = "square", ljoin ="mitre")
+mp = barplot(rho_mean_out[,"mean"], 
+             horiz = TRUE, xlim = c(-1,1),
+             names.arg = rho_labels[rownames(rho_mean_out)],
+             las = 1, col = "white", border = "white")
+usr = par("usr")
+
+# draw on the prior distribution
+rho_pr = post_summ(post, "rho_Lphi_Ma_O0_pr[2,1]", probs = c(0.025, 0.1, 0.25, 0.75, 0.9, 0.975))
+rect(rho_pr["2.5%",], usr[3], rho_pr["97.5%",], usr[4], col = scales::alpha("grey25", 0.15), border = NA)
+rect(rho_pr["10%",], usr[3], rho_pr["90%",], usr[4], col = scales::alpha("grey25", 0.15), border = NA)
+rect(rho_pr["25%",], usr[3], rho_pr["75%",], usr[4], col = scales::alpha("grey25", 0.15), border = NA)
 abline(v = 0, lty = 2)
-segments(rho_summs$`2.5%`, at_y, rho_summs$`97.5%`, col = col)
-segments(rho_summs$`25%`, at_y, rho_summs$`75%`, lwd = 4, col = col)
-points(y = at_y, x = rho_summs$mean, cex = 1, pch = 3, lwd = 2, col = col)
-axis(side = 2, at = at_y, labels = rho_summs$name, las = 2, cex.axis = 0.8)
-abline(h = at_y - 0.5, col = "grey")
-legend("topleft", legend = c("Across Populations", "Across Origins"), text.col = c("black", "red"), bty = "n", cex = 0.8)
+
+# param = rownames(rho_mean_out)[4]
+# at_mp = mp[4,]
+pop_rhos = function(param, at_mp) {
+  
+  # if the process is not one of the hydropower migration survival ones, do this
+  # those processes are correlated across origins, because all populations share the same values each year
+  if (!(param %in% c("rho_Lphi_Ma_O0", "rho_Lphi_Rb_Ra"))) {
+    x = post_summ(post, paste0(param, vcov_inds), probs = c(0.1, 0.25, 0.75, 0.9))
+    y = at_mp + runif(6, -0.4, 0.4)
+    points(y ~ x["mean",], col = "salmon", pch = 3, lwd = 1.5)
+    segments(x["25%",], y, x["75%",], y, col = scales::alpha("salmon", 0.5))
+  } 
+}
+
+junk = sapply(1:nrow(mp), function(i) pop_rhos(rownames(rho_mean_out)[i], mp[i,]))
+segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 6, col = scales::alpha("royalblue", 0.55))
+segments(rho_mean_out[,"10%"], mp, rho_mean_out[,"90%"], mp, col = scales::alpha("royalblue", 0.55))
+points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "royalblue", lwd = 3)
+
+abline(h = mp + rbind(diff(mp)/2, NA), xpd = FALSE, col = "grey50", lty = 2)
+par(tcl = -7)
+axis(side = 2, at = mp + rbind(diff(mp)/2, NA), col = "grey50", line = NA, labels = FALSE, lty = 2)
 box()
 ```
 
