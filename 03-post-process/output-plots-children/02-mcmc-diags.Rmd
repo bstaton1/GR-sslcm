@@ -90,8 +90,8 @@ summs_out = NULL
 
 # parr recruitment
 L1 = "Egg-to-Parr Survival"
-L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "White Noise Process SD", "AR(1) Coefficient", "Initial Residual", "Among-pop Correlation", "Realized")
-match = c("alpha", "^beta[", "^lambda$", "sig_lbeta", "sig_Lphi_E_Pb", "kappa_phi_E_Pb", "Lphi_E_Pb_resid[1,", "rho_Lphi_E_Pb", "^phi_E_Pb[")
+L2 = c("BH Productivity", "BH Capacity", "Capacity vs. Habitat Slope", "Capacity vs. slope SD", "White Noise Process SD", "AR(1) Coefficient", "Among-pop Correlation", "Realized")
+match = c("alpha", "^beta[", "^lambda$", "sig_lbeta", "sig_Lphi_E_Pb", "kappa_phi_E_Pb", "rho_Lphi_E_Pb", "^phi_E_Pb[")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
@@ -271,8 +271,8 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Misc ocean survival
 L1 = "Misc Ocean Survival"
-L2 = c("Yr1 NOR:HOR Scaler", "Yr2 NOR:HOR Scaler", "Yr1 Initial Residual", "Yr 1 AR(1) Coefficient")
-base = c("delta_O0_O1[pop]", "delta_O1_O2[pop]", "Lphi_O0_O1_resid[1,1,pop]", "kappa_phi_O0_O1[pop]")
+L2 = c("Yr1 NOR:HOR Scaler", "Yr 1 AR(1) Coefficient")
+base = c("delta_O0_O1[pop]", "kappa_phi_O0_O1[pop]")
 match = sub_index(base, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
