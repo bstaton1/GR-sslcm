@@ -125,8 +125,8 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Overwinter survival: Fall Migrants
 L1 = "Overwinter Survival"
-L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
-base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
+L2 = c("Intercept", "Slope", "Realized")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "^phi_Pa_Mb[year,LH_type,pop]")
 match = sub_index(base, year = ".+", LH_type = i_fall, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "Fall Migrants"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -135,10 +135,19 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Overwinter survival: Spring Migrants
 L1 = "Overwinter Survival"
-L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
-base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "sig_Lphi_Pa_Mb[pop,LH_type]", "rho_Lphi_Pa_Mb[.,.,LH_type]", "^phi_Pa_Mb[year,LH_type,pop]")
+L2 = c("Intercept", "Slope", "Realized")
+base = list("gamma0[LH_type,pop]", "gamma1[LH_type,pop]", "^phi_Pa_Mb[year,LH_type,pop]")
 match = sub_index(base, year = ".+", LH_type = i_spring, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "Spring Migrants"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Overwinter survival: Process variance
+L1 = "Overwinter Survival"
+L2 = c("Process SD", "Among Pop. Correlation")
+base = c("sig_Lphi_Pa_Mb", "rho_Lphi_Pa_Mb")
+tmp_diags = lapply(1:length(base), function(i) summarize_posterior(base[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
@@ -155,8 +164,8 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # trib to LGR Migration survival: NOR 
 L1 = "Migration Survival (Trib to LGR)"
-L2 = c("Intercept", "Slope", "Process SD", "Among-pop Correlation", "Realized")
-base = c("tau0", "tau1", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "^phi_Mb_Ma[.+,LH_type,origin,pop]")
+L2 = c("Intercept", "Slope", "Realized")
+base = c("tau0", "tau1", "^phi_Mb_Ma[.+,LH_type,origin,pop]")
 match = sub_index(base, LH_type = i_spring, origin = o_nor, pop = ".", year = ".+")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -165,10 +174,19 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # trib to LGR Migration survival: HOR 
 L1 = "Migration Survival (Trib to LGR)"
-L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "sig_Lphi_Mb_Ma[pop,origin]", "rho_Lphi_Mb_Ma[.,.,origin]", "phi_Mb_Ma[year,LH_type,origin,pop]")
+L2 = c("Mean", "Realized")
+base = list("mu_phi_Mb_Ma[LH_type,origin,pop]", "phi_Mb_Ma[year,LH_type,origin,pop]")
 match = sub_index(base, year = ".+", LH_type = i_spring, origin = o_hor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# trib to LGR Migration survival: Process variance
+L1 = "Migration Survival (Trib to LGR)"
+L2 = c("Process SD", "Among Pop. Correlation")
+base = c("sig_Lphi_Mb_Ma", "rho_Lphi_Mb_Ma")
+tmp_diags = lapply(1:length(base), function(i) summarize_posterior(base[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
@@ -201,8 +219,8 @@ summs_out = rbind(summs_out, tmp_summ)
 
 # Probability of Maturing at Age-3: NOR
 L1 = "Pr(Mature at Age-3)"
-L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[pop,origin]", "rho_Lpsi_O1[.,.,origin]", "^psi_O1[.+,origin,pop]")
+L2 = c("Mean", "Realized")
+base = c("mu_psi_O1[origin,pop]", "^psi_O1[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -211,18 +229,27 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Probability of Maturing at Age-3: HOR
 L1 = "Pr(Mature at Age-3)"
-L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O1[origin,pop]", "sig_Lpsi_O1[pop,origin]", "rho_Lpsi_O1[.,.,origin]", "^psi_O1[.+,origin,pop]")
+L2 = c("Mean", "Realized")
+base = c("mu_psi_O1[origin,pop]", "^psi_O1[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
+# Process Variance: Probability of Maturity at Age-3
+L1 = "Pr(Mature at Age-3)"
+L2 = c("Process SD", "Among-pop Correlation")
+base = c("sig_Lpsi_O1", "rho_Lpsi_O1")
+tmp_diags = lapply(1:length(base), function(i) summarize_posterior(base[i], L1 = L1, L2 = L2[i]))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
 # Probability of Maturing at Age-4: NOR
 L1 = "Pr(Mature at Age-4)"
-L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[pop,origin]", "rho_Lpsi_O2[.,.,origin]", "^psi_O2[.+,origin,pop]")
+L2 = c("Mean", "Realized")
+base = c("mu_psi_O2[origin,pop]", "^psi_O2[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_nor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "NOR"))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
@@ -231,10 +258,19 @@ summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Probability of Maturing at Age-4: HOR
 L1 = "Pr(Mature at Age-4)"
-L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-base = c("mu_psi_O2[origin,pop]", "sig_Lpsi_O2[pop,origin]", "rho_Lpsi_O2[.,.,origin]", "^psi_O2[.+,origin,pop]")
+L2 = c("Mean", "Realized")
+base = c("mu_psi_O2[origin,pop]", "^psi_O2[.+,origin,pop]")
 match = sub_index(base, year = ".+", origin = o_hor, pop = ".")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i], L3 = "HOR"))
+tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
+diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
+summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
+
+# Process Variance: Probability of Maturity at Age-4
+L1 = "Pr(Mature at Age-4)"
+L2 = c("Process SD", "Among-pop Correlation")
+base = c("sig_Lpsi_O2", "rho_Lpsi_O2")
+tmp_diags = lapply(1:length(base), function(i) summarize_posterior(base[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
 summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
@@ -308,7 +344,7 @@ summs_out = rbind(summs_out, tmp_summ)
 # Pre-spawn Survival
 L1 = "Pre-spawn Survival"
 L2 = c("Mean", "Process SD", "Among-pop Correlation", "Realized")
-match = c("mu_phi_Sb_Sa[.]", "sig_Lphi_Sb_Sa[.]", "rho_Lphi_Sb_Sa", "^phi_Sb_Sa[.+,.]")
+match = c("mu_phi_Sb_Sa", "sig_Lphi_Sb_Sa", "rho_Lphi_Sb_Sa", "^phi_Sb_Sa")
 tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
 tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
 diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
