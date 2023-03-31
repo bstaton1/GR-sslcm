@@ -14,9 +14,18 @@ if (length(simulated) > 0) {
   diag_post = post
 }
 
-# discard duplicate correlation terms: all rho parameters for a given process are equal
-all_rho = match_params(post, "^rho")
-rho_keep = match_params(post, "^rho_.+[2,1")
+# discard any node that simply track prior densities, no need to MCMC diagnose them
+pr_rm = c(match_params(diag_post, "_pr["), match_params(diag_post, "_pr$"))
+diag_post = suppressMessages(post_remove(diag_post, pr_rm, ask = FALSE))
+```
+
+```{r discard-rho-upper-tri}
+# duplicate correlation parameters do not need to have MCMC diagnostics ran
+# those on the diagonal have already been discarded 
+# this code discards those in the upper triangle 
+rho_params = match_params(diag_post, "rho", type = "base_only")
+rho_keep = unlist(lapply(rho_params, function(x) paste0(x, vcov_inds)))
+all_rho = match_params(diag_post, "^rho", type = "base_index")
 rho_discard = all_rho[!(all_rho %in% rho_keep)]
 diag_post = suppressMessages(post_remove(diag_post, rho_discard, ask = FALSE))
 ```
