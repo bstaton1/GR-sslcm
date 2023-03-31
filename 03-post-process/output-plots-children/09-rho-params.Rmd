@@ -89,5 +89,117 @@ abline(h = mp + rbind(diff(mp)/2, NA), xpd = FALSE, col = "grey50", lty = 2)
 par(tcl = -7)
 axis(side = 2, at = mp + rbind(diff(mp)/2, NA), col = "grey50", line = NA, labels = FALSE, lty = 2)
 box()
+
+```
+
+## Process-Specific Summaries {.tabset .tabset-dropdown}
+
+```{r rho_mat_plot-fns}
+
+# one correlagram: for one summary statistic
+rho_mat_plot = function(param, q = "mean", main) {
+  rho_ests = post_summ(post, param, probs = c(0.1, 0.9))
+  rho_mat = array_format(rho_ests[q,])
+  rownames(rho_mat) = colnames(rho_mat) = pops
+  col = colorRampPalette(c("salmon", "white", "royalblue"))(20)
+  corrplot::corrplot(rho_mat, method = "color", type = "lower", tl.srt = 45, col = col, addCoef.col = "black", diag = FALSE, cl.pos = "n")
+  mtext(line = -2.5, text = main, side = 3, font = 2, cex = 1, col = "grey50")
+}
+
+# a set of three: 80% quantiles & mean
+rho_mat_plots = function(param, is_prior = FALSE) {
+  par(mfrow = c(1,3), mar = c(1,1,1,1), cex = 1)
+  dist = ifelse(is_prior, "Prior", "Posterior")
+  rho_mat_plot(param = param, q = "10%", main = paste0(dist, " 10%"))
+  rho_mat_plot(param = param, q = "mean", main = paste0(dist, " Mean"))
+  rho_mat_plot(param = param, q = "90%", main = paste0(dist, " 90%"))
+}
+
+rho_mat_fig_h = 4
+rho_mat_fig_w = 8
+```
+
+### Prior
+
+```{r rho_prior-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_E_Pb_pr[", is_prior = TRUE)
+```
+
+### Egg-to-Parr Survival
+
+```{r rho_Lphi_E_Pb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_E_Pb[")
+```
+
+### Mean Parr Length
+
+```{r rho_lL_Pb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_lL_Pb[")
+```
+
+### Proportion Fall Migrants
+
+```{r rho_Lpi-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lpi[")
+```
+
+### Overwinter Survival
+
+```{r rho_Lphi_Pa_Mb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_Pa_Mb[")
+```
+
+### 'Growth' Factor
+
+```{r rho_lDelta_L_Pb_Mb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_lDelta_L_Pb_Mb[")
+```
+
+### Trib. to LGR Survival
+
+```{r rho_Lphi_Mb_Ma-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_Mb_Ma[")
+```
+
+### LGR to Ocean Survival
+
+```{r rho_Lphi_Mb_O0-plot}
+est = post_summ(post, "rho_Lphi_Ma_O0[2,1]")
+kable(t(est), digits = 3, row.names = FALSE) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
+```
+
+### Yr1 Ocean Survival
+
+```{r rho_Lphi_O0_O1-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_O0_O1[")
+```
+
+### Maturity {.tabset .tabset-pills}
+
+#### Pr(Age-3)
+
+```{r rho_Lpsi_O1-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lpsi_O1[")
+```
+
+#### Pr(Age-4)
+
+```{r rho_Lpsi_O2-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lpsi_O2[")
+```
+
+### BON to LGR Survival
+
+```{r rho_Lphi_Rb_Ra-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+est = post_summ(post, "rho_Lphi_Rb_Ra[2,1]")
+kable(t(est), digits = 3, row.names = FALSE) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
+```
+
+### Pre-Spawn Survival
+
+```{r rho_Lphi_Sb_Sa-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_Sb_Sa[")
 ```
 
