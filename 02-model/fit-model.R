@@ -323,10 +323,10 @@ cat("Decomposing all Precision Matrices\n")
 
 # a function to get the posterior of the vcov components (sig and rhos) from a precision matrix
 process_Tau = function(Tau_name) {
-  cat("  Precision Matrix:", Tau_name)
+  cat("  ", Tau_name, sep = "")
   suppressMessages({
     vcov_decomp(
-      post, param = Tau_name, invert = TRUE,
+      post, param = paste0(Tau_name, "["), invert = TRUE,
       sigma_base_name = stringr::str_replace(Tau_name, "Tau", "sig"),
       rho_base_name = stringr::str_replace(Tau_name, "Tau", "rho")
     )
@@ -346,6 +346,13 @@ post = post_bind(post, Sig_components)
 
 # remove all precision matrix nodes: no longer needed
 post = suppressMessages(post_remove(post, "^Tau", ask = FALSE))
+
+# remove all diagonal elements of correlation matrices
+# these are all 1 for all MCMC draws
+diagonal_rhos = sub_index(sub_index("rho_.+[pop,pop]", pop = 1:jags_data$nj), pop = 1:jags_data$nj)
+post = suppressWarnings(
+  post_remove(post, diagonal_rhos, ask = FALSE)
+)
 
 ##### STEP 8: SAVE THE OUTPUT #####
 
