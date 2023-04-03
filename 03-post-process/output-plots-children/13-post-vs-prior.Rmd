@@ -79,23 +79,59 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
 }
 ```
 
-```{r}
+```{r post-v-prior-wrappers}
 # wrapper to create plot for all populations
-post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", xlim = NULL, ...) {
-  # function to plot one population
+post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", xlim = NULL, is_rho = FALSE, y_max = 0.3, ...) {
+  
+  if (is_rho) {
+    n = length(vcov_labels)
+    titles = vcov_labels
+    mfrow = c(3,2)
+    looping = vcov_inds
+    prior_param = paste0(prior_param, "pop")
+    post_param = paste0(post_param, "pop")
+  } else {
+    n = jags_data$nj
+    titles = pops
+    mfrow = c(2,2)
+    looping = 1:jags_data$nj
+  }
+  
+  # function to plot one population/pair
   plot_f = function(j) {
     post_v_prior(
       post_samps = post_subset(post, sub_index(post_param, pop = j, ...), matrix = TRUE),
-      prior_samps = post_subset(post, prior_param, matrix = TRUE),
-      main = pops[j], 
-      legend_loc = ifelse(j == 1, legend_loc, NA),
+      prior_samps = post_subset(post, sub_index(prior_param, pop = j, ...), matrix = TRUE),
+      main = titles[j], 
+      legend_loc = ifelse(j == looping[1], legend_loc, NA),
+      y_max = y_max,
       xlim = xlim
     )
   }
   
-  # apply to each population
-  par(mfrow = c(2,2), oma = c(1,1.5,0,0))
-  junk = sapply(1:jags_data$nj, plot_f)
+  # apply to each population/pair
+  par(mfrow = mfrow, oma = c(1,1.75,0,0))
+  junk = sapply(1:n, function(j) plot_f(looping[j]))
+  mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
+  mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
+}
+
+# wrapper to create plot for all origins
+post_v_prior_origins = function(post_param, prior_param, legend_loc = "topright", xlim = NULL, ...) {
+  # function to plot one population
+  plot_f = function(o) {
+    post_v_prior(
+      post_samps = post_subset(post, sub_index(post_param, origin = o, ...), matrix = TRUE),
+      prior_samps = post_subset(post, sub_index(prior_param, origin = o, ...), matrix = TRUE),
+      main = c("NOR", "HOR")[o], 
+      legend_loc = ifelse(o == 1, legend_loc, NA),
+      xlim = xlim
+    )
+  }
+  
+  # apply to each origin
+  par(mfrow = c(1,2), oma = c(1,1.5,0,0))
+  junk = sapply(1:jags_data$no, plot_f)
   mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
   mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
 }
@@ -187,64 +223,309 @@ post_v_prior_pops(post_param = "mu_psi_O2[origin,pop]", prior_param = "mu_psi_O2
 
 ## "Scale" Parameters {.tabset .tabset-dropdown}
 
-### SD Logit Egg-to-Parr Survival
+### Egg-to-Parr Survival
 
-**Prior Used**: `dt(0, 1/`r jags_data$sig_Lphi_E_Pb_prior`^2, 1) T(0, `r jags_data$dt_upr`)`
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_E_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
 
 ```{r sig_Lphi_E_Pb-post-v-prior}
-post_v_prior_pops(post_param = "sig_Lphi_E_Pb[pop]", prior_param = "sig_Lphi_E_Pb_pr",
-                  xlim = c(0, jags_data$dt_upr)
+post_v_prior_pops(post_param = "sig_Lphi_E_Pb[pop]", prior_param = "sig_Lphi_E_Pb_pr[pop]",
+                  xlim = c(0, 2)
 )
 ```
 
-### SD Logit Yr1 Ocean Survival
+### Parr Mean Length
 
-**Prior Used**: `dt(0, 1/`r jags_data$sig_Lphi_O0_O1_prior`^2, 1) T(0, `r jags_data$dt_upr`)`
+**Process Noise Distribution**: Multivariate log-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lL_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r sig_lL_Pb-post-v-prior}
+post_v_prior_pops(post_param = "sig_lL_Pb[pop]", prior_param = "sig_lL_Pb_pr[pop]",
+                  xlim = c(0, 2)
+)
+```
+
+### Proportion Fall Migrants
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpi_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r sig_Lpi-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lpi[pop]", prior_param = "sig_Lpi_pr[pop]",
+                  xlim = c(0, 2)
+)
+```
+
+### Overwinter Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Pa_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r sig_Lphi_Pa_Mb-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lphi_Pa_Mb[pop]", prior_param = "sig_Lphi_Pa_Mb_pr[pop]",
+                  xlim = c(0, 2)
+)
+```
+
+### "Growth" Factor
+
+**Process Noise Distribution**: Multivariate log-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lDelta_L_Pb_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r sig_lDelta_L_Pb_Mb-post-v-prior}
+post_v_prior_pops(post_param = "sig_lDelta_L_Pb_Mb[pop]", prior_param = "sig_lDelta_L_Pb_Mb_pr[pop]",
+                  xlim = c(0, 2)
+)
+```
+
+### Trib to LGR Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Mb_Ma_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r sig_Lphi_Mb_Ma-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lphi_Mb_Ma[pop]", prior_param = "sig_Lphi_Mb_Ma_pr[pop]",
+                  xlim = c(0, 2)
+)
+```
+
+### LGR to Ocean Survival
+
+**Process Noise Distribution**: Bivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Ma_O0_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
+
+```{r sig_Lphi_Ma_O0-post-v-prior, fig.width = 6, fig.height = 3}
+post_v_prior_origins(post_param = "sig_Lphi_Ma_O0[origin]", prior_param = "sig_Lphi_Ma_O0_pr[origin]",
+                  xlim = c(0, 2)
+)
+```
+
+### Yr 1 Ocean Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_O0_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
 
 ```{r sig_Lphi_O0_O1-post-v-prior}
-post_v_prior_pops(post_param = "sig_Lphi_O0_O1[pop]", prior_param = "sig_Lphi_O0_O1_pr",
-                  xlim = c(0, jags_data$dt_upr)
+post_v_prior_pops(post_param = "sig_Lphi_O0_O1[pop]", prior_param = "sig_Lphi_O0_O1_pr[pop]",
+                  xlim = c(0, 2)
 )
 ```
 
-### SD Logit Maturation {.tabset .tabset-pills}
+### Maturity {.tabset .tabset-pills}
 
-#### Age-3 {.tabset .tabset-pills}
+#### Pr(Age-3)
 
-**Prior Used**: `dt(0, 1/`r jags_data$sig_Lpsi_O1`^2, 1) T(0, `r jags_data$dt_upr`)`
+**Process Noise Distribution**: Multivariate logit-normal
 
-##### NOR
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
 
-```{r sig_Lpsi_O1_nor-post-v-prior}
-post_v_prior_pops(post_param = "sig_Lpsi_O1[pop,origin]", prior_param = "sig_Lpsi_O1_pr",
-                  origin = o_nor, xlim = c(0, jags_data$dt_upr)
+```{r sig_Lpsi-O1-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lpsi_O1[pop]", prior_param = "sig_Lpsi_O1_pr[pop]",
+                  xlim = c(0, 2)
 )
 ```
 
-##### HOR
+#### Pr(Age-4)
 
-```{r sig_Lpsi_O1_hor-post-v-prior}
-post_v_prior_pops(post_param = "sig_Lpsi_O1[pop,origin]", prior_param = "sig_Lpsi_O1_pr",
-                  origin = o_hor, xlim = c(0, jags_data$dt_upr)
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O2_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r sig_Lpsi_O2-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lpsi_O2[pop]", prior_param = "sig_Lpsi_O2_pr[pop]",
+                  xlim = c(0, 2)
 )
 ```
 
-#### Age-4 {.tabset .tabset-pills}
+### BON to LGR Survival
 
-**Prior Used**: `dt(0, 1/`r jags_data$sig_Lpsi_O2`^2, 1) T(0, `r jags_data$dt_upr`)`
+**Process Noise Distribution**: Bivariate logit-normal
 
-##### NOR
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Rb_Ra_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
 
-```{r sig_Lpsi_O2_nor-post-v-prior}
-post_v_prior_pops(post_param = "sig_Lpsi_O2[pop,origin]", prior_param = "sig_Lpsi_O2_pr",
-                  origin = o_nor, xlim = c(0, jags_data$dt_upr)
+```{r sig_Lphi_Rb_Ra-post-v-prior, fig.width = 6, fig.height = 3}
+post_v_prior_origins(post_param = "sig_Lphi_Rb_Ra[origin]", prior_param = "sig_Lphi_Rb_Ra_pr[origin]",
+                  xlim = c(0, 2)
 )
 ```
 
-##### HOR
+### Pre-spawn Survival
 
-```{r sig_Lpsi_O2_hor-post-v-prior}
-post_v_prior_pops(post_param = "sig_Lpsi_O2[pop,origin]", prior_param = "sig_Lpsi_O2_pr",
-                  origin = o_hor, xlim = c(0, jags_data$dt_upr)
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Sb_Sa_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r sig_Lphi_Sb_Sa-post-v-prior}
+post_v_prior_pops(post_param = "sig_Lphi_Sb_Sa[pop]", prior_param = "sig_Lphi_Sb_Sa_pr[pop]",
+                  xlim = c(0, 2)
+)
+```
+
+## Correlation Parameters {.tabset .tabset-dropdown}
+
+```{r}
+# set these figure options for all plots in this section
+y_max = 0.2
+xlim = c(-1,1)
+knitr::opts_chunk$set(fig.width = 5, fig.height = 6)
+```
+
+### Egg-to-Parr Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_E_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lphi_E_Pb-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lphi_E_Pb", prior_param = "rho_Lphi_E_Pb_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### Parr Mean Length
+
+**Process Noise Distribution**: Multivariate log-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lL_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_lL_Pb-post-v-prior}
+post_v_prior_pops(post_param = "rho_lL_Pb", prior_param = "rho_lL_Pb_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### Proportion Fall Migrants
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpi_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lpi-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lpi", prior_param = "rho_Lpi_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### Overwinter Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Pa_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lphi_Pa_Mb-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lphi_Pa_Mb", prior_param = "rho_Lphi_Pa_Mb_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### "Growth" Factor
+
+**Process Noise Distribution**: Multivariate log-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lDelta_L_Pb_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_lDelta_L_Pb_Mb-post-v-prior}
+post_v_prior_pops(post_param = "rho_lDelta_L_Pb_Mb", prior_param = "rho_lDelta_L_Pb_Mb_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### Trib to LGR Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Mb_Ma_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lphi_Mb_Ma-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lphi_Mb_Ma", prior_param = "rho_Lphi_Mb_Ma_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### LGR to Ocean Survival
+
+**Process Noise Distribution**: Bivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Ma_O0_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
+
+```{r rho_Lphi_Ma_O0-post-v-prior, fig.width = 3, fig.height = 3}
+par(oma = c(1,1.75,0,0))
+post_v_prior(post_samps = post_subset(post, "rho_Lphi_Ma_O0[2,1]", matrix = TRUE),
+             prior_samps = post_subset(post, "rho_Lphi_Ma_O0_pr[2,1]", matrix = TRUE),
+             xlim = xlim, y_max = y_max)
+mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
+mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
+```
+
+### Yr 1 Ocean Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_O0_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lphi_O0_O1-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lphi_O0_O1", prior_param = "rho_Lphi_O0_O1_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### Maturity {.tabset .tabset-pills}
+
+#### Pr(Age-3)
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lpsi-O1-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lpsi_O1", prior_param = "rho_Lpsi_O1_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+#### Pr(Age-4)
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O2_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lpsi_O2-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lpsi_O2", prior_param = "rho_Lpsi_O2_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
+)
+```
+
+### BON to LGR Survival
+
+**Process Noise Distribution**: Bivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Rb_Ra_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
+
+```{r rho_Lphi_Rb_Ra-post-v-prior, fig.width = 3, fig.height = 3}
+par(oma = c(1,1.75,0,0))
+post_v_prior(post_samps = post_subset(post, "rho_Lphi_Rb_Ra[2,1]", matrix = TRUE),
+             prior_samps = post_subset(post, "rho_Lphi_Rb_Ra_pr[2,1]", matrix = TRUE),
+             xlim = xlim, y_max = y_max)
+mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
+mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
+```
+
+### Pre-spawn Survival
+
+**Process Noise Distribution**: Multivariate logit-normal
+
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Sb_Sa_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+
+```{r rho_Lphi_Sb_Sa-post-v-prior}
+post_v_prior_pops(post_param = "rho_Lphi_Sb_Sa", prior_param = "rho_Lphi_Sb_Sa_pr",
+                  xlim = xlim, y_max = y_max, is_rho = TRUE
 )
 ```
