@@ -227,7 +227,7 @@ post_v_prior_pops(post_param = "mu_psi_O2[origin,pop]", prior_param = "mu_psi_O2
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_E_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_E_Pb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_E_Pb_prior[2]`)`
 
 ```{r sig_Lphi_E_Pb-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lphi_E_Pb[pop]", prior_param = "sig_Lphi_E_Pb_pr[pop]",
@@ -239,7 +239,7 @@ post_v_prior_pops(post_param = "sig_Lphi_E_Pb[pop]", prior_param = "sig_Lphi_E_P
 
 **Process Noise Distribution**: Multivariate log-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lL_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lL_Pb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_lL_Pb_prior[2]`)`
 
 ```{r sig_lL_Pb-post-v-prior}
 post_v_prior_pops(post_param = "sig_lL_Pb[pop]", prior_param = "sig_lL_Pb_pr[pop]",
@@ -251,7 +251,7 @@ post_v_prior_pops(post_param = "sig_lL_Pb[pop]", prior_param = "sig_lL_Pb_pr[pop
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpi_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpi_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lpi_prior[2]`)`
 
 ```{r sig_Lpi-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lpi[pop]", prior_param = "sig_Lpi_pr[pop]",
@@ -263,7 +263,7 @@ post_v_prior_pops(post_param = "sig_Lpi[pop]", prior_param = "sig_Lpi_pr[pop]",
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Pa_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Pa_Mb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_Pa_Mb_prior[2]`)`
 
 ```{r sig_Lphi_Pa_Mb-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lphi_Pa_Mb[pop]", prior_param = "sig_Lphi_Pa_Mb_pr[pop]",
@@ -275,7 +275,7 @@ post_v_prior_pops(post_param = "sig_Lphi_Pa_Mb[pop]", prior_param = "sig_Lphi_Pa
 
 **Process Noise Distribution**: Multivariate log-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lDelta_L_Pb_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lDelta_L_Pb_Mb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_lDelta_L_Pb_Mb_prior[2]`)`
 
 ```{r sig_lDelta_L_Pb_Mb-post-v-prior}
 post_v_prior_pops(post_param = "sig_lDelta_L_Pb_Mb[pop]", prior_param = "sig_lDelta_L_Pb_Mb_pr[pop]",
@@ -287,7 +287,7 @@ post_v_prior_pops(post_param = "sig_lDelta_L_Pb_Mb[pop]", prior_param = "sig_lDe
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Mb_Ma_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Mb_Ma_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_Mb_Ma_prior[2]`)`
 
 ```{r sig_Lphi_Mb_Ma-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lphi_Mb_Ma[pop]", prior_param = "sig_Lphi_Mb_Ma_pr[pop]",
@@ -299,7 +299,7 @@ post_v_prior_pops(post_param = "sig_Lphi_Mb_Ma[pop]", prior_param = "sig_Lphi_Mb
 
 **Process Noise Distribution**: Bivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Ma_O0_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Ma_O0_prior[1]`,`r jags_data$no`),`r jags_data$Tau_Lphi_Ma_O0_prior[2]`)`
 
 ```{r sig_Lphi_Ma_O0-post-v-prior, fig.width = 6, fig.height = 3}
 post_v_prior_origins(post_param = "sig_Lphi_Ma_O0[origin]", prior_param = "sig_Lphi_Ma_O0_pr[origin]",
@@ -311,7 +311,7 @@ post_v_prior_origins(post_param = "sig_Lphi_Ma_O0[origin]", prior_param = "sig_L
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_O0_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_O0_O1_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_O0_O1_prior[2]`)`
 
 ```{r sig_Lphi_O0_O1-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lphi_O0_O1[pop]", prior_param = "sig_Lphi_O0_O1_pr[pop]",
@@ -325,7 +325,7 @@ post_v_prior_pops(post_param = "sig_Lphi_O0_O1[pop]", prior_param = "sig_Lphi_O0
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O1_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lpsi_O1_prior[2]`)`
 
 ```{r sig_Lpsi-O1-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lpsi_O1[pop]", prior_param = "sig_Lpsi_O1_pr[pop]",
@@ -337,7 +337,7 @@ post_v_prior_pops(post_param = "sig_Lpsi_O1[pop]", prior_param = "sig_Lpsi_O1_pr
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O2_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O2_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lpsi_O2_prior[2]`)`
 
 ```{r sig_Lpsi_O2-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lpsi_O2[pop]", prior_param = "sig_Lpsi_O2_pr[pop]",
@@ -349,7 +349,7 @@ post_v_prior_pops(post_param = "sig_Lpsi_O2[pop]", prior_param = "sig_Lpsi_O2_pr
 
 **Process Noise Distribution**: Bivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Rb_Ra_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Rb_Ra_prior[1]`,`r jags_data$no`),`r jags_data$Tau_Lphi_Rb_Ra_prior[2]`)`
 
 ```{r sig_Lphi_Rb_Ra-post-v-prior, fig.width = 6, fig.height = 3}
 post_v_prior_origins(post_param = "sig_Lphi_Rb_Ra[origin]", prior_param = "sig_Lphi_Rb_Ra_pr[origin]",
@@ -361,7 +361,7 @@ post_v_prior_origins(post_param = "sig_Lphi_Rb_Ra[origin]", prior_param = "sig_L
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Sb_Sa_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Sb_Sa_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_Sb_Sa_prior[2]`)`
 
 ```{r sig_Lphi_Sb_Sa-post-v-prior}
 post_v_prior_pops(post_param = "sig_Lphi_Sb_Sa[pop]", prior_param = "sig_Lphi_Sb_Sa_pr[pop]",
@@ -382,7 +382,7 @@ knitr::opts_chunk$set(fig.width = 5, fig.height = 6)
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_E_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_E_Pb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_E_Pb_prior[2]`)`
 
 ```{r rho_Lphi_E_Pb-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lphi_E_Pb", prior_param = "rho_Lphi_E_Pb_pr",
@@ -394,7 +394,7 @@ post_v_prior_pops(post_param = "rho_Lphi_E_Pb", prior_param = "rho_Lphi_E_Pb_pr"
 
 **Process Noise Distribution**: Multivariate log-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lL_Pb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lL_Pb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_lL_Pb_prior[2]`)`
 
 ```{r rho_lL_Pb-post-v-prior}
 post_v_prior_pops(post_param = "rho_lL_Pb", prior_param = "rho_lL_Pb_pr",
@@ -406,7 +406,7 @@ post_v_prior_pops(post_param = "rho_lL_Pb", prior_param = "rho_lL_Pb_pr",
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpi_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpi_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lpi_prior[2]`)`
 
 ```{r rho_Lpi-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lpi", prior_param = "rho_Lpi_pr",
@@ -418,7 +418,7 @@ post_v_prior_pops(post_param = "rho_Lpi", prior_param = "rho_Lpi_pr",
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Pa_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Pa_Mb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_Pa_Mb_prior[2]`)`
 
 ```{r rho_Lphi_Pa_Mb-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lphi_Pa_Mb", prior_param = "rho_Lphi_Pa_Mb_pr",
@@ -430,7 +430,7 @@ post_v_prior_pops(post_param = "rho_Lphi_Pa_Mb", prior_param = "rho_Lphi_Pa_Mb_p
 
 **Process Noise Distribution**: Multivariate log-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lDelta_L_Pb_Mb_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_lDelta_L_Pb_Mb_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_lDelta_L_Pb_Mb_prior[2]`)`
 
 ```{r rho_lDelta_L_Pb_Mb-post-v-prior}
 post_v_prior_pops(post_param = "rho_lDelta_L_Pb_Mb", prior_param = "rho_lDelta_L_Pb_Mb_pr",
@@ -442,7 +442,7 @@ post_v_prior_pops(post_param = "rho_lDelta_L_Pb_Mb", prior_param = "rho_lDelta_L
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Mb_Ma_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Mb_Ma_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_Mb_Ma_prior[2]`)`
 
 ```{r rho_Lphi_Mb_Ma-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lphi_Mb_Ma", prior_param = "rho_Lphi_Mb_Ma_pr",
@@ -454,7 +454,7 @@ post_v_prior_pops(post_param = "rho_Lphi_Mb_Ma", prior_param = "rho_Lphi_Mb_Ma_p
 
 **Process Noise Distribution**: Bivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Ma_O0_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Ma_O0_prior[1]`,`r jags_data$no`),`r jags_data$Tau_Lphi_Ma_O0_prior[2]`)`
 
 ```{r rho_Lphi_Ma_O0-post-v-prior, fig.width = 3, fig.height = 3}
 par(oma = c(1,1.75,0,0))
@@ -469,7 +469,7 @@ mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_O0_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_O0_O1_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_O0_O1_prior[2]`)`
 
 ```{r rho_Lphi_O0_O1-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lphi_O0_O1", prior_param = "rho_Lphi_O0_O1_pr",
@@ -483,7 +483,7 @@ post_v_prior_pops(post_param = "rho_Lphi_O0_O1", prior_param = "rho_Lphi_O0_O1_p
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O1_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O1_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lpsi_O1_prior[2]`)`
 
 ```{r rho_Lpsi-O1-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lpsi_O1", prior_param = "rho_Lpsi_O1_pr",
@@ -495,7 +495,7 @@ post_v_prior_pops(post_param = "rho_Lpsi_O1", prior_param = "rho_Lpsi_O1_pr",
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O2_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lpsi_O2_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lpsi_O2_prior[2]`)`
 
 ```{r rho_Lpsi_O2-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lpsi_O2", prior_param = "rho_Lpsi_O2_pr",
@@ -507,7 +507,7 @@ post_v_prior_pops(post_param = "rho_Lpsi_O2", prior_param = "rho_Lpsi_O2_pr",
 
 **Process Noise Distribution**: Bivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Rb_Ra_prior`,`r jags_data$no`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Rb_Ra_prior[1]`,`r jags_data$no`),`r jags_data$Tau_Lphi_Rb_Ra_prior[2]`)`
 
 ```{r rho_Lphi_Rb_Ra-post-v-prior, fig.width = 3, fig.height = 3}
 par(oma = c(1,1.75,0,0))
@@ -522,7 +522,7 @@ mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
 
 **Process Noise Distribution**: Multivariate logit-normal
 
-**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Sb_Sa_prior`,`r jags_data$nj`),`r jags_data$isw_df`)`
+**Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Sb_Sa_prior[1]`,`r jags_data$nj`),`r jags_data$Tau_Lphi_Sb_Sa_prior[2]`)`
 
 ```{r rho_Lphi_Sb_Sa-post-v-prior}
 post_v_prior_pops(post_param = "rho_Lphi_Sb_Sa", prior_param = "rho_Lphi_Sb_Sa_pr",

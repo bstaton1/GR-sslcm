@@ -8,52 +8,52 @@ jags_model_code = function() {
   ### PRIORS: Precision Matrices for Process Noise
   
   # egg to parr survival
-  Tau_Lphi_E_Pb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_E_Pb_prior, nj), isw_df)
-  Tau_Lphi_E_Pb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_E_Pb_prior, nj), isw_df)
+  Tau_Lphi_E_Pb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_E_Pb_prior[1], nj), Tau_Lphi_E_Pb_prior[2])
+  Tau_Lphi_E_Pb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_E_Pb_prior[1], nj), Tau_Lphi_E_Pb_prior[2])
   
   # parr mean length
-  Tau_lL_Pb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lL_Pb_prior, nj), isw_df)
-  Tau_lL_Pb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lL_Pb_prior, nj), isw_df)
+  Tau_lL_Pb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lL_Pb_prior[1], nj), Tau_lL_Pb_prior[2])
+  Tau_lL_Pb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lL_Pb_prior[1], nj), Tau_lL_Pb_prior[2])
 
   # proportion of parr that are fall migrants
-  Tau_Lpi[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpi_prior, nj), isw_df)
-  Tau_Lpi_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpi_prior, nj), isw_df)
+  Tau_Lpi[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpi_prior[1], nj), Tau_Lpi_prior[2])
+  Tau_Lpi_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpi_prior[1], nj), Tau_Lpi_prior[2])
 
   # overwinter survival
-  Tau_Lphi_Pa_Mb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Pa_Mb_prior, nj), isw_df)
-  Tau_Lphi_Pa_Mb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Pa_Mb_prior, nj), isw_df)
+  Tau_Lphi_Pa_Mb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Pa_Mb_prior[1], nj), Tau_Lphi_Pa_Mb_prior[2])
+  Tau_Lphi_Pa_Mb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Pa_Mb_prior[1], nj), Tau_Lphi_Pa_Mb_prior[2])
 
   # overwinter change in mean size
-  Tau_lDelta_L_Pb_Mb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lDelta_L_Pb_Mb_prior, nj), isw_df)
-  Tau_lDelta_L_Pb_Mb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lDelta_L_Pb_Mb_prior, nj), isw_df)
+  Tau_lDelta_L_Pb_Mb[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lDelta_L_Pb_Mb_prior[1], nj), Tau_lDelta_L_Pb_Mb_prior[2])
+  Tau_lDelta_L_Pb_Mb_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_lDelta_L_Pb_Mb_prior[1], nj), Tau_lDelta_L_Pb_Mb_prior[2])
 
   # migration survival to LGR
-  Tau_Lphi_Mb_Ma[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Mb_Ma_prior, nj), isw_df)
-  Tau_Lphi_Mb_Ma_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Mb_Ma_prior, nj), isw_df)
+  Tau_Lphi_Mb_Ma[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Mb_Ma_prior[1], nj), Tau_Lphi_Mb_Ma_prior[2])
+  Tau_Lphi_Mb_Ma_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Mb_Ma_prior[1], nj), Tau_Lphi_Mb_Ma_prior[2])
 
   # migration survival from LGR to ocean
-  Tau_Lphi_Ma_O0[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Ma_O0_prior, no), isw_df)
-  Tau_Lphi_Ma_O0_pr[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Ma_O0_prior, no), isw_df)
+  Tau_Lphi_Ma_O0[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Ma_O0_prior[1], no), Tau_Lphi_Ma_O0_prior[2])
+  Tau_Lphi_Ma_O0_pr[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Ma_O0_prior[1], no), Tau_Lphi_Ma_O0_prior[2])
   
   # Yr1 ocean survival
-  Tau_Lphi_O0_O1[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_O0_O1_prior, nj), isw_df)
-  Tau_Lphi_O0_O1_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_O0_O1_prior, nj), isw_df)
+  Tau_Lphi_O0_O1[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_O0_O1_prior[1], nj), Tau_Lphi_O0_O1_prior[2])
+  Tau_Lphi_O0_O1_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_O0_O1_prior[1], nj), Tau_Lphi_O0_O1_prior[2])
   
   # Pr(mature after 1 year at sea)
-  Tau_Lpsi_O1[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O1_prior, nj), isw_df)
-  Tau_Lpsi_O1_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O1_prior, nj), isw_df)
+  Tau_Lpsi_O1[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O1_prior[1], nj), Tau_Lpsi_O1_prior[2])
+  Tau_Lpsi_O1_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O1_prior[1], nj), Tau_Lpsi_O1_prior[2])
   
   # Pr(mature after 2 years at sea)
-  Tau_Lpsi_O2[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O2_prior, nj), isw_df)
-  Tau_Lpsi_O2_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O2_prior, nj), isw_df)
+  Tau_Lpsi_O2[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O2_prior[1], nj), Tau_Lpsi_O2_prior[2])
+  Tau_Lpsi_O2_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lpsi_O2_prior[1], nj), Tau_Lpsi_O2_prior[2])
   
   # migration survival BON to LGR
-  Tau_Lphi_Rb_Ra[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Rb_Ra_prior, no), isw_df)
-  Tau_Lphi_Rb_Ra_pr[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Rb_Ra_prior, no), isw_df)
+  Tau_Lphi_Rb_Ra[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Rb_Ra_prior[1], no), Tau_Lphi_Rb_Ra_prior[2])
+  Tau_Lphi_Rb_Ra_pr[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Rb_Ra_prior[1], no), Tau_Lphi_Rb_Ra_prior[2])
   
   # pre-spawn survival
-  Tau_Lphi_Sb_Sa[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Sb_Sa_prior, nj), isw_df)
-  Tau_Lphi_Sb_Sa_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Sb_Sa_prior, nj), isw_df)
+  Tau_Lphi_Sb_Sa[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Sb_Sa_prior[1], nj), Tau_Lphi_Sb_Sa_prior[2])
+  Tau_Lphi_Sb_Sa_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Sb_Sa_prior[1], nj), Tau_Lphi_Sb_Sa_prior[2])
   
   for (j in 1:nj) {
     ### PRIORS: RECRUITMENT FUNCTION ###
