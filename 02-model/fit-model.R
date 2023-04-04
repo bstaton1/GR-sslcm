@@ -165,7 +165,7 @@ if (do_sim_vs_obs) {
 # nodes to monitor for any model
 jags_params = c(
   # reproduction
-  "alpha", "beta", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", "phi_E_Pb_dot", "phi_E_Pb_dot2",
+  "alpha", "beta", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", 
 
   # length-related quantities
   "omega0", "omega1", 
@@ -178,6 +178,10 @@ jags_params = c(
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_O0",
   "mu_psi_O1", "mu_psi_O2", "mu_phi_Sb_Sa",
   "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
+  
+  # "dot" parameters -- expected values after accounting for relationships (dot), AR(1) (dot2)
+  "phi_E_Pb_dot", "phi_E_Pb_dot2", "L_Pb_dot", "phi_Pa_Mb_dot",
+  "Delta_L_Pb_Mb_dot", "phi_Mb_Ma_dot", "phi_O0_O1_dot2",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
