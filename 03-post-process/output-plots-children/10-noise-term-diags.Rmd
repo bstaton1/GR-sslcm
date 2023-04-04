@@ -127,6 +127,224 @@ They are shown at the top left of each time series plot and summarized across pr
 
 ## Process Model Noise Terms {.tabset .tabset-pills}
 
+```{r make-process-noise-terms, results = "hide"}
+# create quantile residuals for a time series from one process
+# e.g., Pr(mature age-3) for all years for one population, origin, and age combination
+make_qresid = function(real_param, mean_param, sig_param, f_real = qlogis, f_mean = qlogis, yrs = observable, ...) {
+  
+  # extract posterior samples of the correct quantities for all years, and apply the correct transformation where needed
+  real_samps = f_real(post_subset(post, sub_index(real_param, year = yrs, ...), matrix = TRUE))  # realized value from ppd
+  mean_samps = f_mean(post_subset(post, sub_index(mean_param, year = yrs, ...), matrix = TRUE))  # mean parameter ppd
+  sig_samps = as.numeric(post_subset(post, sub_index(sig_param, ...), matrix = TRUE))            # sd parameter of ppd
+  
+  # remove any ^ or $ symbols used in specifying specific parameters
+  real_param = postpack:::rm_regex_lock(real_param)
+  mean_param = postpack:::rm_regex_lock(mean_param)
+  
+  # calculate the quantile of the realized value given the mean and sd parameter
+  # performed MCMC draw by draw for each year separately
+  out = sapply(1:length(yrs), function(y) {
+    pnorm(
+      real_samps[,sub_index(real_param, year = yrs[y], ...)],
+      mean_samps[,sub_index(mean_param, year = yrs[y], ...)],
+      sig_samps
+    )
+  })
+  
+  # create new names for the output
+  # basically add "_qresid" to the end of the realized node name
+  new_names = sub_index(real_param, year = yrs, ...)
+  new_names = stringr::str_replace(new_names, "\\[", "_qresid[")
+  
+  # include the correct letter to indicate transformation performed (L = logit or l = log) and drop any ^
+  new_names = paste0(ifelse(f_real(1) == log(1), "l", "L"), new_names)
+  colnames(out) = new_names
+  
+  # return the output: a matrix of posterior samples for the desired process
+  return(out)
+}
+
+# create quantile residuals for all time series from one process
+# e.g., Pr(mature age-3) for all years, all populations, and age-combinations
+# type = "pop" is for processes that vary by population
+# type = "origin" is for processes that very by origin
+make_qresid_all = function(real_param, mean_param, sig_param, f_real = qlogis, f_mean = qlogis, type = "pop", ...) {
+  
+  # print an indicator for which process is being analyzed
+  process_name = postpack:::rm_regex_lock(real_param)
+  process_name = postpack:::drop_index(process_name)
+  cat("  ", process_name, "\n")
+  
+  # loop over populations if appropriate
+  if (type == "pop") {
+    qresid_out = lapply(1:jags_data$nj, function(j) {
+      cat("\r    Population: ", c("CAT", "LOS", "MIN", "UGR")[j], sep = "")
+      out = make_qresid(real_param, mean_param, sig_param, f_real = f_real, f_mean = f_mean, pop = j, ...)
+      return(out)
+    })
+  }
+  
+  # loop over origins if appropriate
+  if (type == "origin") {
+    qresid_out = lapply(1:jags_data$no, function(o) {
+      cat("\r    Origin: ", c("NOR", "HOR")[o], sep = "")
+      out = make_qresid(real_param, mean_param, sig_param, f_real = f_real, f_mean = f_mean, origin = o, ...)
+      return(out)
+    });
+  }
+  
+  # print a newline
+  cat("\n")
+  
+  # combine list elements into one matrix
+  qresid_out = do.call(cbind, qresid_out)
+  
+  # return the output
+  return(qresid_out)
+}
+
+# container object to append output to
+qresid_post = postpack:::id_mat(post)
+
+# the years to calculate residuals for
+observable = 2:jags_data$ny_obs
+# "^phi_E_Pb[year,pop]""phi_E_Pb_dot2[year,pop]", "sig_Lphi_E_Pb[pop]"
+
+# egg to parr survival
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_E_Pb[year,pop]",
+                                    "phi_E_Pb_dot2[year,pop]",
+                                    "sig_Lphi_E_Pb[pop]",
+                                    type = "pop")
+)
+
+# parr mean length
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^L_Pb[year,pop]",
+                                    "^L_Pb_dot[year,pop]",
+                                    "sig_lL_Pb[pop]",
+                                    type = "pop", f_real = log, f_mean = log)
+)
+
+# Pr(fall migrant)
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^pi[year,LH_type,pop]",
+                                    "mu_pi[LH_type,pop]",
+                                    "sig_Lpi[pop]",
+                                    type = "pop", LH_type = jags_data$i_fall)
+)
+
+# overwinter survival: fall migrants
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_Pa_Mb[year,LH_type,pop]",
+                                    "^phi_Pa_Mb_dot[year,LH_type,pop]",
+                                    "sig_Lphi_Pa_Mb[pop]",
+                                    type = "pop", LH_type = jags_data$i_fall)
+)
+
+# overwinter survival: spring migrants
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_Pa_Mb[year,LH_type,pop]",
+                                    "^phi_Pa_Mb_dot[year,LH_type,pop]",
+                                    "sig_Lphi_Pa_Mb[pop]",
+                                    type = "pop", LH_type = jags_data$i_spring)
+)
+
+
+# "growth" factor
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^Delta_L_Pb_Mb[year,pop]",
+                                    "^Delta_L_Pb_Mb_dot[year,pop]",
+                                    "sig_Lphi_Pa_Mb[pop]",
+                                    type = "pop", f_real = log, f_mean = log)
+)
+
+
+# trib to LGR survival: NOR
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_Mb_Ma[year,LH_type,origin,pop]",
+                                    "^phi_Mb_Ma_dot[year,LH_type,origin,pop]",
+                                    "sig_Lphi_Mb_Ma[pop]",
+                                    type = "pop", LH_type = jags_data$i_spring, origin = jags_data$o_nor)
+)
+
+# trib to LGR survival: HOR
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_Mb_Ma[year,LH_type,origin,pop]",
+                                    "^mu_phi_Mb_Ma[LH_type,origin,pop]",
+                                    "sig_Lphi_Mb_Ma[pop]",
+                                    type = "pop", LH_type = jags_data$i_spring, origin = jags_data$o_hor)
+)
+
+# LGR to ocean survival
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_Ma_O0[year,origin]",
+                                    "mu_phi_Ma_O0[origin]",
+                                    "sig_Lphi_Ma_O0[origin]",
+                                    type = "origin")
+)
+
+# Yr1 ocean survival
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_O0_O1[year,origin,pop]",
+                                    "^phi_O0_O1_dot2[year,origin,pop]",
+                                    "sig_Lphi_O0_O1[pop]",
+                                    type = "pop", origin = jags_data$o_nor)
+)
+
+# Pr(mature age-3): NOR
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^psi_O1[year,origin,pop]",
+                                    "^mu_psi_O1[origin,pop]",
+                                    "sig_Lpsi_O1[pop]",
+                                    type = "pop", origin = jags_data$o_nor)
+)
+
+# Pr(mature age-3): HOR
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^psi_O1[year,origin,pop]",
+                                    "^mu_psi_O1[origin,pop]",
+                                    "sig_Lpsi_O1[pop]",
+                                    type = "pop", origin = jags_data$o_hor)
+)
+
+# Pr(mature age-3): NOR
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^psi_O2[year,origin,pop]",
+                                    "^mu_psi_O2[origin,pop]",
+                                    "sig_Lpsi_O2[pop]",
+                                    type = "pop", origin = jags_data$o_nor)
+)
+
+# Pr(mature age-3): HOR
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^psi_O2[year,origin,pop]",
+                                    "^mu_psi_O2[origin,pop]",
+                                    "sig_Lpsi_O2[pop]",
+                                    type = "pop", origin = jags_data$o_hor)
+)
+
+# BON to LGR survival
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_Rb_Ra[year,origin]",
+                                    "mu_phi_Rb_Ra[origin]",
+                                    "sig_Lphi_Rb_Ra[origin]",
+                                    type = "origin")
+)
+
+# Pre-spawn survival
+qresid_post = cbind(qresid_post,
+                    make_qresid_all("^phi_Sb_Sa[year,pop]",
+                                    "^mu_phi_Sb_Sa[pop]",
+                                    "sig_Lphi_Sb_Sa[pop]",
+                                    type = "pop", origin = jags_data$o_hor)
+)
+
+qresid_post = qresid_post[,-c(1:2)]
+
+post = post_bind(post, qresid_post)
+```
+
 ```{r plot-proc-resid-fn}
 
 plot_proc_qresid = function(qresid_param, year = ts_yrs, pop = NULL, origin = NULL, LH_type = NULL, age = NULL, main = NULL) {
@@ -233,7 +451,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r pi-noise, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpi_qresid[year,pop]", pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpi_qresid[year,LH_type,pop]", pop = j, main = pops[j], LH_type = i_fall))
 oma_labels("Brood Year", "logit(Proportion Fall Migrants) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -273,7 +491,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r trib-to-LGR-surv-nor, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,origin,pop]", pop = j, origin = 1, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,LH_type,origin,pop]", pop = j, origin = 1, LH_type = 2, main = pops[j]))
 oma_labels("Brood Year", "logit(Trib to LGR Survival [NOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -282,7 +500,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r trib-to-LGR-surv-hor, fig.width = 6, fig.height = 5}
 my_par()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,origin,pop]", pop = j, origin = 2, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,LH_type,origin,pop]", pop = j, origin = 2, LH_type = 2, main = pops[j]))
 oma_labels("Brood Year", "logit(Trib to LGR Survival [HOR]) Residual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
@@ -375,10 +593,10 @@ These tables show posterior summary statistics of the time series of noise terms
 # rename parameters to human-readable format
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_E_Pb_qresid\\[year,pop\\]", "Egg to Parr Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lL_Pb_qresid\\[year,pop\\]", "Summer Parr Length")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpi_qresid\\[year,pop\\]", "Migratory Strategy Apportionment")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpi_qresid\\[year,LH_type,pop\\]", "Migratory Strategy Apportionment")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Pa_Mb_qresid\\[year,LH_type,pop\\]", "Overwinter Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "lDelta_L_Pb_Mb_qresid\\[year,pop\\]", "Summer to Spring 'Growth Factor'")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Mb_Ma_qresid\\[year,origin,pop\\]", "Trib to LGR Survival")
+proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Mb_Ma_qresid\\[year,LH_type,origin,pop\\]", "Trib to LGR Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Ma_O0_qresid\\[year,origin\\]", "LGR to BON Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_O0_O1_qresid\\[year,origin,pop\\]", "Yr1 Ocean Survival")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpsi_O1_qresid\\[year,origin,pop\\]", "Pr(Mature Age-3)")
