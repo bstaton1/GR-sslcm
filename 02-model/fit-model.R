@@ -16,8 +16,25 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
+# handle arguments supplied via command line
+# run like: Rscript 02-model/fit-model.R base medium TRUE TRUE
+args = commandArgs(trailingOnly = TRUE)
+scenario_name = args[1]
+mcmc_length = args[2]
+do_sim_vs_obs = as.logical(args[3])
+rmd = as.logical(args[4])
+
+# scenario name: change this
+if (is.na(scenario_name)) scenario_name = "siw-DF2"
+
+# set mcmc length
+if (is.na(mcmc_length)) mcmc_length = "very_short"
+
 # include a forward simulation to compare to observed values as a validation?
-do_sim_vs_obs = FALSE
+if (is.na(do_sim_vs_obs)) do_sim_vs_obs = FALSE
+
+# build RMDs?
+if (is.na(rmd)) rmd = TRUE
 
 # include posterior predictive checks in JAGS code?
 do_pp_check = TRUE
@@ -25,25 +42,8 @@ do_pp_check = TRUE
 # include posterior predictive density calculation in JAGS code?
 do_lppd = FALSE
 
-# specify a scenario name
-scenario = "scaled-wishart"
-
-# handle command line arguments
-# run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
-# or if in interactive session, uncomment the pop you wish to fit
-args = commandArgs(trailingOnly = T)
-rmd = as.logical(args[1])
-mcmc_length = args[2]
-
-if (is.na(rmd)) {
-  rmd = TRUE
-  cat("'rmd' was not supplied as a command line argument. '", rmd, "' will be used.\n", sep = "")
-}
-
-if (is.na(mcmc_length)) {
-  mcmc_length = "short"
-  cat("'mcmc_length' was not supplied as a command line argument. '", mcmc_length, "' will be used.\n", sep = "")
-}
+# build the scenario name
+scenario = paste0(scenario_name, "_", mcmc_length, ifelse(do_sim_vs_obs, "_sim", ""))
 
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
