@@ -280,6 +280,10 @@ jags_dims = list(
 
 ##### STEP 5: GENERATE INITIAL VALUES #####
 
+# set random seed so at least initial values are reproducible
+set.seed(1234)
+
+# generate initial values
 jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data = jags_data)
 
 ##### STEP 6: CALL THE JAGS SAMPLER #####
