@@ -350,9 +350,7 @@ post = suppressMessages(post_remove(post, "^Tau", ask = FALSE))
 # remove all diagonal elements of correlation matrices
 # these are all 1 for all MCMC draws
 diagonal_rhos = sub_index(sub_index("rho_.+[pop,pop]", pop = 1:jags_data$nj), pop = 1:jags_data$nj)
-post = suppressWarnings(
-  post_remove(post, diagonal_rhos, ask = FALSE)
-)
+post = suppressMessages(post_remove(post, diagonal_rhos, ask = FALSE))
 
 ##### STEP 8: SAVE THE OUTPUT #####
 
