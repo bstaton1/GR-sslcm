@@ -11,35 +11,34 @@ knitr::opts_chunk$set(fig.width = 6, fig.height = 5)
 ```
 
 ```{r post-v-prior-fn}
-# argument list:
-# post_samps & prior_samps: samples from their respective PDFs
-# post_col & prior_col: (non-transparent) colors for each PDF (will be made transparent for bar fills based on the alpha argument)
-# main: plot title
-# y_max: maximum bin probability height to display; should be [0,1]
-# legend_loc: position of the legend (e.g., "topright")
-# n_bins: the number of bins
-# alpha: transparency setting for bar fills
-
 post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col = "royalblue",
-                        main = NULL, y_max = 0.3, xlim = NULL, legend_loc = NA, n_bins = 50, alpha = 0.5) {
+                        main = NULL, y_max = 0.5, xlim = NULL, legend_loc = NA, n_bins = 50, alpha = 0.5) {
+  
+  if (!is.null(xlim)) {
+    post_samps_keep = post_samps[post_samps >= xlim[1] & post_samps <= xlim[2]]
+    prior_samps_keep = prior_samps[prior_samps >= xlim[1] & prior_samps <= xlim[2]]
+  } else {
+    post_samps_keep = post_samps
+    prior_samps_keep = prior_samps
+  }
+  p_post_keep = length(post_samps_keep)/length(post_samps)
+  p_prior_keep = length(prior_samps_keep)/length(prior_samps)
   
   # get the range of all samples
-  rng = range(post_samps, prior_samps)
+  rng = range(post_samps_keep, prior_samps_keep)
+  if (!is.null(xlim)) rng[2] = max(xlim[2], rng[2])
   
-  # if xlim was provided, take it into consideration when creating breaks
-  if (is.null(xlim)) {
-    breaks = seq(rng[1], rng[2], length = n_bins)
-  } else {
-    breaks = seq(min(rng[1], xlim[1]), max(rng[2], xlim[2]), length = n_bins)
-  }
- 
+  # set bins
+  breaks = seq(rng[1], rng[2], length = n_bins)
+  
   # calculate the data for the histogram
-  prior_hist = hist(prior_samps, plot = FALSE, breaks = breaks)
-  post_hist = hist(post_samps, plot = FALSE, breaks = breaks)
+  prior_hist = hist(prior_samps_keep, plot = FALSE, breaks = breaks)
+  post_hist = hist(post_samps_keep, plot = FALSE, breaks = breaks)
   
   # convert bin counts to probabilities
-  prior_probs = prior_hist$counts/sum(prior_hist$counts)
-  post_probs = post_hist$counts/sum(post_hist$counts)
+  # account for fraction not shown
+  prior_probs = prior_hist$counts/sum(prior_hist$counts) * p_prior_keep
+  post_probs = post_hist$counts/sum(post_hist$counts) * p_post_keep
   
   # graphics parameters
   par(xaxs = "i", yaxs = "i", mgp = c(2,0.2,0), cex.axis = 0.8, tcl = -0.15, mar = c(1.5,1,1.5,0.5), lend = "square", ljoin = "mitre")
@@ -52,13 +51,14 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
   # create the histogram for prior PDF
   # barplot where height is equal to bin prob
   mp = barplot(
-    prior_probs, ylim = c(0,y_max), space = 0, border = prior_col, col = scales::alpha(prior_col, alpha), axes = FALSE
-    )
+    prior_probs, ylim = c(0,y_max), space = 0, border = prior_col,
+    col = scales::alpha(prior_col, alpha), axes = FALSE
+  )
   
   # create the histogram for posterior PDF
   mp = barplot(
     post_probs, ylim = c(0,y_max), space = 0, border = post_col, col = scales::alpha(post_col, alpha), axes = FALSE, add = TRUE
-    )
+  )
   
   # draw the x-axis
   at_x = axisTicks(par("usr")[1:2], log = FALSE)
@@ -68,7 +68,7 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
   axis(side = 2)
   
   # draw segments to connect axes at origin
-  usr = par("usr")
+  usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
   segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
   segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE)
   
@@ -76,12 +76,27 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
   if (!is.na(legend_loc)) {
     legend(legend_loc, legend = c("Prior", "Posterior"), bty = "n", pch = 22, pt.cex = 1.75, cex = 0.8, col = c(prior_col, post_col), pt.bg = scales::alpha(c(prior_col, post_col), 0.5))
   }
+  
+  # if some portion of one of the dists is not shown, include a message
+  if (p_post_keep < 1 | p_prior_keep < 1) {
+    nice_round = function(x, digits = 2) {
+      x_round = round(x, digits = digits)
+      if (x_round == 0 & x > 0) x_out  = "<0.01" else x_out = x_round
+      x_out
+    }
+    
+    legend(x = usr[1] - xdiff * 0, y = usr[4] + ydiff * 0.025, xpd = TRUE,
+           legend = c(nice_round(1 - p_prior_keep), nice_round(1 - p_post_keep)),
+           text.col = c(prior_col, post_col), bty = "n", title.col = "black",
+           title = "P Not Shown", cex = 0.8
+    )
+  }
 }
 ```
 
 ```{r post-v-prior-wrappers}
 # wrapper to create plot for all populations
-post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", xlim = NULL, is_rho = FALSE, y_max = 0.3, ...) {
+post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", xlim = NULL, is_rho = FALSE, y_max = 0.5, ...) {
   
   if (is_rho) {
     n = length(vcov_labels)
