@@ -115,24 +115,24 @@ add_jags_data = append(add_jags_data, list(
 
 # add hyperparameters of priors on ocean survival parameters
 add_jags_data = append(add_jags_data, list(
-  alpha_prior =                 c(2,8),
-  mu_phi_O0_O1_prior =          c(1,9),
-  mu_phi_O1_O2_prior =        c(60,40),
-  mu_phi_O2_O3_prior =        c(70,30),
-  mu_psi_O1_prior =             c(1,9),
-  mu_psi_O2_prior =         c(8.5,1.5),
-  Tau_Lphi_E_Pb_prior =            c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)), 
-  Tau_lL_Pb_prior =                c(0.10, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lpi_prior =                  c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lphi_Pa_Mb_prior =           c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_lDelta_L_Pb_Mb_prior =       c(0.15, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lphi_Mb_Ma_prior =           c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lphi_Ma_O0_prior =           c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lphi_O0_O1_prior =           c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lpsi_O1_prior =              c(0.15, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lpsi_O2_prior =              c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lphi_Rb_Ra_prior =           c(0.30, ifelse(do_sim_vs_obs, sim_siw_df, 20)),
-  Tau_Lphi_Sb_Sa_prior =           c(0.15, ifelse(do_sim_vs_obs, sim_siw_df, 20))
+  alpha_prior =               c(2, 8),
+  mu_phi_O0_O1_prior =        c(1, 9),
+  mu_phi_O1_O2_prior =        c(60, 40),
+  mu_phi_O2_O3_prior =        c(70, 30),
+  mu_psi_O1_prior =           c(1, 9),
+  mu_psi_O2_prior =           c(8.5, 1.5),
+  Tau_Lphi_E_Pb_prior =       c(0.30, 2), 
+  Tau_lL_Pb_prior =           c(0.10, 2),
+  Tau_Lpi_prior =             c(0.30, 2),
+  Tau_Lphi_Pa_Mb_prior =      c(0.30, 2),
+  Tau_lDelta_L_Pb_Mb_prior =  c(0.15, 500),  # model fails with Cholesky error if this has low DF
+  Tau_Lphi_Mb_Ma_prior =      c(0.30, 2),
+  Tau_Lphi_Ma_O0_prior =      c(0.30, 2),
+  Tau_Lphi_O0_O1_prior =      c(0.30, 2),
+  Tau_Lpsi_O1_prior =         c(0.15, 2),
+  Tau_Lpsi_O2_prior =         c(0.30, 2),
+  Tau_Lphi_Rb_Ra_prior =      c(0.30, 2),
+  Tau_Lphi_Sb_Sa_prior =      c(0.15, 2)
 ))
 
 # append all of this additional content to the data object
