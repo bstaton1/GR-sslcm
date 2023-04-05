@@ -148,16 +148,16 @@ if (do_sim_vs_obs) {
 
 # write the jags model source code to a text file
 jags_source = "02-model/model-code.R"
-jags_file = "02-model/model.txt"
+jags_file = file.path("02-model", basename(tempfile(pattern = "model-", fileext = ".txt")))
 write_model_code(jags_source, jags_file)
 
 # toggle on/off the calculation of pp checks and lppd
-toggle_data_diagnostics(do_lppd, do_pp_check)
+toggle_data_diagnostics(do_lppd, do_pp_check, jags_file)
 
 # toggle Rb_init for HOR fish
 # (this is only for the sim vs. obs)
 if (do_sim_vs_obs) {
-  toggle_HOR_Rb_init()
+  toggle_HOR_Rb_init(jags_file)
 }
 
 ##### STEP 3: SELECT NODES TO MONITOR #####
