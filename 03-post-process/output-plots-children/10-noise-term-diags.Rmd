@@ -255,7 +255,7 @@ qresid_post = cbind(qresid_post,
 qresid_post = cbind(qresid_post,
                     make_qresid_all("^Delta_L_Pb_Mb[year,pop]",
                                     "^Delta_L_Pb_Mb_dot[year,pop]",
-                                    "sig_Lphi_Pa_Mb[pop]",
+                                    "sig_lDelta_L_Pb_Mb[pop]",
                                     type = "pop", f_real = log, f_mean = log)
 )
 
