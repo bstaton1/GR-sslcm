@@ -13,8 +13,9 @@ editor_options:
 rho_params1 = match_params(post, "rho", type = "base_only")
 rho_params2 = match_params(post, "rho_.+_pr", type = "base_only")
 rho_params = rho_params1[!(rho_params1 %in% rho_params2)]
+
 f = function(p) {
-  x = rowMeans(post_subset(post, p, matrix = TRUE))
+  x = rowMeans(post_subset(post, paste0("^", p, "["), matrix = TRUE))
   c(mean = mean(x), sd = sd(x), quantile(x, c(0.1, 0.25, 0.5, 0.75, 0.9)))
 }
 rho_mean_out = t(sapply(rho_params, f))
@@ -31,7 +32,7 @@ rho_labels = c(
   "rho_lL_Pb" = "Mean Parr Length",
   "rho_Lphi_Pa_Mb" = "Overwinter Survival",
   "rho_Lphi_Sb_Sa" = "Pre-spawn Survival",
-  "rho_Lphi_Rb_Ra" = "BON -> UGR Survival",
+  "rho_Lphi_Rb_Ra" = "BON -> LGR Survival",
   "rho_Lpi" = "Pr(Fall Migrant)",
   "rho_Lphi_Ma_O0" = "LGR -> Ocean Survival"
 )
@@ -42,8 +43,8 @@ All processes assumed covariance among population pairs except "LGR to Ocean" an
 
 Notation:
 
-* Blue: Mean of all population pairs ("+" = posterior mean, thick lines = 50% CRI, thin lines = 80% CRI)
-* Red: Individual population pairs ("+" = posterior mean, lines = 50% CRI)
+* Blue: Mean correlation of all population pairs ("+" = posterior mean, thick lines = 50% CRI, thin lines = 80% CRI)
+* Red: Correlation of individual population pairs ("+" = posterior mean, lines = 50% CRI)
 * Grey: Prior distribution (95%, 80%, and 50% CRIs in increasing darkness)
 
 ```{r rho-mean-plot, fig.width = 5, fig.height = 5}
