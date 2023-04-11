@@ -27,8 +27,11 @@ params:
   include_egg_to_parr_surv:
     label: "Include Egg-to-Parr Survival Output?"
     value: TRUE
-  include_length_based_values:
-    label: "Include Length-Based Output?"
+  include_mean_length:
+    label: "Include Mean Length Output?"
+    value: TRUE
+  include_surv_vs_length:
+    label: "Length-based Survival Output?"
     value: TRUE
   include_capacity_vs_habitat:
     label: "Include Capacity vs. Habitat Output?"
@@ -167,7 +170,10 @@ vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
 ```{r egg-to-parr-surv, child = "output-plots-children/04-egg-to-parr-surv.Rmd", eval = params$include_egg_to_parr_surv}
 ```
 
-```{r length-based-values, child = "output-plots-children/05-length-based-values.Rmd", eval = params$include_length_based_values}
+```{r mean-length, child = "output-plots-children/05-length-based-values.Rmd", eval = params$include_mean_length}
+```
+
+```{r length-based-values, child = "output-plots-children/06-length-based-survival.Rmd", eval = params$include_surv_vs_length}
 ```
 
 ```{r capacity-vs-habitat, child = "output-plots-children/06-capacity-vs-habitat.Rmd", eval = params$include_capacity_vs_habitat}
