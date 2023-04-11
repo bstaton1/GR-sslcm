@@ -105,6 +105,15 @@ plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2,
   if (!is.null(yaxis_side)) axis(side = yaxis_side)
 }
 
+add_tseries = function(est, yrs, col = "royalblue") {
+  polygon(x = c(all_yrs[ts_yrs], rev(all_yrs[ts_yrs])),
+          y = c(est["2.5%",], rev(est["97.5%",])),
+          col = scales::alpha(col, 0.15), border = NA)
+  lines(est["mean",] ~ all_yrs[ts_yrs], col = col, lwd = 2)
+  lines(est["2.5%",] ~ all_yrs[ts_yrs], col = col, lty = 2)
+  lines(est["97.5%",] ~ all_yrs[ts_yrs], col = col, lty = 2)
+}
+
 ##### FUNCTIONS FOR COMPARING POSTERIORS AMONG 2 OR MORE MODELS #####
 
 ## EXAMPLE USAGE OF THESE FUNCTIONS ##
