@@ -60,15 +60,20 @@ mp = barplot(rho_mean_out[,"mean"],
              las = 1, col = "white", border = "white")
 usr = par("usr")
 
-# draw on the prior distribution
-rho_pr = post_summ(post, "rho_Lphi_Ma_O0_pr[2,1]", probs = c(0.025, 0.1, 0.25, 0.75, 0.9, 0.975))
-rect(rho_pr["2.5%",], usr[3], rho_pr["97.5%",], usr[4], col = scales::alpha("grey25", 0.15), border = NA)
-rect(rho_pr["10%",], usr[3], rho_pr["90%",], usr[4], col = scales::alpha("grey25", 0.15), border = NA)
-rect(rho_pr["25%",], usr[3], rho_pr["75%",], usr[4], col = scales::alpha("grey25", 0.15), border = NA)
-abline(v = 0, lty = 2)
+box_upr = mp - rbind(diff(mp)/2, NA)
+box_lwr = mp + rbind(diff(mp)/2, NA)
+box_upr[nrow(box_upr),] = box_upr[nrow(box_upr)-1,] + diff(box_upr[1:2])
+box_lwr[nrow(box_lwr),] = box_lwr[nrow(box_upr)-1,] + diff(box_lwr[1:2])
 
-# param = rownames(rho_mean_out)[4]
-# at_mp = mp[4,]
+# draw on the prior distribution for rho
+draw_rho_prior = function(param, box_lwr, box_upr) {
+  rho_pr = post_summ(post, paste0(param, "_pr[2,1]"), probs = c(0.025, 0.1, 0.25, 0.75, 0.9, 0.975))
+  rect(rho_pr["2.5%",], box_lwr, rho_pr["97.5%",], box_upr, col = scales::alpha("grey25", 0.15), border = NA)
+  rect(rho_pr["10%",], box_lwr, rho_pr["90%",], box_upr, col = scales::alpha("grey25", 0.15), border = NA)
+  rect(rho_pr["25%",], box_lwr, rho_pr["75%",], box_upr, col = scales::alpha("grey25", 0.15), border = NA)
+  abline(v = 0, lty = 2)
+}
+
 pop_rhos = function(param, at_mp) {
   
   # if the process is not one of the hydropower migration survival ones, do this
@@ -76,11 +81,12 @@ pop_rhos = function(param, at_mp) {
   if (!(param %in% c("rho_Lphi_Ma_O0", "rho_Lphi_Rb_Ra"))) {
     x = post_summ(post, paste0(param, vcov_inds), probs = c(0.1, 0.25, 0.75, 0.9))
     y = at_mp + runif(6, -0.4, 0.4)
-    points(y ~ x["mean",], col = "salmon", pch = 3, lwd = 1.5)
-    segments(x["25%",], y, x["75%",], y, col = scales::alpha("salmon", 0.5))
+    points(y ~ x["mean",], col = "royalblue", pch = 3, lwd = 1.5)
+    # segments(x["25%",], y, x["75%",], y, col = scales::alpha("royalblue", 0.5))
   } 
 }
 
+junk = sapply(1:nrow(mp), function(i) draw_rho_prior(rownames(rho_mean_out)[i], box_lwr[i,], box_upr[i,]))
 junk = sapply(1:nrow(mp), function(i) pop_rhos(rownames(rho_mean_out)[i], mp[i,]))
 segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 6, col = scales::alpha("royalblue", 0.55))
 segments(rho_mean_out[,"10%"], mp, rho_mean_out[,"90%"], mp, col = scales::alpha("royalblue", 0.55))
