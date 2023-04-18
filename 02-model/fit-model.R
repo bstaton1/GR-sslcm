@@ -25,13 +25,13 @@ do_sim_vs_obs = as.logical(args[3])
 rmd = as.logical(args[4])
 
 # scenario name: change this
-if (is.na(scenario_name)) scenario_name = "siw"
+if (is.na(scenario_name)) scenario_name = "base"
 
 # set mcmc length
 if (is.na(mcmc_length)) mcmc_length = "vshort"
 
 # include a forward simulation to compare to observed values as a validation?
-if (is.na(do_sim_vs_obs)) do_sim_vs_obs = FALSE
+if (is.na(do_sim_vs_obs)) do_sim_vs_obs = TRUE
 
 # build RMDs?
 if (is.na(rmd)) rmd = TRUE
