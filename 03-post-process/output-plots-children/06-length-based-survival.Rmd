@@ -104,8 +104,9 @@ plot_fn = function(j) {
   phi_Mb_Ma_upr = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["97.5%",])[-1,i_spring,o_nor,j]
 
   # create vectors to predict survival at: for credible regions and mean curve
-  L_Mb_seq = seq(min(L_Mb_lwr), max(L_Mb_upr), length = 30)
-  L_Mb_star_seq = seq(min(L_Mb_star_lwr), max(L_Mb_star_upr), length = 30)
+  mean_diff = diff(range(L_Mb_mean)) * 0.1
+  L_Mb_seq = seq(min(L_Mb_mean) - mean_diff, max(L_Mb_mean) + mean_diff, length = 30)
+  L_Mb_star_seq = (L_Mb_seq - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
   
   # extract posteriors of coefficients
   tau0 = post_subset(post, sub_index("tau0[pop]", pop = j), matrix = TRUE)
