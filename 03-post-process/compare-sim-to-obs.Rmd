@@ -947,7 +947,7 @@ assign_color_1 = function(x) {
   blue_cols = blue_pal(5)
   cols = c(blue_cols, red_cols)
   
-  breaks = c(0, 0.25, 0.5, 0.75, 0.9, 1.1, 1.25, 1.5, 1.75, 100)
+  breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1.2, 1.4, 1.6, 1.8, 100)
   bin_names = levels(cut(runif(1e6, 0, 2), breaks = breaks, include.lowest = TRUE))
   names(cols) = c(bin_names[1:5], bin_names[5:9])
   bins = cut(x, breaks = breaks, include.lowest = TRUE)
@@ -964,7 +964,7 @@ assign_color_0 = function(x) {
   blue_cols = blue_pal(5)
   cols = c(blue_cols, red_cols)
   
-  breaks = c(-1, -0.75, -0.5, -0.25, -0.1, 0.1, 0.25, 0.5, 0.75, 1)
+  breaks = c(-1, -0.8, -0.6, -0.4, -0.2, 0.2, 0.4, 0.6, 0.8, 1)
   bin_names = levels(cut(runif(1e6, -1, 1), breaks = breaks, include.lowest = TRUE))
   names(cols) = c(bin_names[1:5], bin_names[5:9])
   bins = cut(x, breaks = breaks, include.lowest = TRUE)
@@ -1631,9 +1631,9 @@ These tables summarize the ratio values shown in the plots above, and are intend
 * **Across Year CV** is the ratio `cv(simulated years)/cv(observed years)`. Values greater than 1 indicate the variability from one year to the next is larger than in observed years.
 * **Lag-1 Autocorrelation** is the difference `acf(simulated years) - acf(observed years)`. Values greater than 0 indicate the quantity shows more autocorrelation in the simulated years than in observed years.
 
-Values close to 1 are ideal for the mean and CV ratios and cells are color-coded based on how far they fall from 1: less than 1 are blue and greater than 1 are red; values between 0.9 and 1.1 might be considered "good enough", and have been assigned no color.
+Values close to 1 are ideal for the mean and CV ratios and cells are color-coded based on how far they fall from 1: less than 1 are blue and greater than 1 are red; values between 0.8 and 1.2 (i.e., <20% off) might be considered "good enough", and have been assigned no color.
 
-Values close to 0 are ideal for the autocorrelation differences and cells are color-coded based on how far they fall from zero: less than zero are blue and greater than zero are red; values between -0.1 and 0.1 might be considered "good enough", and have been assigned no color.
+Values close to 0 are ideal for the autocorrelation differences and cells are color-coded based on how far they fall from zero: less than zero are blue and greater than zero are red; values between -0.2 and 0.2 might be considered "good enough", and have been assigned no color.
 
 ### Estimated Quantities {.tabset .tabset-pills}
 
