@@ -1,0 +1,156 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# Length-Based Survival {.tabset .tabset-pills}
+
+## Parr $\to$ Smolt Overwinter Survival
+
+```{r overwinter-survival-plots, fig.width = 8, fig.height = 5}
+plot_fn = function(j, i) {
+  
+  # extract posterior summaries of spring length outcomes
+  L_Pb_mean = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  L_Pb_lwr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  L_Pb_upr = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
+  
+  # obtain scaled/centered versions
+  L_Pb_star_mean = (L_Pb_mean - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  L_Pb_star_lwr = (L_Pb_lwr - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  L_Pb_star_upr = (L_Pb_upr - jags_data$L_Pb_center[j])/jags_data$L_Pb_scale[j]
+  
+  # summarize posterior of overwinter survival outcomes
+  phi_Pa_Mb_mean = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["mean",])[-1,i,j]
+  phi_Pa_Mb_lwr = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["2.5%",])[-1,i,j]
+  phi_Pa_Mb_upr = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", pop = j, year = ts_yrs, LH_type = i))["97.5%",])[-1,i,j]
+
+  # create vectors to predict survival at: for credible regions and mean curve
+  L_Pb_seq = seq(min(L_Pb_lwr), max(L_Pb_upr), length = 30)
+  L_Pb_star_seq = seq(min(L_Pb_star_lwr), max(L_Pb_star_upr), length = 30)
+  
+  # extract posteriors of coefficients
+  gamma0 = post_subset(post, sub_index("gamma0[LH_type,pop]", pop = j, LH_type = i), matrix = TRUE)
+  gamma1 = post_subset(post, sub_index("gamma1[LH_type,pop]", pop = j, LH_type = i), matrix = TRUE)
+  
+  # function to create predicted survival curve for one posterior sample
+  pred_fn = function(i) {
+    pred_phi_Pa_Mb = plogis(gamma0[i] + gamma1[i] * L_Pb_star_seq)
+    names(pred_phi_Pa_Mb) = paste0("pred_phi_Pa_Mb[", 1:30, "]")
+    pred_phi_Pa_Mb
+  }
+  
+  # calculate predicted survivals and add to posterior samples
+  pred_phi_Pa_Mb = t(sapply(1:post_dim(post, "saved"), pred_fn))
+  post_pred_phi_Pa_Mb = post_convert(cbind(postpack:::id_mat(post), pred_phi_Pa_Mb))
+  
+  # extract summarize predicted length
+  pred_phi_Pa_Mb_mean = post_summ(post_pred_phi_Pa_Mb, ".")["mean",]
+  pred_phi_Pa_Mb_lwr = post_summ(post_pred_phi_Pa_Mb, ".")["2.5%",]
+  pred_phi_Pa_Mb_upr = post_summ(post_pred_phi_Pa_Mb, ".")["97.5%",]
+  
+  # make a blank plot with the correct dimensions
+  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  plot(1,1, type = "n", 
+       ylim = range(pred_phi_Pa_Mb_lwr, pred_phi_Pa_Mb_upr, phi_Pa_Mb_lwr, phi_Pa_Mb_upr, na.rm = T),
+       xlim = range(L_Pb_seq), 
+       main = ifelse(i == 1, pops[j], "")
+  )
+    
+  # expected relationship
+  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_phi_Pa_Mb_lwr, rev(pred_phi_Pa_Mb_upr)), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_phi_Pa_Mb_lwr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_phi_Pa_Mb_upr ~ L_Pb_seq, col = "red", lty = 2)
+  lines(pred_phi_Pa_Mb_mean ~ L_Pb_seq, col = "red", lwd = 2)
+  
+  # realized pairs
+  segments(L_Pb_lwr, phi_Pa_Mb_mean, L_Pb_upr, phi_Pa_Mb_mean, col = alpha("red", 0.5))
+  segments(L_Pb_mean, phi_Pa_Mb_lwr, L_Pb_mean, phi_Pa_Mb_upr, col = alpha("red", 0.5))
+  points(phi_Pa_Mb_mean ~ L_Pb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(phi_Pa_Mb_mean ~ L_Pb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+}
+
+plot_fn2 = function(j) {
+    # create the plots for both migratory strategies
+  par(mgp = c(2, 0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  plot_fn(j = j, i = 1); if (j == 1) mtext(side = 2, line = 1.5, "Fall Migrants")
+  plot_fn(j = j, i = 2); if (j == 1) mtext(side = 2, line = 1.5, "Spring Migrants")
+}
+
+par(mfcol = c(jags_data$ni,jags_data$nj), oma = c(2.5,3.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn2)
+mtext(side = 1, line = 1.5, outer = T, "Parr Mean Length (mm)", cex = 1.2)
+mtext(side = 2, line = 2, outer = T, "Overwinter Survival", cex = 1.2)
+```
+
+## Smolt Survival to LGR
+
+```{r toLGR-survival-plots, fig.width = 6, fig.height = 5}
+plot_fn = function(j) {
+  
+  # extract posterior summaries of spring length outcomes
+  L_Mb_mean = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["mean",]
+  L_Mb_lwr = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["2.5%",]
+  L_Mb_upr = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j))["97.5%",]
+  
+  # obtain scaled/centered versions
+  L_Mb_star_mean = (L_Mb_mean - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  L_Mb_star_lwr = (L_Mb_lwr - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  L_Mb_star_upr = (L_Mb_upr - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  
+  # summarize posterior of migration survival outcomes
+  phi_Mb_Ma_mean = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["mean",])[-1,i_spring,o_nor,j]
+  phi_Mb_Ma_lwr = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["2.5%",])[-1,i_spring,o_nor,j]
+  phi_Mb_Ma_upr = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = j, year = ts_yrs, LH_type = i_spring, origin = o_nor))["97.5%",])[-1,i_spring,o_nor,j]
+
+  # create vectors to predict survival at: for credible regions and mean curve
+  mean_diff = diff(range(L_Mb_mean)) * 0.1
+  L_Mb_seq = seq(min(L_Mb_mean) - mean_diff, max(L_Mb_mean) + mean_diff, length = 30)
+  L_Mb_star_seq = (L_Mb_seq - jags_data$L_Mb_center[j])/jags_data$L_Mb_scale[j]
+  
+  # extract posteriors of coefficients
+  tau0 = post_subset(post, sub_index("tau0[pop]", pop = j), matrix = TRUE)
+  tau1 = post_subset(post, sub_index("tau1[pop]", pop = j), matrix = TRUE)
+
+  # function to create predicted survival curve for one posterior sample
+  pred_fn = function(i) {
+    pred_phi_Mb_Ma = plogis(tau0[i] + tau1[i] * L_Mb_star_seq)
+    names(pred_phi_Mb_Ma) = paste0("pred_phi_Mb_Ma[", 1:30, "]")
+    pred_phi_Mb_Ma
+  }
+  
+  # calculate predicted survivals and add to posterior samples
+  pred_phi_Mb_Ma = t(sapply(1:post_dim(post, "saved"), pred_fn))
+  post_pred_phi_Mb_Ma = post_convert(cbind(postpack:::id_mat(post), pred_phi_Mb_Ma))
+  
+  # extract summarize predicted length
+  pred_phi_Mb_Ma_mean = post_summ(post_pred_phi_Mb_Ma, ".")["mean",]
+  pred_phi_Mb_Ma_lwr = post_summ(post_pred_phi_Mb_Ma, ".")["2.5%",]
+  pred_phi_Mb_Ma_upr = post_summ(post_pred_phi_Mb_Ma, ".")["97.5%",]
+  
+  # make a blank plot with the correct dimensions
+  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
+  plot(1,1, type = "n", 
+       ylim = range(pred_phi_Mb_Ma_lwr, pred_phi_Mb_Ma_upr, phi_Mb_Ma_lwr, phi_Mb_Ma_upr, na.rm = T),
+       xlim = range(L_Mb_seq), 
+       main = pops[j]
+  )
+    
+  # expected relationship
+  polygon(c(L_Mb_seq, rev(L_Mb_seq)), c(pred_phi_Mb_Ma_lwr, rev(pred_phi_Mb_Ma_upr)), border = NA, col = alpha("salmon", 0.5))
+  lines(pred_phi_Mb_Ma_lwr ~ L_Mb_seq, col = "red", lty = 2)
+  lines(pred_phi_Mb_Ma_upr ~ L_Mb_seq, col = "red", lty = 2)
+  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = "red", lwd = 2)
+  
+  # realized pairs
+  segments(L_Mb_lwr, phi_Mb_Ma_mean, L_Mb_upr, phi_Mb_Ma_mean, col = alpha("red", 0.5))
+  segments(L_Mb_mean, phi_Mb_Ma_lwr, L_Mb_mean, phi_Mb_Ma_upr, col = alpha("red", 0.5))
+  points(phi_Mb_Ma_mean ~ L_Mb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  text(phi_Mb_Ma_mean ~ L_Mb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 1, outer = T, line = 0.25, "Smolt Mean Length (mm)")
+mtext(side = 2, outer = T, line = 0.25, "Migration to LGR Survival")
+```

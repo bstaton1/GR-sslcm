@@ -1,0 +1,212 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# Correlation Parameters {.tabset .tabset-pills}
+
+## Summary Across Processes
+
+```{r summarize-rho-means}
+# get posterior summaries of the mean correlation across all pop pairs
+# for each process separately
+rho_params1 = match_params(post, "rho", type = "base_only")
+rho_params2 = match_params(post, "rho_.+_pr", type = "base_only")
+rho_params = rho_params1[!(rho_params1 %in% rho_params2)]
+
+f = function(p) {
+  x = rowMeans(post_subset(post, paste0("^", p, "["), matrix = TRUE))
+  c(mean = mean(x), sd = sd(x), quantile(x, c(0.1, 0.25, 0.5, 0.75, 0.9)))
+}
+rho_mean_out = t(sapply(rho_params, f))
+rho_mean_out = rho_mean_out[order(rho_mean_out[,"mean"]),]
+
+# assign names to the different rho parameters
+rho_labels = c(
+  "rho_Lphi_E_Pb" = "Egg-to-Parr Survival",
+  "rho_Lphi_O0_O1" = "Yr1 Ocean Survival",
+  "rho_Lpsi_O1" = "Pr(Mature Age-3)",
+  "rho_Lpsi_O2" = "Pr(Mature Age-4)",
+  "rho_lDelta_L_Pb_Mb" = "'Growth' Factor",
+  "rho_Lphi_Mb_Ma" = "Trib. to LGR Survival",
+  "rho_lL_Pb" = "Mean Parr Length",
+  "rho_Lphi_Pa_Mb" = "Overwinter Survival",
+  "rho_Lphi_Sb_Sa" = "Pre-spawn Survival",
+  "rho_Lphi_Rb_Ra" = "BON -> LGR Survival",
+  "rho_Lpi" = "Pr(Fall Migrant)",
+  "rho_Lphi_Ma_O0" = "LGR -> Ocean Survival"
+)
+```
+
+Posterior summaries of the correlation matrices for all process model components that used a multivariate (logit- or log-) normal distribution model inter-annual variability.
+All processes assumed covariance among population pairs except "LGR to Ocean" and "BON to LGR", which had equal values for all populations but covaried across origin types.
+
+Notation:
+
+* Blue: Mean correlation of all population pairs ("+" = posterior mean, thick lines = 50% CRI, thin lines = 80% CRI)
+* Red: Correlation of individual population pairs ("+" = posterior mean, lines = 50% CRI)
+* Grey: Prior distribution (95%, 80%, and 50% CRIs in increasing darkness)
+
+```{r rho-mean-plot, fig.width = 5, fig.height = 5}
+# plot to show summary of correlation parameters across processes
+# mean across pairs shown as blue
+# individual population pairs shown as red
+
+# set up empty plotting region
+par(mar = c(2,8,1,1), cex.axis = 0.8, lend = "square", tcl = -0.15, mgp = c(2,0.35,0), yaxs = "i", lend = "square", ljoin ="mitre")
+mp = barplot(rho_mean_out[,"mean"], 
+             horiz = TRUE, xlim = c(-1,1),
+             names.arg = rho_labels[rownames(rho_mean_out)],
+             las = 1, col = "white", border = "white")
+usr = par("usr")
+
+box_upr = mp - rbind(diff(mp)/2, NA)
+box_lwr = mp + rbind(diff(mp)/2, NA)
+box_upr[nrow(box_upr),] = box_upr[nrow(box_upr)-1,] + diff(box_upr[1:2])
+box_lwr[nrow(box_lwr),] = box_lwr[nrow(box_upr)-1,] + diff(box_lwr[1:2])
+
+# draw on the prior distribution for rho
+draw_rho_prior = function(param, box_lwr, box_upr) {
+  rho_pr = post_summ(post, paste0(param, "_pr[2,1]"), probs = c(0.025, 0.1, 0.25, 0.75, 0.9, 0.975))
+  rect(rho_pr["2.5%",], box_lwr, rho_pr["97.5%",], box_upr, col = scales::alpha("grey25", 0.15), border = NA)
+  rect(rho_pr["10%",], box_lwr, rho_pr["90%",], box_upr, col = scales::alpha("grey25", 0.15), border = NA)
+  rect(rho_pr["25%",], box_lwr, rho_pr["75%",], box_upr, col = scales::alpha("grey25", 0.15), border = NA)
+  abline(v = 0, lty = 2)
+}
+
+pop_rhos = function(param, at_mp) {
+  
+  # if the process is not one of the hydropower migration survival ones, do this
+  # those processes are correlated across origins, because all populations share the same values each year
+  if (!(param %in% c("rho_Lphi_Ma_O0", "rho_Lphi_Rb_Ra"))) {
+    x = post_summ(post, paste0(param, vcov_inds), probs = c(0.1, 0.25, 0.75, 0.9))
+    y = at_mp + runif(6, -0.4, 0.4)
+    points(y ~ x["mean",], col = "royalblue", pch = 3, lwd = 1.5)
+    # segments(x["25%",], y, x["75%",], y, col = scales::alpha("royalblue", 0.5))
+  } 
+}
+
+junk = sapply(1:nrow(mp), function(i) draw_rho_prior(rownames(rho_mean_out)[i], box_lwr[i,], box_upr[i,]))
+junk = sapply(1:nrow(mp), function(i) pop_rhos(rownames(rho_mean_out)[i], mp[i,]))
+segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 6, col = scales::alpha("royalblue", 0.55))
+segments(rho_mean_out[,"10%"], mp, rho_mean_out[,"90%"], mp, col = scales::alpha("royalblue", 0.55))
+points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "royalblue", lwd = 3)
+
+abline(h = mp + rbind(diff(mp)/2, NA), xpd = FALSE, col = "grey50", lty = 2)
+par(tcl = -7)
+axis(side = 2, at = mp + rbind(diff(mp)/2, NA), col = "grey50", line = NA, labels = FALSE, lty = 2)
+box()
+
+```
+
+## Process-Specific Summaries {.tabset .tabset-dropdown}
+
+```{r rho_mat_plot-fns}
+
+# one correlagram: for one summary statistic
+rho_mat_plot = function(param, q = "mean", main) {
+  rho_ests = post_summ(post, param, probs = c(0.1, 0.9))
+  rho_mat = array_format(rho_ests[q,])
+  rownames(rho_mat) = colnames(rho_mat) = pops
+  col = colorRampPalette(c("salmon", "white", "royalblue"))(20)
+  corrplot::corrplot(rho_mat, method = "color", type = "lower", tl.srt = 45, col = col, addCoef.col = "black", diag = FALSE, cl.pos = "n")
+  mtext(line = -2.5, text = main, side = 3, font = 2, cex = 1, col = "grey50")
+}
+
+# a set of three: 80% quantiles & mean
+rho_mat_plots = function(param, is_prior = FALSE) {
+  par(mfrow = c(1,3), mar = c(1,1,1,1), cex = 1)
+  dist = ifelse(is_prior, "Prior", "Posterior")
+  rho_mat_plot(param = param, q = "10%", main = paste0(dist, " 10%"))
+  rho_mat_plot(param = param, q = "mean", main = paste0(dist, " Mean"))
+  rho_mat_plot(param = param, q = "90%", main = paste0(dist, " 90%"))
+}
+
+rho_mat_fig_h = 4
+rho_mat_fig_w = 8
+```
+
+### Prior
+
+```{r rho_prior-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_E_Pb_pr[", is_prior = TRUE)
+```
+
+### Egg-to-Parr Survival
+
+```{r rho_Lphi_E_Pb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_E_Pb[")
+```
+
+### Mean Parr Length
+
+```{r rho_lL_Pb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_lL_Pb[")
+```
+
+### Proportion Fall Migrants
+
+```{r rho_Lpi-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lpi[")
+```
+
+### Overwinter Survival
+
+```{r rho_Lphi_Pa_Mb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_Pa_Mb[")
+```
+
+### 'Growth' Factor
+
+```{r rho_lDelta_L_Pb_Mb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_lDelta_L_Pb_Mb[")
+```
+
+### Trib. to LGR Survival
+
+```{r rho_Lphi_Mb_Ma-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_Mb_Ma[")
+```
+
+### LGR to Ocean Survival
+
+```{r rho_Lphi_Mb_O0-plot}
+est = post_summ(post, "rho_Lphi_Ma_O0[2,1]")
+kable(t(est), digits = 3, row.names = FALSE) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
+```
+
+### Yr1 Ocean Survival
+
+```{r rho_Lphi_O0_O1-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_O0_O1[")
+```
+
+### Maturity {.tabset .tabset-pills}
+
+#### Pr(Age-3)
+
+```{r rho_Lpsi_O1-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lpsi_O1[")
+```
+
+#### Pr(Age-4)
+
+```{r rho_Lpsi_O2-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lpsi_O2[")
+```
+
+### BON to LGR Survival
+
+```{r rho_Lphi_Rb_Ra-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+est = post_summ(post, "rho_Lphi_Rb_Ra[2,1]")
+kable(t(est), digits = 3, row.names = FALSE) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
+```
+
+### Pre-Spawn Survival
+
+```{r rho_Lphi_Sb_Sa-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
+rho_mat_plots("rho_Lphi_Sb_Sa[")
+```
+

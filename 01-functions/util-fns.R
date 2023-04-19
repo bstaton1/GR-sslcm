@@ -274,27 +274,6 @@ write_model_code = function(fun_file, out_file) {
   writeLines(code, out_file)
 }
 
-##### TOGGLE ON THE ESTIMATION OF A CORRELATION PARAMETER #####
-
-# the default JAGS model code has all correlation parameters (i.e., as part of covariance terms)
-# fixed at zero. If the user wishes to estimate these with a dunif(-0.99, 0.99) prior, they should
-# use this function in the model fitting script rather than editing the JAGS model code by hand
-
-toggle_rho_estimation = function(rho_term, jags_file = "02-model/model.txt") {
-  # read in the existing jags model code
-  # has all rho terms <- 0
-  model_lines = readLines(jags_file)
-  
-  # find the line numbers where the rho term is defined
-  which_matches = stringr::str_which(model_lines, paste0("^[:space:]*", rho_term))
-  
-  # replace the "<- 0" with a prior to turn on the estimation of the rho term
-  model_lines[which_matches] = stringr::str_replace(model_lines[which_matches], "<- 0", "~ dunif(-1, 1)")
-  
-  # write over the old jags model code
-  writeLines(model_lines, jags_file)
-}
-
 ##### TOGGLE THE CALCULATION OF DATA CHECKS #####
 
 # the default JAGS model code includes data simulation for the observed period (for posterior predictive checks)

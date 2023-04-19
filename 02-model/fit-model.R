@@ -16,8 +16,25 @@ invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
+# handle arguments supplied via command line
+# run like: Rscript 02-model/fit-model.R base medium TRUE TRUE
+args = commandArgs(trailingOnly = TRUE)
+scenario_name = args[1]
+mcmc_length = args[2]
+do_sim_vs_obs = as.logical(args[3])
+rmd = as.logical(args[4])
+
+# scenario name: change this
+if (is.na(scenario_name)) scenario_name = "base"
+
+# set mcmc length
+if (is.na(mcmc_length)) mcmc_length = "vshort"
+
 # include a forward simulation to compare to observed values as a validation?
-do_sim_vs_obs = FALSE
+if (is.na(do_sim_vs_obs)) do_sim_vs_obs = TRUE
+
+# build RMDs?
+if (is.na(rmd)) rmd = TRUE
 
 # include posterior predictive checks in JAGS code?
 do_pp_check = TRUE
@@ -25,25 +42,8 @@ do_pp_check = TRUE
 # include posterior predictive density calculation in JAGS code?
 do_lppd = FALSE
 
-# specify a scenario name
-scenario = "base-vshort"
-
-# handle command line arguments
-# run this script via command line: Rscript 02-model/fit-model.R LOS TRUE
-# or if in interactive session, uncomment the pop you wish to fit
-args = commandArgs(trailingOnly = T)
-rmd = as.logical(args[1])
-mcmc_length = args[2]
-
-if (is.na(rmd)) {
-  rmd = TRUE
-  cat("'rmd' was not supplied as a command line argument. '", rmd, "' will be used.\n", sep = "")
-}
-
-if (is.na(mcmc_length)) {
-  mcmc_length = "medium"
-  cat("'mcmc_length' was not supplied as a command line argument. '", mcmc_length, "' will be used.\n", sep = "")
-}
+# build the scenario name
+scenario = paste0(scenario_name, "_", mcmc_length, ifelse(do_sim_vs_obs, "_sim", ""))
 
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
@@ -115,17 +115,24 @@ add_jags_data = append(add_jags_data, list(
 
 # add hyperparameters of priors on ocean survival parameters
 add_jags_data = append(add_jags_data, list(
-  alpha_prior = c(2,8),
-  mu_phi_O0_O1_prior = c(1, 9),
-  mu_phi_O1_O2_prior = c(60, 40),
-  mu_phi_O2_O3_prior = c(70, 30),
-  mu_psi_O1_prior = c(1, 9),
-  mu_psi_O2_prior = c(8.5, 1.5),
-  sig_Lphi_E_Pb_prior = 0.5,
-  sig_Lphi_O0_O1_prior = 0.15,
-  sig_Lpsi_O1_prior = 0.15,
-  sig_Lpsi_O2_prior = 0.35,
-  dt_upr = 2
+  alpha_prior =               c(2, 8),
+  mu_phi_O0_O1_prior =        c(1, 9),
+  mu_phi_O1_O2_prior =        c(60, 40),
+  mu_phi_O2_O3_prior =        c(70, 30),
+  mu_psi_O1_prior =           c(1, 9),
+  mu_psi_O2_prior =           c(8.5, 1.5),
+  Tau_Lphi_E_Pb_prior =       c(0.30, 2), 
+  Tau_lL_Pb_prior =           c(0.10, 2),
+  Tau_Lpi_prior =             c(0.30, 2),
+  Tau_Lphi_Pa_Mb_prior =      c(0.30, 2),
+  Tau_lDelta_L_Pb_Mb_prior =  c(0.15, 500),  # model fails with Cholesky error if this has low DF
+  Tau_Lphi_Mb_Ma_prior =      c(0.30, 2),
+  Tau_Lphi_Ma_O0_prior =      c(0.30, 2),
+  Tau_Lphi_O0_O1_prior =      c(0.30, 2),
+  Tau_Lpsi_O1_prior =         c(0.15, 2),
+  Tau_Lpsi_O2_prior =         c(0.30, 2),
+  Tau_Lphi_Rb_Ra_prior =      c(0.30, 2),
+  Tau_Lphi_Sb_Sa_prior =      c(0.15, 2)
 ))
 
 # append all of this additional content to the data object
@@ -141,32 +148,16 @@ if (do_sim_vs_obs) {
 
 # write the jags model source code to a text file
 jags_source = "02-model/model-code.R"
-jags_file = "02-model/model.txt"
+jags_file = file.path("02-model", basename(tempfile(pattern = "model-", fileext = ".txt")))
 write_model_code(jags_source, jags_file)
 
-# toggle on the estimation of various rho terms
-# this function alters the contents of jags_file to
-# replace the appropriate "rho <- 0" with "rho ~ dunif(-1, 1)
-# i.e., defines which components should have non-zero covariance
-toggle_rho_estimation("rho_Lphi_E_Pb")     # parr recruitment process noise
-toggle_rho_estimation("rho_lL_Pb")         # mean length at end of summer process noise
-toggle_rho_estimation("rho_Lpi")           # parr apportionment to LH type process noise
-toggle_rho_estimation("rho_Lphi_Pa_Mb")    # parr -> smolt overwinter survival process noise (both LH types)
-toggle_rho_estimation("rho_lDelta_L_Pb_Mb")# growth factor from summer mean length to spring mean length
-toggle_rho_estimation("rho_Lphi_Mb_Ma")    # migration to LGR survival process noise
-toggle_rho_estimation("rho_Lphi_Ma_O0")    # migration from LGR to ocean survival process noise
-toggle_rho_estimation("rho_Lphi_O0_O1")    # first year ocean survival process noise
-toggle_rho_estimation("rho_Lpsi_O.")       # all maturity process noise
-toggle_rho_estimation("rho_Lphi_Rb_Ra")    # migration BON to LGR survival process noise
-toggle_rho_estimation("rho_Lphi_Sb_Sa")    # pre-spawn survival process noise
-
 # toggle on/off the calculation of pp checks and lppd
-toggle_data_diagnostics(do_lppd, do_pp_check)
+toggle_data_diagnostics(do_lppd, do_pp_check, jags_file)
 
 # toggle Rb_init for HOR fish
 # (this is only for the sim vs. obs)
 if (do_sim_vs_obs) {
-  toggle_HOR_Rb_init()
+  toggle_HOR_Rb_init(jags_file)
 }
 
 ##### STEP 3: SELECT NODES TO MONITOR #####
@@ -174,11 +165,11 @@ if (do_sim_vs_obs) {
 # nodes to monitor for any model
 jags_params = c(
   # reproduction
-  "alpha", "beta", "Sig_Lphi_E_Pb", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", "phi_E_Pb_dot", "phi_E_Pb_dot2",
+  "alpha", "beta", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", 
 
   # length-related quantities
-  "omega0", "omega1", "Sig_lL_Pb", 
-  "theta0", "theta1", "Sig_lDelta_L_Pb_Mb", "tau0", "tau1",
+  "omega0", "omega1", 
+  "theta0", "theta1", "tau0", "tau1",
   
   # overwinter survival coefficients
   "gamma0", "gamma1",
@@ -188,10 +179,9 @@ jags_params = c(
   "mu_psi_O1", "mu_psi_O2", "mu_phi_Sb_Sa",
   "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
   
-  # hyperparameters: inter-annual sd
-  "Sig_Lpi", "Sig_Lphi_Pa_Mb", "Sig_Lphi_Mb_Ma", "Sig_Lphi_Ma_O0",
-  "Sig_Lpsi_O1", "Sig_Lpsi_O2", "Sig_Lphi_Sb_Sa",
-  "Sig_Lphi_O0_O1", "Sig_Lphi_Rb_Ra",
+  # "dot" parameters -- expected values after accounting for relationships (dot), AR(1) (dot2)
+  "phi_E_Pb_dot", "phi_E_Pb_dot2", "L_Pb_dot", "phi_Pa_Mb_dot",
+  "Delta_L_Pb_Mb_dot", "phi_Mb_Ma_dot", "phi_O0_O1_dot2",
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
@@ -229,13 +219,6 @@ jags_params = c(
   "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
   "lL_Pb_resid", "lDelta_L_Pb_Mb_resid",
   
-  # quantile residuals: process model
-  "Lpi_qresid", "Lphi_Pa_Mb_qresid", "Lphi_Mb_Ma_qresid",
-  "Lphi_Ma_O0_qresid", "Lpsi_O1_qresid",
-  "Lpsi_O2_qresid", "Lphi_O0_O1_qresid",
-  "Lphi_Sb_Sa_qresid", "Lphi_E_Pb_qresid", "Lphi_Rb_Ra_qresid",
-  "lL_Pb_qresid", "lDelta_L_Pb_Mb_qresid",
-  
   # quantile residuals: observation model
   "x_Ra_obs_qresid", "x_Sa_prime_obs_qresid",
   "lPa_obs_qresid", "lMb_obs_qresid", "lRa_obs_qresid",
@@ -272,24 +255,35 @@ prior_params = c(
   "sig_Lpsi_O1_pr", "sig_Lpsi_O2_pr"
 )
 
+# nodes for Tau matrices
+Tau_params = c(
+  "Tau_Lphi_E_Pb", "Tau_lL_Pb", "Tau_Lpi", "Tau_Lphi_Pa_Mb", "Tau_lDelta_L_Pb_Mb", 
+  "Tau_Lphi_Mb_Ma", "Tau_Lphi_Ma_O0", "Tau_Lphi_O0_O1", "Tau_Lpsi_O1", "Tau_Lpsi_O2",
+  "Tau_Lphi_Rb_Ra", "Tau_Lphi_Sb_Sa"
+)
+
 # add these additional nodes if included in JAGS model
-jags_params = c(jags_params, prior_params)
+jags_params = c(jags_params, prior_params, Tau_params, paste0(Tau_params, "_pr"))
 if (do_pp_check) jags_params = c(jags_params, pp_check_params)
 if (do_lppd) jags_params = c(jags_params, lppd_params)
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post = switch(mcmc_length,  "very_short" = 50,  "short" = 2000, "medium" = 24000, "long" = 50000, "very_long" = 100000),
-  n_burn = switch(mcmc_length,  "very_short" = 5,   "short" = 1000, "medium" = 20000, "long" = 30000, "very_long" = 50000),
-  n_thin = switch(mcmc_length,  "very_short" = 1,   "short" = 3,    "medium" = 8,     "long" = 10,    "very_long" = 25),
-  n_chain = switch(mcmc_length, "very_short" = 4,   "short" = 4,    "medium" = 4,     "long" = 4,     "very_long" = 4),
-  n_adapt = switch(mcmc_length, "very_short" = 10,  "short" = 100,  "medium" = 3000,  "long" = 3000,  "very_long" = 5000),
+  n_post  = switch(mcmc_length, "vshort" = 100, "short" = 2000, "medium" = 24000, "long" = 50000, "vlong" = 100000),
+  n_burn  = switch(mcmc_length, "vshort" = 10,  "short" = 1000, "medium" = 20000, "long" = 30000, "vlong" = 50000),
+  n_thin  = switch(mcmc_length, "vshort" = 1,   "short" = 3,    "medium" = 8,     "long" = 10,    "vlong" = 25),
+  n_chain = switch(mcmc_length, "vshort" = 2,   "short" = 4,    "medium" = 4,     "long" = 4,     "vlong" = 4),
+  n_adapt = switch(mcmc_length, "vshort" = 100, "short" = 100,  "medium" = 1000,  "long" = 3000,  "vlong" = 5000),
   parallel = TRUE
 )
 
 ##### STEP 5: GENERATE INITIAL VALUES #####
 
+# set random seed so at least initial values are reproducible
+set.seed(1234)
+
+# generate initial values
 jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data = jags_data)
 
 ##### STEP 6: CALL THE JAGS SAMPLER #####
@@ -325,89 +319,38 @@ cat("  MCMC elapsed:", format(round(stoptime - starttime, 2)), "\n")
 
 ##### STEP 7: PROCESS COVARIANCE MATRICES #####
 
-# decompose all covariance matrices ("^Sig.+" nodes)
-# into an SD vector and a correlation matrix
-# postpack::vcov_decomp() does this for all posterior samples
-# do this here so these quantities can be easily compared across models
+cat("Decomposing all Precision Matrices\n")
 
-cat("Decomposing all covariance matrices\n")
+# a function to get the posterior of the vcov components (sig and rhos) from a precision matrix
+process_Tau = function(Tau_name) {
+  cat("  ", Tau_name, sep = "")
+  suppressMessages({
+    vcov_decomp(
+      post, param = paste0(Tau_name, "["), invert = TRUE,
+      sigma_base_name = stringr::str_replace(Tau_name, "Tau", "sig"),
+      rho_base_name = stringr::str_replace(Tau_name, "Tau", "rho")
+    )
+  })
+}
 
-# Convert the precision/covariance matrices monitored by JAGS into the marginal SD and correlation matrix terms
-suppressMessages({
-  Sig_Lphi_E_Pb = vcov_decomp(post, "Sig_Lphi_E_Pb", sigma_base_name = "sig_Lphi_E_Pb", rho_base_name = "rho_Lphi_E_Pb")
-  Sig_lL_Pb = vcov_decomp(post, "Sig_lL_Pb", sigma_base_name = "sig_lL_Pb", rho_base_name = "rho_lL_Pb")
-  Sig_Lpi = vcov_decomp(post, "Sig_Lpi", sigma_base_name = "sig_Lpi", rho_base_name = "rho_Lpi")
-  Sig_Lphi_Pa_Mb1 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,1]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
-  Sig_Lphi_Pa_Mb2 = vcov_decomp(rm_index(post, "Sig_Lphi_Pa_Mb[.,.,2]"), "Sig_Lphi_Pa_Mb", sigma_base_name = "sig_Lphi_Pa_Mb", rho_base_name = "rho_Lphi_Pa_Mb")
-  Sig_lDelta_L_Pb_Mb = vcov_decomp(post, "Sig_lDelta_L_Pb_Mb", sigma_base_name = "sig_lDelta_L_Pb_Mb", rho_base_name = "rho_lDelta_L_Pb_Mb")
-  Sig_Lphi_Mb_Ma1 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,1]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
-  Sig_Lphi_Mb_Ma2 = vcov_decomp(rm_index(post, "Sig_Lphi_Mb_Ma[.,.,2]"), "Sig_Lphi_Mb_Ma", sigma_base_name = "sig_Lphi_Mb_Ma", rho_base_name = "rho_Lphi_Mb_Ma")
-  Sig_Lphi_Ma_O0 = vcov_decomp(post, "Sig_Lphi_Ma_O0", sigma_base_name = "sig_Lphi_Ma_O0", rho_base_name = "rho_Lphi_Ma_O0")
-  Sig_Lphi_O0_O1 = vcov_decomp(post, "Sig_Lphi_O0_O1", sigma_base_name = "sig_Lphi_O0_O1", rho_base_name = "rho_Lphi_O0_O1")
-  Sig_Lpsi_O1_1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1[.,.,1]"), "Sig_Lpsi_O1", sigma_base_name = "sig_Lpsi_O1", rho_base_name = "rho_Lpsi_O1")
-  Sig_Lpsi_O1_2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O1[.,.,2]"), "Sig_Lpsi_O1", sigma_base_name = "sig_Lpsi_O1", rho_base_name = "rho_Lpsi_O1")
-  Sig_Lpsi_O2_1 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2[.,.,1]"), "Sig_Lpsi_O2", sigma_base_name = "sig_Lpsi_O2", rho_base_name = "rho_Lpsi_O2")
-  Sig_Lpsi_O2_2 = vcov_decomp(rm_index(post, "Sig_Lpsi_O2[.,.,2]"), "Sig_Lpsi_O2", sigma_base_name = "sig_Lpsi_O2", rho_base_name = "rho_Lpsi_O2")
-  Sig_Lphi_Rb_Ra = vcov_decomp(post, "Sig_Lphi_Rb_Ra", sigma_base_name = "sig_Lphi_Rb_Ra", rho_base_name = "rho_Lphi_Rb_Ra")
-  Sig_Lphi_Sb_Sa = vcov_decomp(post, "Sig_Lphi_Sb_Sa", sigma_base_name = "sig_Lphi_Sb_Sa", rho_base_name = "rho_Lphi_Sb_Sa")
-})
+# extract the names of all Tau nodes
+Tau_names = match_params(post, "^Tau", type = "base_only")
 
-# update node names for quantities that have a third dimension to the covariance matrix (origin or LH type)
-Sig_Lphi_Pa_Mb1 = add_index(Sig_Lphi_Pa_Mb1, c("sig", "rho"), 1)
-Sig_Lphi_Pa_Mb2 = add_index(Sig_Lphi_Pa_Mb2, c("sig", "rho"), 2)
-Sig_Lphi_Mb_Ma1 = add_index(Sig_Lphi_Mb_Ma1, c("sig", "rho"), 1)
-Sig_Lphi_Mb_Ma2 = add_index(Sig_Lphi_Mb_Ma2, c("sig", "rho"), 2)
-Sig_Lpsi_O1_1 = add_index(Sig_Lpsi_O1_1, c("sig", "rho"), 1)
-Sig_Lpsi_O1_2 = add_index(Sig_Lpsi_O1_2, c("sig", "rho"), 2)
-Sig_Lpsi_O2_1 = add_index(Sig_Lpsi_O2_1, c("sig", "rho"), 1)
-Sig_Lpsi_O2_2 = add_index(Sig_Lpsi_O2_2, c("sig", "rho"), 2)
+# apply the above function to each one
+Sig_components = lapply(Tau_names, function(x) {out = process_Tau(x); cat("\n"); return(out)})
 
-# make the labels/indices for which elements of the vcov matrices contain unique covariances
-# no point in summarizing/displaying both off-diagonal triangles
-dummy_cols = matrix(rep(1:jags_data$nj, each = jags_data$nj), jags_data$nj, jags_data$nj)
-dummy_rows = matrix(rep(1:jags_data$nj, jags_data$nj), jags_data$nj, jags_data$nj)
-vcov_cols = dummy_cols[lower.tri(dummy_cols)]
-vcov_rows = dummy_rows[lower.tri(dummy_rows)]
-vcov_indices = paste0("[", vcov_rows, ",", vcov_cols, "(,.)?]")
+# combine with other posterior samples
+Sig_components = lapply(Sig_components, as.matrix)
+Sig_components = do.call(cbind, Sig_components)
+post = post_bind(post, Sig_components)
 
-# subset out only the unique elements
-Sig_Lphi_E_Pb = post_subset(Sig_Lphi_E_Pb, c("sig", paste0("rho.+", vcov_indices)))
-Sig_lL_Pb = post_subset(Sig_lL_Pb, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpi = post_subset(Sig_Lpi, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Pa_Mb1 = post_subset(Sig_Lphi_Pa_Mb1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Pa_Mb2 = post_subset(Sig_Lphi_Pa_Mb2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_lDelta_L_Pb_Mb = post_subset(Sig_lDelta_L_Pb_Mb, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Mb_Ma1 = post_subset(Sig_Lphi_Mb_Ma1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Mb_Ma2 = post_subset(Sig_Lphi_Mb_Ma2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Ma_O0 = post_subset(Sig_Lphi_Ma_O0, c("sig", "rho.+"))
-Sig_Lphi_O0_O1 = post_subset(Sig_Lphi_O0_O1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O1_1 = post_subset(Sig_Lpsi_O1_1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O1_2 = post_subset(Sig_Lpsi_O1_2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O2_1 = post_subset(Sig_Lpsi_O2_1, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lpsi_O2_2 = post_subset(Sig_Lpsi_O2_2, c("sig", paste0("rho.+", vcov_indices)))
-Sig_Lphi_Rb_Ra = post_subset(Sig_Lphi_Rb_Ra, c("sig", "rho.+"))
-Sig_Lphi_Sb_Sa = post_subset(Sig_Lphi_Sb_Sa, c("sig", paste0("rho.+", vcov_indices)))
+# remove all precision matrix nodes: no longer needed
+post = suppressMessages(post_remove(post, "^Tau", ask = FALSE))
 
-# combine these derived posterior samples with the main object
-post = post_bind(post, Sig_Lphi_E_Pb)
-post = post_bind(post, Sig_lL_Pb)
-post = post_bind(post, Sig_lDelta_L_Pb_Mb)
-post = post_bind(post, Sig_Lpi)
-post = post_bind(post, Sig_Lphi_Pa_Mb1)
-post = post_bind(post, Sig_Lphi_Pa_Mb2)
-post = post_bind(post, Sig_Lphi_Mb_Ma1)
-post = post_bind(post, Sig_Lphi_Mb_Ma2)
-post = post_bind(post, Sig_Lphi_Ma_O0)
-post = post_bind(post, Sig_Lphi_O0_O1)
-post = post_bind(post, Sig_Lpsi_O1_1)
-post = post_bind(post, Sig_Lpsi_O1_2)
-post = post_bind(post, Sig_Lpsi_O2_1)
-post = post_bind(post, Sig_Lpsi_O2_2)
-post = post_bind(post, Sig_Lphi_Rb_Ra)
-post = post_bind(post, Sig_Lphi_Sb_Sa)
-
-# remove all covariance matrix nodes: no longer needed
-post = suppressMessages(post_remove(post, "^Sig", ask = FALSE))
+# remove all diagonal elements of correlation matrices
+# these are all 1 for all MCMC draws
+diagonal_rhos = sub_index(sub_index("rho_.+[pop,pop]", pop = 1:jags_data$nj), pop = 1:jags_data$nj)
+post = suppressMessages(post_remove(post, diagonal_rhos, ask = FALSE))
 
 ##### STEP 8: SAVE THE OUTPUT #####
 

@@ -23,7 +23,7 @@ wul_seq = seq(0, max(jags_data$wul) * 1.1, length = 30)
 pred_beta = t(sapply(beta_per, function(slope) wul_seq * slope))
 
 # select a subset of posterior samples at random to draw
-i = sample(1:post_dim(post, "saved"), 100, replace = FALSE)
+i = sample(1:post_dim(post, "saved"), min(100, post_dim(post, "saved")), replace = FALSE)
 
 # empty plot with correct labeling/dimensions
 par(mar = c(3,3,1,1), mgp = c(2,0.35,0), tcl = -0.15)

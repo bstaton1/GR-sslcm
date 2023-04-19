@@ -1,0 +1,229 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# Miscellaneous Process Model Components {.tabset .tabset-pills}
+
+## Migratory Strategy Apportionment
+
+```{r pi-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  plot_tseries(post_summ(post, sub_index("^pi[year,LH_type,pop]$", year = ts_yrs, LH_type = i_fall, pop = j)),
+               yrs = all_yrs[ts_yrs],
+               main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Proportion of Parr with Fall Migration Strategy")
+```
+
+## Ocean Survival {.tabset .tabset-pills}
+
+### Yr1 {.tabset .tabset-pills}
+
+#### NOR {.tabset .tabset-pills}
+
+##### Realized Alone
+
+```{r phi-O0-O1-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 0.4))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Yr1 Ocean Survival (NOR)")
+```
+
+##### Realized & [Predicted + AR(1)]
+
+```{r phi-O0-O1-plots2, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 0.4))
+  
+  keep = sub_index("^phi_O0_O1_dot2[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)
+  add_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Yr1 Ocean Survival (NOR)")
+```
+
+#### HOR {.tabset .tabset-pills}
+
+##### Realized Alone
+
+```{r phi-O0-O1-hor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 0.4))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Yr1 Ocean Survival (HOR)")
+```
+
+### Yr2 {.tabset .tabset-pills}
+
+#### NOR
+
+```{r phi-O1-O2-nor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 1))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Yr2 Ocean Survival (NOR)")
+```
+
+#### HOR
+
+```{r phi-O1-O2-hor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 1))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Yr2 Ocean Survival (HOR)")
+```
+
+### Yr3 {.tabset .tabset-pills}
+
+#### NOR
+
+```{r phi-O2-O3-nor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 1))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Yr3 Ocean Survival (NOR)")
+```
+
+#### HOR
+
+```{r phi-O2-O3-hor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 1))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Yr3 Ocean Survival (HOR)")
+```
+
+## Maturity {.tabset .tabset-pills}
+
+### Pr(Age-3) {.tabset .tabset-pills}
+
+#### NOR
+
+```{r psi-O1-nor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^psi_O1[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 0.4))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Pr(Mature Age-3|NOR)")
+```
+
+#### HOR
+
+```{r psi-O1-hor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^psi_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 0.4))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Pr(Mature Age-3|HOR)")
+```
+
+### Pr(Age-4) {.tabset .tabset-pills}
+
+#### NOR
+
+```{r psi-O2-nor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^psi_O2[year,origin,pop]", year = ts_yrs, origin = o_nor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 1))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Pr(Mature Age-4|NOR)")
+```
+
+#### HOR
+
+```{r psi-O2-hor-plots, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  keep = sub_index("^psi_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+  plot_tseries(post_summ(post, keep), yrs = all_yrs[ts_yrs], main = pops[j], ylim = c(0, 1))
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Pr(Mature Age-4|HOR)")
+```
+
+## Straying Dynamics {.tabset .tabset-pills}
+
+### Number of Strays
+
+```{r n-stray, fig.width = 6, fig.height = 5}
+plot_fn = function(j) {
+  plot_tseries(est = post_summ(post, sub_index("^G[year,origin,pop]", pop = j, year = ts_yrs, origin = o_hor)), yrs = all_yrs[ts_yrs], main = pops[j])
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 1, outer = T, line = 0.25, "Return Year")
+mtext(side = 2, outer = T, line = 0.25, "Number of Strays Entering Population")
+```
+
+### Stray Composition
+
+```{r stray-comp, fig.width = 6, fig.height = 5}
+plot_fn = function(j) {
+  x = post_summ(post, sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = j))
+  
+  par(mar = c(5,2,1,1), tcl = -0.15, mgp = c(2, 0.35, 0))
+  mp = barplot(x["mean",], ylim = c(0, 1), xaxt = "n", main = pops[j], col = alpha("salmon", 0.5), border = alpha("red", 0.5))
+  segments(mp, x["2.5%",], mp, x["97.5%",], col = alpha("red", 0.5))
+  axis(side = 1, at = mp, labels = paste0("Age", jags_data$kmin:jags_data$kmax), las = 2)
+  segments(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[3], xpd = TRUE)
+}
+
+par(mfrow = c(2,2), oma = c(0,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_fn)
+mtext(side = 2, outer = T, line = 0.25, "Proportion of Strays by Age")
+```

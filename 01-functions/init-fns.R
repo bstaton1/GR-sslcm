@@ -308,6 +308,73 @@ get_BH_params = function(jags_data) {
   return(BH_params)
 }
 
+# simulate a covariance matrix
+# create a vcov matrix, supply the standard deviation vect (sqrt(diag(vcov))), and a type of correlation
+sim_Sigma = function(sig, correlation) {
+  
+  # other functions
+  cor_fns = list(
+    none = function(n) {
+      m = matrix(runif(n^2, 0, 0), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    low = function(n) {
+      m = matrix(runif(n^2, 0.01, 0.29), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    moderate = function(n) {
+      m = matrix(runif(n^2, 0.3, 0.49), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    high = function(n) {
+      m = matrix(runif(n^2, 0.5, 0.95), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    },
+    near_perfect = function(n) {
+      m = matrix(runif(n^2, 0.96, 0.99999), n, n)
+      m = (m * lower.tri(m)) + t(m * lower.tri(m)) 
+      diag(m) = 1
+      m
+    }
+  )
+  
+  cor2cov = function(cor, sig) {
+    n = length(sig)
+    cov = matrix(NA, n, n)
+    for (i in 1:n) {
+      for (j in 1:n) {
+        cov[i,j] = sig[i] * sig[j] * cor[i,j]
+      }
+    }
+    cov
+  }
+  
+  if (!(correlation %in% names(cor_fns))) {
+    stop("invalid correlation type specified. The accepted values are: \n\n  ", 
+         paste(paste(paste0("'", names(cor_fns), "'"), c(rep(", ", length(names(cor_fns)) - 2), ", or ", ""), sep = ""), collapse = "")
+    )
+  }
+  
+  # how many elements  
+  n = length(sig)
+  
+  # continue creating matrices until one is found that's positive definite
+  cor = cor_fns[[correlation]](length(sig))
+  Sigma = cor2cov(cor, sig)
+  while(!matrixcalc::is.positive.definite(Sigma)) {
+    Sigma = cor2cov(cor_fns[[correlation]](length(sig)), sig)
+  }
+  Sigma
+}
+
 gen_initials = function(CHAIN, jags_data) {
   
   with(jags_data, {
@@ -394,7 +461,9 @@ gen_initials = function(CHAIN, jags_data) {
     sig_Lphi_Mb_Ma_init = rbind(NOR = sig_Lphi_Mb_Ma_init, HOR = rep(NA, nj))
     
     # create random parameters for trib to LGR migration survival
-    # Lphi_obs_Mb_Ma
+    mu_phi_Mb_Ma_init = array(NA, dim = c(ni,no,nj))
+    mu_phi_Mb_Ma_init[i_spring,o_hor,] = plogis(colMeans(Lphi_obs_Mb_Ma[,i_spring,o_hor,], na.rm = TRUE) + rnorm(nj, 0, 0.05))
+    mu_phi_Mb_Ma_init[i_spring,o_hor,3] = 0.5
     
     # create random parameters for straying dynamics
     # p_G_init
@@ -419,8 +488,8 @@ gen_initials = function(CHAIN, jags_data) {
     kappa_phi_O0_O1_init = runif(nj, 0.2, 0.5)
     mu_phi_O0_O1_init = matrix(c(runif(nj, 0.1, 0.2), rep(NA, nj)), no, nj, byrow = TRUE) 
     sig_Lphi_O0_O1_init = runif(nj, 0.1, 0.5)
-    Lphi_O0_O1_resid_init = array(NA, dim = c(ny, no, nj))
-    Lphi_O0_O1_resid_init[1,o_nor,] = rnorm(nj, 0, 0.05)
+    # Lphi_O0_O1_resid_init = array(NA, dim = c(ny, no, nj))
+    # Lphi_O0_O1_resid_init[1,o_nor,] = rnorm(nj, 0, 0.05)
     Lphi_O0_O1_init = array(NA, dim = c(ny, no, nj))
     Lphi_O0_O1_init[2:ny,o_nor,] = rnorm((ny-1) * nj, qlogis(0.15), 0.2)
     
@@ -467,14 +536,22 @@ gen_initials = function(CHAIN, jags_data) {
     lgrowth_init = log(matrix(runif(nj * ny, 1, 1.5), ny, nj))
     lgrowth_init[1,] = NA
     
+    Lphi_E_Pb_resid_init = matrix(NA, ny, nj)
+    Lphi_E_Pb_resid_init[1,1:nj] = 0
+    Lphi_O0_O1_resid_init = array(NA, dim = c(ny, no, nj))
+    Lphi_O0_O1_resid_init[1,o_nor,1:nj] = 0
+    
+    
     # build the output as a list
     list(
       # BH parameters
       alpha = alpha_init,
       lbeta = lbeta_init,
-      sig_Lphi_E_Pb = sig_Lphi_E_Pb_init,
+      # sig_Lphi_E_Pb = sig_Lphi_E_Pb_init,
       kappa_phi_E_Pb = kappa_phi_E_Pb_init,
       Lphi_E_Pb = Lphi_E_Pb_init,
+      # Lphi_E_Pb_resid = Lphi_E_Pb_resid_init,
+      Tau_Lphi_E_Pb = solve(sim_Sigma(rep(0.3, nj), "low")),
       
       # habitat capacity parameters
       lambda = lambda_init,
@@ -483,42 +560,51 @@ gen_initials = function(CHAIN, jags_data) {
       # summer length relationship
       omega0 = omega0_init,
       omega1 = omega1_init,
-      sig_lL_Pb = sig_lL_Pb_init,
+      # sig_lL_Pb = sig_lL_Pb_init,
       lL_Pb = lL_Pb_init,
+      Tau_lL_Pb = solve(sim_Sigma(rep(0.05, nj), "low")),
       
       # proportion of parr leaving in fall
       mu_pi = mu_pi_init,
-      sig_Lpi = sig_Lpi_init,
+      # sig_Lpi = sig_Lpi_init,
       Lpi1 = Lpi1_init,
+      Tau_Lpi = solve(sim_Sigma(rep(0.3, nj), "low")),
       
       # overwinter survival
       gamma0 = gamma0_init,
       gamma1 = gamma1_init,
-      sig_Lphi_Pa_Mb = sig_Lphi_Pa_Mb_init,
+      # sig_Lphi_Pa_Mb = sig_Lphi_Pa_Mb_init,
       Lphi_Pa_Mb = Lphi_Pa_Mb_init,
+      Tau_Lphi_Pa_Mb = solve(sim_Sigma(rep(0.3, nj), "low")),
       
       # summer to spring growth
       # mu_growth = mu_growth_init,
       # sig_lgrowth = sig_lgrowth_init,
       lgrowth = lgrowth_init,
+      Tau_lDelta_L_Pb_Mb = solve(sim_Sigma(rep(0.05, nj), "low")),
       
       # migration to LGR
       # tau0 = tau0_init,
       # tau1 = tau1_init,
-      sig_Lphi_Mb_Ma = sig_Lphi_Mb_Ma_init,
+      mu_phi_Mb_Ma = mu_phi_Mb_Ma_init,
+      # sig_Lphi_Mb_Ma = sig_Lphi_Mb_Ma_init,
       # Lphi_Mb_Ma = Lphi_Mb_Ma_init,
+      Tau_Lphi_Mb_Ma = solve(sim_Sigma(rep(0.3, nj), "low")),
       
       # LGR to ocean
       mu_phi_Ma_O0 = mu_phi_Ma_O0_init,
       sig_Lphi_Ma_O0 = sig_Lphi_Ma_O0_init,
       Lphi_Ma_O0 = Lphi_Ma_O0_init,
+      Tau_Lphi_Ma_O0 = solve(sim_Sigma(rep(0.3, no), "low")),
       
       # first year ocean survival
       kappa_phi_O0_O1 = kappa_phi_O0_O1_init,
       mu_phi_O0_O1 = mu_phi_O0_O1_init,
-      sig_Lphi_O0_O1 = sig_Lphi_O0_O1_init,
-      Lphi_O0_O1_resid = Lphi_O0_O1_resid_init,
+      # sig_Lphi_O0_O1 = sig_Lphi_O0_O1_init,
+      # Lphi_O0_O1_resid = Lphi_O0_O1_resid_init,
+      # Lphi_O0_O1_resid = Lphi_O0_O1_resid_init,
       Lphi_O0_O1 = Lphi_O0_O1_init,
+      Tau_Lphi_O0_O1 = solve(sim_Sigma(rep(0.15, nj), "low")),
       
       # second year ocean survival
       # mu_phi_O1_O2 = mu_phi_O1_O2_init,
@@ -533,18 +619,21 @@ gen_initials = function(CHAIN, jags_data) {
       
       # age-3 maturity
       mu_psi_O1 = mu_psi_O1_init,
-      sig_Lpsi_O1 = sig_Lpsi_O1_init,
+      # sig_Lpsi_O1 = sig_Lpsi_O1_init,
       Lpsi_O1 = Lpsi_O1_init,
+      Tau_Lpsi_O1 = solve(sim_Sigma(rep(0.15, nj), "low")),
       
       # age-4 maturity
       mu_psi_O2 = mu_psi_O2_init,
-      sig_Lpsi_O2 = sig_Lpsi_O2_init,
+      # sig_Lpsi_O2 = sig_Lpsi_O2_init,
       Lpsi_O2 = Lpsi_O2_init,
+      Tau_Lpsi_O2 = solve(sim_Sigma(rep(0.15, nj), "low")),
       
       # LGR to BON migration
       mu_phi_Rb_Ra = mu_phi_Rb_Ra_init,
-      sig_Lphi_Rb_Ra = sig_Lphi_Rb_Ra_init,
+      # sig_Lphi_Rb_Ra = sig_Lphi_Rb_Ra_init,
       Lphi_Rb_Ra_random = Lphi_Rb_Ra_random_init,
+      Tau_Lphi_Rb_Ra = solve(sim_Sigma(rep(0.15, no), "low")),
       
       # straying dynamics parameter
       # p_G = p_G_init,
@@ -553,8 +642,9 @@ gen_initials = function(CHAIN, jags_data) {
       
       # prespawn survival
       mu_phi_Sb_Sa = mu_phi_Sb_Sa_init,
-      sig_Lphi_Sb_Sa = sig_Lphi_Sb_Sa_init,
-      Lphi_Sb_Sa = Lphi_Sb_Sa_init
+      # sig_Lphi_Sb_Sa = sig_Lphi_Sb_Sa_init,
+      Lphi_Sb_Sa = Lphi_Sb_Sa_init,
+      Tau_Lphi_Sb_Sa = solve(sim_Sigma(rep(0.3, nj), "low"))
     )
   })
 }

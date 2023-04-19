@@ -37,14 +37,8 @@ plot_f = function(j) {
                main = pops[j])
   
   # draw on the posterior time series that includes BH prediction only
-  dot_col = "royalblue"
-  dot = post_summ(post, sub_index("^phi_E_Pb_dot[year,pop]", pop = j, year = ts_yrs))
-  polygon(x = c(all_yrs[ts_yrs], rev(all_yrs[ts_yrs])),
-          y = c(dot["2.5%",], rev(dot["97.5%",])),
-          col = scales::alpha(dot_col, 0.15), border = NA)
-  lines(dot["mean",] ~ all_yrs[ts_yrs], col = dot_col, lwd = 2)
-  lines(dot["2.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
-  lines(dot["97.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
+  add_tseries(post_summ(post, sub_index("^phi_E_Pb_dot[year,pop]", year = ts_yrs, pop = j)),
+              yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -64,14 +58,9 @@ plot_f = function(j) {
                main = pops[j])
   
   # draw on the posterior time series that includes BH prediction and the carry over residual from last year
-  dot_col = "royalblue"
-  dot = post_summ(post, sub_index("^phi_E_Pb_dot2[year,pop]", pop = j, year = ts_yrs))
-  polygon(x = c(all_yrs[ts_yrs], rev(all_yrs[ts_yrs])),
-          y = c(dot["2.5%",], rev(dot["97.5%",])),
-          col = scales::alpha(dot_col, 0.15), border = NA)
-  lines(dot["mean",] ~ all_yrs[ts_yrs], col = dot_col, lwd = 2)
-  lines(dot["2.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
-  lines(dot["97.5%",] ~ all_yrs[ts_yrs], col = dot_col, lty = 2)
+  # draw on the posterior time series that includes BH prediction only
+  add_tseries(post_summ(post, sub_index("^phi_E_Pb_dot2[year,pop]", year = ts_yrs, pop = j)),
+              yrs = all_yrs[ts_yrs])
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))

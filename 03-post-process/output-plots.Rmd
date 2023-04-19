@@ -27,8 +27,11 @@ params:
   include_egg_to_parr_surv:
     label: "Include Egg-to-Parr Survival Output?"
     value: TRUE
-  include_length_based_values:
-    label: "Include Length-Based Output?"
+  include_mean_length:
+    label: "Include Mean Length Output?"
+    value: TRUE
+  include_surv_vs_length:
+    label: "Length-based Survival Output?"
     value: TRUE
   include_capacity_vs_habitat:
     label: "Include Capacity vs. Habitat Output?"
@@ -48,11 +51,11 @@ params:
   include_param_summaries:
     label: "Include Posterior Boxplot Output?"
     value: TRUE
-  include_jags_info:
-    label: "Include JAGS Code/Data?"
-    value: TRUE
   include_post_v_prior:
     label: "Include Posterior vs. Prior Densities?"
+    value: TRUE
+  include_jags_info:
+    label: "Include JAGS Code/Data?"
     value: TRUE
 editor_options: 
   chunk_output_type: console
@@ -151,6 +154,7 @@ dummy_cols = matrix(rep(1:jags_data$nj, each = jags_data$nj), jags_data$nj, jags
 dummy_rows = matrix(rep(1:jags_data$nj, jags_data$nj), jags_data$nj, jags_data$nj)
 vcov_cols = dummy_cols[lower.tri(dummy_cols)]
 vcov_rows = dummy_rows[lower.tri(dummy_rows)]
+vcov_inds = paste0("[", vcov_rows, ",", vcov_cols, "]")
 vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
 ```
 
@@ -166,29 +170,32 @@ vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
 ```{r egg-to-parr-surv, child = "output-plots-children/04-egg-to-parr-surv.Rmd", eval = params$include_egg_to_parr_surv}
 ```
 
-```{r length-based-values, child = "output-plots-children/05-length-based-values.Rmd", eval = params$include_length_based_values}
+```{r mean-length, child = "output-plots-children/05-length.Rmd", eval = params$include_mean_length}
 ```
 
-```{r capacity-vs-habitat, child = "output-plots-children/06-capacity-vs-habitat.Rmd", eval = params$include_capacity_vs_habitat}
+```{r length-based-values, child = "output-plots-children/06-length-based-survival.Rmd", eval = params$include_surv_vs_length}
 ```
 
-```{r misc-process-model, child = "output-plots-children/07-misc-process-model.Rmd", eval = params$include_misc_process_model}
+```{r capacity-vs-habitat, child = "output-plots-children/07-capacity-vs-habitat.Rmd", eval = params$include_capacity_vs_habitat}
 ```
 
-```{r equiv-rates, child = "output-plots-children/08-equiv-rates.Rmd", eval = params$include_equiv_rates}
+```{r misc-process-model, child = "output-plots-children/08-misc-process-model.Rmd", eval = params$include_misc_process_model}
 ```
 
-```{r rho-params, child = "output-plots-children/09-rho-params.Rmd", eval = params$include_rho_params}
+```{r equiv-rates, child = "output-plots-children/09-equiv-rates.Rmd", eval = params$include_equiv_rates}
 ```
 
-```{r noise-term-diags, child = "output-plots-children/10-noise-term-diags.Rmd", eval = params$include_noise_term_diags}
+```{r rho-params, child = "output-plots-children/10-rho-params.Rmd", eval = params$include_rho_params}
 ```
 
-```{r param-summaries, child = "output-plots-children/11-param-summaries.Rmd", eval = params$include_param_summaries}
+```{r noise-term-diags, child = "output-plots-children/11-noise-term-diags.Rmd", eval = params$include_noise_term_diags}
 ```
 
-```{r jags-info, child = "output-plots-children/12-jags-model-info.Rmd", eval = params$include_jags_info}
+```{r param-summaries, child = "output-plots-children/12-param-summaries.Rmd", eval = params$include_param_summaries}
 ```
 
 ```{r post-v-prior, child = "output-plots-children/13-post-vs-prior.Rmd", eval = params$include_post_v_prior}
+```
+
+```{r jags-info, child = "output-plots-children/14-jags-model-info.Rmd", eval = params$include_jags_info}
 ```
