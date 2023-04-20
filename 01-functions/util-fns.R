@@ -322,3 +322,18 @@ toggle_HOR_Rb_init = function(jags_file = "02-model/model.txt") {
   # write over the old jags model code
   writeLines(model_lines, jags_file)
 }
+
+##### PRINT A NICE MESSAGE TO CONSOLE #####
+
+my_cat = function(label, value, total_width = 60, indent = 2, first = FALSE) {
+  label = paste(c(rep(" ", indent), "| ", label), collapse = "")
+  value = paste(c(rep(" ", indent), value, " |"), collapse = "")
+  label_width = nchar(label)
+  value_width = nchar(value)
+  blank_width = total_width - label_width - value_width
+  if (blank_width < 0) {stop ("total_width too narrow")}
+  if (first) cat(paste(c(rep(" ", indent), "|-", rep("-", total_width - 3 - indent), "|"), collapse = ""), "\n", sep = "")
+  cat(label, paste(rep(" ", blank_width), collapse = ""), value, "\n", sep = "")
+  cat(paste(c(rep(" ", indent), "|-", rep("-", total_width - 3 - indent), "|"), collapse = ""), "\n", sep = "")
+  Sys.sleep(0.25)
+}
