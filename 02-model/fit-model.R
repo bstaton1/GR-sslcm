@@ -2,7 +2,13 @@
 # SCRIPT TO RUN THE JAGS MODEL FOR ALL POPULATIONS #
 # :::::::::::::::::::::::::::::::::::::::::::::::: #
 
-##### STEP 0: SET UP WORKSPACE #####
+##### STEP 0: SET UP WORKSPACE W/SETTINGS #####
+
+# load all necessary functions
+invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
+
+# print initial starting message
+my_cat("Preparing Objects for JAGS:", "...please wait", first = TRUE)
 
 # load biological data (also loads packages)
 source("00-data/prep-bio-data.R")
@@ -10,45 +16,81 @@ source("00-data/prep-bio-data.R")
 # load environmental/habitat data
 source("00-data/prep-env-data.R")
 
-# load all necessary functions
+# start a timer for all calculations
+starttime_all = Sys.time()
+
+# load all necessary functions (again, prep-bio-dat clears workspace)
 invisible(sapply(list.files(path = "01-functions", pattern = "\\.R$", full.names = T), source))
 
 # set the output directory: if it doesn't exist, a new directory will be created
 out_dir = "02-model/model-output"
 
-# handle arguments supplied via command line
-# run like: Rscript 02-model/fit-model.R base medium TRUE TRUE
-args = commandArgs(trailingOnly = TRUE)
-scenario_name = args[1]
-mcmc_length = args[2]
-do_sim_vs_obs = as.logical(args[3])
-rmd = as.logical(args[4])
+# the list of acceptable mcmc length settings
+accepted_mcmc = c("vshort", "short", "medium", "long", "vlong")
 
-# scenario name: change this
-if (is.na(scenario_name)) scenario_name = "base"
+# set defaults: if running interactively, adjust settings here
+default_args = list(
+  scenario    = "test",
+  mcmc        = "vshort",
+  rmd         = TRUE,
+  sim         = TRUE,
+  pp_check    = TRUE,
+  lppd        = FALSE
+)
 
-# set mcmc length
-if (is.na(mcmc_length)) mcmc_length = "vshort"
+# Build command line argument parser
+# provides defaults and instructions
+parser = arg_parser("Fit the GR-sslcm to Data", hide.opts = TRUE) |>
+  
+  add_argument("scenario", "Name of model run",
+               type = "character", default = default_args$scenario) %>%
+  
+  add_argument("--mcmc", paste0("Overall run length, ranging from ~5mins to ~24hrs. Accepted options are: ", knitr::combine_words(accepted_mcmc, before = "'", and = " or ")),
+               type = "character", default = default_args$mcmc) %>%
+  
+  add_argument("--sim", "Perform simulation as a validation?",
+               type = "logical", default = default_args$sim, short = "sim") %>%
+  
+  add_argument("--rmd", "Render Rmarkdown output?",
+               type = "logical", default = default_args$rmd, short = "rmd") %>%
+  
+  add_argument("--pp_check", "Include posterior predictive check calculations?",
+               type = "logical", default = default_args$pp_check, short = "pp_check") %>%
+  
+  add_argument("--lppd", "Include log posterior predictive density calculations (for WAIC)?",
+               type = "logical", default = default_args$lppd, short = "lppd") 
 
-# include a forward simulation to compare to observed values as a validation?
-if (is.na(do_sim_vs_obs)) do_sim_vs_obs = TRUE
+# handle arguments based on whether this is an interactive session or not
+# if interactive, use all defaults
+# code also discards irrelevant values
+if (interactive()) {
+  defaults = parser$defaults
+  arg_names = parser$args
+  arg_names = str_remove(arg_names, "--")
+  names(defaults) = arg_names
+  args = defaults[!(names(defaults) %in% c("", "help"))]
+} else {
+  args = parse_args(parser)
+  args = args[!(names(args) %in% c("", "help"))]
+}
 
-# build RMDs?
-if (is.na(rmd)) rmd = TRUE
-
-# include posterior predictive checks in JAGS code?
-do_pp_check = TRUE
-
-# include posterior predictive density calculation in JAGS code?
-do_lppd = FALSE
+# stop if MCMC is not accepted
+if (!(args$mcmc %in% accepted_mcmc)) {
+  stop ("value supplied to argument '--mcmc' must be one of: ",
+        knitr::combine_words(accepted_mcmc, before = "'", and = " or "))
+}
 
 # build the scenario name
-scenario = paste0(scenario_name, "_", mcmc_length, ifelse(do_sim_vs_obs, "_sim", ""))
+scenario = paste0(args$scenario, "_", args$mcmc, ifelse(args$sim, "_sim", ""))
+
+# build and print the output file name
+out_file = paste0("output_", scenario, ".rds")
+my_cat("Output File: ", out_file)
 
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
-jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"), first_y = ifelse(!do_sim_vs_obs, 1991, 2000), last_y = 2019)
+jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"), first_y = ifelse(!args$sim, 1991, 2000), last_y = 2019)
 
 # remove trap abundance data in BY 2007 for UGR
 # estimates impossibly low, causing problems with model
@@ -98,7 +140,7 @@ add_jags_data = append(add_jags_data, add_jags_data3)
 add_jags_data = append(add_jags_data, list(first_x_LGR = min(which(!is.na(jags_data$x_LGR[,1])))))
 
 # set upper boundaries for early Rb states
-if (!do_sim_vs_obs) {
+if (!args$sim) {
   add_jags_data = append(add_jags_data, list(max_Rb_init = c(50, 200, 200)))
 } else {
   add_jags_data = append(add_jags_data, list(max_Rb_init = c(200, 1000, 1000)))
@@ -140,7 +182,7 @@ jags_data = append(jags_data, add_jags_data)
 
 ### ADD ON QUANTITIES FOR FORWARD SIMULATION ###
 
-if (do_sim_vs_obs) {
+if (args$sim) {
   jags_data = append_values_for_sim(jags_data)
 }
 
@@ -152,11 +194,11 @@ jags_file = file.path("02-model", basename(tempfile(pattern = "model-", fileext 
 write_model_code(jags_source, jags_file)
 
 # toggle on/off the calculation of pp checks and lppd
-toggle_data_diagnostics(do_lppd, do_pp_check, jags_file)
+toggle_data_diagnostics(args$lppd, args$pp_check, jags_file)
 
 # toggle Rb_init for HOR fish
 # (this is only for the sim vs. obs)
-if (do_sim_vs_obs) {
+if (args$sim) {
   toggle_HOR_Rb_init(jags_file)
 }
 
@@ -166,7 +208,7 @@ if (do_sim_vs_obs) {
 jags_params = c(
   # reproduction
   "alpha", "beta", "phi_E_Pb", "lambda", "sig_lbeta", "kappa_phi_E_Pb", 
-
+  
   # length-related quantities
   "omega0", "omega1", 
   "theta0", "theta1", "tau0", "tau1",
@@ -264,19 +306,27 @@ Tau_params = c(
 
 # add these additional nodes if included in JAGS model
 jags_params = c(jags_params, prior_params, Tau_params, paste0(Tau_params, "_pr"))
-if (do_pp_check) jags_params = c(jags_params, pp_check_params)
-if (do_lppd) jags_params = c(jags_params, lppd_params)
+if (args$pp_check) jags_params = c(jags_params, pp_check_params)
+if (args$lppd) jags_params = c(jags_params, lppd_params)
 
 ##### STEP 4: SELECT MCMC ATTRIBUTES #####
 
 jags_dims = list(
-  n_post  = switch(mcmc_length, "vshort" = 100, "short" = 2000, "medium" = 24000, "long" = 50000, "vlong" = 100000),
-  n_burn  = switch(mcmc_length, "vshort" = 10,  "short" = 1000, "medium" = 20000, "long" = 30000, "vlong" = 50000),
-  n_thin  = switch(mcmc_length, "vshort" = 1,   "short" = 3,    "medium" = 8,     "long" = 10,    "vlong" = 25),
-  n_chain = switch(mcmc_length, "vshort" = 2,   "short" = 4,    "medium" = 4,     "long" = 4,     "vlong" = 4),
-  n_adapt = switch(mcmc_length, "vshort" = 100, "short" = 100,  "medium" = 1000,  "long" = 3000,  "vlong" = 5000),
+  n_post  = switch(args$mcmc, "vshort" = 100, "short" = 2000, "medium" = 24000, "long" = 50000, "vlong" = 100000),
+  n_burn  = switch(args$mcmc, "vshort" = 10,  "short" = 1000, "medium" = 20000, "long" = 30000, "vlong" = 50000),
+  n_thin  = switch(args$mcmc, "vshort" = 1,   "short" = 3,    "medium" = 8,     "long" = 10,    "vlong" = 25),
+  n_chain = switch(args$mcmc, "vshort" = 2,   "short" = 4,    "medium" = 4,     "long" = 4,     "vlong" = 4),
+  n_adapt = switch(args$mcmc, "vshort" = 100, "short" = 100,  "medium" = 1000,  "long" = 3000,  "vlong" = 5000),
   parallel = TRUE
 )
+
+# calculate expected time to run and misc values for nice printing
+hrs_per_10k = ifelse(args$sim, 0.75, 1.65)
+iters = with(jags_dims, (n_burn + n_post) * ifelse(parallel, 1, n_chain))
+pred_hrs = iters/1e4 * hrs_per_10k
+units_c = ifelse(pred_hrs > 1, "hour(s)", "minute(s)")
+units_m = ifelse(pred_hrs > 1, 1, 60)
+units_r = ifelse(pred_hrs > 1, 2, 0)
 
 ##### STEP 5: GENERATE INITIAL VALUES #####
 
@@ -286,49 +336,54 @@ set.seed(1234)
 # generate initial values
 jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data = jags_data)
 
-##### STEP 6: CALL THE JAGS SAMPLER #####
+##### STEP 6: CALL JAGS #####
 
-# print a start message
-cat("Running JAGS on Multi-Population Model\n")
-cat("  MCMC Length Selected: ", mcmc_length, "\n", sep = "")
-cat("  Simulating years for validation: ", ifelse(do_sim_vs_obs, "Yes", "No"), "\n", sep = "")
-cat("  Simulating data for posterior predictive check: ", ifelse(do_pp_check, "Yes", "No"), "\n", sep = "")
-cat("  Monitoring log posterior predictive density for WAIC: ", ifelse(do_lppd, "Yes", "No"), "\n", sep = "")
-starttime = Sys.time()
-cat("  MCMC started:", format(starttime), "\n")
+# print summary of what is about to run
+starttime_jags = Sys.time()
+my_cat("MCMC Length Selected:", args$mcmc)
+my_cat("Predicted MCMC Duration:", paste(round(pred_hrs * units_m, digits = units_r), units_c))
+my_cat("Sim vs. Obs Comparison:", ifelse(args$sim, "Yes", "No"))
+my_cat("Posterior Predictive Check:", ifelse(args$pp_check, "Yes", "No"))
+my_cat("WAIC: ", ifelse(args$lppd, "Yes", "No"))
+my_cat("Scenario Name: ", scenario)
+my_cat("MCMC Started:", format(starttime_jags))
+my_cat("MCMC Completion (predicted):", format(starttime_jags + 3600 * pred_hrs))
+my_cat("MCMC Running:", "...please wait")
 
 # call JAGS
 post = jags.basic(
   data = jags_data,
   inits = jags_inits,
-  parameters.to.save = jags_params, 
-  model.file = jags_file, 
-  n.chains = jags_dims$n_chain, 
-  n.adapt = jags_dims$n_adapt, 
-  n.iter = jags_dims$n_post + jags_dims$n_burn, 
-  n.burnin = jags_dims$n_burn, 
+  parameters.to.save = jags_params,
+  model.file = jags_file,
+  n.chains = jags_dims$n_chain,
+  n.adapt = jags_dims$n_adapt,
+  n.iter = jags_dims$n_post + jags_dims$n_burn,
+  n.burnin = jags_dims$n_burn,
   n.thin = jags_dims$n_thin,
   parallel = jags_dims$parallel,
   verbose = FALSE
 )
 
-# print a stop message
-stoptime = Sys.time()
-cat("  MCMC ended:", format(stoptime), "\n")
-cat("  MCMC elapsed:", format(round(stoptime - starttime, 2)), "\n")
+# print a stop message upon completion
+stoptime_jags = Sys.time()
+my_cat("MCMC Completion (actual):", format(stoptime_jags))
+my_cat("    Elapsed:", format(round(stoptime_jags - starttime_jags, 1)))
 
-##### STEP 7: PROCESS COVARIANCE MATRICES #####
+##### STEP 7: HANDLE PROCESS COVARIANCE MATRICES #####
 
-cat("Decomposing all Precision Matrices\n")
+# print a start message
+starttime = Sys.time()
+my_cat("Tau Matrix Decomposition:", "...please wait")
 
 # a function to get the posterior of the vcov components (sig and rhos) from a precision matrix
 process_Tau = function(Tau_name) {
-  cat("  ", Tau_name, sep = "")
+  cat("\r", paste(rep(" ", 100), collapse = ""), "\r        (", which(Tau_names == Tau_name), "/", length(Tau_names), ") ", Tau_name, sep = "")
   suppressMessages({
     vcov_decomp(
       post, param = paste0(Tau_name, "["), invert = TRUE,
-      sigma_base_name = stringr::str_replace(Tau_name, "Tau", "sig"),
-      rho_base_name = stringr::str_replace(Tau_name, "Tau", "rho")
+      sigma_base_name = str_replace(Tau_name, "Tau", "sig"),
+      rho_base_name = str_replace(Tau_name, "Tau", "rho")
     )
   })
 }
@@ -337,7 +392,7 @@ process_Tau = function(Tau_name) {
 Tau_names = match_params(post, "^Tau", type = "base_only")
 
 # apply the above function to each one
-Sig_components = lapply(Tau_names, function(x) {out = process_Tau(x); cat("\n"); return(out)})
+Sig_components = lapply(Tau_names, function(x) {out = process_Tau(x); return(out)}); cat("\n")
 
 # combine with other posterior samples
 Sig_components = lapply(Sig_components, as.matrix)
@@ -352,7 +407,14 @@ post = suppressMessages(post_remove(post, "^Tau", ask = FALSE))
 diagonal_rhos = sub_index(sub_index("rho_.+[pop,pop]", pop = 1:jags_data$nj), pop = 1:jags_data$nj)
 post = suppressMessages(post_remove(post, diagonal_rhos, ask = FALSE))
 
+# print a stop message when complete
+stoptime = Sys.time()
+my_cat("    Elapsed:", format(round(stoptime - starttime, 1)))
+
 ##### STEP 8: SAVE THE OUTPUT #####
+
+starttime = Sys.time()
+my_cat("Saving output file:", "...please wait")
 
 # create the output directory if it doesn't already exist
 if (!dir.exists(out_dir)) dir.create(out_dir)
@@ -363,33 +425,30 @@ out_obj = list(
   jags_data = jags_data,
   jags_inits = jags_inits,
   jags_dims = jags_dims,
-  do_lppd = do_lppd,
-  do_pp_check = do_pp_check,
-  do_sim_vs_obs = do_sim_vs_obs,
-  jags_time = c(starttime = format(starttime), stoptime = format(stoptime), elapsed = format(round(stoptime - starttime,2))),
+  do_lppd = args$lppd,
+  do_pp_check = args$pp_check,
+  do_sim_vs_obs = args$sim,
+  jags_time = c(starttime = format(starttime_jags), stoptime = format(stoptime_jags), elapsed = format(round(stoptime_jags - starttime_jags,2))),
   post = post,
   scenario = scenario
 )
 
-# create the output file name
-out_file = paste0("output-", scenario, ".rds")
-
 # save the file
-cat("Saving rds Output\n")
 saveRDS(out_obj, file.path(out_dir, out_file))
 
 # delete the text file that contains the JAGS code
 unlink(jags_file)
 
-##### STEP 9: RENDER RMDs #####
+# print a stop message when complete
+stoptime = Sys.time()
+my_cat("    Elapsed:", format(round(stoptime - starttime, 1)))
 
 # render the output plots if requested
-if (rmd) {
-  # start a timer, this can take a while
-  starttime = Sys.time()
+if (args$rmd) {
   
-  # print a progress message
-  cat("Rendering Rmd Output\n")
+  # print a start message
+  starttime = Sys.time()
+  my_cat("Rendering Rmd File: ", "output-plots.Rmd")
   
   # set working dir to post-processing directory
   setwd("03-post-process")
@@ -405,24 +464,22 @@ if (rmd) {
   )
   
   # open the rendered file when complete
-  file.show(rmd_out_file)
+  if (interactive()) file.show(rmd_out_file)
   
-  # stop the timer
+  # print a message when complete
   stoptime = Sys.time()
-  cat("\nRmd elapsed:", format(round(stoptime - starttime, 2)))
+  my_cat("    Elapsed:", format(round(stoptime - starttime, 1)))
   
   # set the working dir back
   setwd("../")
-  cat("\n\nDone.")
 }
 
 # render the simulation vs. observed time series plots if requested and applicable
-if (rmd & do_sim_vs_obs) {
-  # start a timer, this can take a while
-  starttime = Sys.time()
+if (args$rmd & args$sim) {
   
-  # print a progress message
-  cat("\nRendering Sim vs. Obs Rmd Output")
+  # print a starting message
+  starttime = Sys.time()
+  my_cat("Rendering Rmd File: ", "compare-sim-to-obs.Rmd")
   
   # set working dir to post-processing directory
   setwd("03-post-process")
@@ -438,14 +495,21 @@ if (rmd & do_sim_vs_obs) {
   )
   
   # open the rendered file when complete
-  file.show(rmd_out_file)
+  if (interactive()) file.show(rmd_out_file)
   
-  # stop the timer
+  # print
   stoptime = Sys.time()
-  cat("\nSim vs. Obs Rmd elapsed:", format(round(stoptime - starttime, 2)))
+  my_cat("    Elapsed:", format(round(stoptime - starttime, 1)))
   
   # set the working dir back
   setwd("../")
-  cat("\n\nDone.")
 }
 
+##### STEP 10: ALL DONE #####
+
+# stop the timer for all analyses
+stoptime_all = Sys.time()
+
+# print a completion message
+my_cat("All Steps Complete:", "HOORAY!!")
+my_cat("    Elapsed:", format(round(stoptime_all - starttime_all, 1)))

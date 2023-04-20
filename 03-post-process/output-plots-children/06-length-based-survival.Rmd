@@ -5,10 +5,96 @@ editor_options:
 
 # Length-Based Survival {.tabset .tabset-pills}
 
-## Parr $\to$ Smolt Overwinter Survival
+## Parr $\to$ Smolt Overwinter Survival {.tabset .tabset-pills}
 
-```{r overwinter-survival-plots, fig.width = 8, fig.height = 5}
-plot_fn = function(j, i) {
+### Time Series {.tabset .tabset-pills}
+
+#### Fall Migrants {.tabset .tabset-pills}
+
+##### Realized Alone
+
+```{r phi_Pa_Mb_tseries-fall-1, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  
+  # draw the realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_fall, pop = j)), 
+               main = pops[j], yrs = all_yrs[ts_yrs]
+  )
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Overwinter Survival (Fall Migrants)")
+```
+
+##### Realized + Predicted
+
+```{r phi_Pa_Mb_tseries-fall-2, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  
+  # draw the realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_fall, pop = j)), 
+               main = pops[j], yrs = all_yrs[ts_yrs]
+  )
+  
+  # add the predicted time series
+  add_tseries(post_summ(post, sub_index("^phi_Pa_Mb_dot[year,LH_type,pop]", year = ts_yrs, LH_type = i_fall, pop = j)),
+              yrs = all_yrs[t])
+  
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Overwinter Survival (Fall Migrants)")
+```
+
+#### Spring Migrants {.tabset .tabset-pills}
+
+##### Realized Alone
+
+```{r phi_Pa_Mb_tseries-spring-1, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  
+  # draw the realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_spring, pop = j)), 
+               main = pops[j], yrs = all_yrs[ts_yrs]
+  )
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Overwinter Survival (Spring Migrants)")
+```
+
+##### Realized + Predicted
+
+```{r phi_Pa_Mb_tseries-spring-2, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  
+  # draw the realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_spring, pop = j)), 
+               main = pops[j], yrs = all_yrs[ts_yrs]
+  )
+  
+  # add the predicted time series
+  add_tseries(post_summ(post, sub_index("^phi_Pa_Mb_dot[year,LH_type,pop]", year = ts_yrs, LH_type = i_spring, pop = j)),
+              yrs = all_yrs[ts_yrs])
+  
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Overwinter Survival (Spring Migrants)")
+```
+
+### Mean Length Relationship {.tabset .tabset-pills}
+
+```{r}
+plot_f = function(j, i) {
   
   # extract posterior summaries of spring length outcomes
   L_Pb_mean = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))["mean",]
@@ -69,21 +155,70 @@ plot_fn = function(j, i) {
   points(phi_Pa_Mb_mean ~ L_Pb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
   text(phi_Pa_Mb_mean ~ L_Pb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 }
-
-plot_fn2 = function(j) {
-    # create the plots for both migratory strategies
-  par(mgp = c(2, 0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
-  plot_fn(j = j, i = 1); if (j == 1) mtext(side = 2, line = 1.5, "Fall Migrants")
-  plot_fn(j = j, i = 2); if (j == 1) mtext(side = 2, line = 1.5, "Spring Migrants")
-}
-
-par(mfcol = c(jags_data$ni,jags_data$nj), oma = c(2.5,3.5,0,0))
-junk = sapply(1:jags_data$nj, plot_fn2)
-mtext(side = 1, line = 1.5, outer = T, "Parr Mean Length (mm)", cex = 1.2)
-mtext(side = 2, line = 2, outer = T, "Overwinter Survival", cex = 1.2)
 ```
 
-## Smolt Survival to LGR
+#### Fall Migrants
+
+```{r phi_Pa_Mb_fall_relationship, fig.width = 6, fig.height = 5}
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f, i = 1)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Overwinter Survival (Fall Migrants)")
+```
+
+#### Spring Migrants
+
+```{r phi_Pa_Mb_spring_relationship, fig.width = 6, fig.height = 5}
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f, i = 2)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Overwinter Survival (Spring Migrants)")
+```
+
+## Smolt $\to$ LGR Survival {.tabset .tabset-pills}
+
+### Time Series {.tabset .tabset-pills}
+
+#### Realized Alone
+
+```{r phi_Mb_Ma_tseries-1, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  
+  # draw the realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ts_yrs, LH_type = i_spring, pop = j, origin = o_nor)), 
+               main = pops[j], yrs = all_yrs[ts_yrs]
+  )
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Smolt to LGR Survival (NOR)")
+```
+
+#### Realized + Predicted
+
+```{r phi_Mb_Ma_tseries-2, fig.width = 6, fig.height = 5}
+plot_f = function(j) {
+  
+  # draw the realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ts_yrs, LH_type = i_spring, pop = j, origin = o_nor)), 
+               main = pops[j], yrs = all_yrs[ts_yrs]
+  )
+  
+  # add the predicted time series
+  add_tseries(post_summ(post, sub_index("^phi_Mb_Ma_dot[year,LH_type,origin,pop]", year = ts_yrs, LH_type = i_spring, pop = j, origin = o_nor)),
+              yrs = all_yrs[ts_yrs])
+  
+}
+
+par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+junk = sapply(1:jags_data$nj, plot_f)
+mtext(side = 1, outer = T, line = 0.25, "Brood Year")
+mtext(side = 2, outer = T, line = 0.25, "Smolt to LGR Survival (NOR)")
+```
+
+### Mean Length Relationship
 
 ```{r toLGR-survival-plots, fig.width = 6, fig.height = 5}
 plot_fn = function(j) {
