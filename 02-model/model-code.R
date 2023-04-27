@@ -84,8 +84,9 @@ jags_model_code = function() {
     # gamma1: LH-common slopes
     for (i in 1:ni) {
       gamma0[i,j] ~ dt(0, 1/1.566^2, 7.763)
-      gamma1[i,j] ~ dt(0, 1/1.566^2, 7.763)
     }
+    gamma1[i_fall,j] ~ dt(0, 1/1.566^2, 7.763)
+    gamma1[i_spring,j] <- gamma1[i_fall,j]
 
     # coefficients for obtaining summer mean length to spring mean length growth factor
     theta0[j] ~ dunif(theta0_prior[1], theta0_prior[2])
