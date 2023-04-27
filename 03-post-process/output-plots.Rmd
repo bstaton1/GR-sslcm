@@ -80,7 +80,7 @@ invisible(sapply(list.files(path = "../01-functions", pattern = "\\.R$", full.na
 in_dir = "../02-model/model-output"
 
 # read information from this model
-model_info = readRDS(file.path(in_dir, paste0("output-", params$scenario, ".rds")))
+model_info = readRDS(file.path(in_dir, paste0("output_", params$scenario, ".rds")))
 
 # extract the posterior samples
 # post-MCMC thinning allowed to reduce run time of this document
