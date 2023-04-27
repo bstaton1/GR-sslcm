@@ -7,6 +7,10 @@ editor_options:
 
 ## Parr $\to$ Smolt Overwinter Survival {.tabset .tabset-pills}
 
+```{r phi_Pa_Mb_lim}
+phi_Pa_Mb_lim = make_lim_param(post, "^phi_Pa_Mb[")
+```
+
 ### Time Series {.tabset .tabset-pills}
 
 #### Fall Migrants {.tabset .tabset-pills}
@@ -18,7 +22,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_fall, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = phi_Pa_Mb_lim
   )
 }
 
@@ -35,7 +39,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_fall, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = phi_Pa_Mb_lim
   )
   
   # add the predicted time series
@@ -59,7 +63,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_spring, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = phi_Pa_Mb_lim
   )
 }
 
@@ -76,7 +80,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = ts_yrs, LH_type = i_spring, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = phi_Pa_Mb_lim
   )
   
   # add the predicted time series
@@ -138,9 +142,10 @@ plot_f = function(j, i) {
   # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
-       ylim = range(pred_phi_Pa_Mb_lwr, pred_phi_Pa_Mb_upr, phi_Pa_Mb_lwr, phi_Pa_Mb_upr, na.rm = T),
+       # ylim = range(pred_phi_Pa_Mb_lwr, pred_phi_Pa_Mb_upr, phi_Pa_Mb_lwr, phi_Pa_Mb_upr, na.rm = T),
+       ylim = phi_Pa_Mb_lim,
        xlim = range(L_Pb_seq), 
-       main = ifelse(i == 1, pops[j], "")
+       main = pops[j]
   )
     
   # expected relationship
@@ -177,6 +182,11 @@ mtext(side = 2, outer = T, line = 0.25, "Overwinter Survival (Spring Migrants)")
 
 ## Smolt $\to$ LGR Survival {.tabset .tabset-pills}
 
+```{r phi_Mb_Ma_lim}
+phi_Mb_Ma_lim = sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = ".", LH_type = i_spring, origin = o_nor) |>
+  make_lim_param(post, param = _)
+```
+
 ### Time Series {.tabset .tabset-pills}
 
 #### Realized Alone
@@ -186,7 +196,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ts_yrs, LH_type = i_spring, pop = j, origin = o_nor)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = phi_Mb_Ma_lim
   )
 }
 
@@ -203,7 +213,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ts_yrs, LH_type = i_spring, pop = j, origin = o_nor)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = phi_Mb_Ma_lim
   )
   
   # add the predicted time series
@@ -266,7 +276,8 @@ plot_fn = function(j) {
   # make a blank plot with the correct dimensions
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
-       ylim = range(pred_phi_Mb_Ma_lwr, pred_phi_Mb_Ma_upr, phi_Mb_Ma_lwr, phi_Mb_Ma_upr, na.rm = T),
+       # ylim = range(pred_phi_Mb_Ma_lwr, pred_phi_Mb_Ma_upr, phi_Mb_Ma_lwr, phi_Mb_Ma_upr, na.rm = T),
+       ylim = phi_Mb_Ma_lim,
        xlim = range(L_Mb_seq), 
        main = pops[j]
   )

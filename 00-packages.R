@@ -13,5 +13,7 @@ suppressWarnings({
     library(posterior)      # for calculating updated MCMC diagnostics; install.packages("posterior")
     library(argparser)      # for parsing command line arguments for 02-model/fit-model.R script
     library(stringr)        # for miscellaneous string handling
+    library(matrixcalc)     # for misc matrix tools, used here to see if matrix is positive definite
+    library(corrplot)       # for creating correlograms
   })
 })

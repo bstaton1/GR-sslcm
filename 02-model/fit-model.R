@@ -174,7 +174,11 @@ add_jags_data = append(add_jags_data, list(
   Tau_Lpsi_O1_prior =         c(0.15, 2),
   Tau_Lpsi_O2_prior =         c(0.30, 2),
   Tau_Lphi_Rb_Ra_prior =      c(0.30, 2),
-  Tau_Lphi_Sb_Sa_prior =      c(0.15, 2)
+  Tau_Lphi_Sb_Sa_prior =      c(0.15, 2),
+  omega0_prior =          log(c(50, 100)),
+  omega1_prior =              c(-0.5, 0.5),
+  theta0_prior =          log(c(1, 2)),
+  theta1_prior =              c(-0.5, 0.5)
 ))
 
 # append all of this additional content to the data object

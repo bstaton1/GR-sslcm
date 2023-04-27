@@ -70,9 +70,9 @@ jags_model_code = function() {
     
     ### PRIORS: DENSITY-DEPENDENT GROWTH ###
     # length at end of summer vs. eggs relationship: density-dependent spring/summer growth
-    omega0[j] ~ dnorm(0, 1e-3)  # intercept
-    omega1[j] ~ dnorm(0, 1e-3)  # slope
-    
+    omega0[j] ~ dunif(omega0_prior[1], omega0_prior[2])  # intercept
+    omega1[j] ~ dunif(omega1_prior[1], omega1_prior[2])  # slope
+
     ### PRIORS: FRESHWATER PARAMETERS ###
     # aggregate parr to LH-specific parr
     mu_pi[i_fall,j] ~ dbeta(1, 1)
@@ -84,13 +84,14 @@ jags_model_code = function() {
     # gamma1: LH-common slopes
     for (i in 1:ni) {
       gamma0[i,j] ~ dt(0, 1/1.566^2, 7.763)
-      gamma1[i,j] ~ dt(0, 1/1.566^2, 7.763)
     }
+    gamma1[i_fall,j] ~ dt(0, 1/1.566^2, 7.763)
+    gamma1[i_spring,j] <- gamma1[i_fall,j]
 
     # coefficients for obtaining summer mean length to spring mean length growth factor
-    theta0[j] ~ dnorm(0, 1e-3)
-    theta1[j] ~ dnorm(0, 1e-3)
-
+    theta0[j] ~ dunif(theta0_prior[1], theta0_prior[2])
+    theta1[j] ~ dunif(theta1_prior[1], theta1_prior[2])
+    
     # size-dependent NOR migration to LGR survival
     # assumed equal among migration types
     tau0[j] ~ dt(0, 1/1.566^2, 7.763)
