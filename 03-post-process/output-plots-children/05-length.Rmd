@@ -7,6 +7,10 @@ editor_options:
 
 ## Parr Mean Length {.tabset .tabset-pills}
 
+```{r L_Pb_lim}
+L_Pb_lim = make_lim_param(post, "^L_Pb[year,")
+```
+
 ### Time Series {.tabset .tabset-pills}
 
 #### Realized Alone
@@ -16,7 +20,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Pb_lim
   )
 }
 
@@ -33,7 +37,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs]
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Pb_lim
   )
   
   # draw the predicted time series
@@ -95,7 +99,8 @@ plot_f = function(j) {
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   
   plot(1,1, type = "n", 
-       ylim = range(pred_L_Pb_lwr, pred_L_Pb_upr, L_Pb_lwr, L_Pb_upr, na.rm = T),
+       # ylim = range(pred_L_Pb_lwr, pred_L_Pb_upr, L_Pb_lwr, L_Pb_upr, na.rm = T),
+       ylim = L_Pb_lim,
        xlim = range(0, E_scaled_seq), 
        main = pops[j]
   )
@@ -122,6 +127,10 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Parr\\, Mean\\, Length\\,(mm)$"))
 
 ## Parr $\to$ Smolt "Growth" Factor {.tabset .tabset-pills}
 
+```{r Delta_L_Pb_Mb_lim}
+Delta_L_Pb_Mb_lim = make_lim_param(post, "^Delta_L_Pb_Mb[year,")
+```
+
 ### Time Series {.tabset .tabset-pills}
 
 #### Realized Alone
@@ -129,7 +138,7 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Parr\\, Mean\\, Length\\,(mm)$"))
 ```{r Delta_L_Pb_Mb-1, fig.width = 6, fig.height = 5}
 plot_f = function(j) {
   plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = c(1,1.6))
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -144,7 +153,7 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Parr \\rightarrow Smolt\\,Growth\\
 plot_f = function(j) {
   Delta_L_Pb_Mb_obs = cbind(mean = jags_data$L_Mb_obs[observable,j]/jags_data$L_Pb_obs[observable,j], lwr95 = NA, upr95 = NA)
   plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
-               Delta_L_Pb_Mb_obs, main = pops[j], yrs = all_yrs[ts_yrs], ylim = c(1,1.6))
+               Delta_L_Pb_Mb_obs, main = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
 }
 
 par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
@@ -159,7 +168,7 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Parr \\rightarrow Smolt\\,Growth\\
 plot_f = function(j) {
   # draw the realized time series
   plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = c(1,1.6))
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
   
   # draw the predicted time series
   add_tseries(est = post_summ(post, sub_index("^Delta_L_Pb_Mb_dot[year,pop]", pop = j, year = ts_yrs)),
@@ -215,7 +224,7 @@ plot_f = function(j) {
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
        # ylim = range(pred_Delta_L_Pb_Mb_lwr, pred_Delta_L_Pb_Mb_upr, Delta_L_Pb_Mb_lwr, Delta_L_Pb_Mb_upr, na.rm = TRUE),
-       ylim = c(1, 1.6),
+       ylim = Delta_L_Pb_Mb_lim,
        xlim = range(L_Pb_seq), 
        main = pops[j]
   )
@@ -241,6 +250,10 @@ mtext(side = 2, outer = T, line = 0.25, TeX("$Parr\\, \\to\\, Smolt\\, Growth\\,
 
 ## Smolt Mean Length {.tabset .tabset-pills}
 
+```{r L_Mb_lim}
+L_Mb_lim = make_lim_param(post, "^L_Mb[year,")
+```
+
 ### Time Series {.tabset .tabset-pills}
 
 #### Realized Alone
@@ -250,7 +263,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = c(75,110)
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Mb_lim
   )
 }
 
@@ -309,7 +322,7 @@ plot_f = function(j) {
   
   # draw the realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = c(75,110)
+               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Mb_lim
   )
   
   # draw the realized time series
@@ -375,8 +388,10 @@ plot_fn = function(j) {
   par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
        # ylim = range(pred_L_Mb_lwr, pred_L_Mb_upr, L_Mb_lwr, L_Mb_upr, na.rm = T),
-       ylim = c(75,110),
-       xlim = range(L_Pb_seq), 
+       # ylim = c(75,110),
+       # xlim = range(L_Pb_seq), 
+       xlim = L_Pb_lim,
+       ylim = L_Mb_lim,
        main = pops[j]
   )
   

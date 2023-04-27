@@ -316,3 +316,18 @@ compare_BH = function(post_list, pop, main = "", legend = "topleft", cols = NULL
     legend(legend, legend = names(post_list), pch = 15, col = cols, pt.cex = 2, bty = "n")
   }
 }
+
+##### GENERALIZED PLOTTING FUNCTIONS #####
+
+# given a parameter name, return the axis limits that would include the 95% CRI
+make_lim_param = function(post, param) {
+  
+  # which rows of post_summ() output should be used in calculating axis limits
+  use_in_lim = c(FALSE, FALSE, FALSE, TRUE, TRUE)
+  
+  # get the range of relevant posterior summaries
+  sub_index(sub_index(param, year = ts_yrs)) |>
+    post_summ(post, param = _) |>
+    subset(use_in_lim) |>
+    range()
+}
