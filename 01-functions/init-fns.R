@@ -414,20 +414,27 @@ gen_initials = function(CHAIN, jags_data) {
     })
     colnames(L_Pb_params) = colnames(jags_data$Ra_obs)
     omega0_init = L_Pb_params["omega0",] * rlnorm(nj, 0, 0.05)
+    omega0_init[omega0_init < omega0_prior[1]] = log(exp(omega0_prior[1]) + 5)
+    omega0_init[omega0_init > omega0_prior[2]] = log(exp(omega0_prior[2]) - 5)
     omega1_init = L_Pb_params["omega1",] * rlnorm(nj, 0, 0.05)
     sig_lL_Pb_init = L_Pb_params["sigma",] * rlnorm(nj, 0, 0.05)
     
     # create random parameters for gammas
     phi_Pa_Mb_params = lapply(1:nj, function(j) {
-      x = L_Pb_obs[,j]
+      x = (L_Pb_obs[,j] - L_Pb_center[j])/L_Pb_scale[j]
       y_fall = get_phi_Pa_Mb_obs(jags_data)[,i_fall,j]
       y_spring = get_phi_Pa_Mb_obs(jags_data)[,i_spring,j]
+      y_mean = rowMeans(cbind(y_fall, y_spring), na.rm = TRUE)
+      
       fit_fall = lm(qlogis(y_fall) ~ x)
       fit_spring = lm(qlogis(y_spring) ~ x)
+      fit_mean = lm(qlogis(y_mean) ~ x)
       
       out_fall = c(coef(fit_fall), summary(fit_fall)$sigma)
       out_spring = c(coef(fit_spring), summary(fit_spring)$sigma)
-      out = rbind(out_fall, out_spring)
+      out_mean = c(coef(fit_mean), summary(fit_mean)$sigma)
+      # out = rbind(out_fall, out_spring)
+      out = rbind(out_mean, out_mean)
       rownames(out) = c("fall-mig", "spring-mig")
       colnames(out) = c("gamma0", "gamma1", "sigma")
       out
@@ -436,15 +443,36 @@ gen_initials = function(CHAIN, jags_data) {
     dimnames(phi_Pa_Mb_params)[[3]] = colnames(Ra_obs)
     gamma0_init = phi_Pa_Mb_params[,"gamma0",] * matrix(rlnorm(ni * nj, 0, 0.05), ni, nj)
     gamma1_init = phi_Pa_Mb_params[,"gamma1",] * matrix(rlnorm(ni * nj, 0, 0.05), ni, nj)
+    gamma1_init[i_spring,] = NA
     sig_Lphi_Pa_Mb_init = phi_Pa_Mb_params[,"sigma",] * matrix(rlnorm(ni * nj, 0, 0.05), ni, nj)
     
     # create random parameters for overwinter survival
     Lphi_Pa_Mb_init = qlogis(get_phi_Pa_Mb_obs(jags_data, TRUE, TRUE)) + array(rnorm(ny * ni * nj, 0, 0.2), dim = c(ny, ni, nj))
     Lphi_Pa_Mb_init[1,,] = NA
     
+    # create random parameters for thetas
+    lDelta_L_Pb_Mb_params = sapply(1:nj, function(j) {
+      y1 = L_Pb_obs[,j]
+      y2 = L_Mb_obs[,j]
+      x = (L_Pb_obs[,j] - L_Pb_center[j])/L_Pb_scale[j]
+      y = log(y2/y1)
+      fit = lm(y ~ x)
+      out = c(coef(fit), summary(fit)$sigma)
+      names(out) = c("theta0", "theta1", "sig_lDelta_L_Pb_Mb")
+      out
+    })
+    colnames(lDelta_L_Pb_Mb_params) = colnames(jags_data$Ra_obs)
+    theta0_init = lDelta_L_Pb_Mb_params["theta0",] * rlnorm(nj, 0, 0.05)
+    theta1_init = lDelta_L_Pb_Mb_params["theta1",] * rlnorm(nj, 0, 0.05)
+    lDelta_L_Pb_Mb_init = array(NA, dim = c(ny, nj))
+    lDelta_L_Pb_Mb_init[1:ny_obs,] = log(L_Mb_obs/L_Pb_obs)
+    lDelta_L_Pb_Mb_init[is.na(lDelta_L_Pb_Mb_init)] = mean(lDelta_L_Pb_Mb_init, na.rm = TRUE)
+    lDelta_L_Pb_Mb_init = lDelta_L_Pb_Mb_init + matrix(rnorm(ny * nj, 0, 0.03), ny, nj)
+    lDelta_L_Pb_Mb_init[1,] = NA
+    
     # create random parameters for taus
     phi_Mb_Ma_params = sapply(1:nj, function(j) {
-      x = L_Mb_obs[,j]
+      x = (L_Mb_obs[,j] - L_Mb_center[j])/L_Mb_scale[j]
       y = Lphi_obs_Mb_Ma[,i_spring,o_nor,j]
       fit = lm(y ~ x)
       out = c(coef(fit), summary(fit)$sigma)
@@ -452,10 +480,10 @@ gen_initials = function(CHAIN, jags_data) {
       out
     })
     colnames(phi_Mb_Ma_params) = colnames(jags_data$Ra_obs)
-    # tau0_init = phi_Mb_Ma_params["tau0",] * rlnorm(nj, 0, 0.05)
-    # tau1_init = phi_Mb_Ma_params["tau1",] * rlnorm(nj, 0, 0.05)
-    tau0_init = c(-6.31, -3.75, -2.68, -8.78) * rlnorm(nj, 0, 0.05)
-    tau1_init = c(0.06, 0.04, 0.03, 0.09) * rlnorm(nj, 0, 0.05)
+    tau0_init = phi_Mb_Ma_params["tau0",] * rlnorm(nj, 0, 0.05)
+    tau1_init = phi_Mb_Ma_params["tau1",] * rlnorm(nj, 0, 0.05)
+    # tau0_init = c(-6.31, -3.75, -2.68, -8.78) * rlnorm(nj, 0, 0.05)
+    # tau1_init = c(0.06, 0.04, 0.03, 0.09) * rlnorm(nj, 0, 0.05)
     
     sig_Lphi_Mb_Ma_init = phi_Mb_Ma_params["sigma",] * rlnorm(nj, 0, 0.05)
     sig_Lphi_Mb_Ma_init = rbind(NOR = sig_Lphi_Mb_Ma_init, HOR = rep(NA, nj))
@@ -532,10 +560,6 @@ gen_initials = function(CHAIN, jags_data) {
     lL_Pb_init = log(matrix(runif(nj * ny, 60, 90), ny, nj))
     lL_Pb_init[1,] = NA
     
-    # create random parameters for growth between summer and spring tagging
-    lgrowth_init = log(matrix(runif(nj * ny, 1, 1.5), ny, nj))
-    lgrowth_init[1,] = NA
-    
     Lphi_E_Pb_resid_init = matrix(NA, ny, nj)
     Lphi_E_Pb_resid_init[1,1:nj] = 0
     Lphi_O0_O1_resid_init = array(NA, dim = c(ny, no, nj))
@@ -578,9 +602,9 @@ gen_initials = function(CHAIN, jags_data) {
       Tau_Lphi_Pa_Mb = solve(sim_Sigma(rep(0.3, nj), "low")),
       
       # summer to spring growth
-      # mu_growth = mu_growth_init,
-      # sig_lgrowth = sig_lgrowth_init,
-      lgrowth = lgrowth_init,
+      theta0 = theta0_init,
+      theta1 = theta1_init,
+      lDelta_L_Pb_Mb = lDelta_L_Pb_Mb_init,
       Tau_lDelta_L_Pb_Mb = solve(sim_Sigma(rep(0.05, nj), "low")),
       
       # migration to LGR
