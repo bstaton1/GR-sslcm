@@ -52,7 +52,53 @@ get_obs_ests_log_normal = function(lmean, lsig) {
   return(out)
 }
 
-##### PLOT A TIME SERIES OF ESTIMATES, WITH DATA IF AVAILABLE #####
+##### PLOTTING INFRASTRUCTURE FUNCTIONS #####
+
+# create a nice axis limit
+make_lim = function(..., buffer = c(0, 0.1)) {
+  lim = range(..., na.rm = TRUE)
+  lim_diff = diff(lim)
+  lim = lim + lim_diff * buffer
+  lim
+}
+
+# include a label in the corner of a plot
+panel_label = function(label_text, label_loc = "topleft", cex = 1,
+                       font = 2, x_inp = 0.015, y_inp = 0.05, col = par("col.axis"), ...) {
+  
+  accepted = c("topleft", "topright", "bottomleft", "bottomright")
+  
+  usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
+  
+  is_left = stringr::str_detect(label_loc, "left")
+  is_top = stringr::str_detect(label_loc, "top")
+  xsign = ifelse(is_left, -1, 1)
+  ysign = ifelse(is_top, -1, 1)
+  xi = ifelse(is_left, 1, 2)
+  yi = ifelse(is_top, 4, 3)
+  pos = ifelse(is_left, 4, 2)
+  
+  text(x = usr[xi] + xsign * xdiff * x_inp,
+       y = usr[yi] + ysign * ydiff * y_inp,
+       labels = label_text, cex = cex, pos = pos, font = font, col = col, ...)
+}
+
+# draw axes labels
+axis_labels = function(xlab = NULL, ylab = NULL, xline = 0.4, yline = 0.4, outer = TRUE, ...) {
+  mtext(side = 1, line = xline, text = xlab, outer = outer, ...)
+  mtext(side = 2, line = yline, text = ylab, outer = outer, ...)
+} 
+
+# default par()
+mypar = function(mar = c(1,1,0.5,0.5),
+                 mfrow = c(2,2), 
+                 oma = c(1.5,1.5,0,0), mgp = c(200,0.05,0), 
+                 tcl = 0, lend = "square",
+                 ljoin = "mitre",
+                 col.axis = "grey40", cex.axis = 0.85, ...) {
+  
+  do.call(par, c(as.list(environment()), list(...)))
+}
 
 # est: output from postpack::post_summ()
 # obs: optional vector of observed data to plot on top of estimates
