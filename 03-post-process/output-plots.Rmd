@@ -158,6 +158,41 @@ vcov_inds = paste0("[", vcov_rows, ",", vcov_cols, "]")
 vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
 ```
 
+```{r set-plot-opts}
+# select main colors
+main_cols = c(
+  "model" = "salmon",
+  "model2" = "forestgreen",
+  "data" = "royalblue"
+)
+
+# set the transparent versions based on main color
+tran_cols = sapply(main_cols, scales::alpha, alpha = 0.25)
+
+# size of points on figures
+pt_cex = 1.4
+
+# figure dimensions: a figure of two panels (inches)
+p2_width = 6.5
+p2_height = 2.75
+
+# figure dimensions: a figure of three panels (inches)
+p3_width = 6.5
+p3_height = 2
+
+# figure dimensions: a figure of four panels (inches)
+p4_width = 6.5
+p4_height = 4.5
+
+# figure dimensions: a figure of 6 panels (inches)
+p6_width = 6.5
+p6_height = 3.75
+
+# actual ylim to use for [0,1]
+# allows showing panel label in upper corner
+ylim_01 = c(0, 1.05)
+```
+
 ```{r model-info, child = "output-plots-children/01-model-info.Rmd"}
 ```
 
