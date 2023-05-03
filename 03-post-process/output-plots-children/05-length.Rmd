@@ -15,45 +15,44 @@ L_Pb_lim = make_lim_param(post, "^L_Pb[year,")
 
 #### Realized Alone
 
-```{r L_Pb_tseries-1, fig.width = 6, fig.height = 5}
+```{r L_Pb_tseries-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
-  # draw the realized time series
+  # realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Pb_lim
+               label_text = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Pb_lim
   )
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Parr Mean Length (mm)")
+axis_labels("Brood Year", "Parr Mean Length (mm)")
 ```
 
 #### Realized & Predicted
 
-```{r L_Pb_tseries-2, fig.width = 6, fig.height = 5}
+```{r L_Pb_tseries-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
-  # draw the realized time series
+  # realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Pb_lim
+               label_text = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Pb_lim
   )
   
-  # draw the predicted time series
+  # predicted time series
   add_tseries(est = post_summ(post, sub_index("^L_Pb_dot[year,pop]", pop = j, year = ts_yrs)),
               yrs = all_yrs[ts_yrs])
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Parr Mean Length (mm)")
+axis_labels("Brood Year", "Parr Mean Length (mm)")
+
 ```
 
 ### Density-Dependent Relationship
 
-```{r L_Pb-relationship, fig.width = 6, fig.height = 5}
+```{r L_Pb-relationship, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
 
   # obtain posterior samples of total egg abundance scaled to WUL
@@ -95,34 +94,30 @@ plot_f = function(j) {
   pred_L_Pb_lwr = post_summ(post_pred_L_Pb, ".")["2.5%",]
   pred_L_Pb_upr = post_summ(post_pred_L_Pb, ".")["97.5%",]
   
-  # make a blank plot with the correct dimensions
-  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
-  
   plot(1,1, type = "n", 
-       # ylim = range(pred_L_Pb_lwr, pred_L_Pb_upr, L_Pb_lwr, L_Pb_upr, na.rm = T),
        ylim = L_Pb_lim,
-       xlim = range(0, E_scaled_seq), 
-       main = pops[j]
+       xlim = range(0, E_scaled_seq)
   )
+  panel_label(pops[j], "topright")
     
   # expected relationship
-  polygon(c(E_scaled_seq, rev(E_scaled_seq)), c(pred_L_Pb_lwr, rev(pred_L_Pb_upr)), border = NA, col = alpha("salmon", 0.5))
-  lines(pred_L_Pb_lwr ~ E_scaled_seq, col = "red", lty = 2)
-  lines(pred_L_Pb_upr ~ E_scaled_seq, col = "red", lty = 2)
-  lines(pred_L_Pb_mean ~ E_scaled_seq, col = "red", lwd = 2)
+  polygon(c(E_scaled_seq, rev(E_scaled_seq)), c(pred_L_Pb_lwr, rev(pred_L_Pb_upr)), border = NA, col = tran_cols["model"])
+  lines(pred_L_Pb_mean ~ E_scaled_seq, col = main_cols["model"], lwd = 2)
   
   # realized pairs
-  segments(E_scaled_lwr, L_Pb_mean, E_scaled_upr, L_Pb_mean, col = alpha("red", 0.5))
-  segments(E_scaled_mean, L_Pb_lwr, E_scaled_mean, L_Pb_upr, col = alpha("red", 0.5))
-  points(L_Pb_mean ~ E_scaled_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  segments(E_scaled_lwr, L_Pb_mean, E_scaled_upr, L_Pb_mean, col = main_cols["model"])
+  segments(E_scaled_mean, L_Pb_lwr, E_scaled_mean, L_Pb_upr, col = main_cols["model"])
+  points(L_Pb_mean ~ E_scaled_mean, pch = 16, col = tran_cols["model"], cex = 1.8)
   text(L_Pb_mean ~ E_scaled_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  box(col = par("col.axis"))
 }
 
-xlab = paste0("Eggs/WUL (", prettyNum(jags_data$E_scale, big.mark = ","), "s per km)")
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, xlab)
-mtext(side = 2, outer = T, line = 0.25, TeX("$Parr\\, Mean\\, Length\\,(mm)$"))
+axis_labels(
+  paste0("Eggs/WUL (", prettyNum(jags_data$E_scale, big.mark = ","), "s per km)"),
+  "Parr Mean Length (mm)"
+)
 ```
 
 ## Parr $\to$ Smolt "Growth" Factor {.tabset .tabset-pills}
@@ -135,55 +130,53 @@ Delta_L_Pb_Mb_lim = make_lim_param(post, "^Delta_L_Pb_Mb[year,")
 
 #### Realized Alone
 
-```{r Delta_L_Pb_Mb-1, fig.width = 6, fig.height = 5}
+```{r Delta_L_Pb_Mb-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
+  # realized time series
+  plot_tseries(est = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
+               label_text = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, TeX("$Parr \\rightarrow Smolt\\,Growth\\, Factor$"))
+axis_labels("Brood Year", "Parr \u2192 Smolt Growth Factor")
 ```
 
 #### Realized & "Data"
 
-```{r Delta_L_Pb_Mb-2, fig.width = 6, fig.height = 5}
+```{r Delta_L_Pb_Mb-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   Delta_L_Pb_Mb_obs = cbind(mean = jags_data$L_Mb_obs[observable,j]/jags_data$L_Pb_obs[observable,j], lwr95 = NA, upr95 = NA)
-  plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
-               Delta_L_Pb_Mb_obs, main = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
+  plot_tseries(est = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
+               obs = Delta_L_Pb_Mb_obs, label_text = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim, pt_cex = pt_cex)
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, TeX("$Parr \\rightarrow Smolt\\,Growth\\, Factor$"))
+axis_labels("Brood Year", "Parr \u2192 Smolt Growth Factor")
 ```
 
 #### Realized & Predicted
 
-```{r Delta_L_Pb_Mb-3, fig.width = 6, fig.height = 5}
+```{r Delta_L_Pb_Mb-3, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   # draw the realized time series
-  plot_tseries(post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
+  plot_tseries(est = post_summ(post, sub_index("^Delta_L_Pb_Mb[year,pop]$", year = ts_yrs, pop = j)),
+               label_text = pops[j], yrs = all_yrs[ts_yrs], ylim = Delta_L_Pb_Mb_lim)
   
   # draw the predicted time series
   add_tseries(est = post_summ(post, sub_index("^Delta_L_Pb_Mb_dot[year,pop]", pop = j, year = ts_yrs)),
               yrs = all_yrs[ts_yrs])
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, TeX("$Parr \\rightarrow Smolt\\,Growth\\, Factor$"))
+axis_labels("Brood Year", "Parr \u2192 Smolt Growth Factor")
 ```
 
 ### Relationship
 
-```{r Delta_L_Pb_Mb-relationship, fig.width = 6, fig.height = 5}
+```{r Delta_L_Pb_Mb-relationship, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
 
   # extract posterior summaries of summer length outcomes
@@ -220,32 +213,29 @@ plot_f = function(j) {
   pred_Delta_L_Pb_Mb_lwr = post_summ(post_pred_Delta_L_Pb_Mb, ".")["2.5%",]
   pred_Delta_L_Pb_Mb_upr = post_summ(post_pred_Delta_L_Pb_Mb, ".")["97.5%",]
   
-  # make a blank plot with the correct dimensions
-  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
-       # ylim = range(pred_Delta_L_Pb_Mb_lwr, pred_Delta_L_Pb_Mb_upr, Delta_L_Pb_Mb_lwr, Delta_L_Pb_Mb_upr, na.rm = TRUE),
        ylim = Delta_L_Pb_Mb_lim,
-       xlim = range(L_Pb_seq), 
-       main = pops[j]
+       xlim = range(L_Pb_seq)
   )
+  panel_label(pops[j], "topright")
     
   # expected relationship
-  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_Delta_L_Pb_Mb_lwr, rev(pred_Delta_L_Pb_Mb_upr)), border = NA, col = alpha("salmon", 0.5))
-  lines(pred_Delta_L_Pb_Mb_lwr ~ L_Pb_seq, col = "red", lty = 2)
-  lines(pred_Delta_L_Pb_Mb_upr ~ L_Pb_seq, col = "red", lty = 2)
-  lines(pred_Delta_L_Pb_Mb_mean ~ L_Pb_seq, col = "red", lwd = 2)
+  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_Delta_L_Pb_Mb_lwr, rev(pred_Delta_L_Pb_Mb_upr)), border = NA, col = tran_cols["model"])
+  lines(pred_Delta_L_Pb_Mb_mean ~ L_Pb_seq, col = main_cols["model"], lwd = 2)
   
   # realized pairs
-  segments(L_Pb_lwr, Delta_L_Pb_Mb_mean, L_Pb_upr, Delta_L_Pb_Mb_mean, col = alpha("red", 0.5))
-  segments(L_Pb_mean, Delta_L_Pb_Mb_lwr, L_Pb_mean, Delta_L_Pb_Mb_upr, col = alpha("red", 0.5))
-  points(Delta_L_Pb_Mb_mean ~ L_Pb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  segments(L_Pb_lwr, Delta_L_Pb_Mb_mean, L_Pb_upr, Delta_L_Pb_Mb_mean, col = main_cols["model"])
+  segments(L_Pb_mean, Delta_L_Pb_Mb_lwr, L_Pb_mean, Delta_L_Pb_Mb_upr, col = main_cols["model"])
+  points(Delta_L_Pb_Mb_mean ~ L_Pb_mean, pch = 16, col = tran_cols["model"], cex = 1.8)
   text(Delta_L_Pb_Mb_mean ~ L_Pb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  
+  box(col = par("col.axis"))
+
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, TeX("$Parr\\, Mean\\, Length\\, (mm)$"))
-mtext(side = 2, outer = T, line = 0.25, TeX("$Parr\\, \\to\\, Smolt\\, Growth\\, Factor$"))
+axis_labels("Parr Mean Length (mm)", "Parr \u2192 Smolt Growth Factor")
 ```
 
 ## Smolt Mean Length {.tabset .tabset-pills}
@@ -258,19 +248,18 @@ L_Mb_lim = make_lim_param(post, "^L_Mb[year,")
 
 #### Realized Alone
 
-```{r L_Mb-tseries-1, fig.width = 6, fig.height = 5}
+```{r L_Mb-tseries-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
-  # draw the realized time series
+  # realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Mb_lim
+               label_text = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Mb_lim
   )
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Smolt Mean Length (mm)")
+axis_labels("Brood Year", "Smolt Mean Length (mm)")
 ```
 
 #### Realized & Predicted
@@ -317,12 +306,12 @@ f = function() {
 post = post_bind(post, f()); rm(f)
 ```
 
-```{r L_Mb-tseries-2, fig.width = 6, fig.height = 5}
+```{r L_Mb-tseries-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
-  # draw the realized time series
+  # realized time series
   plot_tseries(est = post_summ(post, sub_index("^L_Mb[year,pop]", year = ts_yrs, pop = j)), 
-               main = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Mb_lim
+               label_text = pops[j], yrs = all_yrs[ts_yrs], ylim = L_Mb_lim
   )
   
   # draw the realized time series
@@ -330,16 +319,15 @@ plot_f = function(j) {
               yrs = all_yrs[ts_yrs])
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Smolt Mean Length (mm)")
+axis_labels("Brood Year", "Smolt Mean Length (mm)")
 ```
 
 ## Smolt vs. Parr Mean Length
 
-```{r L_Mb-v-L_Pb, fig.width = 6, fig.height = 5}
-plot_fn = function(j) {
+```{r L_Mb-v-L_Pb, fig.width = p4_width, fig.height = p4_height}
+plot_f = function(j) {
   
   # extract posterior summaries of parr mean length outcomes
   L_Pb_summ = post_summ(post, sub_index("^L_Pb[year,pop]", year = ts_yrs, pop = j))
@@ -384,33 +372,27 @@ plot_fn = function(j) {
   pred_L_Mb_lwr = pred_L_Mb_summ["2.5%",]
   pred_L_Mb_upr = pred_L_Mb_summ["97.5%",]
   
-  # make a blank plot with the correct dimensions
-  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
-       # ylim = range(pred_L_Mb_lwr, pred_L_Mb_upr, L_Mb_lwr, L_Mb_upr, na.rm = T),
-       # ylim = c(75,110),
-       # xlim = range(L_Pb_seq), 
        xlim = L_Pb_lim,
-       ylim = L_Mb_lim,
-       main = pops[j]
+       ylim = L_Mb_lim
   )
   
+  panel_label(pops[j])
+  
   # expected relationship
-  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_L_Mb_lwr, rev(pred_L_Mb_upr)), border = NA, col = alpha("salmon", 0.5))
-  lines(pred_L_Mb_lwr ~ L_Pb_seq, col = "red", lty = 2)
-  lines(pred_L_Mb_upr ~ L_Pb_seq, col = "red", lty = 2)
-  lines(pred_L_Mb_mean ~ L_Pb_seq, col = "red", lwd = 2)
+  polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_L_Mb_lwr, rev(pred_L_Mb_upr)), border = NA, col = tran_cols["model"])
+  lines(pred_L_Mb_mean ~ L_Pb_seq, col = main_cols["model"], lwd = 2)
   
   # realized pairs
-  segments(L_Pb_lwr, L_Mb_mean, L_Pb_upr, L_Mb_mean, col = alpha("red", 0.5))
-  segments(L_Pb_mean, L_Mb_lwr, L_Pb_mean, L_Mb_upr, col = alpha("red", 0.5))
-  points(L_Mb_mean ~ L_Pb_mean, pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  segments(L_Pb_lwr, L_Mb_mean, L_Pb_upr, L_Mb_mean, col = main_cols["model"])
+  segments(L_Pb_mean, L_Mb_lwr, L_Pb_mean, L_Mb_upr, col = main_cols["model"])
+  points(L_Mb_mean ~ L_Pb_mean, pch = 16, col = tran_cols["model"], cex = 1.8)
   text(L_Mb_mean ~ L_Pb_mean, labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  box(col = par("col.axis"))
+
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
-junk = sapply(1:jags_data$nj, plot_fn)
-mtext(side = 1, outer = T, line = 0.25, "Parr Mean Length (mm)")
-mtext(side = 2, outer = T, line = 0.25, "Smolt Mean Length (mm)")
+mypar()
+junk = sapply(1:jags_data$nj, plot_f)
+axis_labels("Parr Mean Length (mm)", "Smolt Mean Length (mm)")
 ```
-
