@@ -68,7 +68,7 @@ knitr::opts_knit$set(root.dir = "C:/Users/bstaton/Desktop/Staton/1_critfc/analys
 
 ```{r setup, include = FALSE}
 # set global knitting options
-knitr::opts_chunk$set(echo = FALSE, fig.align = "center")
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", dpi = 600, out.width = "75%")
 
 # load packages
 source("../00-packages.R")
@@ -162,7 +162,7 @@ vcov_labels = paste0(pops[vcov_rows], "-", pops[vcov_cols])
 # select main colors
 main_cols = c(
   "model" = "salmon",
-  "model2" = "forestgreen",
+  "model2" = "royalblue",
   "data" = "royalblue"
 )
 

@@ -111,7 +111,8 @@ plot_tseries = function(est, obs = NULL, ylim = NULL, yrs = NULL, xaxis = TRUE, 
   }
   
   est = est/y_scale
-  obs = obs/y_scale
+  
+  if (!is.null(obs)) obs = obs/y_scale
   
   # set y limits
   if (is.null(ylim)) {
