@@ -12,7 +12,7 @@ knitr::opts_chunk$set(fig.width = 6, fig.height = 5)
 
 ```{r post-v-prior-fn}
 post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col = "royalblue",
-                        main = NULL, y_max = 0.5, xlim = NULL, legend_loc = NA, n_bins = 50, alpha = 0.5) {
+                        main = NULL, y_max = 0.5, xlim = NULL, legend_loc = NA, label_text = NULL, n_bins = 50, alpha = 0.5) {
   
   if (!is.null(xlim)) {
     post_samps_keep = post_samps[post_samps >= xlim[1] & post_samps <= xlim[2]]
@@ -41,7 +41,7 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
   post_probs = post_hist$counts/sum(post_hist$counts) * p_post_keep
   
   # graphics parameters
-  par(xaxs = "i", yaxs = "i", mgp = c(2,0.2,0), cex.axis = 0.8, tcl = -0.15, mar = c(1.5,1,1.5,0.5), lend = "square", ljoin = "mitre")
+  par(xaxs = "i", yaxs = "i")
   
   # create a y_max if not supplied
   if (is.null(y_max)) {
@@ -60,6 +60,8 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
     post_probs, ylim = c(0,y_max), space = 0, border = post_col, col = scales::alpha(post_col, alpha), axes = FALSE, add = TRUE
   )
   
+  panel_label(label_text)
+  
   # draw the x-axis
   at_x = axisTicks(par("usr")[1:2], log = FALSE)
   axis(side = 1, at = mp[at_x], labels = round(prior_hist$breaks[at_x], 1))
@@ -69,8 +71,8 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
   
   # draw segments to connect axes at origin
   usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
-  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
-  segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE)
+  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE, col = par("col.axis"))
+  segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
   
   # add a legend in the desired location if not NULL
   if (!is.na(legend_loc)) {
@@ -117,7 +119,7 @@ post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", x
     post_v_prior(
       post_samps = post_subset(post, sub_index(post_param, pop = j, ...), matrix = TRUE),
       prior_samps = post_subset(post, sub_index(prior_param, pop = j, ...), matrix = TRUE),
-      main = titles[j], 
+      label_text = titles[j], 
       legend_loc = ifelse(j == looping[1], legend_loc, NA),
       y_max = y_max,
       xlim = xlim
@@ -125,10 +127,9 @@ post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", x
   }
   
   # apply to each population/pair
-  par(mfrow = mfrow, oma = c(1,1.75,0,0))
+  mypar(mfrow = mfrow)
   junk = sapply(1:n, function(j) plot_f(looping[j]))
-  mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
-  mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
+  axis_labels("Parameter Value", "Probability")
 }
 
 # wrapper to create plot for all origins
@@ -138,17 +139,16 @@ post_v_prior_origins = function(post_param, prior_param, legend_loc = "topright"
     post_v_prior(
       post_samps = post_subset(post, sub_index(post_param, origin = o, ...), matrix = TRUE),
       prior_samps = post_subset(post, sub_index(prior_param, origin = o, ...), matrix = TRUE),
-      main = c("NOR", "HOR")[o], 
+      label_text = c("NOR", "HOR")[o], 
       legend_loc = ifelse(o == 1, legend_loc, NA),
       xlim = xlim
     )
   }
   
   # apply to each origin
-  par(mfrow = c(1,2), oma = c(1,1.5,0,0))
+  mypar(mfrow = c(1,2))
   junk = sapply(1:jags_data$no, plot_f)
-  mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
-  mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
+  axis_labels("Parameter Value", "Probability")
 }
 ```
 
@@ -472,12 +472,11 @@ post_v_prior_pops(post_param = "rho_Lphi_Mb_Ma", prior_param = "rho_Lphi_Mb_Ma_p
 **Prior Used**: `dscaled.wishart(rep(`r jags_data$Tau_Lphi_Ma_O0_prior[1]`,`r jags_data$no`),`r jags_data$Tau_Lphi_Ma_O0_prior[2]`)`
 
 ```{r rho_Lphi_Ma_O0-post-v-prior, fig.width = 3, fig.height = 3}
-par(oma = c(1,1.75,0,0))
+mypar(mfrow = c(1,1))
 post_v_prior(post_samps = post_subset(post, "rho_Lphi_Ma_O0[2,1]", matrix = TRUE),
              prior_samps = post_subset(post, "rho_Lphi_Ma_O0_pr[2,1]", matrix = TRUE),
              xlim = xlim, y_max = y_max)
-mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
-mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
+axis_labels("Parameter Value", "Probability")
 ```
 
 ### Yr 1 Ocean Survival
