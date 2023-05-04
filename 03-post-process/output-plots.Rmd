@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base"
+    value: "test-rmd_vshort"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
@@ -61,7 +61,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r directories, include = F}
+```{r directories, include = FALSE}
 # set root directory to the project directory: one level up from this location
 knitr::opts_knit$set(root.dir = "C:/Users/bstaton/Desktop/Staton/1_critfc/analyses/GR-sslcm/03-post-process")
 ```

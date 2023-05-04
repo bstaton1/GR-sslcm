@@ -47,7 +47,7 @@ plot_f = function(j) {
   
   # predicted time series
   add_tseries(post_summ(post, sub_index("^phi_Pa_Mb_dot[year,LH_type,pop]", year = ts_yrs, LH_type = i_fall, pop = j)),
-              yrs = all_yrs[t])
+              yrs = all_yrs[ts_yrs])
   
 }
 
@@ -145,9 +145,9 @@ plot_f = function(j, i) {
   
   plot(1,1, type = "n", 
        ylim = phi_Pa_Mb_lim,
-       xlim = range(L_Pb_seq), 
-       main = pops[j]
+       xlim = range(L_Pb_seq)
   )
+  panel_label(pops[j])
     
   # expected relationship
   polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_phi_Pa_Mb_lwr, rev(pred_phi_Pa_Mb_upr)), border = NA, col = tran_cols["model"])
