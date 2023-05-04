@@ -7,11 +7,9 @@ editor_options:
 
 ## Survival Time Series {.tabset .tabset-pills}
 
-These figures show the realized time series of egg-to-parr survival that include all sources of variability in red: that explained by Beverton-Holt dynamics and that not explained by it.
-
 ### Realized Alone
 
-Just the realized time series shown.
+The `r colorize("realized time series", main_cols["model"])`.
 
 ```{r phi_E_Pb-plots, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -29,7 +27,7 @@ axis_labels("Brood Year", "Egg \u2192 Parr Survival")
 
 ### Realized & BH
 
-The blue shows the time series with variability explained only by Beverton-Holt dynamics.
+The `r colorize("realized time series", main_cols["model"])` and the `r colorize("time series with variability explained only by Beverton-Holt dynamics", main_cols["model2"])`.
 
 ```{r phi_E_Pb_dot-plots, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -51,7 +49,7 @@ axis_labels("Brood Year", "Egg \u2192 Parr Survival")
 
 ### Realized & [BH + AR(1)]
 
-The blue shows the time series with variability explained by Beverton-Holt dynamics and the carry-over residual.
+The `r colorize("realized time series", main_cols["model"])` and the `r colorize("time series with variability explained by Beverton-Holt dynamics and the carry-over residual", main_cols["model2"])`.
 
 ```{r phi_E_Pb_dot2-plots, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -73,7 +71,7 @@ axis_labels("Brood Year", "Egg \u2192 Parr Survival")
 
 ## Survival vs. Total Egg Production
 
-This is the scale the Beverton-Holt recruitment function is estimated on.
+This is the scale the Beverton-Holt recruitment function is modeled on.
 
 ```{r egg-surv-vs-eggs, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -116,6 +114,8 @@ plot_f = function(j) {
   segments(E["mean",], phi_E_Pb["2.5%",], E["mean",], phi_E_Pb["97.5%",], col = main_cols["model"])
   points(phi_E_Pb["mean",] ~ E["mean",], pch = 16, col = tran_cols["model"], cex = 1.8)
   text(phi_E_Pb["mean",] ~ E["mean",], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  
+  box(col = par("col.axis"))
 }
 
 mypar()
@@ -166,6 +166,8 @@ plot_f = function(j) {
   segments(E["mean",], Pb["2.5%",], E["mean",], Pb["97.5%",], col = main_cols["model"])
   points(Pb["mean",] ~ E["mean",], pch = 16, col = tran_cols["model"], cex = 1.8)
   text(Pb["mean",] ~ E["mean",], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  
+  box(col = par("col.axis"))
 }
 
 mypar()
@@ -175,7 +177,8 @@ axis_labels("Total Egg Production (Millions)", "Parr Recruits (Thousands)")
 
 ## Total Eggs vs. Total Spawners
 
-This figure illustrates that total spawners is a reasonable index of total egg production, according to the assumptions of our model. The three lines illustrate the relationship if each spawner (regardless of age or sex) had a fixed number of eggs.
+This figure shows that total spawner abundance is a reasonable index of total egg production, according to the assumptions of our model (eggs = spawners-age-4/5 * 50% * age-specific fecundity).
+The three lines illustrate the relationship if each spawner (regardless of age or sex) had a fixed number of eggs.
 
 ```{r eggs-vs-spawners, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -210,6 +213,8 @@ plot_f = function(j) {
            legend = c("1,000", "1,800", "3,600"),
            lty = c(1,2,3), bty = "n", cex = 0.75)
   }
+  
+  box(col = par("col.axis"))
 }
 
 mypar()

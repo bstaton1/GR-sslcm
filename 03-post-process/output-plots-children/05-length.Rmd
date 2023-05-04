@@ -15,6 +15,8 @@ L_Pb_lim = make_lim_param(post, "^L_Pb[year,")
 
 #### Realized Alone
 
+The `r colorize("realized time series", main_cols["model"])`.
+
 ```{r L_Pb_tseries-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
@@ -29,7 +31,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Parr Mean Length (mm)")
 ```
 
-#### Realized & Predicted
+#### Realized & Expected
+
+The `r colorize("realized time series", main_cols["model"])` and `r colorize("expected time series", main_cols["model2"])` (i.e., without process noise).
 
 ```{r L_Pb_tseries-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -130,6 +134,8 @@ Delta_L_Pb_Mb_lim = make_lim_param(post, "^Delta_L_Pb_Mb[year,")
 
 #### Realized Alone
 
+The `r colorize("realized time series", main_cols["model"])`.
+
 ```{r Delta_L_Pb_Mb-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   # realized time series
@@ -144,6 +150,8 @@ axis_labels("Brood Year", "Parr \u2192 Smolt Growth Factor")
 
 #### Realized & "Data"
 
+The `r colorize("realized time series", main_cols["model"])` and the `r colorize("ratio between observed smolt and parr mean length", main_cols["model2"])`.
+
 ```{r Delta_L_Pb_Mb-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   Delta_L_Pb_Mb_obs = cbind(mean = jags_data$L_Mb_obs[observable,j]/jags_data$L_Pb_obs[observable,j], lwr95 = NA, upr95 = NA)
@@ -156,7 +164,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Parr \u2192 Smolt Growth Factor")
 ```
 
-#### Realized & Predicted
+#### Realized & Expected
+
+The `r colorize("realized time series", main_cols["model"])` and `r colorize("expected time series", main_cols["model2"])` (i.e., without process noise).
 
 ```{r Delta_L_Pb_Mb-3, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -248,6 +258,8 @@ L_Mb_lim = make_lim_param(post, "^L_Mb[year,")
 
 #### Realized Alone
 
+The `r colorize("realized time series", main_cols["model"])`.
+
 ```{r L_Mb-tseries-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
@@ -262,7 +274,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Smolt Mean Length (mm)")
 ```
 
-#### Realized & Predicted
+#### Realized & Expected
+
+The `r colorize("realized time series", main_cols["model"])` and `r colorize("expected time series", main_cols["model2"])` (i.e., without process noise).
 
 ```{r get-L_Mb_dot}
 # function to get posterior samples of expected smolt length

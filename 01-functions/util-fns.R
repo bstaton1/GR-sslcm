@@ -337,3 +337,13 @@ my_cat = function(label, value, total_width = 60, indent = 2, first = FALSE) {
   cat(paste(c(rep(" ", indent), "|-", rep("-", total_width - 3 - indent), "|"), collapse = ""), "\n", sep = "")
   Sys.sleep(0.25)
 }
+
+##### COLOR TEXT FOR PRINTING IN RMD #####
+
+# ADAPTED FROM https://bookdown.org/yihui/rmarkdown-cookbook/font-color.html#using-an-r-function-to-write-raw-html-or-latex-code
+
+colorize = function(x, color) {
+  if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'>%s</span>", color, x)
+  } else x
+}

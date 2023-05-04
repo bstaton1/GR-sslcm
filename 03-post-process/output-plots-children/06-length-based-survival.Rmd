@@ -17,6 +17,8 @@ phi_Pa_Mb_lim = make_lim_param(post, "^phi_Pa_Mb[")
 
 ##### Realized Alone
 
+The `r colorize("realized time series", main_cols["model"])`.
+
 ```{r phi_Pa_Mb_tseries-fall-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
@@ -31,7 +33,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Overwinter Survival (Fall Migrants)")
 ```
 
-##### Realized + Predicted
+##### Realized & Expected
+
+The `r colorize("realized time series", main_cols["model"])` and `r colorize("expected time series", main_cols["model2"])` (i.e., without process noise).
 
 ```{r phi_Pa_Mb_tseries-fall-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -56,6 +60,8 @@ axis_labels("Brood Year", "Overwinter Survival (Fall Migrants)")
 
 ##### Realized Alone
 
+The `r colorize("realized time series", main_cols["model"])`.
+
 ```{r phi_Pa_Mb_tseries-spring-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
@@ -70,7 +76,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Overwinter Survival (Spring Migrants)")
 ```
 
-##### Realized + Predicted
+##### Realized & Expected
+
+The `r colorize("realized time series", main_cols["model"])` and `r colorize("expected time series", main_cols["model2"])` (i.e., without process noise).
 
 ```{r phi_Pa_Mb_tseries-spring-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -181,6 +189,8 @@ phi_Mb_Ma_lim = sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", pop = ".", LH_t
 
 #### Realized Alone
 
+The `r colorize("realized time series", main_cols["model"])`.
+
 ```{r phi_Mb_Ma_tseries-1, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   
@@ -195,7 +205,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Smolt \u2192 LGR Survival (NOR)")
 ```
 
-#### Realized + Predicted
+#### Realized & Expected
+
+The `r colorize("realized time series", main_cols["model"])` and `r colorize("expected time series", main_cols["model2"])` (i.e., without process noise).
 
 ```{r phi_Mb_Ma_tseries-2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -262,13 +274,11 @@ plot_fn = function(j) {
   pred_phi_Mb_Ma_upr = post_summ(post_pred_phi_Mb_Ma, ".")["97.5%",]
   
   # make a blank plot with the correct dimensions
-  par(mgp = c(2,0.35, 0), tcl = -0.15, mar = c(1,1,2,1))
   plot(1,1, type = "n", 
-       # ylim = range(pred_phi_Mb_Ma_lwr, pred_phi_Mb_Ma_upr, phi_Mb_Ma_lwr, phi_Mb_Ma_upr, na.rm = T),
        ylim = phi_Mb_Ma_lim,
-       xlim = range(L_Mb_seq), 
-       main = pops[j]
+       xlim = range(L_Mb_seq)
   )
+  panel_label(pops[j])
     
   # expected relationship
   polygon(c(L_Mb_seq, rev(L_Mb_seq)), c(pred_phi_Mb_Ma_lwr, rev(pred_phi_Mb_Ma_upr)), border = NA, col = tran_cols["model"])

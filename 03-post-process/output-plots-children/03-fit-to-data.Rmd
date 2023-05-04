@@ -7,7 +7,7 @@ editor_options:
 
 ## Figures {.tabset .tabset-dropdown}
 
-In all figures below, the thick red line is the posterior median value each year, the red region is the equal-tailed 95% credible interval, and blue points are "observed" data (estimated from raw data external to the model).
+Figures in this section show the consistencies between the `r colorize("posterior", main_cols["model"])` (mean with 95% equal-tailed credible interval) and the `r colorize("data", main_cols["data"])` (point estimate with approximate 95% confidence interval illustrating the magnitude of assumed observation error).
 
 ### Abundance Data {.tabset .tabset-pills}
 
@@ -682,7 +682,7 @@ plot_f = function(j) {
                col = tran_cols["data"], border = main_cols["data"])
   at_x = axisTicks(par("usr")[1:2], log = FALSE)
   axis(side = 1, at = mp[at_x], labels = substr(names(jags_data$x_carcass_total[observable,j]), 3, 4)[at_x])
-  box()
+  box(col = par("col.axis"))
   
   if (j == 1) mtext(side = 2, "Carcasses Sampled", line = 1, cex = 0.9)
 }
