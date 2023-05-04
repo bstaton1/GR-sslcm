@@ -7,7 +7,7 @@ editor_options:
 
 ```{r post-v-prior-fig-sizes}
 # set global knitting options
-knitr::opts_chunk$set(fig.width = 6, fig.height = 5)
+knitr::opts_chunk$set(fig.width = p4_width, fig.height = p4_height)
 ```
 
 ```{r post-v-prior-fn}
@@ -80,19 +80,19 @@ post_v_prior = function(post_samps, prior_samps, prior_col = "salmon", post_col 
   }
   
   # if some portion of one of the dists is not shown, include a message
-  if (p_post_keep < 1 | p_prior_keep < 1) {
-    nice_round = function(x, digits = 2) {
-      x_round = round(x, digits = digits)
-      if (x_round == 0 & x > 0) x_out  = "<0.01" else x_out = x_round
-      x_out
-    }
-    
-    legend(x = usr[1] - xdiff * 0, y = usr[4] + ydiff * 0.025, xpd = TRUE,
-           legend = c(nice_round(1 - p_prior_keep), nice_round(1 - p_post_keep)),
-           text.col = c(prior_col, post_col), bty = "n", title.col = "black",
-           title = "P Not Shown", cex = 0.8
-    )
-  }
+  # if (p_post_keep < 1 | p_prior_keep < 1) {
+  #   nice_round = function(x, digits = 2) {
+  #     x_round = round(x, digits = digits)
+  #     if (x_round == 0 & x > 0) x_out  = "<0.01" else x_out = x_round
+  #     x_out
+  #   }
+  #   
+  #   legend(x = usr[1] - xdiff * 0, y = usr[4] + ydiff * 0.025, xpd = TRUE,
+  #          legend = c(nice_round(1 - p_prior_keep), nice_round(1 - p_post_keep)),
+  #          text.col = c(prior_col, post_col), bty = "n", title.col = "black",
+  #          title = "P Not Shown", cex = 0.8
+  #   )
+  # }
 }
 ```
 
@@ -180,7 +180,7 @@ post_v_prior_pops(post_param = "mu_phi_O0_O1[origin,pop]", prior_param = "mu_phi
 
 ```{r mu_phi_O1_O2-post-v-prior}
 post_v_prior_pops(post_param = "mu_phi_O1_O2[origin,pop]", prior_param = "mu_phi_O1_O2_pr",
-                  origin = o_nor, xlim = c(0,1), legend_loc = "topleft"
+                  origin = o_nor, xlim = c(0,1), legend_loc = "topright"
 )
 ```
 
@@ -190,7 +190,7 @@ post_v_prior_pops(post_param = "mu_phi_O1_O2[origin,pop]", prior_param = "mu_phi
 
 ```{r mu_phi_O2_O3-post-v-prior}
 post_v_prior_pops(post_param = "mu_phi_O2_O3[origin,pop]", prior_param = "mu_phi_O2_O3_pr",
-                  origin = o_nor, xlim = c(0,1), legend_loc = "topleft"
+                  origin = o_nor, xlim = c(0,1), legend_loc = "topright"
 )
 ```
 
@@ -390,7 +390,7 @@ post_v_prior_pops(post_param = "sig_Lphi_Sb_Sa[pop]", prior_param = "sig_Lphi_Sb
 # set these figure options for all plots in this section
 y_max = 0.15
 xlim = c(-1,1)
-knitr::opts_chunk$set(fig.width = 5, fig.height = 6)
+knitr::opts_chunk$set(fig.width = p4_height, fig.height = p4_width, out.width = "50%")
 ```
 
 ### Egg-to-Parr Survival
