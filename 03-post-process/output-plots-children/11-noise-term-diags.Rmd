@@ -22,18 +22,9 @@ make_legend_text = function(mn_post, sd_post, first_last_mn_diff_post) {
   c(paste0("Mean: ", f(mn_post)), paste0("SD: ", f(sd_post)), paste0("Diff: ", f(first_last_mn_diff_post)))
 }
 
-oma_labels = function(xlab = "", ylab = "", xline = 0.75, yline = 0.75, ...) {
-  mtext(side = 1, outer = TRUE, line = xline, text = xlab, ...)
-  mtext(side = 2, outer = TRUE, line = yline, text = ylab, ...)
-}
-
 no_data_plot = function(main = NULL) {
   plot(1,1, xlim = c(-1,1), ylim = c(-1,1), type = "n", xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = main)
   text(0,0, "No Data", font = 3)
-}
-
-my_par = function() {
-  par(mfrow = c(2,2), mar = c(1,1,2,2), oma = c(2,2,0,0), tcl = -0.15, mgp = c(2,0.35,0))
 }
 ```
 
@@ -371,12 +362,11 @@ plot_proc_qresid = function(qresid_param, year = ts_yrs, pop = NULL, origin = NU
   # calculate posterior summaries of standardized qresidual time series
   qresid = apply(qresid_post, 2, function(x) c(mean = mean(x), sd = sd(x), quantile(x, c(0.5, 0.025, 0.975, 0.25, 0.75))))
   
-    # set the y-axis limits: leave room at top for legend
+  # set the y-axis limits: leave room at top for legend
   ylim = c(0,1.3)
-
+  
   # blank plot with correct dimensions
-  par(lend = "square")
-  plot(qresid["mean",] ~ all_yrs[y_ind], main = main, type = "n",
+  plot(qresid["mean",] ~ all_yrs[y_ind], type = "n",
        ylim = ylim, xlim = range(all_yrs[y_ind]), xaxt = "n", yaxt = "n", xlab = "", ylab = "")
   
   # draw x-axis: years
@@ -388,19 +378,22 @@ plot_proc_qresid = function(qresid_param, year = ts_yrs, pop = NULL, origin = NU
   abline(h = c(0.25, 0.5, 0.75), lty = 3, col = "grey", lwd = 2)
   
   # draw posterior mean for first and half of time series
-  lines(x = all_yrs[y_ind[y_first]], y = rep(mean(mn_post_first), length(y_first)), col = "blue", lty = 3, lwd = 2)
-  lines(x = all_yrs[y_ind[y_last]], y = rep(mean(mn_post_last), length(y_last)), col = "blue", lty = 3, lwd = 2)
+  lines(x = all_yrs[y_ind[y_first]], y = rep(mean(mn_post_first), length(y_first)), col = main_cols["model2"], lty = 3, lwd = 2)
+  lines(x = all_yrs[y_ind[y_last]], y = rep(mean(mn_post_last), length(y_last)), col = main_cols["model2"], lty = 3, lwd = 2)
   
   # draw the noise time series: mean and 95% CRI
-  segments(all_yrs[observable], qresid["2.5%",], all_yrs[observable], qresid["97.5%",], col = "salmon")
-  segments(all_yrs[observable], qresid["25%",], all_yrs[observable], qresid["75%",], col = "salmon", lwd = 4)
-  points(qresid["mean",] ~ all_yrs[observable], pch = 21, col = "red", bg = "salmon", cex = 1.25)
+  segments(all_yrs[observable], qresid["2.5%",], all_yrs[observable], qresid["97.5%",], col = main_cols["model"])
+  segments(all_yrs[observable], qresid["25%",], all_yrs[observable], qresid["75%",], col = main_cols["model"], lwd = 4)
+  points(qresid["mean",] ~ all_yrs[observable], pch = 21, col = "white", bg = "white", cex = 1.25)
+  points(qresid["mean",] ~ all_yrs[observable], pch = 21, col = main_cols["model"], bg = tran_cols["model"], cex = 1.25)
   
   # draw legend that shows estimate summaries
   usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
-  rect(usr[1], 1, usr[2], usr[4], border = "black", col = "grey90")
-  legend(x = usr[1] - xdiff * 0.05, y = usr[4] + ydiff * 0.025, legend = make_legend_text(mn_post, sd_post, first_last_mn_diff_post), bty = "n", cex = 0.8)
-  box()
+  rect(usr[1], 1, usr[2], usr[4], border = par("col.axis"), col = "grey95")
+  legend(x = usr[1] - xdiff * 0.05, y = usr[4] + ydiff * 0.025, text.col = par("col.axis"), legend = make_legend_text(mn_post, sd_post, first_last_mn_diff_post), bty = "n", cex = 0.8)
+  box(col = par("col.axis"))
+  panel_label(main, "topright")
+  
   
   # create output for building summary tables
   data.frame(param = qresid_param,
@@ -418,7 +411,7 @@ plot_proc_qresid = function(qresid_param, year = ts_yrs, pop = NULL, origin = NU
              diff_mean = mean(first_last_mn_diff_post), 
              diff_lwr = unname(quantile(first_last_mn_diff_post, 0.025)), 
              diff_upr = unname(quantile(first_last_mn_diff_post, 0.975))
-             )
+  )
   
 }
 
@@ -429,30 +422,30 @@ proc_error_ests = NULL
 
 ### FW Juvenile {.tabset .tabset-pills}
 
-#### Egg-to-Parr Survival
+#### Egg $\to$ Parr Survival
 
-```{r egg-to-parr-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r egg-to-parr-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_E_Pb_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(Egg-to-Parr Survival) Residual")
+axis_labels("Brood Year", "logit(Egg \u2192 Parr Survival) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
-#### Summer Parr Mean Length
+#### Parr Mean Length
 
-```{r summer-length-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r summer-length-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("lL_Pb_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Brood Year", "log(Summer Parr Mean Length) Residual")
+axis_labels("Brood Year", "log(Summer Parr Mean Length) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 #### Migratory Strategy Apportionment
 
-```{r pi-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r pi-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpi_qresid[year,LH_type,pop]", pop = j, main = pops[j], LH_type = i_fall))
-oma_labels("Brood Year", "logit(Proportion Fall Migrants) Residual")
+axis_labels("Brood Year", "logit(Proportion Fall Migrants) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
@@ -460,57 +453,57 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ##### Fall Migrants
 
-```{r overwinter-surv-noise-fall, fig.width = 6, fig.height = 5}
-my_par()
+```{r overwinter-surv-noise-fall, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Pa_Mb_qresid[year,LH_type,pop]", pop = j, LH_type = 1, main = pops[j]))
-oma_labels("Brood Year", "logit(Over-winter Survival [Fall Migrants]) Residual")
+axis_labels("Brood Year", "logit(Over-winter Survival [Fall Migrants]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 ##### Spring Migrants
 
-```{r overwinter-surv-noise-spring, fig.width = 6, fig.height = 5}
-my_par()
+```{r overwinter-surv-noise-spring, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Pa_Mb_qresid[year,LH_type,pop]", pop = j, LH_type = 2, main = pops[j]))
-oma_labels("Brood Year", "logit(Over-winter Survival [Spring Migrants]) Residual")
+axis_labels("Brood Year", "logit(Over-winter Survival [Spring Migrants]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
-#### Summer Parr to Spring Smolt "Growth Factor"
+#### Parr $\to$ Smolt "Growth Factor"
 
-```{r growth-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r growth-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("lDelta_L_Pb_Mb_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Brood Year", "log(Summer to Spring Growth Factor) Residual")
+axis_labels("Brood Year", "log(Parr \u2192 Smolt 'Growth' Factor) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
-#### Trib to LGR {.tabset .tabset-pills}
+#### Trib $\to$ LGR {.tabset .tabset-pills}
 
 ##### NOR
 
-```{r trib-to-LGR-surv-nor, fig.width = 6, fig.height = 5}
-my_par()
+```{r trib-to-LGR-surv-nor, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,LH_type,origin,pop]", pop = j, origin = 1, LH_type = 2, main = pops[j]))
-oma_labels("Brood Year", "logit(Trib to LGR Survival [NOR]) Residual")
+axis_labels("Brood Year", "logit(Trib \u2192 LGR Survival [NOR]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 ##### HOR
 
-```{r trib-to-LGR-surv-hor, fig.width = 6, fig.height = 5}
-my_par()
+```{r trib-to-LGR-surv-hor, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Mb_Ma_qresid[year,LH_type,origin,pop]", pop = j, origin = 2, LH_type = 2, main = pops[j]))
-oma_labels("Brood Year", "logit(Trib to LGR Survival [HOR]) Residual")
+axis_labels("Brood Year", "logit(Trib \u2192 LGR Survival [HOR]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
-#### LGR to BON Survival
+#### LGR $\to$ BON Survival
 
-```{r LGR-to-BON-surv-noise, fig.width = 6, fig.height = 3.5}
-my_par(); par(mfrow = c(1,2))
+```{r LGR-to-BON-surv-noise, fig.width = p2_width, fig.height = p2_height}
+mypar(mfrow = c(1,2))
 tmp = lapply(1:jags_data$no, function(o) plot_proc_qresid("Lphi_Ma_O0_qresid[year,origin]", origin = o, main = origins[o]))
-oma_labels("Brood Year", "logit(LGR to Ocean Survival) Residual")
+axis_labels("Brood Year", "logit(LGR \u2192 BON Survival) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
@@ -518,10 +511,10 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 #### Yr1 Ocean Survival
 
-```{r yr1-ocean-surv-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r yr1-ocean-surv-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_O0_O1_qresid[year,origin,pop]", origin = 1, year = c(ts_yrs), pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(First Year Ocean Survival) Residual")
+axis_labels("Brood Year", "logit(Yr1 Ocean Survival) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
@@ -529,19 +522,19 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ##### NOR
 
-```{r pr-mat-3-nor-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r pr-mat-3-nor-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O1_qresid[year,origin,pop]", origin = 1, pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(Mature at Age-3 [NOR]) Residual")
+axis_labels("Brood Year", "logit(Mature at Age-3 [NOR]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 ##### HOR
 
-```{r pr-mat-3-hor-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r pr-mat-3-hor-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O1_qresid[year,origin,pop]", origin = 2, pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(Mature at Age-3 [HOR]) Residual")
+axis_labels("Brood Year", "logit(Mature at Age-3 [HOR]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
@@ -549,39 +542,39 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ##### NOR
 
-```{r pr-mat-4-nor-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r pr-mat-4-nor-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O2_qresid[year,origin,pop]", origin = 1, pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(Mature at Age-4 [NOR]) Residual")
+axis_labels("Brood Year", "logit(Mature at Age-4 [NOR]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 ##### HOR
 
-```{r pr-mat-4-hor-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r pr-mat-4-hor-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lpsi_O2_qresid[year,origin,pop]", origin = 2, pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(Mature at Age-4 [HOR]) Residual")
+axis_labels("Brood Year", "logit(Mature at Age-4 [HOR]) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 ### FW Adult {.tabset .tabset-pills}
 
-#### BON to LGR Survival
+#### BON $\to$ LGR Survival
 
-```{r BON-to-LGR-surv-noise, fig.width = 6, fig.height = 3.5}
-my_par(); par(mfrow = c(1,2))
+```{r BON-to-LGR-surv-noise, fig.width = p2_width, fig.height = p2_height}
+mypar(mfrow = c(1,2))
 tmp = lapply(1:jags_data$no, function(o) plot_proc_qresid("Lphi_Rb_Ra_qresid[year,origin]", origin = o, main = origins[o]))
-oma_labels("Return Year", "logit(BON to LGR Survival) Residual")
+axis_labels("Return Year", "logit(BON \u2192 LGR Survival) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
 #### Pre-spawn Survival
 
-```{r prespawn-surv-noise, fig.width = 6, fig.height = 5}
-my_par()
+```{r prespawn-surv-noise, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Sb_Sa_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Return Year", "logit(Pre-spawn Survival) Residual")
+axis_labels("Return Year", "logit(Pre-spawn Survival) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
@@ -756,8 +749,7 @@ plot_obs_qresid = function(qresid_param, year = ".+", pop = NULL, origin = NULL,
   ylim = c(0,1.3)
   
   # blank plot with correct dimensions
-  par(lend = "square")
-  plot(qresid["mean",] ~ all_yrs[observable], main = main,  type = "n", ylim = ylim, xlim = range(all_yrs[observable]), xaxt = "n", xlab = "", ylab = "",yaxt = "n")
+  plot(qresid["mean",] ~ all_yrs[observable], type = "n", ylim = ylim, xlim = range(all_yrs[observable]), xaxt = "n", xlab = "", ylab = "",yaxt = "n")
   
   # draw x-axis: years
   at_x = seq(min(all_yrs[observable]), max(all_yrs[observable]), 4)
@@ -765,22 +757,24 @@ plot_obs_qresid = function(qresid_param, year = ".+", pop = NULL, origin = NULL,
   axis(side = 2, at = seq(0, 1, 0.25), labels = TRUE)
 
   # draw the noise time series: mean and 95% CRI
-  segments(all_yrs[observable], qresid["2.5%",], all_yrs[observable], qresid["97.5%",], col = "salmon")
-  segments(all_yrs[observable], qresid["25%",], all_yrs[observable], qresid["75%",], col = "salmon", lwd = 4)
-  points(qresid["mean",] ~ all_yrs[observable], pch = 21, col = "red", bg = "salmon", cex = 1.25)
+  segments(all_yrs[observable], qresid["2.5%",], all_yrs[observable], qresid["97.5%",], col = main_cols["model"])
+  segments(all_yrs[observable], qresid["25%",], all_yrs[observable], qresid["75%",], col = main_cols["model"], lwd = 4)
+  points(qresid["mean",] ~ all_yrs[observable], pch = 21, col = "white", bg = "white", cex = 1.25)
+  points(qresid["mean",] ~ all_yrs[observable], pch = 21, col = main_cols["model"], bg = tran_cols["model"], cex = 1.25)
   
   # draw reference line at 25%, 50%, and 75% quantiles
   abline(h = c(0.25, 0.5, 0.75), lty = 3, col = "grey", lwd = 2)
   
   # draw posterior mean for first and half of time series
-  lines(x = all_yrs[observable[y_first]], y = rep(mean(mn_post_first), length(y_first)), col = "blue", lty = 3, lwd = 2)
-  lines(x = all_yrs[observable[y_last]], y = rep(mean(mn_post_last), length(y_last)), col = "blue", lty = 3, lwd = 2)
+  lines(x = all_yrs[observable[y_first]], y = rep(mean(mn_post_first), length(y_first)), col = main_cols["model2"], lty = 3, lwd = 2)
+  lines(x = all_yrs[observable[y_last]], y = rep(mean(mn_post_last), length(y_last)), col = main_cols["model2"], lty = 3, lwd = 2)
   
   # draw legend that shows estimate summaries
   usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
-  rect(usr[1], 1, usr[2], usr[4], border = "black", col = "grey90")
-  legend(x = usr[1] - xdiff * 0.05, y = usr[4] + ydiff * 0.025, legend = make_legend_text(mn_post, sd_post, first_last_mn_diff_post), bty = "n", cex = 0.8)
-  box()
+  rect(usr[1], 1, usr[2], usr[4], border = par("col.axis"), col = "grey95")
+  legend(x = usr[1] - xdiff * 0.05, y = usr[4] + ydiff * 0.025, text.col = par("col.axis"), legend = make_legend_text(mn_post, sd_post, first_last_mn_diff_post), bty = "n", cex = 0.8)
+  box(col = par("col.axis"))
+  panel_label(main, "topright")
   
   # create output for building summary tables
   data.frame(param = qresid_param,
@@ -810,55 +804,55 @@ obs_error_ests = NULL
 
 #### Fall Parr Abundance
 
-```{r fall-trap-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r fall-trap-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("lPa_obs_qresid[year,LH_type,pop]", LH_type = 1, pop = j, main = pops[j]))
-oma_labels("Brood Year", "log(Fall Parr Abundance) Residual")
+axis_labels("Brood Year", "log(Fall Parr Abundance) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
 #### Spring Smolt Abundance
 
-```{r spring-trap-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r spring-trap-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("lMb_obs_qresid[year,LH_type,origin,pop]", LH_type = 2, origin = 1, pop = j, main = pops[j]))
-oma_labels("Brood Year", "log(Spring Trap Count) Residual")
+axis_labels("Brood Year", "log(Spring Trap Count) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
 #### Adult Return Abundance
 
-```{r adult-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r adult-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("lRa_obs_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Return Year", "log(Total Adult Count) Residual")
+axis_labels("Return Year", "log(Total Adult Count) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
 ### Survival Data {.tabset .tabset-pills}
 
-#### Summer Parr $\rightarrow$ LGR
+#### Summer Parr $\to$ LGR
 
-```{r summer-surv-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r summer-surv-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("Lphi_obs_Pb_Ma_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(Summer Tagging to LGR Survival) Residual")
+axis_labels("Brood Year", "logit(Summer Parr \u2192 LGR Survival) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
-#### Fall Parr $\rightarrow$ LGR
+#### Fall Parr $\to$ LGR
 
-```{r fall-surv-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r fall-surv-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("Lphi_obs_Pa_Ma_qresid[year,LH_type,pop]", LH_type = 1, pop = j, main = pops[j]))
-oma_labels("Brood Year", "logit(Fall Tagging to LGR Survival) Residual")
+axis_labels("Brood Year", "logit(Fall Parr \u2192 LGR Survival) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
-#### Winter Parr $\rightarrow$ LGR
+#### Winter Parr $\to$ LGR
 
-```{r winter-surv-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r winter-surv-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) {
   if (j == 3) {
     no_data_plot(main = pops[j])
@@ -866,25 +860,25 @@ tmp = lapply(1:jags_data$nj, function(j) {
     plot_obs_qresid("Lphi_obs_Pa_Ma_qresid[year,LH_type,pop]", LH_type = 2, pop = j, main = pops[j])
   }
 })
-oma_labels("Brood Year", "logit(Winter Tagging to LGR Survival) Residual")
+axis_labels("Brood Year", "logit(Winter Parr \u2192 LGR Survival) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
-#### Spring Smolt $\rightarrow$ LGR {.tabset .tabset-pills}
+#### Spring Smolt $\to$ LGR {.tabset .tabset-pills}
 
 ##### NOR
 
-```{r spring-surv-resid-nor, fig.width = 6, fig.height = 5}
-my_par()
+```{r spring-surv-resid-nor, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("Lphi_obs_Mb_Ma_qresid[year,LH_type,origin,pop]", LH_type = 2, pop = j, origin = 1, main = pops[j]))
-oma_labels("Brood Year", "logit(NOR Smolt to LGR Survival) Residual")
+axis_labels("Brood Year", "logit(NOR Smolt \u2192 LGR Survival) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
 ##### HOR
 
-```{r spring-surv-resid-hor, fig.width = 6, fig.height = 5}
-my_par()
+```{r spring-surv-resid-hor, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) {
   if (j == 3) {
     no_data_plot(main = pops[j])
@@ -892,54 +886,54 @@ tmp = lapply(1:jags_data$nj, function(j) {
     plot_obs_qresid("Lphi_obs_Mb_Ma_qresid[year,LH_type,origin,pop]", LH_type = 2, pop = j, origin = 2, main = pops[j])
   }
 })
-oma_labels("Brood Year", "logit(HOR Smolt to LGR Survival) Residual")
+axis_labels("Brood Year", "logit(HOR Smolt \u2192 LGR Survival) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
-#### LGR Smolt $\rightarrow$ Ocean
+#### LGR Smolt $\to$ BON
 
-```{r hydro-surv-resid, fig.width = 6, fig.height = 3.5}
-my_par(); par(mfrow = c(1,2))
+```{r hydro-surv-resid, fig.width = p2_width, fig.height = p2_height}
+mypar(mfrow = c(1,2))
 tmp = lapply(1:jags_data$no, function(o) plot_obs_qresid("Lphi_obs_Ma_O0_qresid[year,origin]", origin = o, main = origins[o]))
-oma_labels("Brood Year", "logit(LGR to Ocean Survival) Residual")
+axis_labels("Brood Year", "logit(LGR \u2192 BON Survival) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
 #### BON Adults $\rightarrow$ LGR
 
 ```{r bon-adult-surv-resid, fig.width = 6, fig.height = 3.5}
-my_par(); par(mfrow = c(1,2))
+mypar(mfrow = c(1,2))
 tmp = lapply(1:jags_data$no, function(o) plot_obs_qresid("x_LGR_obs_qresid[year,origin]", origin = o, main = origins[o]))
-oma_labels("Return Year", "Count of PIT Tagged Adults at LGR Residual")
+axis_labels("Return Year", "Count of PIT Tagged Adults at LGR QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
 #### Pre-spawn
 
-```{r pre-spawn-surv-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r pre-spawn-surv-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("x_carcass_spawned_obs_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Return Year", "Count of Female Spawned-out Carcasses Residual")
+axis_labels("Return Year", "Count of Female Spawned-out Carcasses QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
 ### Length Data {.tabset .tabset-pills}
 
-#### Summer Length
+#### Parr Mean Length
 
-```{r summer-length-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r summer-length-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("lL_Pb_obs_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Brood Year", "log(Mean Summer Length) Residual")
+axis_labels("Brood Year", "log(Parr Mean Length) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
-#### Spring Length
+#### Smolt Mean Length
 
-```{r spring-length-resid, fig.width = 6, fig.height = 5}
-my_par()
+```{r spring-length-resid, fig.width = p4_width, fig.height = p4_height}
+mypar()
 tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("lL_Mb_obs_qresid[year,pop]", pop = j, main = pops[j]))
-oma_labels("Brood Year", "log(Mean Spring Length) Residual")
+axis_labels("Brood Year", "log(Smolt Mean Length) QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
@@ -952,23 +946,23 @@ ko_names = c("Age-3 (NOR)", "Age-4 (NOR)", "Age-5 (NOR)",
              "Age-3 (HOR)", "Age-4 (HOR)", "Age-5 (HOR)")
 
 weir_comp_qresid_plots = function(j) {
-  my_par(); par(mfrow = c(2,3))
+  mypar(mfrow = c(2,3))
   tmp = lapply(1:jags_data$nko, function(ko) plot_obs_qresid("x_Ra_obs_qresid[year,age,pop]", year = unname(which(jags_data$nx_Ra[,j] > 0)), age = ko, main = ko_names[ko], pop = j))
-  oma_labels("Return Year", "Weir Age/Origin Composition Residual")
+  axis_labels("Return Year", "Weir Age/Origin Composition QResidual")
   do.call(rbind, tmp)
 }
 ```
 
 ##### CAT
 
-```{r cat-weir-comp-resids, fig.width = 8, fig.height = 5}
+```{r cat-weir-comp-resids, fig.width = p6_width, fig.height = p6_height}
 tmp = weir_comp_qresid_plots(j_cat)
 obs_error_ests = rbind(obs_error_ests, tmp)
 ```
 
 ##### LOS
 
-```{r los-weir-comp-resids, fig.width = 8, fig.height = 5}
+```{r los-weir-comp-resids, fig.width = p6_width, fig.height = p6_height}
 tmp = weir_comp_qresid_plots(j_los)
 obs_error_ests = rbind(obs_error_ests, tmp)
 ```
@@ -979,7 +973,7 @@ _No weir data for MIN_
 
 ##### UGR
 
-```{r ugr-weir-comp-resids, fig.width = 8, fig.height = 5}
+```{r ugr-weir-comp-resids, fig.width = p6_width, fig.height = p6_height}
 tmp = weir_comp_qresid_plots(j_ugr)
 obs_error_ests = rbind(obs_error_ests, tmp)
 ```
@@ -988,37 +982,37 @@ obs_error_ests = rbind(obs_error_ests, tmp)
 
 ```{r carcass-comp-resid-plots-fn}
 carcass_comp_qresid_plots = function(j) {
-  my_par(); par(mfrow = c(2,3))
+  mypar(mfrow = c(2,3))
   tmp = lapply(1:jags_data$nko, function(ko) plot_obs_qresid("x_Sa_prime_obs_qresid[year,age,pop]", year = unname(which(jags_data$nx_Sa_prime[,j] > 0)), age = ko, main = ko_names[ko], pop = j))
-  oma_labels("Return Year", "Carcass Age/Origin Composition Residual")
+  axis_labels("Return Year", "Carcass Age/Origin Composition QResidual")
   do.call(rbind, tmp)
 }
 ```
 
 ##### CAT
 
-```{r cat-carcass-comp-resids, fig.width = 8, fig.height = 5}
+```{r cat-carcass-comp-resids, fig.width = p6_width, fig.height = p6_height}
 tmp = carcass_comp_qresid_plots(j_cat)
 obs_error_ests = rbind(obs_error_ests, tmp)
 ```
 
 ##### LOS
 
-```{r los-carcas-comp-resids, fig.width = 8, fig.height = 5}
+```{r los-carcas-comp-resids, fig.width = p6_width, fig.height = p6_height}
 tmp = carcass_comp_qresid_plots(j_los)
 obs_error_ests = rbind(obs_error_ests, tmp)
 ```
 
 ##### MIN
 
-```{r min-carcas-comp-resids, fig.width = 8, fig.height = 5}
+```{r min-carcas-comp-resids, fig.width = p6_width, fig.height = p6_height}
 tmp = carcass_comp_qresid_plots(j_min)
 obs_error_ests = rbind(obs_error_ests, tmp)
 ```
 
 ##### UGR
 
-```{r ugr-carcass-comp-resids, fig.width = 8, fig.height = 5}
+```{r ugr-carcass-comp-resids, fig.width = p6_width, fig.height = p6_height}
 tmp = carcass_comp_qresid_plots(j_ugr)
 obs_error_ests = rbind(obs_error_ests, tmp)
 ```
