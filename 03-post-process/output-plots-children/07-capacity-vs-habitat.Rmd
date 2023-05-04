@@ -9,7 +9,7 @@ editor_options:
 
 Error bars represent the central 80% of the posterior. The many grey lines are individual posterior draws.
 
-```{r beta-v-habitat-relationship, fig.width = 5, fig.height = 5}
+```{r beta-v-habitat-relationship, fig.width = 5, fig.height = 4, out.width="50%"}
 # extract posterior summaries of the capacity parameters
 beta_ests = post_summ(post, "^beta[", probs = c(0.1, 0.5, 0.9))
 
@@ -26,24 +26,27 @@ pred_beta = t(sapply(beta_per, function(slope) wul_seq * slope))
 i = sample(1:post_dim(post, "saved"), min(100, post_dim(post, "saved")), replace = FALSE)
 
 # empty plot with correct labeling/dimensions
-par(mar = c(3,3,1,1), mgp = c(2,0.35,0), tcl = -0.15)
+mypar(mfrow = c(1,1))
 plot(1,1, type = "n", xlim = range(wul_seq),
-     ylim = c(0, max(beta_ests["90%",], beta_ests["90%",], pred_beta[i,])),
-     xlab = "Weighted Usable Length (km)",
+     ylim = make_lim(0, max(beta_ests["90%",], beta_ests["90%",], pred_beta[i,])),
+     xlab = "",
      ylab = "Parr Capacity (000s)", yaxt = "n")
 at_y = axisTicks(par("usr")[3:4], log = FALSE)
 axis(side = 2, at = at_y, labels = at_y/1000)
 
 # draw the random regression lines
-junk = sapply(i, function(k) lines(pred_beta[k,] ~ wul_seq, col = alpha("grey25", 0.15)))
+junk = sapply(i, function(k) lines(pred_beta[k,] ~ wul_seq, col = tran_cols["model"]))
 
 # draw the posterior mean regression line
-lines(apply(pred_beta, 2, mean) ~ wul_seq, lwd = 3, lty = 2)
+lines(apply(pred_beta, 2, mean) ~ wul_seq, lwd = 3, col = main_cols["model"])
 
 # draw the population-specific capacity estimates w/error bars and labels
-points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 16)
-segments(jags_data$wul, beta_ests["10%",], jags_data$wul, beta_ests["90%",])
-text(x = jags_data$wul, y = beta_ests["mean",], labels = c("CAT", "LOS", "MIN", "UGR"), pos = c(2,4,4,4), font = 2)
+points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 21, col = "white", bg = "white")
+points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 21, col = main_cols["model"], bg = tran_cols["model"])
+segments(jags_data$wul, beta_ests["10%",], jags_data$wul, beta_ests["90%",], col = main_cols["model"])
+text(x = jags_data$wul, y = beta_ests["mean",], labels = c("CAT", "LOS", "MIN", "UGR"), pos = c(2,4,4,4), font = 2, col = par("col.axis"))
+axis_labels("Weighted Usable Length (km)", "Parr Capacity (000s)")
+box(col = par("col.axis"))
 ```
 
 ## Slope Parameter
