@@ -84,9 +84,9 @@ panel_label = function(label_text, label_loc = "topleft", cex = 1,
 }
 
 # draw axes labels
-axis_labels = function(xlab = NULL, ylab = NULL, xline = 0.4, yline = 0.4, outer = TRUE, ...) {
-  mtext(side = 1, line = xline, text = xlab, outer = outer, ...)
-  mtext(side = 2, line = yline, text = ylab, outer = outer, ...)
+axis_labels = function(xlab = NULL, ylab = NULL, xline = 0.4, yline = 0.4, outer = TRUE, col = par("col.axis"), ...) {
+  mtext(side = 1, line = xline, text = xlab, outer = outer, col = col, ...)
+  mtext(side = 2, line = yline, text = ylab, outer = outer, col = col, ...)
 } 
 
 # default par()
@@ -95,7 +95,7 @@ mypar = function(mar = c(1,1,0.5,0.5),
                  oma = c(1.5,1.5,0,0), mgp = c(200,0.05,0), 
                  tcl = 0, lend = "square",
                  ljoin = "mitre",
-                 col.axis = "grey40", cex.axis = 0.85, ...) {
+                 col.axis = "grey30", cex.axis = 0.85, ...) {
   
   do.call(par, c(as.list(environment()), list(...)))
 }
@@ -141,17 +141,19 @@ plot_tseries = function(est, obs = NULL, ylim = NULL, yrs = NULL, xaxis = TRUE, 
   # draw axes/labels
   if (xaxis) {
     at_yrs = axisTicks(par("usr")[1:2], log = FALSE)
-    axis(side = 1, at = at_yrs, labels = substr(at_yrs, 3, 4))
+    axis(side = 1, at = at_yrs, labels = paste0("'", substr(at_yrs, 3, 4)))
   } 
   if (!is.null(yaxis_side)) axis(side = yaxis_side)
   panel_label(label_text, label_loc)
+  
+  box(col = par("col.axis"))
 }
 
 add_tseries = function(est, yrs, main_col = main_cols["model2"], tran_col = tran_cols["model2"]) {
-  polygon(x = c(all_yrs[ts_yrs], rev(all_yrs[ts_yrs])),
+  polygon(x = c(yrs, rev(yrs)),
           y = c(est["2.5%",], rev(est["97.5%",])),
           col = tran_col, border = NA)
-  lines(est["mean",] ~ all_yrs[ts_yrs], col = main_col, lwd = 2)
+  lines(est["mean",] ~ yrs, col = main_col, lwd = 2)
 }
 
 ##### FUNCTIONS FOR COMPARING POSTERIORS AMONG 2 OR MORE MODELS #####
