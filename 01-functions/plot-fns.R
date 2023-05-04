@@ -52,66 +52,108 @@ get_obs_ests_log_normal = function(lmean, lsig) {
   return(out)
 }
 
+##### PLOTTING INFRASTRUCTURE FUNCTIONS #####
+
+# create a nice axis limit
+make_lim = function(..., buffer = c(0, 0.1)) {
+  lim = range(..., na.rm = TRUE)
+  lim_diff = diff(lim)
+  lim = lim + lim_diff * buffer
+  lim
+}
+
+# include a label in the corner of a plot
+panel_label = function(label_text, label_loc = "topleft", cex = 1,
+                       font = 2, x_inp = 0.015, y_inp = 0.05, col = par("col.axis"), ...) {
+  
+  accepted = c("topleft", "topright", "bottomleft", "bottomright")
+  
+  usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
+  
+  is_left = stringr::str_detect(label_loc, "left")
+  is_top = stringr::str_detect(label_loc, "top")
+  xsign = ifelse(is_left, -1, 1)
+  ysign = ifelse(is_top, -1, 1)
+  xi = ifelse(is_left, 1, 2)
+  yi = ifelse(is_top, 4, 3)
+  pos = ifelse(is_left, 4, 2)
+  
+  text(x = usr[xi] + xsign * xdiff * x_inp,
+       y = usr[yi] + ysign * ydiff * y_inp,
+       labels = label_text, cex = cex, pos = pos, font = font, col = col, ...)
+}
+
+# draw axes labels
+axis_labels = function(xlab = NULL, ylab = NULL, xline = 0.4, yline = 0.4, outer = TRUE, col = par("col.axis"), ...) {
+  mtext(side = 1, line = xline, text = xlab, outer = outer, col = col, ...)
+  mtext(side = 2, line = yline, text = ylab, outer = outer, col = col, ...)
+} 
+
+# default par()
+mypar = function(mar = c(1,1,0.5,0.5),
+                 mfrow = c(2,2), 
+                 oma = c(1.5,1.5,0,0), mgp = c(200,0.05,0), 
+                 tcl = 0, lend = "square",
+                 ljoin = "mitre",
+                 col.axis = "grey30", cex.axis = 0.85, ...) {
+  
+  do.call(par, c(as.list(environment()), list(...)))
+}
+
+
 ##### PLOT A TIME SERIES OF ESTIMATES, WITH DATA IF AVAILABLE #####
 
-# est: output from postpack::post_summ()
-# obs: optional vector of observed data to plot on top of estimates
-# main: plot title
-# xaxis: plot the xaxis?
-# yaxis_side: 2 or 4 or NULL, where should the y-axis be placed?
-# set_par: set some par() options internally?
-
-plot_tseries = function(est, obs = NULL, main = NULL, xaxis = T, yaxis_side = 2, set_par = T, ylim = NULL, yrs = NULL) {
+plot_tseries = function(est, obs = NULL, ylim = NULL, yrs = NULL, xaxis = TRUE, yaxis_side = 2, label_text = NULL, label_loc = "topleft", y_scale = 1, pt_cex = 1.3) {
   
   # extract year labels
   if (is.null(yrs)) {
     yrs = as.numeric(rownames(obs))
   }
   
+  est = est/y_scale
+  
+  if (!is.null(obs)) obs = obs/y_scale
+  
   # set y limits
   if (is.null(ylim)) {
-    ylim = range(list(est[c("2.5%", "97.5%"),], obs), na.rm = T)
+    ylim = make_lim(list(est[c("2.5%", "97.5%"),], obs))
   }
-  
-  # set the graphics device parameters
-  if (set_par) par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
   
   # create empty plot with correct dimensions/labels
   plot(1,1, type = "n", 
        xlim = range(yrs), ylim = ylim,
-       xlab = "", las = 1, ylab = "", main = main, xaxt = "n", yaxt = "n")
+       xlab = "", ylab = "", main = "", xaxt = "n", yaxt = "n")
   
   # draw band representing 95% credible region
-  polygon(x = c(yrs, rev(yrs)), y = c(est["2.5%",], rev(est["97.5%",])), border = NA, col = alpha("salmon", 0.5))
-  lines(est["2.5%",] ~ yrs, col = "red", lty = 2)
-  lines(est["97.5%",] ~ yrs, col = "red", lty = 2)
+  polygon(x = c(yrs, rev(yrs)), y = c(est["2.5%",], rev(est["97.5%",])), border = NA, col = tran_cols["model"])
   
-  # draw posterior median
-  lines(est["50%",] ~ yrs, col = "red", lwd = 2)
+  # draw posterior mean
+  lines(est["mean",] ~ yrs, col = main_cols["model"], lwd = 2)
   
   # draw data if provided
   if (!is.null(obs)) {
     obs_yrs = as.numeric(rownames(obs))
-    segments(obs_yrs, obs[,"lwr95"], obs_yrs, obs[,"upr95"], col = alpha("blue", 0.75))
-    points(obs[,"mean"] ~ obs_yrs, pch = 21, col = alpha("blue", 0.75), bg = alpha("skyblue2", 0.5), cex = 1.2)
+    segments(obs_yrs, obs[,"lwr95"], obs_yrs, obs[,"upr95"], col = main_cols["data"])
+    points(obs[,"mean"] ~ obs_yrs, pch = 21, col = "white", bg = "white", cex = pt_cex)
+    points(obs[,"mean"] ~ obs_yrs, pch = 21, col = main_cols["data"], bg = tran_cols["data"], cex = pt_cex)
   } 
   
   # draw axes/labels
   if (xaxis) {
-    at_yrs = c(seq(min(yrs), max(yrs), 4), max(yrs))
-    axis(side = 1, at = yrs, labels = FALSE)
-    axis(side = 1, at = at_yrs, labels = paste0("", substr(at_yrs, 3, 4)), tcl = -0.3)
+    at_yrs = axisTicks(par("usr")[1:2], log = FALSE)
+    axis(side = 1, at = at_yrs, labels = paste0("'", substr(at_yrs, 3, 4)))
   } 
   if (!is.null(yaxis_side)) axis(side = yaxis_side)
+  panel_label(label_text, label_loc)
+  
+  box(col = par("col.axis"))
 }
 
-add_tseries = function(est, yrs, col = "royalblue") {
-  polygon(x = c(all_yrs[ts_yrs], rev(all_yrs[ts_yrs])),
+add_tseries = function(est, yrs, main_col = main_cols["model2"], tran_col = tran_cols["model2"]) {
+  polygon(x = c(yrs, rev(yrs)),
           y = c(est["2.5%",], rev(est["97.5%",])),
-          col = scales::alpha(col, 0.15), border = NA)
-  lines(est["mean",] ~ all_yrs[ts_yrs], col = col, lwd = 2)
-  lines(est["2.5%",] ~ all_yrs[ts_yrs], col = col, lty = 2)
-  lines(est["97.5%",] ~ all_yrs[ts_yrs], col = col, lty = 2)
+          col = tran_col, border = NA)
+  lines(est["mean",] ~ yrs, col = main_col, lwd = 2)
 }
 
 ##### FUNCTIONS FOR COMPARING POSTERIORS AMONG 2 OR MORE MODELS #####

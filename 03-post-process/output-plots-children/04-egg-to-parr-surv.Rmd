@@ -7,73 +7,73 @@ editor_options:
 
 ## Survival Time Series {.tabset .tabset-pills}
 
-These figures show the realized time series of egg-to-parr survival that include all sources of variability in red: that explained by Beverton-Holt dynamics and that not explained by it.
-
 ### Realized Alone
 
-Just the realized time series shown.
+The `r colorize("realized time series", main_cols["model"])`.
 
-```{r phi_E_Pb-plots, fig.width = 6, fig.height = 5}
+```{r phi_E_Pb-plots, fig.width = p4_width, fig.height = p4_height}
+# function to create the plot for one population
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
-               yrs = all_yrs[ts_yrs],
-               main = pops[j])
+  # realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
+               yrs = all_yrs[ts_yrs], label_text = pops[j])
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+# loop over populations
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+axis_labels("Brood Year", "Egg \u2192 Parr Survival")
 ```
 
 ### Realized & BH
 
-The blue shows the time series with variability explained only by Beverton-Holt dynamics.
+The `r colorize("realized time series", main_cols["model"])` and the `r colorize("time series with variability explained only by Beverton-Holt dynamics", main_cols["model2"])`.
 
-```{r phi_E_Pb_dot-plots, fig.width = 6, fig.height = 5}
+```{r phi_E_Pb_dot-plots, fig.width = p4_width, fig.height = p4_height}
+# function to create the plot for one population
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
-               yrs = all_yrs[ts_yrs],
-               main = pops[j])
+  # realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
+               yrs = all_yrs[ts_yrs], label_text = pops[j])
   
-  # draw on the posterior time series that includes BH prediction only
+  # time series that includes BH prediction only
   add_tseries(post_summ(post, sub_index("^phi_E_Pb_dot[year,pop]", year = ts_yrs, pop = j)),
               yrs = all_yrs[ts_yrs])
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+# loop over populations
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+axis_labels("Brood Year", "Egg \u2192 Parr Survival")
 ```
 
 ### Realized & [BH + AR(1)]
 
-The blue shows the time series with variability explained by Beverton-Holt dynamics and the carry-over residual.
+The `r colorize("realized time series", main_cols["model"])` and the `r colorize("time series with variability explained by Beverton-Holt dynamics and the carry-over residual", main_cols["model2"])`.
 
-```{r phi_E_Pb_dot2-plots, fig.width = 6, fig.height = 5}
+```{r phi_E_Pb_dot2-plots, fig.width = p4_width, fig.height = p4_height}
+# function to create the plot for one population
 plot_f = function(j) {
-  plot_tseries(post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
-               yrs = all_yrs[ts_yrs],
-               main = pops[j])
+  # realized time series
+  plot_tseries(est = post_summ(post, sub_index("^phi_E_Pb[year,pop]$", year = ts_yrs, pop = j)),
+               yrs = all_yrs[ts_yrs], label_text = pops[j])
   
-  # draw on the posterior time series that includes BH prediction and the carry over residual from last year
-  # draw on the posterior time series that includes BH prediction only
+  # time series that includes BH prediction only
   add_tseries(post_summ(post, sub_index("^phi_E_Pb_dot2[year,pop]", year = ts_yrs, pop = j)),
               yrs = all_yrs[ts_yrs])
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+# loop over populations
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Brood Year")
-mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+axis_labels("Brood Year", "Egg \u2192 Parr Survival")
 ```
 
 ## Survival vs. Total Egg Production
 
-This is the scale the Beverton-Holt recruitment function is estimated on.
+This is the scale the Beverton-Holt recruitment function is modeled on.
 
-```{r egg-surv-vs-eggs, fig.width = 6, fig.height = 5}
+```{r egg-surv-vs-eggs, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   # extract posterior samples of the BH productivity and capacity parameters
   alpha = post_subset(post, sub_index("alpha[pop]", pop = j), matrix = TRUE)
@@ -92,12 +92,13 @@ plot_f = function(j) {
   phi_E_Pb_pred = post_convert(cbind(postpack:::id_mat(post), phi_E_Pb_pred))
   phi_E_Pb_pred = post_summ(phi_E_Pb_pred, "Pb_pred")
   
-  # graphical parameters
-  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
-  
   # empty plot
-  plot(1, 1, type = "n", xlim = range(0, E[5,]), ylim = range(0, phi_E_Pb[5,], phi_E_Pb_pred[5,]),
-       xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = pops[j])
+  plot(1, 1, type = "n", xlim = range(0, E["97.5%",]),
+       ylim = range(0, phi_E_Pb["97.5%",], phi_E_Pb_pred["97.5%",]),
+       xlab = "", ylab = "", xaxt = "n", yaxt = "n")
+
+  # add panel label
+  panel_label(pops[j], "topright")
   
   x_ticks = axisTicks(par("usr")[1:2], log = FALSE)
   y_ticks = axisTicks(par("usr")[3:4], log = FALSE)
@@ -105,35 +106,31 @@ plot_f = function(j) {
   axis(side = 2, at = y_ticks)
   
   # draw fitted relationship
-  polygon(c(E_pred, rev(E_pred)), c(phi_E_Pb_pred[4,], rev(phi_E_Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
-  lines(phi_E_Pb_pred[4,] ~ E_pred, col = "red", lty = 2)
-  lines(phi_E_Pb_pred[5,] ~ E_pred, col = "red", lty = 2)
-  lines(phi_E_Pb_pred[3,] ~ E_pred, col = "red", lwd = 2)
-  
+  polygon(c(E_pred, rev(E_pred)), c(phi_E_Pb_pred["2.5%",], rev(phi_E_Pb_pred["97.5%",])), col = tran_cols["model"], border = NA)
+  lines(phi_E_Pb_pred["mean",] ~ E_pred, col = main_cols["model"], lwd = 2)
+
   # draw state pairs + uncertainty
-  segments(E[4,], phi_E_Pb[3,], E[5,], phi_E_Pb[3,], col = alpha("red", 0.5))
-  segments(E[3,], phi_E_Pb[4,], E[3,], phi_E_Pb[5,], col = alpha("red", 0.5))
-  points(phi_E_Pb[3,] ~ E[3,], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
-  text(phi_E_Pb[3,] ~ E[3,], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  segments(E["2.5%",], phi_E_Pb["mean",], E["97.5%",], phi_E_Pb["mean",], col = main_cols["model"])
+  segments(E["mean",], phi_E_Pb["2.5%",], E["mean",], phi_E_Pb["97.5%",], col = main_cols["model"])
+  points(phi_E_Pb["mean",] ~ E["mean",], pch = 16, col = tran_cols["model"], cex = 1.8)
+  text(phi_E_Pb["mean",] ~ E["mean",], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  
+  box(col = par("col.axis"))
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Total Egg Production (Millions)")
-mtext(side = 2, outer = T, line = 0.25, "Egg-to-Parr Survival")
+axis_labels("Total Egg Production (Millions)", "Egg \u2192 Parr Survival")
 ```
 
 ## Parr vs. Total Egg Production
 
 Parr abundance is the product of egg-to-parr survival and total egg production; in this way we can back-out the standard Beverton-Holt function.
 
-```{r eggs-to-parr, fig.width = 6, fig.height = 5}
+```{r eggs-to-parr, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   # extract posterior samples of the BH productivity and capacity parameters
   bh_params = post_subset(post, sub_index(c("alpha[pop]", "^beta[pop]$"), pop = j), matrix = TRUE)
-  
-  # extract posterior summaries of total spawners by brood year
-  # Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
   
   # extract posterior summaries of total egg production by brood year
   E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
@@ -142,20 +139,18 @@ plot_f = function(j) {
   Pb = post_summ(post, sub_index("^Pb[year,pop]", pop = j, year = ts_yrs))
   
   # predict parr recruits along a sequence of spawner abundances
-  # Sa_pred = seq(0, max(Sa_tot[5,]), length = 30)
-  E_pred = seq(0, max(E[5,]), length = 30)
+  E_pred = seq(0, max(E[c("2.5%", "97.5%"),]), length = 30)
   
   Pb_pred = t(sapply(1:post_dim(post, "saved"), function(i) BH(E_pred, bh_params[i,1], bh_params[i,2])))
   colnames(Pb_pred) = paste0("Pb_pred[", 1:length(E_pred), "]")
   Pb_pred = post_convert(cbind(postpack:::id_mat(post), Pb_pred))
   Pb_pred = post_summ(Pb_pred, "Pb_pred")
   
-  # graphical parameters
-  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
-  
   # empty plot
-  plot(1, 1, type = "n", xlim = range(0, E[5,]), ylim = range(0, Pb[5,], Pb_pred[5,]),
-       xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = pops[j])
+  plot(1, 1, type = "n", xlim = range(0, E["97.5%",]), ylim = range(0, Pb["97.5%",], Pb_pred["97.5%",]),
+       xlab = "", ylab = "", xaxt = "n", yaxt = "n")
+  
+  panel_label(pops[j])
   
   x_ticks = axisTicks(par("usr")[1:2], log = FALSE)
   y_ticks = axisTicks(par("usr")[3:4], log = FALSE)
@@ -163,29 +158,29 @@ plot_f = function(j) {
   axis(side = 2, at = y_ticks, labels = y_ticks/1e3)
   
   # draw fitted relationship: Bayesian
-  polygon(c(E_pred, rev(E_pred)), c(Pb_pred[4,], rev(Pb_pred[5,])), col = alpha("salmon", 0.5), border = NA)
-  lines(Pb_pred[4,] ~ E_pred, col = "red", lty = 2)
-  lines(Pb_pred[5,] ~ E_pred, col = "red", lty = 2)
-  lines(Pb_pred[3,] ~ E_pred, col = "red", lwd = 2)
+  polygon(c(E_pred, rev(E_pred)), c(Pb_pred["2.5%",], rev(Pb_pred["97.5%",])), col = tran_cols["model"], border = NA)
+  lines(Pb_pred["mean",] ~ E_pred, col = main_cols["model"], lwd = 2)
   
   # draw state pairs + uncertainty
-  segments(E[4,], Pb[3,], E[5,], Pb[3,], col = alpha("red", 0.5))
-  segments(E[3,], Pb[4,], E[3,], Pb[5,], col = alpha("red", 0.5))
-  points(Pb[3,] ~ E[3,], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
-  text(Pb[3,] ~ E[3,], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  segments(E["2.5%",], Pb["mean",], E["97.5%",], Pb["mean",], col = main_cols["model"])
+  segments(E["mean",], Pb["2.5%",], E["mean",], Pb["97.5%",], col = main_cols["model"])
+  points(Pb["mean",] ~ E["mean",], pch = 16, col = tran_cols["model"], cex = 1.8)
+  text(Pb["mean",] ~ E["mean",], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
+  
+  box(col = par("col.axis"))
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Total Egg Production (Millions)")
-mtext(side = 2, outer = T, line = 0.25, "Parr Recruits (Thousands)")
+axis_labels("Total Egg Production (Millions)", "Parr Recruits (Thousands)")
 ```
 
 ## Total Eggs vs. Total Spawners
 
-This figure illustrates that total spawners is a reasonable index of total egg production, according to the assumptions of our model. The three lines illustrate the relationship if each spawner (regardless of age or sex) had a fixed number of eggs.
+This figure shows that total spawner abundance is a reasonable index of total egg production, according to the assumptions of our model (eggs = spawners-age-4/5 * 50% * age-specific fecundity).
+The three lines illustrate the relationship if each spawner (regardless of age or sex) had a fixed number of eggs.
 
-```{r eggs-vs-spawners, fig.width = 6, fig.height = 5}
+```{r eggs-vs-spawners, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
   # extract posterior summaries of total spawners by brood year
   Sa_tot = post_summ(post, sub_index("^Sa_tot[year,pop]", pop = j, year = ts_yrs))
@@ -193,22 +188,20 @@ plot_f = function(j) {
   # extract posterior summaries of total egg production by brood year
   E = post_summ(post, sub_index("^E[year,pop]", pop = j, year = ts_yrs))
 
-  # graphical parameters
-  par(mar = c(1.5,1.5,1.5,0.5), tcl = -0.15, mgp = c(2,0.35,0))
-  
   # empty plot
   plot(E["mean",] ~ Sa_tot["mean",],
        ylim = c(0, max(E["97.5%",])),
        xlim = c(0, max(Sa_tot["97.5%",])), type = "n",
-       ylab = "", xlab = "", las = 1, yaxt = "n")
+       ylab = "", xlab = "", yaxt = "n")
+  panel_label(pops[j])
   
   # yaxis ticks
   y_ticks = axisTicks(par("usr")[3:4], log = F)
   axis(side = 2, at = y_ticks, labels = y_ticks/1e6, las = 2)
   
-  segments(Sa_tot["2.5%",], E["mean",], Sa_tot["97.5%",], E["mean",], col = alpha("red", 0.5))
-  segments(Sa_tot["mean",], E["2.5%",], Sa_tot["mean",], E["97.5%",], col = alpha("red", 0.5))
-  points(E["mean",] ~ Sa_tot["mean",], pch = 16, col = alpha("salmon", 0.5), cex = 1.8)
+  segments(Sa_tot["2.5%",], E["mean",], Sa_tot["97.5%",], E["mean",], col = main_cols["model"])
+  segments(Sa_tot["mean",], E["2.5%",], Sa_tot["mean",], E["97.5%",], col = main_cols["model"])
+  points(E["mean",] ~ Sa_tot["mean",], pch = 16, col = tran_cols["model"], cex = 1.8)
   text(E["mean",] ~ Sa_tot["mean",], labels = substr(all_yrs[ts_yrs], 3, 4), cex = 0.65, col = "black")
 
   abline(c(0, 1000), lty = 1)
@@ -216,14 +209,15 @@ plot_f = function(j) {
   abline(c(0, 3600), lty = 3)
 
   if (j == 1) {
-    legend("bottomright", title = "If Each Spawner Had:",
-           legend = c("1000 Eggs", "1800 Eggs", "3600 Eggs"),
+    legend("bottomright", title = "Eggs/Spawner:",
+           legend = c("1,000", "1,800", "3,600"),
            lty = c(1,2,3), bty = "n", cex = 0.75)
   }
+  
+  box(col = par("col.axis"))
 }
 
-par(mfrow = c(2,2), oma = c(1.5,1.5,0,0))
+mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-mtext(side = 1, outer = T, line = 0.25, "Total Spawners")
-mtext(side = 2, outer = T, line = 0.25, "Total Egg Production (Millions)")
+axis_labels("Total Spawners", "Total Egg Production (Millions)")
 ```
