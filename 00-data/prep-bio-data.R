@@ -295,6 +295,33 @@ colnames(tmp)[2] = "brood_year"
 # rename the object and remove "tmp" object
 dam_adult_counts = tmp; rm(tmp)
 
+##### ADULT HARVEST IN TRIBUTARIES #####
+
+# read in the raw data file
+tmp = read.csv(file.path(data_dir, "11-tributary-harvest.csv"))
+
+# sum over sexes
+tmp = aggregate(count ~ population + year + origin + age, data = tmp, FUN = sum)
+
+# relabel origin type
+tmp$origin = ifelse(tmp$origin == "Hat", "HOR", ifelse(tmp$origin == "Nat", "NOR", NA))
+
+# create "age/origin" combo variable
+tmp$origin_age = paste0(tmp$origin, "_", tmp$age)
+
+# reformat
+tmp = dcast(tmp[,c("population", "year", "origin_age", "count")], population + year ~ origin_age, value.var = "count")
+
+# update column names
+# note: year renamed to "brood_year" to allow merging with other data sets
+# and for consistent indexing in model.
+# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
+colnames(tmp)[2] = "brood_year"
+colnames(tmp)[3:ncol(tmp)] = paste0("harv_", colnames(tmp)[3:ncol(tmp)])
+
+# rename the data frame, and remove "tmp" objects
+harv_composition = tmp; rm(tmp)
+
 ##### JUVENILE ABUNDANCE #####
 
 # read the data
@@ -510,6 +537,7 @@ bio_dat = merge(bio_dat, adult_abundance, by = c("population", "brood_year"), al
 bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, harv_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, sea_lion_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
