@@ -103,7 +103,7 @@ mypar = function(mar = c(1,1,0.5,0.5),
 
 ##### PLOT A TIME SERIES OF ESTIMATES, WITH DATA IF AVAILABLE #####
 
-plot_tseries = function(est, obs = NULL, ylim = NULL, yrs = NULL, xaxis = TRUE, yaxis_side = 2, label_text = NULL, label_loc = "topleft", y_scale = 1, pt_cex = 1.3) {
+plot_tseries = function(est, obs = NULL, ylim = NULL, yrs = NULL, xaxis = TRUE, yaxis_side = 2, label_text = NULL, label_loc = "topleft", y_scale = 1, pt_cex = 1.3, blank = FALSE) {
   
   # extract year labels
   if (is.null(yrs)) {
@@ -124,11 +124,13 @@ plot_tseries = function(est, obs = NULL, ylim = NULL, yrs = NULL, xaxis = TRUE, 
        xlim = range(yrs), ylim = ylim,
        xlab = "", ylab = "", main = "", xaxt = "n", yaxt = "n")
   
-  # draw band representing 95% credible region
-  polygon(x = c(yrs, rev(yrs)), y = c(est["2.5%",], rev(est["97.5%",])), border = NA, col = tran_cols["model"])
-  
-  # draw posterior mean
-  lines(est["mean",] ~ yrs, col = main_cols["model"], lwd = 2)
+  if (!blank) {
+    # draw band representing 95% credible region
+    polygon(x = c(yrs, rev(yrs)), y = c(est["2.5%",], rev(est["97.5%",])), border = NA, col = tran_cols["model"])
+    
+    # draw posterior mean
+    lines(est["mean",] ~ yrs, col = main_cols["model"], lwd = 2)
+  }
   
   # draw data if provided
   if (!is.null(obs)) {
@@ -149,11 +151,11 @@ plot_tseries = function(est, obs = NULL, ylim = NULL, yrs = NULL, xaxis = TRUE, 
   box(col = par("col.axis"))
 }
 
-add_tseries = function(est, yrs, main_col = main_cols["model2"], tran_col = tran_cols["model2"]) {
+add_tseries = function(est, yrs, main_col = main_cols["model2"], tran_col = tran_cols["model2"], y_scale = 1) {
   polygon(x = c(yrs, rev(yrs)),
-          y = c(est["2.5%",], rev(est["97.5%",])),
+          y = c(est["2.5%",], rev(est["97.5%",]))/y_scale,
           col = tran_col, border = NA)
-  lines(est["mean",] ~ yrs, col = main_col, lwd = 2)
+  lines(I(est["mean",]/y_scale) ~ yrs, col = main_col, lwd = 2)
 }
 
 ##### FUNCTIONS FOR COMPARING POSTERIORS AMONG 2 OR MORE MODELS #####
