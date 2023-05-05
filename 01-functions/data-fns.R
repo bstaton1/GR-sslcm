@@ -256,6 +256,15 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   B[y_names %in% sub$brood_year,,o_names[1]] = as.matrix(rm_comp[,paste("rm", o_names[1], k_names, sep = "_")])
   B[y_names %in% sub$brood_year,,o_names[2]] = as.matrix(rm_comp[,paste("rm", o_names[2], k_names, sep = "_")])
 
+  ### NUMBER OF RETURNING ADULTS HARVESTED IN TRIBUTARY ###
+  
+  harv_comp_names = create_comp_names("harv", o_names, k_names)
+  harv_comp = sub[,unlist(harv_comp_names)]
+  harv_comp[is.na(harv_comp)] = 0
+  H = array(NA, dim = c(ny, nk, no)); dimnames(H) = list(y_names, k_names, o_names)
+  H[y_names %in% sub$brood_year,,o_names[1]] = as.matrix(harv_comp[,paste("harv", o_names[1], k_names, sep = "_")])
+  H[y_names %in% sub$brood_year,,o_names[2]] = as.matrix(harv_comp[,paste("harv", o_names[2], k_names, sep = "_")])
+  
   ### ADULT HARVEST RATE BELOW BON ###
   # assume age-3 is harvested at a rate 25% of that for age-4 and age-5
   U = array(NA, dim = c(ny, nk, no)); dimnames(U) = list(y_names, k_names, o_names)
@@ -377,6 +386,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     Ra_obs = Ra_obs,
     sig_Ra_obs = sig_Ra_obs,
     
+    # number harvested in tributary
+    H = H,
+    
     # number removed at weir
     B = B,
     
@@ -489,6 +501,9 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     x_Sa_prime = abind(lapply(main_list, function(x) x$x_Sa_prime), along = 3),
     nx_Sa_prime = abind(lapply(main_list, function(x) x$nx_Sa_prime), along = 2),
     
+    # tributary harvest
+    H = abind(lapply(main_list, function(x) x$H), along = 4),
+    
     # weir removals
     B = abind(lapply(main_list, function(x) x$B), along = 4),
     
@@ -597,6 +612,20 @@ append_values_for_sim = function(jags_data) {
   
   # append with observed period to be passed to the model
   jags_data$Mb_obs = abind(x, y, along = 1)
+  
+  ### KNOWN VALUES SOURCE X: TRIBUTARY HARVEST ###
+  
+  # extract the values from the observed period
+  x = jags_data$H
+  
+  # insert a value in the old "year-0" position
+  x[1,,,] = jags_data$H[jags_data$ny_obs,,,]
+  
+  # change year names
+  dimnames(x)[[1]] = 1:ny_sim + last_obs_yr
+  
+  # append with observed period to be passed to the model
+  jags_data$H = abind(jags_data$H, x, along = 1)
   
   ### KNOWN VALUES SOURCE X: WEIR REMOVALS ###
   

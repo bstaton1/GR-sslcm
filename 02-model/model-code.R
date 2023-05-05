@@ -425,7 +425,7 @@ jags_model_code = function() {
           Ra[y,k,o,j] <- Ra_LGR[y,k,o,j] + (G[y,o,j] * p_G[k,o,j])
 
           # remove fish at weir: use max() to ensure that fewer fish were removed than existed
-          Sb[y,k,o,j] <- max(Ra[y,k,o,j] - B[y,k,o,j], 1)
+          Sb[y,k,o,j] <- max(Ra[y,k,o,j] - B[y,k,o,j] - H[y,k,o,j], 1)
           
           # survive pre-spawn mortality
           Sa[y,k,o,j] <- Sb[y,k,o,j] * phi_Sb_Sa[y,j]
