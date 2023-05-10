@@ -304,6 +304,11 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   x_carcass_spawned[y_names %in% sub$brood_year] = sub$carcs_status_spawned
   x_carcass_total[y_names %in% sub$brood_year] = sub$carcs_samp_for_status
   
+  ### ADULT FECUNDITY ###
+  
+  f = array(NA, dim = c(ny, nk)); dimnames(f) = list(y_names, k_names)
+  f[y_names %in% sub$brood_year] = as.matrix(sub[,c(paste0("fecund_", kmin:kmax))])
+  
   ### INFORMATION ABOUT WHICH YEARS NEED STRAYING ###
   # the years in which strays will be needed
   if (pop != "MIN") {
@@ -391,6 +396,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     
     # number removed at weir
     B = B,
+    
+    # adult fecundity
+    f = f,
     
     ### ADULT COMPOSITION ###
     # observed frequency of age/origin arriving at weir
@@ -506,6 +514,8 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     
     # weir removals
     B = abind(lapply(main_list, function(x) x$B), along = 4),
+    
+    f = abind(lapply(main_list, function(x) x$f), along = 3),
     
     # number of carcasses sampled for spawn status
     x_carcass_total = abind(lapply(main_list, function(x) x$x_carcass_total), along = 2),
@@ -688,6 +698,20 @@ append_values_for_sim = function(jags_data) {
   
   # append with observed period to be passed to the model
   jags_data$U = abind(jags_data$U, x, along = 1)
+  
+  ### KNOWN VALUES SOURCE X: FECUNDITY ###
+  
+  # extract the values from the observed period
+  x = jags_data$f
+  
+  # insert a value in the old "year-0" position
+  x[1,,] = x[2,,]
+  
+  # change year names
+  dimnames(x)[[1]] = 1:ny_sim + last_obs_yr
+  
+  # append with observed period to be passed to the model
+  jags_data$f = abind(jags_data$f, x, along = 1)
   
   # return the updated jags_data object
   return(jags_data)
