@@ -2,7 +2,6 @@
 # SCRIPT TO HOUSE FUNCTIONS FOR GENERATING INITIAL MCMC VALUES #
 # :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: #
 
-
 # reconstruct total parr
 get_Pb_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
   
@@ -66,8 +65,13 @@ get_E_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
     
     # get the broodstock removed
     broodstock = B
-    broodstock = lapply(1:nj, function(j) cbind(broodstock[1:ny_obs,,1,j], broodstock[1:ny_obs,,1,j]))
+    broodstock = lapply(1:nj, function(j) cbind(broodstock[1:ny_obs,,o_nor,j], broodstock[1:ny_obs,,o_hor,j]))
     broodstock = do.call(abind, append(broodstock, list(along = 3)))
+    
+    # get the harvest removed
+    harvest = H
+    harvest = lapply(1:nj, function(j) cbind(harvest[1:ny_obs,,o_nor,j], harvest[1:ny_obs,,o_hor,j]))
+    harvest = do.call(abind, append(harvest, list(along = 3)))
     
     # get the pre-spawn survival
     prespawn_surv = x_carcass_spawned/x_carcass_total
@@ -86,8 +90,8 @@ get_E_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
     })
     age_origin_return = do.call(abind, append(age_origin_return, list(along = 3)))
     
-    # remove brood_stock
-    age_origin_above_weir = age_origin_return - broodstock
+    # remove brood_stock & harvest
+    age_origin_above_weir = age_origin_return - broodstock - harvest
     age_origin_above_weir[age_origin_above_weir < 0] = 5
     
     # remove prespawn morts
@@ -104,15 +108,18 @@ get_E_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
     females_age_origin = do.call(abind, append(females_age_origin, list(along = 3)))
     
     # get total egg output
-    f_age_origin = c(f, f)
     eggs_age_origin = lapply(1:nj, function(j) {
-      t(apply(females_age_origin[,,j], 1, function(y) y * f_age_origin))
+      f_age_origin = cbind(f[,,j], f[,,j])
+      t(sapply(1:nrow(females_age_origin), function(y) females_age_origin[y,,j] * f_age_origin[y,]))
     })
     eggs_age_origin = do.call(abind, append(eggs_age_origin, list(along = 3)))
     total_eggs = apply(eggs_age_origin, 3, rowSums)
     
     # add population names back in
     colnames(total_eggs) = colnames(total_return)
+    
+    # add year names back in
+    rownames(total_eggs) = rownames(total_return)
     
     # append years for simulation if requested and needed
     if (append_sim_yrs & (ny - ny_obs > 1)) {
