@@ -431,7 +431,7 @@ jags_model_code = function() {
           Sa[y,k,o,j] <- Sb[y,k,o,j] * phi_Sb_Sa[y,j]
           
           # calculate egg production (eggs separated by age/origin)
-          E_sep[y,k,o,j] <- Sa[y,k,o,j] * Omega[k,j] * f[k]
+          E_sep[y,k,o,j] <- Sa[y,k,o,j] * Omega[k,j] * f[y,k,j]
           
           # calculate "adjusted carcasses": accounts for sampling bias relative to weir
           Sa_prime[y,k,o,j] <- Sa[y,k,o,j] * zeta[k,j]
