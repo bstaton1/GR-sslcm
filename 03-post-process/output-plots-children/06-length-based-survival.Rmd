@@ -282,7 +282,7 @@ plot_fn = function(j) {
     
   # expected relationship
   polygon(c(L_Mb_seq, rev(L_Mb_seq)), c(pred_phi_Mb_Ma_lwr, rev(pred_phi_Mb_Ma_upr)), border = NA, col = tran_cols["model"])
-  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = tran_cols["model"], lwd = 2)
+  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = main_cols["model"], lwd = 2)
   
   # realized pairs
   segments(L_Mb_lwr, phi_Mb_Ma_mean, L_Mb_upr, phi_Mb_Ma_mean, col = main_cols["model"])
