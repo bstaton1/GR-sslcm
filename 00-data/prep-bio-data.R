@@ -322,6 +322,26 @@ colnames(tmp)[3:ncol(tmp)] = paste0("harv_", colnames(tmp)[3:ncol(tmp)])
 # rename the data frame, and remove "tmp" objects
 harv_composition = tmp; rm(tmp)
 
+##### ADULT FECUNDITY #####
+
+# read the data
+tmp = read.csv("C:/Users/bstaton/Desktop/Staton/1_critfc/analyses/GR-sslcm-data/bio/10-fecundity.csv")
+
+# reformat the data
+tmp = dcast(tmp, pop + return_year ~ age, value.var = "fecundity")
+
+# update column names
+# note: year renamed to "brood_year" to allow merging with other data sets
+# and for consistent indexing in model.
+# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
+colnames(tmp) = c("population", "brood_year", "fecund_4", "fecund_5")
+
+# add in age-3 fecundity: assumed to be zero
+tmp = cbind(tmp[,c("population", "brood_year")], "fecund_3" = 0, tmp[,c("fecund_4", "fecund_5")])
+
+# rename the data frame, and remove "tmp" objects
+fecundity = tmp; rm(tmp)
+
 ##### JUVENILE ABUNDANCE #####
 
 # read the data
@@ -538,6 +558,7 @@ bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_yea
 bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, harv_composition, by = c("population", "brood_year"), all = T)
+bio_dat = merge(bio_dat, fecundity, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, sea_lion_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
