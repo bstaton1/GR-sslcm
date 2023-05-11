@@ -114,7 +114,6 @@ dimnames(Omega) = list(jags_data$kmin:jags_data$kmax, colnames(jags_data$Ra_obs)
 Omega["3",] = 0
 
 add_jags_data = list(
-  f = c(1904, 3971, 4846),  # fecundity [female age]
   Omega = Omega             # proportion of spawners by age and population that are female
 )
 
@@ -325,7 +324,7 @@ jags_dims = list(
 )
 
 # calculate expected time to run and misc values for nice printing
-hrs_per_10k = ifelse(args$sim, 0.75, 1.65)
+hrs_per_10k = ifelse(args$sim, 0.9, 1.85)
 iters = with(jags_dims, (n_burn + n_post) * ifelse(parallel, 1, n_chain))
 pred_hrs = iters/1e4 * hrs_per_10k
 units_c = ifelse(pred_hrs > 1, "hour(s)", "minute(s)")
