@@ -858,7 +858,7 @@ ratio_plot = function(ratios, line_y, pt_fn = mean, ylim = NULL, ylab = FALSE, .
   
   # replace median with output of supplied point estimate function
   summs["50%",] = apply(ratios, 2, pt_fn)
-  
+
   # set graphics parameters
   par(mar = c(7,1.25,1,1), mgp = c(2,0.35,0), tcl = -0.15, lend = "square", ljoin = "mitre")
   
@@ -1014,7 +1014,7 @@ prep_est_ratios = function(x, q) {
   
   # reorder rows
   x$Class = factor(x$Class, levels = c("FW Juvenile", "SW Juvenile", "FW Adult"))
-  x$Type = factor(x$Type, levels = c("Egg to Parr Survival", "Parr Mean Size", "Proportion Fall Migrants", "Overwinter Survival", "Parr to Smolt Mean Size 'Growth Factor'", "Smolt Mean Size", "Migration to LGR Survival", "LGR to Ocean Survival", "First Year Ocean Survival", "Age-3 Maturity", "Age-4 Maturity", "BON to LGR Survival", "Pre-Spawn Survival"))
+  x$Type = factor(x$Type, levels = c("Egg to Parr Survival", "Parr Mean Size", "Proportion Fall Migrants", "Overwinter Survival", "Parr to Smolt Mean Size 'Growth Factor'", "Smolt Mean Size", "Migration to LGR Survival", "LGR to Ocean Survival", "First Year Ocean Survival", "Age-3 Maturity", "Age-4 Maturity", "BON to LGR Survival"))
   x$LH_type = factor(x$LH_type, levels = c("Combined", "Fall", "Spring"))
   x$origin = factor(x$origin, levels = c("NOR", "HOR", "Combined"))
   x = x[order(x$Class, x$Type, x$LH_type, x$origin),]
@@ -1272,16 +1272,6 @@ x = do.call(abind, append(x, list(along = 4)))
 vals_plots(x, "BON to LGR Survival: Estimates")
 ratio_plots(x, "BON to LGR Survival: Ratios")
 est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Adult", Type = "BON to LGR Survival"))
-```
-
-#### Pre-Spawn Survival
-
-```{r}
-x = lapply(1:4, function(j) get_ratio("^phi_Sb_Sa[year,pop]", obs_y, sim_y, pop = j))
-x = do.call(abind, append(x, list(along = 4)))
-vals_plots(x, "Pre-Spawn Survival: Estimates")
-ratio_plots(x, "Pre-Spawn Survival: Ratios")
-est_ratios = rbind(est_ratios, summarize_ratios(x, Class = "FW Adult", Type = "Pre-Spawn Survival"))
 ```
 
 ## Emergent Properties {.tabset .tabset-pills}
@@ -1862,12 +1852,6 @@ ts_plot("^phi_Rb_Ra[year,origin]", main = "NOR", origin = 1)
 ts_plot("^phi_Rb_Ra[year,origin]", main = "HOR", origin = 2)
 mtext(side = 1, outer = TRUE, line = 0.5, "Year")
 mtext(side = 2, outer = TRUE, line = 0.5, "Value")
-```
-
-#### Pre-Spawn Survival
-
-```{r}
-pop_ts_plots("^phi_Sb_Sa[year,pop]")
 ```
 
 ## Emergent Properties {.tabset .tabset-pills}
