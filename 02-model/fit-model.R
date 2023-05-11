@@ -173,7 +173,6 @@ add_jags_data = append(add_jags_data, list(
   Tau_Lpsi_O1_prior =         c(0.15, 2),
   Tau_Lpsi_O2_prior =         c(0.30, 2),
   Tau_Lphi_Rb_Ra_prior =      c(0.30, 2),
-  Tau_Lphi_Sb_Sa_prior =      c(0.15, 2),
   omega0_prior =          log(c(50, 100)),
   omega1_prior =              c(-0.5, 0.5),
   theta0_prior =          log(c(1, 2)),
@@ -261,7 +260,7 @@ jags_params = c(
   "Lpi_resid", "Lphi_Pa_Mb_resid", "Lphi_Mb_Ma_resid",
   "Lphi_Ma_O0_resid", "Lpsi_O1_resid",
   "Lpsi_O2_resid", "Lphi_O0_O1_resid",
-  "Lphi_Sb_Sa_resid", "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
+  "Lphi_E_Pb_resid", "Lphi_Rb_Ra_resid",
   "lL_Pb_resid", "lDelta_L_Pb_Mb_resid",
   
   # quantile residuals: observation model
@@ -304,7 +303,7 @@ prior_params = c(
 Tau_params = c(
   "Tau_Lphi_E_Pb", "Tau_lL_Pb", "Tau_Lpi", "Tau_Lphi_Pa_Mb", "Tau_lDelta_L_Pb_Mb", 
   "Tau_Lphi_Mb_Ma", "Tau_Lphi_Ma_O0", "Tau_Lphi_O0_O1", "Tau_Lpsi_O1", "Tau_Lpsi_O2",
-  "Tau_Lphi_Rb_Ra", "Tau_Lphi_Sb_Sa"
+  "Tau_Lphi_Rb_Ra"
 )
 
 # add these additional nodes if included in JAGS model
