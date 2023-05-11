@@ -31,7 +31,6 @@ rho_labels = c(
   "rho_Lphi_Mb_Ma" = "Trib. to LGR Survival",
   "rho_lL_Pb" = "Mean Parr Length",
   "rho_Lphi_Pa_Mb" = "Overwinter Survival",
-  "rho_Lphi_Sb_Sa" = "Pre-spawn Survival",
   "rho_Lphi_Rb_Ra" = "BON -> LGR Survival",
   "rho_Lpi" = "Pr(Fall Migrant)",
   "rho_Lphi_Ma_O0" = "LGR -> Ocean Survival"
@@ -202,10 +201,3 @@ est = post_summ(post, "rho_Lphi_Rb_Ra[2,1]")
 kable(t(est), digits = 3, row.names = FALSE) %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
 ```
-
-### Pre-Spawn Survival
-
-```{r rho_Lphi_Sb_Sa-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
-rho_mat_plots("rho_Lphi_Sb_Sa[")
-```
-
