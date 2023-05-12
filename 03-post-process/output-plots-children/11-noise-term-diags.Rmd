@@ -197,10 +197,6 @@ make_qresid_all = function(real_param, mean_param, sig_param, f_real = qlogis, f
 # container object to append output to
 qresid_post = postpack:::id_mat(post)
 
-# the years to calculate residuals for
-observable = 2:jags_data$ny_obs
-# "^phi_E_Pb[year,pop]""phi_E_Pb_dot2[year,pop]", "sig_Lphi_E_Pb[pop]"
-
 # egg to parr survival
 qresid_post = cbind(qresid_post,
                     make_qresid_all("^phi_E_Pb[year,pop]",
@@ -321,14 +317,6 @@ qresid_post = cbind(qresid_post,
                                     "mu_phi_Rb_Ra[origin]",
                                     "sig_Lphi_Rb_Ra[origin]",
                                     type = "origin")
-)
-
-# Pre-spawn survival
-qresid_post = cbind(qresid_post,
-                    make_qresid_all("^phi_Sb_Sa[year,pop]",
-                                    "^mu_phi_Sb_Sa[pop]",
-                                    "sig_Lphi_Sb_Sa[pop]",
-                                    type = "pop", origin = jags_data$o_hor)
 )
 
 qresid_post = qresid_post[,-c(1:2)]
@@ -569,15 +557,6 @@ axis_labels("Return Year", "logit(BON \u2192 LGR Survival) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
 
-#### Pre-spawn Survival
-
-```{r prespawn-surv-noise, fig.width = p4_width, fig.height = p4_height}
-mypar()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_Sb_Sa_qresid[year,pop]", pop = j, main = pops[j]))
-axis_labels("Return Year", "logit(Pre-spawn Survival) QResidual")
-proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
-```
-
 ### **SUMMARY TABLES** {.tabset .tabset-pills}
 
 These tables show posterior summary statistics of the time series of noise terms across years (i.e., the values shown on each figure panel). Bold values denote that the target value for verifying model assumptions was not within the 95% CRI of the across-year summary statistic and indicates a potential problem.
@@ -595,10 +574,8 @@ proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_O0_O1_
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpsi_O1_qresid\\[year,origin,pop\\]", "Pr(Mature Age-3)")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lpsi_O2_qresid\\[year,origin,pop\\]", "Pr(Mature Age-4)")
 proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Rb_Ra_qresid\\[year,origin\\]", "BON to LGR Survival")
-proc_error_ests$param = stringr::str_replace(proc_error_ests$param, "Lphi_Sb_Sa_qresid\\[year,pop\\]", "Pre-spawn Survival")
 
 # correct origin indices
-proc_error_ests$origin[proc_error_ests$param == "Pre-spawn Survival"] = 3
 proc_error_ests$origin[is.na(proc_error_ests$origin)] = 1
 
 # correct LH_type indices
@@ -618,7 +595,7 @@ proc_error_ests$LH_type = c("Fall Mig.", "Spring Mig.", "Combined")[proc_error_e
 # which processes are in each life phase?
 fw_juv = c("Egg to Parr Survival", "Summer Parr Length", "Migratory Strategy Apportionment", "Overwinter Survival", "Summer to Spring 'Growth Factor'", "Trib to LGR Survival", "LGR to BON Survival")
 sw_juv = c("Yr1 Ocean Survival", "Pr(Mature Age-3)", "Pr(Mature Age-4)")
-fw_adult = c("BON to LGR Survival", "Pre-spawn Survival")
+fw_adult = c("BON to LGR Survival")
 
 # add a life phase column
 proc_error_ests$phase = NA

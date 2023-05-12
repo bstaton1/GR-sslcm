@@ -74,9 +74,7 @@ get_E_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
     harvest = do.call(abind, append(harvest, list(along = 3)))
     
     # get the pre-spawn survival
-    prespawn_surv = x_carcass_spawned/x_carcass_total
-    prespawn_surv[is.na(prespawn_surv)] = 0.75
-    prespawn_surv[prespawn_surv < 0.5] = 0.5
+    prespawn_surv = colSums(x_carcass_spawned, na.rm = TRUE)/colSums(x_carcass_total, na.rm = TRUE)
     
     # get the age/origin compositon of the total adult return
     # assume 60% pHOS and 20%, 60%, 20% of age 3, 4, and 5
@@ -96,7 +94,7 @@ get_E_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
     
     # remove prespawn morts
     age_origin_survived = lapply(1:nj, function(j) {
-      apply(age_origin_above_weir[,,j], 2, function(a) a * prespawn_surv[,j])
+      apply(age_origin_above_weir[,,j], 2, function(a) a * prespawn_surv[j])
     })
     age_origin_survived = do.call(abind, append(age_origin_survived, list(along = 3)))
     
@@ -559,9 +557,6 @@ gen_initials = function(CHAIN, jags_data) {
     
     # create random parameters for prespawn survival
     mu_phi_Sb_Sa_init = runif(nj, 0.8, 0.95)
-    sig_Lphi_Sb_Sa_init = runif(nj, 0.1, 0.5)
-    Lphi_Sb_Sa_init = array(qlogis(runif(ny * nj, 0.7, 0.99)), dim = c(ny, nj))
-    Lphi_Sb_Sa_init[1,] = NA
     
     # create random parameters for length at summer tagging
     lL_Pb_init = log(matrix(runif(nj * ny, 60, 90), ny, nj))
@@ -673,9 +668,6 @@ gen_initials = function(CHAIN, jags_data) {
       
       # prespawn survival
       mu_phi_Sb_Sa = mu_phi_Sb_Sa_init,
-      # sig_Lphi_Sb_Sa = sig_Lphi_Sb_Sa_init,
-      Lphi_Sb_Sa = Lphi_Sb_Sa_init,
-      Tau_Lphi_Sb_Sa = solve(sim_Sigma(rep(0.3, nj), "low"))
     )
   })
 }

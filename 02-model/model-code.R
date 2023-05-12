@@ -51,10 +51,6 @@ jags_model_code = function() {
   Tau_Lphi_Rb_Ra[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Rb_Ra_prior[1], no), Tau_Lphi_Rb_Ra_prior[2])
   Tau_Lphi_Rb_Ra_pr[1:no,1:no] ~ dscaled.wishart(rep(Tau_Lphi_Rb_Ra_prior[1], no), Tau_Lphi_Rb_Ra_prior[2])
   
-  # pre-spawn survival
-  Tau_Lphi_Sb_Sa[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Sb_Sa_prior[1], nj), Tau_Lphi_Sb_Sa_prior[2])
-  Tau_Lphi_Sb_Sa_pr[1:nj,1:nj] ~ dscaled.wishart(rep(Tau_Lphi_Sb_Sa_prior[1], nj), Tau_Lphi_Sb_Sa_prior[2])
-  
   for (j in 1:nj) {
     ### PRIORS: RECRUITMENT FUNCTION ###
     # total egg production to aggregate parr recruitment function
@@ -254,7 +250,7 @@ jags_model_code = function() {
     Lphi_O2_O3[y,o_hor,1:nj] <- Lphi_O2_O3[y,o_nor,1:nj] + delta_O2_O3[1:nj]
     
     # pre-spawn survival
-    Lphi_Sb_Sa[y,1:nj] ~ dmnorm(logit(mu_phi_Sb_Sa[1:nj]), Tau_Lphi_Sb_Sa[1:nj,1:nj])
+    Lphi_Sb_Sa[y,1:nj] <- logit(mu_phi_Sb_Sa[1:nj])
 
     # movement survival (juveniles LGR to BON)
     Lphi_Ma_O0[y,1:no] ~ dmnorm(logit(mu_phi_Ma_O0[1:no]), Tau_Lphi_Ma_O0[1:no,1:no])
@@ -829,9 +825,6 @@ jags_model_code = function() {
         # ocean survival
         Lphi_O0_O1_resid[y,o,j] <- Lphi_O0_O1[y,o,j] - logit(mu_phi_O0_O1[o,j])
       }
-      
-      # pre-spawn survival
-      Lphi_Sb_Sa_resid[y,j] <- Lphi_Sb_Sa[y,j] - logit(mu_phi_Sb_Sa[j])
     }
     
     # processes that are constant across populations but vary by origin
