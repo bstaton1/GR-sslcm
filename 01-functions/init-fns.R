@@ -667,7 +667,7 @@ gen_initials = function(CHAIN, jags_data) {
       # G_random2 = G_random2_init,
       
       # prespawn survival
-      mu_phi_Sb_Sa = mu_phi_Sb_Sa_init,
+      mu_phi_Sb_Sa = mu_phi_Sb_Sa_init
     )
   })
 }
