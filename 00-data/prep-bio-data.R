@@ -166,9 +166,6 @@ tmp = tmp[tmp$origin != "Unk",]
 # rename trap_year to year
 colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
 
-# discard records for recaptured fish
-tmp = tmp[-which(tmp$recapture),]
-
 # keep only fish that were removed
 tmp = tmp[tmp$disposition == "removed",]
 
