@@ -114,7 +114,7 @@ tmp = tmp[tmp$origin != "Unk",]
 tmp = tmp[-which(tmp$recapture),]
 
 # rename trap_year to year
-colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
+colnames(tmp)[colnames(tmp) == "trapyear"] = "year"
 
 # keep only relevant columns
 tmp = tmp[,c("population", "year", "origin", "age_best2", "count")]
@@ -164,7 +164,7 @@ tmp = tmp[tmp$age_best2 > 2,]
 tmp = tmp[tmp$origin != "Unk",]
 
 # rename trap_year to year
-colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
+colnames(tmp)[colnames(tmp) == "trapyear"] = "year"
 
 # keep only fish that were removed
 tmp = tmp[tmp$disposition == "removed",]
