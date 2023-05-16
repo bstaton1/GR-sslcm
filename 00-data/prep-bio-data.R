@@ -113,8 +113,14 @@ tmp = tmp[tmp$origin != "Unk",]
 # discard records for recaptured fish
 tmp = tmp[-which(tmp$recapture),]
 
+# discard records for LOS in 2001 - 2008
+# known sampling issues in these years
+# however, records needed in data set
+# to be used in weir removal calculations.
+tmp = tmp[-which(tmp$population == "LOS" & tmp$trapyear %in% 2001:2008),]
+
 # rename trap_year to year
-colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
+colnames(tmp)[colnames(tmp) == "trapyear"] = "year"
 
 # keep only relevant columns
 tmp = tmp[,c("population", "year", "origin", "age_best2", "count")]
@@ -164,10 +170,7 @@ tmp = tmp[tmp$age_best2 > 2,]
 tmp = tmp[tmp$origin != "Unk",]
 
 # rename trap_year to year
-colnames(tmp)[colnames(tmp) == "trap_year"] = "year"
-
-# discard records for recaptured fish
-tmp = tmp[-which(tmp$recapture),]
+colnames(tmp)[colnames(tmp) == "trapyear"] = "year"
 
 # keep only fish that were removed
 tmp = tmp[tmp$disposition == "removed",]
