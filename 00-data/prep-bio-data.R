@@ -5,6 +5,13 @@
 # clear the workspace
 rm(list = ls(all = T))
 
+# weir assignments to origin are known to be problematic at UGR
+# ~10% of fish assigned NOR are actually HOR (only 50% HOR are ad-clipped)
+# but only applies to 2006 and later; see gibsonpp/GR-sslcm-data#30
+# can be turned off by setting p = 0
+p_missassign_nor_UGR = 0.097
+p_missassign_nor_UGR_fyr = 2006
+
 # load all necessary packages
 source("00-packages.R")
 
@@ -131,6 +138,19 @@ tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN 
 # reformat: to wide
 tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
 
+# handle misassignments to origin in UGR
+# see gibsonpp/GR-sslcm-data#30
+tmp_UGR = tmp[tmp$population == "UGR" & tmp$year >= p_missassign_nor_UGR_fyr,]
+tmp_UGR[is.na(tmp_UGR)] = 0 # NA means zero fish of that age/origin were counted
+tmp_UGR_fixed = data.frame(
+  do.call(rbind, lapply(1:nrow(tmp_UGR), correct_origins, x = tmp_UGR, k = 1)),
+  do.call(rbind, lapply(1:nrow(tmp_UGR), correct_origins, x = tmp_UGR, k = 2)),
+  do.call(rbind, lapply(1:nrow(tmp_UGR), correct_origins, x = tmp_UGR, k = 3))
+)
+tmp_UGR_fixed = cbind(tmp_UGR[,c("population", "year")], tmp_UGR_fixed)
+tmp_UGR_fixed = tmp_UGR_fixed[,colnames(tmp_UGR)]
+tmp[tmp$population == "UGR" & tmp$year >= p_missassign_nor_UGR_fyr,] = tmp_UGR_fixed
+
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets
 # and for consistent indexing in model.
@@ -183,6 +203,19 @@ tmp = aggregate(count ~ population + year + origin + age_best2, data = tmp, FUN 
 
 # reformat: to wide
 tmp = dcast(tmp, population + year ~ origin + age_best2, value.var = "count")
+
+# handle misassignments to origin in UGR
+# see gibsonpp/GR-sslcm-data#30
+tmp_UGR = tmp[tmp$population == "UGR" & tmp$year >= p_missassign_nor_UGR_fyr,]
+tmp_UGR[is.na(tmp_UGR)] = 0 # NA means zero fish of that age/origin were counted
+tmp_UGR_fixed = data.frame(
+  do.call(rbind, lapply(1:nrow(tmp_UGR), correct_origins, x = tmp_UGR, k = 1)),
+  do.call(rbind, lapply(1:nrow(tmp_UGR), correct_origins, x = tmp_UGR, k = 2)),
+  do.call(rbind, lapply(1:nrow(tmp_UGR), correct_origins, x = tmp_UGR, k = 3))
+)
+tmp_UGR_fixed = cbind(tmp_UGR[,c("population", "year")], tmp_UGR_fixed)
+tmp_UGR_fixed = tmp_UGR_fixed[,colnames(tmp_UGR)]
+tmp[tmp$population == "UGR" & tmp$year >= p_missassign_nor_UGR_fyr,] = tmp_UGR_fixed
 
 # update column names
 # note: year renamed to "brood_year" to allow merging with other data sets

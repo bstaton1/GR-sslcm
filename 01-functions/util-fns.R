@@ -347,3 +347,38 @@ colorize = function(x, color) {
     sprintf("<span style='color: %s;'>%s</span>", color, x)
   } else x
 }
+
+##### ROUND A VECTOR WHILE KEEPING THE SUM EQUAL TO THE SUM OF UNROUNDED NUMBERS #####
+
+# COPIED FROM https://stackoverflow.com/questions/32544646/round-vector-of-numerics-to-integer-while-preserving-their-sum/35930285#35930285
+# FOR USE IN CORRECT_ORIGINS()
+smart_round = function(x, digits = 0) {
+  up = 10^digits
+  x = x * up
+  y = floor(x)
+  indices = tail(order(x-y), round(sum(x)) - sum(y))
+  y[indices] = y[indices] + 1
+  y/up
+}
+
+##### MOVE FISH MISSASSIGNED TO NOR TO HOR #####
+# FOR USE IN WEIR COMPOSITION DATA PREP
+
+correct_origins = function(x, y, k) {
+  # which columns apply to each origin
+  hat_cols = str_detect(colnames(x), "Hat")
+  nat_cols = str_detect(colnames(x), "Nat")
+  
+  # extract the counts of this age in this year by origin
+  count_made = c(unlist(x[y,nat_cols][k]), unlist(x[y,hat_cols][k]))
+  
+  # obtain the number of NOR fish that should have been assigned HOR fish at this age
+  errors_made = count_made[1] * p_missassign_nor_UGR
+  
+  # move these fish from NOR to HOR
+  count_fixed = count_made + c(-1,1) * unname(errors_made)
+  
+  # round and return the result, ensuring the sum is equal to the original sum
+  smart_round(count_fixed, digits = 0)
+}
+
