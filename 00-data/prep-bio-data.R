@@ -49,7 +49,8 @@ tmp = read.csv(file.path(data_dir, "02a-adult-indiv-carcass.csv"), stringsAsFact
 # new age_best variable
 # some of the age_best are NA, but there are age records in the other columns
 # this will correct that issue and use an age if present, while prioritizing age methods
-tmp$age_best2 = NA
+# but use the "age_best" by default
+tmp$age_best2 = tmp$age_best
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_cwt), tmp$age_cwt, tmp$age_best2)
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_scale), tmp$age_scale, tmp$age_best2)
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_key), tmp$age_key, tmp$age_best2)
@@ -97,7 +98,8 @@ tmp = read.csv(file.path(data_dir, "02b-adult-indiv-weir.csv"), stringsAsFactors
 # new age_best variable
 # some of the age_best are NA, but there are age records in the other columns
 # this will correct that issue and use an age if present, while prioritizing age methods
-tmp$age_best2 = NA
+# but use the "age_best" by default
+tmp$age_best2 = tmp$age_best
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_cwt), tmp$age_cwt, tmp$age_best2)
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_pit), tmp$age_pit, tmp$age_best2)
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_scale), tmp$age_scale, tmp$age_best2)
@@ -169,7 +171,8 @@ tmp = read.csv(file.path(data_dir, "02b-adult-indiv-weir.csv"), stringsAsFactors
 # new age_best variable
 # some of the age_best are NA, but there are age records in the other columns
 # this will correct that issue and use an age if present, while prioritizing age methods
-tmp$age_best2 = NA
+# but use the "age_best" by default
+tmp$age_best2 = tmp$age_best
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_cwt), tmp$age_cwt, tmp$age_best2)
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_pit), tmp$age_pit, tmp$age_best2)
 tmp$age_best2 = ifelse(is.na(tmp$age_best2) & !is.na(tmp$age_scale), tmp$age_scale, tmp$age_best2)
