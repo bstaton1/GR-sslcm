@@ -277,23 +277,6 @@ tmp$carcs_samp_for_status[tmp$carcs_samp_for_status <= status_count_threshold] =
 # rename the data frame, and remove "tmp" objects
 adult_prespawn = tmp; rm(tmp)
 
-##### ADULT SURVIVAL PAST SEA LIONS #####
-
-# read the data
-tmp = read.csv(file.path(data_dir, "07-sea-lion-survival.csv"))
-
-# reformat to long format
-tmp = melt(tmp, id.vars = "year", value.name = "surv_est_sea_lions", variable.name = "population")
-
-# update column names
-# note: return_year renamed to "brood_year" to allow merging with other data sets
-# and for consistent indexing in model.
-# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
-colnames(tmp)[1] = "brood_year"
-
-# rename object and remove "tmp" object
-sea_lion_survival = tmp; rm(tmp)
-
 ##### ADULT HARVEST RATES BELOW BON #####
 
 # read the data

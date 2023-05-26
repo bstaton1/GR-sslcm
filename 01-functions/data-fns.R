@@ -273,10 +273,6 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   U[y_names %in% all$brood_year,"3","HOR"] = all$HR_HOR * 0.25
   U[y_names %in% all$brood_year,c("4", "5"),"HOR"] = all$HR_HOR
   
-  ### ADULT SURVIVAL PAST SEA LIONS ###
-  phi_SL = rep(NA, ny); names(phi_SL) = y_names
-  phi_SL[y_names %in% sub$brood_year] = sub$surv_est_sea_lions
-  
   ### COUNTS OF ADULT PIT TAG DETECTIONS AT BON ###
   x_BON = matrix(NA, ny, no); dimnames(x_BON) = list(y_names, o_names)
   x_BON[y_names %in% all$brood_year,o_names[1]] = all$NOR_BON_adults
@@ -374,8 +370,6 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     sig_Lphi_obs_Ma_O0 = sig_Lphi_obs_Ma_O0,
     
     ### ADULT SURVIVAL ###
-    # adult survival past sea lions (not fitted; assumed known w/o error)
-    phi_SL = phi_SL,
     
     # adult harvest rate below BON
     U = U,
@@ -487,9 +481,6 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     # hydropower survival
     Lphi_obs_Ma_O0 = main_list[[1]]$Lphi_obs_Ma_O0,
     sig_Lphi_obs_Ma_O0 = main_list[[1]]$sig_Lphi_obs_Ma_O0,
-    
-    # adult survival past sea lions (not fitted; assumed known w/o error)
-    phi_SL = abind(lapply(main_list, function(x) x$phi_SL), along = 2),
     
     # adult PIT tag counts at BON
     x_BON = main_list[[1]]$x_BON,
@@ -669,21 +660,6 @@ append_values_for_sim = function(jags_data) {
   fill[,"MIN"] = NA
   jags_data$not_stray_yrs = rbind(jags_data$not_stray_yrs, fill)
   jags_data$n_not_stray_yrs = apply(jags_data$not_stray_yrs, 2, function(x) sum(!is.na(x)))
-  
-  ### KNOWN VALUES SOURCE X: SURVIVAL PAST SEA LIONS ###
-  
-  # homogenize and extract the values from the observed period
-  jags_data$phi_SL["2000",] = jags_data$phi_SL["2001",]
-  x = jags_data$phi_SL
-  
-  # insert a value in the old "year-0" position
-  x[1,] = jags_data$phi_SL["2001",]
-  
-  # change year names
-  dimnames(x)[[1]] = 1:ny_sim + last_obs_yr
-  
-  # append with observed period to be passed to the model
-  jags_data$phi_SL = abind(jags_data$phi_SL, x, along = 1)
   
   ### KNOWN VALUES SOURCE X: HARVEST RATES ###
   

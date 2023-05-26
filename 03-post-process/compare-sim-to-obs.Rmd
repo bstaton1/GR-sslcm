@@ -65,7 +65,7 @@ rm(model_info)
 
 ```{r select-years}
 # all of the years included in the model
-all_yrs = as.numeric(rownames(jags_data$phi_SL))
+all_yrs = as.numeric(rownames(jags_data$Ra_obs))
 
 # which is the first year of observation period?
 # may want to use 2001 to cut off years without hatchery supplementation

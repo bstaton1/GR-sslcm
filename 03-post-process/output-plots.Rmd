@@ -96,7 +96,7 @@ jags_data = model_info$jags_data
 
 ```{r dimension-ids}
 # the years included by the model
-all_yrs = as.numeric(dimnames(jags_data$phi_SL)[[1]])
+all_yrs = as.numeric(rownames(jags_data$Ra_obs))
 
 # which years are "observable" for at least some quantities?
 observable = 2:jags_data$ny_obs
