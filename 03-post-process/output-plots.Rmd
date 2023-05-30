@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "test-rmd_vshort"
+    value: "base_vlong"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"

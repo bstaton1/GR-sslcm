@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base"
+    value: "base_vlong_sim"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
