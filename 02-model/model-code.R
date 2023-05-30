@@ -411,8 +411,8 @@ jags_model_code = function() {
         # adult in-river processes: all age/origin specific
         # for these adult stages, y represents the brood year fish returned in
         for (k in 1:nk) {
-          # returning adults making it to BON (survive sea lions * survive fisheries downstream of BON)
-          Rb_BON[y,k,o,j] <- Rb[y,k,o,j] * phi_SL[y,j] * (1 - U[y,k,o])
+          # returning adults making it to BON (survive fisheries downstream of BON)
+          Rb_BON[y,k,o,j] <- Rb[y,k,o,j] * (1 - U[y,k,o])
           
           # survive upstream migration from BON to LGR
           Ra_LGR[y,k,o,j] <- Rb_BON[y,k,o,j] * phi_Rb_Ra[y,o]

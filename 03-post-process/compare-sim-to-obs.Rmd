@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base"
+    value: "base_vlong_sim"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
@@ -64,8 +64,8 @@ rm(model_info)
 ```
 
 ```{r select-years}
-# all of the years included in the model
-all_yrs = as.numeric(rownames(jags_data$phi_SL))
+# the years included in the model
+all_yrs = as.numeric(dimnames(jags_data$Mb_obs)[[1]])
 
 # which is the first year of observation period?
 # may want to use 2001 to cut off years without hatchery supplementation

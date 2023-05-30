@@ -24,7 +24,7 @@ data_dir = "../GR-sslcm-data/bio"
 ##### ADULT ABUNDANCE DATA #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "01-adult-abundance.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "adult-abundance.csv"), stringsAsFactors = F)
 
 # keep only relevant columns
 tmp = tmp[,c("population", "return_year", "n_returned", "n_above_weir", "abund_cv")]
@@ -44,7 +44,7 @@ adult_abundance = tmp; rm(tmp)
 ##### ADULT COMPOSITION: CARCASS DATA #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "02a-adult-indiv-carcass.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "adult-indiv-carcass.csv"), stringsAsFactors = F)
 
 # new age_best variable
 # some of the age_best are NA, but there are age records in the other columns
@@ -93,7 +93,7 @@ adult_carc_composition = tmp; rm(tmp)
 ##### ADULT COMPOSITION: WEIR DATA #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "02b-adult-indiv-weir.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "adult-indiv-weir.csv"), stringsAsFactors = F)
 
 # new age_best variable
 # some of the age_best are NA, but there are age records in the other columns
@@ -166,7 +166,7 @@ adult_weir_composition = tmp; rm(tmp)
 ##### ADULT COMPOSITION: WEIR REMOVAL DATA #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "02b-adult-indiv-weir.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "adult-indiv-weir.csv"), stringsAsFactors = F)
 
 # new age_best variable
 # some of the age_best are NA, but there are age records in the other columns
@@ -238,7 +238,7 @@ adult_rm_composition = tmp; rm(tmp)
 status_count_threshold = 10
 
 # read the data
-tmp = read.csv(file.path(data_dir, "02a-adult-indiv-carcass.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "adult-indiv-carcass.csv"), stringsAsFactors = F)
 
 # drop out non-known females
 tmp = tmp[tmp$sex == "F",]
@@ -277,27 +277,10 @@ tmp$carcs_samp_for_status[tmp$carcs_samp_for_status <= status_count_threshold] =
 # rename the data frame, and remove "tmp" objects
 adult_prespawn = tmp; rm(tmp)
 
-##### ADULT SURVIVAL PAST SEA LIONS #####
-
-# read the data
-tmp = read.csv(file.path(data_dir, "07-sea-lion-survival.csv"))
-
-# reformat to long format
-tmp = melt(tmp, id.vars = "year", value.name = "surv_est_sea_lions", variable.name = "population")
-
-# update column names
-# note: return_year renamed to "brood_year" to allow merging with other data sets
-# and for consistent indexing in model.
-# just note that for adults, brood_year is the year is the year adults SPAWNED, NOT the year they WERE SPAWNED
-colnames(tmp)[1] = "brood_year"
-
-# rename object and remove "tmp" object
-sea_lion_survival = tmp; rm(tmp)
-
 ##### ADULT HARVEST RATES BELOW BON #####
 
 # read the data
-tmp = read.csv("98-scratch/harvest-rates-below-BON.csv")
+tmp = read.csv(file.path(data_dir, "harvest-rates-below-BON.csv"))
 
 # add a population variable
 tmp$population = "ALL"
@@ -311,7 +294,7 @@ harvest_rates = tmp; rm(tmp)
 ##### ADULT SURVIVAL BON -> LGR #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "08-BON-LGR-adult-PIT-detections.csv"))
+tmp = read.csv(file.path(data_dir, "BON-LGR-adult-PIT-detections.csv"))
 
 # reformat BON detection counts
 tmp_BON = dcast(tmp[,c("year", "origin", "BON_adult_detections")], year ~ origin, value.var = "BON_adult_detections")
@@ -337,7 +320,7 @@ dam_adult_counts = tmp; rm(tmp)
 ##### ADULT HARVEST IN TRIBUTARIES #####
 
 # read in the raw data file
-tmp = read.csv(file.path(data_dir, "11-tributary-harvest.csv"))
+tmp = read.csv(file.path(data_dir, "tributary-harvest.csv"))
 
 # sum over sexes
 tmp = aggregate(count ~ population + year + origin + age, data = tmp, FUN = sum)
@@ -364,7 +347,7 @@ harv_composition = tmp; rm(tmp)
 ##### ADULT FECUNDITY #####
 
 # read the data
-tmp = read.csv("C:/Users/bstaton/Desktop/Staton/1_critfc/analyses/GR-sslcm-data/bio/10-fecundity.csv")
+tmp = read.csv(file.path(data_dir, "fecundity.csv"))
 
 # reformat the data
 tmp = dcast(tmp, pop + return_year ~ age, value.var = "fecundity")
@@ -384,7 +367,7 @@ fecundity = tmp; rm(tmp)
 ##### JUVENILE ABUNDANCE #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "03-juv-abundance.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "juv-abundance.csv"), stringsAsFactors = F)
 
 # remove any records that don't have a point estimate
 tmp = tmp[!is.na(tmp$abund_est),]
@@ -422,7 +405,7 @@ juvenile_abundance = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 ##### JUVENILE SURVIVAL DATA #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "04-juv-survival.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "juv-survival.csv"), stringsAsFactors = F)
 
 # remove any records that don't have a point estimate
 tmp = tmp[!is.na(tmp$surv_est),]
@@ -466,7 +449,7 @@ juvenile_survival = tmp; rm(list = c("tmp", "tmp_se", "tmp_est"))
 ##### JUVENILE LENGTH DATA #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "09-juv-mean-length.csv"))
+tmp = read.csv(file.path(data_dir, "juv-mean-length.csv"))
 
 # retain only rows corresponding to all fish measured (tagged and untagged)
 tmp = tmp[tmp$fish_subset == "all",]
@@ -521,7 +504,7 @@ juvenile_length = tmp; rm("tmp", "length_mean", "length_se", "length_mean_adj")
 ##### HATCHERY RELEASES OF SMOLTS AND SURVIVAL TO LGD #####
 
 # read the data
-tmp = read.csv(file.path(data_dir, "05-hatchery-juv-releases.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "hatchery-juv-releases.csv"), stringsAsFactors = F)
 
 # discard any records prior to 1995
 # these releases were very early and did not follow the same
@@ -552,7 +535,7 @@ hatchery_release_survival = tmp; rm(tmp)
 
 # read the data: found in scratch folder for now
 # until we decide on the best source for these data
-tmp = read.csv(file.path(data_dir, "06-juv-survival-hydro.csv"), stringsAsFactors = F)
+tmp = read.csv(file.path(data_dir, "juv-survival-hydro.csv"), stringsAsFactors = F)
 
 # convert migration year to brood year
 tmp$brood_year = tmp$mig_year - 2
@@ -599,7 +582,6 @@ bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"
 bio_dat = merge(bio_dat, harv_composition, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, fecundity, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, sea_lion_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, hydro_surv, by = c("population", "brood_year"), all = T)
 bio_dat = merge(bio_dat, dam_adult_counts, by = c("population", "brood_year"), all = T)

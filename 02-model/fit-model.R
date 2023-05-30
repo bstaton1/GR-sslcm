@@ -90,7 +90,14 @@ my_cat("Output File: ", out_file)
 ##### STEP 1: PREPARE DATA FOR JAGS #####
 
 # build JAGS data object
-jags_data = create_jags_data_mult(c("CAT", "LOS", "MIN", "UGR"), first_y = ifelse(!args$sim, 1991, 2000), last_y = 2019)
+jags_data = create_jags_data_mult(
+  pops = c("CAT", "LOS", "MIN", "UGR"),
+  first_y = ifelse(!args$sim, 1991, 2000),
+  last_y = max(bio_dat$brood_year)
+)
+
+# plug in values for harvest rates not yet available
+jags_data$U[c("2020", "2021", "2022"),,] = jags_data$U[c("2017", "2018", "2019"),,]
 
 # remove trap abundance data in BY 2007 for UGR
 # estimates impossibly low, causing problems with model
@@ -101,10 +108,6 @@ jags_data$sig_Mb_obs["2007","spring-mig","NOR","UGR"] = NA
 
 # add NA indices in the correct locations
 jags_data = append_no_na_indices(jags_data)
-
-# set assumed survival past sea lions to 1 in all years
-# past time-trending patterns were causing problems with ocean survival estimation/simulation
-jags_data$phi_SL[2:nrow(jags_data$phi_SL),] = 1
 
 # proportion of spawners by age and population that are female
 # assume 50% female for all fish aged 4 or 5; 0% for age-3

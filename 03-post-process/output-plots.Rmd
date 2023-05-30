@@ -9,7 +9,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "test-rmd_vshort"
+    value: "base_vlong"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
@@ -95,8 +95,8 @@ jags_data = model_info$jags_data
 ```
 
 ```{r dimension-ids}
-# the years included by the model
-all_yrs = as.numeric(dimnames(jags_data$phi_SL)[[1]])
+# the years included in the model
+all_yrs = as.numeric(dimnames(jags_data$Mb_obs)[[1]])
 
 # which years are "observable" for at least some quantities?
 observable = 2:jags_data$ny_obs
