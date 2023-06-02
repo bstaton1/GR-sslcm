@@ -7,11 +7,14 @@ editor_options:
 
 ## Smolt-to-Adult Rates {.tabset .tabset-pills}
 
-### LGR to Tributary
+### LGR to LGR
 
-This is survival from $Ma$ (smolts at the top of LGD) to $Ra$ (adults returning to tributary, vulnerable to being counted at weir).
+This is survival from $M^{a}$ (smolt at the top of LGR by origin, NOR fish aggregated across migratory strategy type) to $R^{a}$ (adults arriving to LGR).
 
-The adult part is calculated across return years, by summing the number of adults of each age that return in the appropriate years. For example, the SAR for brood year 1991 uses smolt that were spawned in 1991, out-migrated in spring 1993, divided by the sum of age 3 adults in 1994, age 4 adults in 1995, and age 5 adults in 1996. The calculation is done for hatchery and natural origin fish separately. Only SARs through brood year 2014 are calculated, since this is the last year of complete adult returns.
+The adult portion is calculated across return years, by summing the number of adults of each age that return in the appropriate years.
+For example, the SAR for brood year 1991 uses smolt that were spawned in 1991, out-migrated in spring 1993, divided by the sum of age 3 adults in 1994, age 4 adults in 1995, and age 5 adults in 1996.
+The calculation is done for hatchery and natural origin fish separately.
+Only SARs through brood year `r max(all_yrs[sar_yrs])` are calculated, since this is the last brood with of all adult ages (3, 4, and 5) accounted for in the model.
 
 ```{r adults-per-smolt, fig.width = p4_width, fig.height = p4_height}
 j = 1
@@ -21,14 +24,14 @@ plot_fn = function(j) {
   zero_hor_smolt = post_summ(post, sub_index("Mb[year,LH_type,origin,pop]", year = sar_yrs, LH_type = i_spring, origin = o_hor, pop = j))["mean",] == 0
   
   # summarize rates
-  Ra_per_Ma_nor = post_summ(post, sub_index("Ra_per_Ma[year,origin,pop]", year = sar_yrs, origin = o_nor, pop = j)) * 100
-  Ra_per_Ma_hor = post_summ(post, sub_index("Ra_per_Ma[year,origin,pop]", year = sar_yrs, origin = o_hor, pop = j)) * 100
+  Ra_per_Ma_nor = post_summ(post, sub_index("Ra_per_Ma[year,origin,pop]", year = sar_yrs, origin = o_nor, pop = j))
+  Ra_per_Ma_hor = post_summ(post, sub_index("Ra_per_Ma[year,origin,pop]", year = sar_yrs, origin = o_hor, pop = j))
   
   # make hatchery values NA in year with no smolt
   Ra_per_Ma_hor[,zero_hor_smolt] = NA
   
   # plot natural origin time series
-  plot_tseries(est = Ra_per_Ma_nor, yrs = all_yrs[sar_yrs], label_text = pops[j], ylim = c(0, 10))
+  plot_tseries(est = Ra_per_Ma_nor, yrs = all_yrs[sar_yrs], label_text = pops[j], ylim = c(0, 0.1))
   
   # add hatchery origin time series
   add_tseries(est = Ra_per_Ma_hor, yrs = all_yrs[sar_yrs])
@@ -40,7 +43,7 @@ plot_fn = function(j) {
 }
 mypar()
 junk = sapply(1:jags_data$nj, plot_fn)
-axis_labels("Brood Year", "Adults per 100 Smolt")
+axis_labels("Brood Year", "Smolt \u2192 Adult Survival Rate")
 ```
 
 ### BON to BON
@@ -73,7 +76,7 @@ plot_fn = function(j) {
 }
 mypar()
 junk = sapply(1:jags_data$nj, plot_fn)
-axis_labels("Brood Year", "BON \u2192 BON Survival")
+axis_labels("Brood Year", "Smolt \u2192 Adult Survival")
 ```
 
 ## Parr per Spawner
