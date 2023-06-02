@@ -3,7 +3,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Miscellaneous Process Model Components {.tabset .tabset-pills}
+# Miscellaneous Processes {.tabset .tabset-pills}
 
 ## Migratory Strategy Apportionment
 
@@ -219,4 +219,91 @@ plot_fn = function(j) {
 mypar()
 junk = sapply(1:jags_data$nj, plot_fn)
 axis_labels("Age of Return", "Proportion of Strays by Age")
+```
+
+## Correction for Carcass Age Bias
+
+ {.tabset .tabset-pills}
+
+Exploratory analyses indicated that older fish (age-4 and age-5) are over represented in carcass surveys relative to age-3 fish (based on comparisons between weir and carcass composition data.
+This could cause model fit inconsistencies, and because Minam River does not have a weir, using only the carcass data to inform its age composition could give biased estimates.
+We thus devised a correction factor that allowed the observation model to fit to biased carcass counts based on a corrected latent value.
+
+```{r add-p-Sa}
+# extract posterior samples of spawners[year,age,origin,pop]
+Sa_post = post_subset(post, "^Sa[", matrix = TRUE)
+
+# extract posterior samples of corrected spawner composition [year,age-origin,pop]
+p_Sa_prime_post = post_subset(post, "^p_Sa_prime[", matrix = TRUE)
+
+# function to get p_Sa (uncorrected spawner composition) for one posterior sample
+g = function(i) {
+  # cat("\r", i)
+  Sa_i = array_format(Sa_post[i,])
+  Sa_i = abind::abind(Sa_i[,,1,], Sa_i[,,2,], along = 2)
+  p_Sa_i = apply(Sa_i, 3, function(x) apply(x, 1, function(y) y/sum(y)), simplify = FALSE)
+  p_Sa_i = do.call(abind::abind, c(lapply(p_Sa_i, t), along = 3))
+  na_ind = which(!is.na(p_Sa_i))
+  p_Sa_i = p_Sa_i[na_ind]
+  names(p_Sa_i) = stringr::str_remove(colnames(p_Sa_prime_post), "_prime")
+  p_Sa_i
+}
+
+# apply the function
+p_Sa_post = sapply(1:nrow(Sa_post), g)
+post = post_bind(post, t(p_Sa_post))
+```
+
+```{r p-Sa-prime-plots-fn}
+# function to create the plot for one population
+plot_f = function(j, ko) {
+  ko_names = paste0("Age-", rep(3:5, 2))
+  ko_names = paste(ko_names, rep(c("(NOR)", "(HOR)"), each = 3))
+  # realized time series
+  plot_tseries(est = post_summ(post, sub_index("^p_Sa[year,age,pop]$", year = ts_yrs, pop = j, age = ko)),
+               yrs = all_yrs[ts_yrs], label_text = ko_names[ko])
+  
+  # time series that includes BH prediction only
+  add_tseries(post_summ(post, sub_index("^p_Sa_prime[year,age,pop]", year = ts_yrs, pop = j, age = ko)),
+              yrs = all_yrs[ts_yrs])
+}
+```
+
+Spawner percent composition displayed as `r colorize("latent (actual) time series", main_cols["model"])`  and the `r colorize("observed (i.e., biased in sampling, but accounted for in model) time series", main_cols["model2"])`.
+Put another way, `r colorize("perceived", main_cols["model2"])` and `r colorize("reality", main_cols["model"])`. 
+
+## CAT 
+
+```{r p-Sa-prime-plots-CAT, fig.width = p6_width, fig.height = p6_height}
+# loop over age/origin combos for CAT
+mypar(mfrow = c(2,3))
+junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_cat, ko = ko))
+axis_labels("Brood Year", "% Composition")
+```
+
+## LOS 
+
+```{r p-Sa-prime-plots-LOS, fig.width = p6_width, fig.height = p6_height}
+# loop over age/origin combos for CAT
+mypar(mfrow = c(2,3))
+junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_los, ko = ko))
+axis_labels("Brood Year", "% Composition")
+```
+
+## MIN 
+
+```{r p-Sa-prime-plots-MIN, fig.width = p6_width, fig.height = p6_height}
+# loop over age/origin combos for CAT
+mypar(mfrow = c(2,3))
+junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_min, ko = ko))
+axis_labels("Brood Year", "% Composition")
+```
+
+## UGR 
+
+```{r p-Sa-prime-plots-UGR, fig.width = p6_width, fig.height = p6_height}
+# loop over age/origin combos for CAT
+mypar(mfrow = c(2,3))
+junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_ugr, ko = ko))
+axis_labels("Brood Year", "% Composition")
 ```
