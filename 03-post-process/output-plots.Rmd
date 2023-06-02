@@ -36,8 +36,8 @@ params:
   include_capacity_vs_habitat:
     label: "Include Capacity vs. Habitat Output?"
     value: TRUE
-  include_misc_process_model:
-    label: "Include Misc. Process Model Output?"
+  include_misc_processes:
+    label: "Include Misc. Processes Output?"
     value: TRUE
   include_equiv_rates:
     label: "Include Equivilency Rate Output?"
@@ -68,7 +68,7 @@ knitr::opts_knit$set(root.dir = "C:/Users/bstaton/Desktop/Staton/1_critfc/analys
 
 ```{r setup, include = FALSE}
 # set global knitting options
-knitr::opts_chunk$set(echo = FALSE, fig.align = "center", dpi = 600, out.width = "75%")
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", dpi = 600, out.width = "75%", warning = FALSE)
 
 # load packages
 source("../00-packages.R")
