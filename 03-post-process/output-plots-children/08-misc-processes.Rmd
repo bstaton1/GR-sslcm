@@ -249,9 +249,7 @@ junk = sapply(1:jags_data$nj, plot_fn)
 axis_labels("Age of Return", "Age Composition of Strays")
 ```
 
-## Correction for Carcass Age Bias
-
- {.tabset .tabset-pills}
+## Correction for Carcass Age Bias {.tabset .tabset-pills}
 
 Exploratory analyses indicated that older fish (age-4 and age-5) are over represented in carcass surveys relative to age-3 fish (based on comparisons between weir and carcass composition data.
 This could cause model fit inconsistencies, and because Minam River does not have a weir, using only the carcass data to inform its age composition could give biased estimates.
@@ -300,38 +298,38 @@ plot_f = function(j, ko) {
 Spawner percent composition displayed as `r colorize("latent (actual) time series", main_cols["model"])`  and the `r colorize("observed (i.e., biased in sampling, but accounted for in model) time series", main_cols["model2"])`.
 Put another way, `r colorize("perceived", main_cols["model2"])` and `r colorize("reality", main_cols["model"])`. 
 
-## CAT 
+### CAT 
 
 ```{r p-Sa-prime-plots-CAT, fig.width = p6_width, fig.height = p6_height}
 # loop over age/origin combos for CAT
 mypar(mfrow = c(2,3))
 junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_cat, ko = ko))
-axis_labels("Brood Year", "% Composition")
+axis_labels("Brood Year", "Proportion of Spawners")
 ```
 
-## LOS 
+### LOS 
 
 ```{r p-Sa-prime-plots-LOS, fig.width = p6_width, fig.height = p6_height}
 # loop over age/origin combos for CAT
 mypar(mfrow = c(2,3))
 junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_los, ko = ko))
-axis_labels("Brood Year", "% Composition")
+axis_labels("Brood Year", "Proportion of Spawners")
 ```
 
-## MIN 
+### MIN 
 
 ```{r p-Sa-prime-plots-MIN, fig.width = p6_width, fig.height = p6_height}
 # loop over age/origin combos for CAT
 mypar(mfrow = c(2,3))
 junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_min, ko = ko))
-axis_labels("Brood Year", "% Composition")
+axis_labels("Brood Year", "Proportion of Spawners")
 ```
 
-## UGR 
+### UGR 
 
 ```{r p-Sa-prime-plots-UGR, fig.width = p6_width, fig.height = p6_height}
 # loop over age/origin combos for CAT
 mypar(mfrow = c(2,3))
 junk = sapply(1:jags_data$nko, function(ko) plot_f(j = j_ugr, ko = ko))
-axis_labels("Brood Year", "% Composition")
+axis_labels("Brood Year", "Proportion of Spawners")
 ```
