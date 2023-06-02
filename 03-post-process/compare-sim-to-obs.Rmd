@@ -1086,14 +1086,19 @@ make_ratios_table = function(ratios, q) {
 }
 ```
 
-For us to use the state-space model as a simulation model (which is the ultimate intent), it would be desirable if several characteristics of the distribution of stochastic and derived quantities were similar between the time periods with and without observations.
+For us to use output from the state-space model to parameterize simulation models, it would be desirable if several features of the distribution of stochastic and derived quantities were similar between the time periods with and without observations.
 
 This document is intended to identify whether outcomes simulated from the state-space model are similar to observed outcomes.
-It looks at two primary types of quantities: stochastic time series parameters that are directly estimated by the model (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes calculated as derived quantities from stochastic parameters (e.g., total adult return abundance, BON to BON SAR rates, etc.). Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
+It looks at two primary types of quantities: stochastic time series parameters that are directly estimated by the model (e.g., egg to parr survival fluctuations not attributable to density dependence) and emergent outcomes calculated as derived quantities from stochastic parameters (e.g., total adult return abundance, BON to BON SAR rates, etc.).
+Because all emergent outcomes are derived from the stochastic elements, issues with emergent outcomes should be traceable to specific stochastic parents.
 
-The JAGS model was altered to carry out the life cycle processes through brood year `r max(all_yrs)`. This means for each posterior sample we have an observed and simulated time series. The simulated time series picks up where the observed one left off, and assumes the same random processes for all components as used in the observed time series.
+The JAGS model was altered to carry out the life cycle processes through brood year `r max(all_yrs)`.
+This means for each posterior sample we have an observed and simulated time series.
+The simulated time series picks up where the observed one left off, and assumes the same random processes for all components as used in the observed time series.
 
-Several quantities are supplied to the model as known without error in the observed time series (weir removals, hatchery smolt releases, harvest rates below BON, etc.). These time series were extended to the future years external to the model using basic averages or resampling from historical outcomes as appropriate. This exercise is purely for model validation.
+Several quantities are supplied to the model as known without error in the observed time series (weir removals, hatchery smolt releases, harvest rates below BON, etc.).
+These time series were extended to the future years external to the model by simply duplicating the time series and "tacking it on".
+This exercise is purely for model validation, so we deemed this simple approach suitable.
 
 Observed vs. simulated consistency is visualized in two ways: by comparing summary statistics of the inter-annual variation and central tendency and by directly comparing the historical time series with 5 random simulated futures.
 
@@ -1105,21 +1110,22 @@ These plots show the distribution of a quantity in the model:
 2. **Inter-annual mean**: measures the central tendency of the quantity across years (uses arithmetic mean)
 3. **Lag-1 autocorrelation**: measures whether consecutive years are independent
 
-If these summary statistics are inconsistent among the observed and simulated time periods, that indicates that the state-space model has not sufficiently captured the random processes that have generated the observed outcomes and that we may have reason to question the reliability of its ability to simulate future outcomes, at least as a direct extension of the historical population dynamics.
-
 In all figures in this section, these time periods were used:
 
 * **Observed**: `r paste0(all_yrs[min(obs_y)], " -- ", all_yrs[max(obs_y)])`
 * **Simulated**: `r paste0(all_yrs[min(sim_y)], " -- ", all_yrs[max(sim_y)])`
 
-The entire 1991 - 2019 period isn't used for the observed period because the early years did not have a hatchery program but the simulation has hatchery input in all years. Thus, including the non-hatchery years may throw off the inference.
+The entire 1991 -- `r all_yrs[max(obs_y)]` period isn't used for the observed period because the early years did not have a hatchery program.
 
 For each quantity, two types of plots are shown:
 
 * **Estimates**: this shows the CV, mean, and autocorrelation coefficient for a quantity based on the time period (red = observed, blue = simulated)
 * **Ratios**: this shows a ratio between the summary statistic between simulated and observed periods. For CV and mean, this is simulated/observed, and for autocorrelation this is simulated - observed.
 
-These summary statistics were calculated for each posterior sample. In estimate plots, the cross mark represents the posterior median, the thick bar represents the central 50% of posterior samples, and the thin bar represents the central 95% of posterior samples. The ratio plots have the same interpretation, except the cross mark represents the posterior geometric mean for the "CV" and "Mean" panels, and the posterior arithmetic mean for the "ACF" panels. The geometric mean is used to summarize central tendency of ratios across posterior samples because it is more appropriate for calculations based on multiplicative, rather than additive, variability (see issue [#168](https://github.com/bstaton1/GR-sslcm/issues/168) for more details).
+These summary statistics were calculated for each posterior sample.
+In estimate plots, the cross mark represents the posterior median, the thick bar represents the central 50% of posterior samples, and the thin bar represents the central 95% of posterior samples.
+The ratio plots have the same interpretation, except the cross mark represents the posterior geometric mean for the "CV" and "Mean" panels, and the posterior arithmetic mean for the "ACF" panels.
+The geometric mean is used to summarize central tendency of ratios across posterior samples because it is more appropriate for calculations based on multiplicative, rather than additive, variability (see issue [#168](https://github.com/bstaton1/GR-sslcm/issues/168) for more details).
 
 ```{r}
 est_ratios = NULL

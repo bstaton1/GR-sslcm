@@ -23,8 +23,7 @@ make_legend_text = function(mn_post, sd_post, first_last_mn_diff_post) {
 }
 
 no_data_plot = function(main = NULL) {
-  plot(1,1, xlim = c(-1,1), ylim = c(-1,1), type = "n", xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = main)
-  text(0,0, "No Data", font = 3)
+  empty_plot(text = "No Data", label_text = main)
 }
 ```
 
@@ -559,7 +558,8 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ### **SUMMARY TABLES** {.tabset .tabset-pills}
 
-These tables show posterior summary statistics of the time series of noise terms across years (i.e., the values shown on each figure panel). Bold values denote that the target value for verifying model assumptions was not within the 95% CRI of the across-year summary statistic and indicates a potential problem.
+These tables show posterior summary statistics of the time series of noise terms across years (i.e., the values shown on each figure panel).
+Cells with color backgrounds indicate that the posterior or the summary statistic did not include the target value in the 95% CRI; red indicates the posterior was higher than the target blue indicates lower than the target.
 
 ```{r proc-error-table-prep}
 # rename parameters to human-readable format
@@ -616,26 +616,43 @@ proc_error_ests$yr_mean_incl_target = ifelse(proc_error_ests$year_mean_lwr <= 0.
 proc_error_ests$yr_sd_incl_target = ifelse(proc_error_ests$year_sd_lwr <= sqrt(1/12) & proc_error_ests$year_sd_upr >= sqrt(1/12), TRUE, FALSE)
 proc_error_ests$diff_incl_target = ifelse(proc_error_ests$diff_lwr <= 0 & proc_error_ests$diff_upr >= 0, TRUE, FALSE)
 
+# function to assign a color to a cell
+assign_color = function(x, do, target) {
+  cols_use = ifelse(!do | is.na(x), "white", ifelse(x < target, "blue", "red"))
+  alpha(unname(cols_use), 0.25)
+}
+
 # format the mean values to present in table
 # round and make bold if target value not in interval
 proc_error_ests$year_mean_mean = round(proc_error_ests$year_mean_mean, 2)
-proc_error_ests$year_mean_mean = ifelse(!proc_error_ests$yr_mean_incl_target, paste0("<b>", proc_error_ests$year_mean_mean, "</b>"), proc_error_ests$year_mean_mean)
+proc_error_ests$year_mean_col = with(proc_error_ests, assign_color(year_mean_mean, !yr_mean_incl_target, 1))
 proc_error_ests$year_sd_mean = round(proc_error_ests$year_sd_mean, 2)
-proc_error_ests$year_sd_mean = ifelse(!proc_error_ests$yr_sd_incl_target, paste0("<b>", proc_error_ests$year_sd_mean, "</b>"), proc_error_ests$year_sd_mean)
+proc_error_ests$year_sd_col = with(proc_error_ests, assign_color(year_sd_mean, !yr_sd_incl_target, 1))
 proc_error_ests$diff_mean = round(proc_error_ests$diff_mean, 2)
-proc_error_ests$diff_mean = ifelse(!proc_error_ests$diff_incl_target, paste0("<b>", proc_error_ests$diff_mean, "</b>"), proc_error_ests$diff_mean)
+proc_error_ests$diff_col = with(proc_error_ests, assign_color(diff_mean, !diff_incl_target, 0))
 
 # drop unneeded columns
-proc_error_ests = proc_error_ests[,c("phase", "param", "pop", "origin", "LH_type","year_mean_mean", "year_sd_mean", "diff_mean")]
+proc_error_ests = proc_error_ests[,c("phase", "param", "pop", "origin", "LH_type","year_mean_mean", "year_mean_col", "year_sd_mean", "year_sd_col", "diff_mean", "diff_col")]
 ```
 
 ```{r proc-error-table-fn}
 proc_error_table = function(var) {
-  out = reshape2::dcast(proc_error_ests, phase + param + origin + LH_type ~ pop, value.var = var)
-  out[is.na(out)] = ""
-
-  knitr::kable(out, "html", col.names = c("Life Phase", "Process", "Origin", "Migratory Type", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "llllccccc") %>%
+  # extract the numbers to display
+  out_values = reshape2::dcast(proc_error_ests, phase + param + origin + LH_type ~ pop, value.var = var)
+  out_values[is.na(out_values)] = ""
+  
+  # extract the colors for the cells
+  out_colors = reshape2::dcast(proc_error_ests, phase + param + origin + LH_type ~ pop, value.var = stringr::str_replace(var, "_mean$", "_col"))
+  out_colors[is.na(out_colors)] = "#FFFFFF80"
+  
+  # make the table
+  knitr::kable(out_values, "html", col.names = c("Life Phase", "Process", "Origin", "Migratory Type", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "llllccccc") %>%
     kableExtra::kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
+    column_spec(5, background = out_colors[,5]) %>%
+    column_spec(6, background = out_colors[,6]) %>%
+    column_spec(7, background = out_colors[,7]) %>%
+    column_spec(8, background = out_colors[,8]) %>%
+    column_spec(9, background = out_colors[,9]) %>%
     collapse_rows(columns = 1:4)
 }
 ```
@@ -1064,27 +1081,43 @@ obs_error_ests$yr_mean_incl_target = ifelse(obs_error_ests$year_mean_lwr <= 0.5 
 obs_error_ests$yr_sd_incl_target = ifelse(obs_error_ests$year_sd_lwr <= sqrt(1/12) & obs_error_ests$year_sd_upr >= sqrt(1/12), TRUE, FALSE)
 obs_error_ests$diff_incl_target = ifelse(obs_error_ests$diff_lwr <= 0 & obs_error_ests$diff_upr >= 0, TRUE, FALSE)
 
+# function to assign a color to a cell
+assign_color = function(x, do, target) {
+  cols_use = ifelse(!do | is.na(x), "white", ifelse(x < target, "blue", "red"))
+  alpha(unname(cols_use), 0.25)
+}
+
 # format the mean values to present in table
 # round and make bold if target value not in interval
 obs_error_ests$year_mean_mean = round(obs_error_ests$year_mean_mean, 2)
-obs_error_ests$year_mean_mean = ifelse(!obs_error_ests$yr_mean_incl_target, paste0("<b>", obs_error_ests$year_mean_mean, "</b>"), obs_error_ests$year_mean_mean)
+obs_error_ests$year_mean_col = with(obs_error_ests, assign_color(year_mean_mean, !yr_mean_incl_target, 0.5))
 obs_error_ests$year_sd_mean = round(obs_error_ests$year_sd_mean, 2)
-obs_error_ests$year_sd_mean = ifelse(!obs_error_ests$yr_sd_incl_target, paste0("<b>", obs_error_ests$year_sd_mean, "</b>"), obs_error_ests$year_sd_mean)
+obs_error_ests$year_sd_col = with(obs_error_ests, assign_color(year_sd_mean, !yr_sd_incl_target, sqrt(1/12)))
 obs_error_ests$diff_mean = round(obs_error_ests$diff_mean, 2)
-obs_error_ests$diff_mean = ifelse(!obs_error_ests$diff_incl_target, paste0("<b>", obs_error_ests$diff_mean, "</b>"), obs_error_ests$diff_mean)
+obs_error_ests$diff_col = with(obs_error_ests, assign_color(diff_mean, !diff_incl_target, 0))
 
 # drop unneeded columns
-obs_error_ests = obs_error_ests[,c("type", "param", "pop", "origin", "LH_type", "age", "year_mean_mean", "year_sd_mean", "diff_mean")]
+obs_error_ests = obs_error_ests[,c("type", "param", "pop", "origin", "LH_type", "age", "year_mean_mean", "year_mean_col", "year_sd_mean", "year_sd_col", "diff_mean", "diff_col")]
 ```
 
 ```{r obs-error-table-fn}
 obs_error_table = function(var) {
-  out = reshape2::dcast(obs_error_ests, type + param + origin + LH_type + age ~ pop, value.var = var)
-  out[is.na(out)] = ""
-  out$param = stringr::str_replace(out$param, "->", "$\\\\rightarrow$")
-
-  knitr::kable(out, "html", col.names = c("Class", "Type", "Origin", "Migratory Type", "Age-of-Maturity", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "lllllccccc") %>%
+ # extract the numbers to display
+  out_values = reshape2::dcast(obs_error_ests, type + param + origin + LH_type + age ~ pop, value.var = var)
+  out_values[is.na(out_values)] = ""
+  out_values$param = stringr::str_replace(out_values$param, "->", "$\\\\rightarrow$")
+  
+  # extract the colors for the cells
+  out_colors = reshape2::dcast(obs_error_ests, type + param + origin + LH_type + age ~ pop, value.var = stringr::str_replace(var, "_mean$", "_col"))
+  out_colors[is.na(out_colors)] = "#FFFFFF80"
+  
+  knitr::kable(out_values, "html", col.names = c("Class", "Type", "Origin", "Migratory Type", "Age-of-Maturity", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "lllllccccc") %>%
     kableExtra::kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
+    column_spec(6, background = out_colors[,6]) %>%
+    column_spec(7, background = out_colors[,7]) %>%
+    column_spec(8, background = out_colors[,8]) %>%
+    column_spec(9, background = out_colors[,9]) %>%
+    column_spec(10, background = out_colors[,10]) %>%
     collapse_rows(columns = 1:5)
 }
 ```

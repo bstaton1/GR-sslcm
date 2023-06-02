@@ -375,3 +375,12 @@ make_lim_param = function(post, param) {
     subset(use_in_lim) |>
     range()
 }
+
+# make an empty plot
+# e.g., where MIN estimates don't apply for HOR fish
+
+empty_plot = function(text = "Not Applicable", label_text = NULL) {
+  plot(1,1, type = "n", xlim = c(0,1), ylim = c(0,1), xaxt = "n", yaxt = "n")
+  text(x = 0.5, y = 0.5, text, col = par("col.axis"), font = 3, cex = 1)
+  panel_label(label_text)
+}

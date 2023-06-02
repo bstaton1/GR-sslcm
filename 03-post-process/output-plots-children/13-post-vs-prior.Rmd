@@ -119,7 +119,7 @@ post_v_prior_pops = function(post_param, prior_param, legend_loc = "topright", x
     post_v_prior(
       post_samps = post_subset(post, sub_index(post_param, pop = j, ...), matrix = TRUE),
       prior_samps = post_subset(post, sub_index(prior_param, pop = j, ...), matrix = TRUE),
-      label_text = titles[j], 
+      label_text = titles[which(looping == j)], 
       legend_loc = ifelse(j == looping[1], legend_loc, NA),
       y_max = y_max,
       xlim = xlim
@@ -378,7 +378,7 @@ post_v_prior_origins(post_param = "sig_Lphi_Rb_Ra[origin]", prior_param = "sig_L
 # set these figure options for all plots in this section
 y_max = 0.15
 xlim = c(-1,1)
-knitr::opts_chunk$set(fig.width = p4_height, fig.height = p4_width, out.width = "50%")
+knitr::opts_chunk$set(fig.width = p4_height * 1.1, fig.height = p4_width, out.width = "50%")
 ```
 
 ### Egg-to-Parr Survival
