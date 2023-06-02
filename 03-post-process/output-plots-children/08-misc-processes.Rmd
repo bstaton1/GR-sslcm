@@ -65,8 +65,12 @@ The `r colorize("realized time series", main_cols["model"])`.
 
 ```{r phi-O0-O1-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
-  keep = sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
-  plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = c(0, 0.4))
+  if (j != j_min) {
+    keep = sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+    plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = c(0, 0.4))
+  } else {
+    empty_plot(label_text = pops[j])
+  }
 }
 
 mypar()
@@ -93,8 +97,12 @@ axis_labels("Brood Year", "Yr2 Ocean Survival (NOR)")
 
 ```{r phi-O1-O2-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
-  keep = sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
-  plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = ylim_01)
+  if (j != j_min) {
+    keep = sub_index("^phi_O1_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+    plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = ylim_01)
+  } else {
+    empty_plot(label_text = pops[j])
+  }
 }
 
 mypar()
@@ -121,9 +129,13 @@ axis_labels("Brood Year", "Yr3 Ocean Survival (NOR)")
 
 ```{r phi-O2-O3-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
-  keep = sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
-  plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = ylim_01)
-}
+  if (j != j_min) {
+    keep = sub_index("^phi_O2_O3[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+    plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = ylim_01)
+  } else {
+    empty_plot(label_text = pops[j])
+  }
+} 
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
@@ -151,8 +163,12 @@ axis_labels("Brood Year", "Pr(Mature Age-3|NOR)")
 
 ```{r psi-O1-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
-  keep = sub_index("^psi_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
-  plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = c(0, 0.4))
+  if (j != j_min) {
+    keep = sub_index("^psi_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+    plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = c(0, 0.4))
+  } else {
+    empty_plot(label_text = pops[j])
+  }
 }
 
 mypar()
@@ -179,8 +195,12 @@ axis_labels("Brood Year", "Pr(Mature Age-4|NOR)")
 
 ```{r psi-O2-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
-  keep = sub_index("^psi_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
-  plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = ylim_01)
+  if (j != j_min) {
+    keep = sub_index("^psi_O2[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+    plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = ylim_01)
+  } else {
+    empty_plot(label_text = pops[j])
+  }
 }
 
 mypar()
@@ -194,7 +214,11 @@ axis_labels("Brood Year", "Pr(Mature Age-4|HOR)")
 
 ```{r n-stray, fig.width = p4_width, fig.height = p4_height}
 plot_fn = function(j) {
-  plot_tseries(est = post_summ(post, sub_index("^G[year,origin,pop]", pop = j, year = ts_yrs, origin = o_hor)), yrs = all_yrs[ts_yrs], label_text = pops[j])
+  if (length(simulated) > 0 & j != j_min) {
+    empty_plot(label_text = pops[j])
+  } else {
+    plot_tseries(est = post_summ(post, sub_index("^G[year,origin,pop]", pop = j, year = ts_yrs, origin = o_hor)), yrs = all_yrs[ts_yrs], label_text = pops[j])
+  }
 }
 
 mypar()
@@ -206,19 +230,23 @@ axis_labels("Return Year", "Number of Strays Entering Population")
 
 ```{r stray-comp, fig.width = p4_width, fig.height = p4_height}
 plot_fn = function(j) {
-  x = post_summ(post, sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = j))
   
-  mp = barplot(x["mean",], ylim = ylim_01, xaxt = "n", col = tran_cols["model"], border = main_cols["model"])
-  segments(mp, x["2.5%",], mp, x["97.5%",], col = alpha("red", 0.5))
-  axis(side = 1, at = mp, labels = paste0("Age", jags_data$kmin:jags_data$kmax), las = 1)
-  segments(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[3], xpd = TRUE, col = par("col.axis"))
-  segments(par("usr")[1], par("usr")[3], par("usr")[1], par("usr")[4], xpd = TRUE, col = par("col.axis"))
-  panel_label(pops[j])
+  if (length(simulated) > 0 & j != j_min) {
+    empty_plot(label_text = pops[j])
+  } else {
+    x = post_summ(post, sub_index("p_G[age,origin,pop]", age = ".", origin = o_hor, pop = j))
+    mp = barplot(x["mean",], ylim = ylim_01, xaxt = "n", col = tran_cols["model"], border = main_cols["model"])
+    segments(mp, x["2.5%",], mp, x["97.5%",], col = alpha("red", 0.5))
+    axis(side = 1, at = mp, labels = paste0("Age", jags_data$kmin:jags_data$kmax), las = 1)
+    segments(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[3], xpd = TRUE, col = par("col.axis"))
+    segments(par("usr")[1], par("usr")[3], par("usr")[1], par("usr")[4], xpd = TRUE, col = par("col.axis"))
+    panel_label(pops[j])
+  }
 }
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_fn)
-axis_labels("Age of Return", "Proportion of Strays by Age")
+axis_labels("Age of Return", "Age Composition of Strays")
 ```
 
 ## Correction for Carcass Age Bias

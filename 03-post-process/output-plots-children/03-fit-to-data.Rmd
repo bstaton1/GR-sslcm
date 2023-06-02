@@ -110,7 +110,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Winter Parr \u2192 LGR Survival")
 ```
 
-#### Spring Smolt $\rightarrow$ LGR (NOR)
+#### Spring Smolt $\rightarrow$ LGR {.tabset .tabset-pills}
+
+##### NOR
 
 ```{r spring-surv-fit-nor, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -126,14 +128,19 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Spring Smolt \u2192 LGR Survival (NOR)")
 ```
 
-#### Spring Smolt $\rightarrow$ LGR (HOR)
+##### HOR
 
 ```{r spring-surv-fit-hor, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
 plot_f = function(j) {
-  plot_tseries(est = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]$", year = ts_yrs, LH_type = i_spring, origin = o_hor, pop = j)),
+  if (j != j_min) {
+    plot_tseries(est = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]$", year = ts_yrs, LH_type = i_spring, origin = o_hor, pop = j)),
                obs = get_obs_ests_logit_normal(jags_data$Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j], jags_data$sig_Lphi_obs_Mb_Ma[observable,i_spring,o_hor,j]),
                label_text = pops[j], yrs = all_yrs[ts_yrs], pt_cex = pt_cex)
+  } else {
+    empty_plot(label_text = pops[j])
+  }
+  
 }
 
 # loop over populations
@@ -475,7 +482,8 @@ weir_sample_size(j_los)
 ###### MIN
 
 ```{r min-weir-ss, fig.width = 5, fig.height = 2.5}
-weir_sample_size(j_min)
+mypar(mfrow = c(1,1), mar = c(1,1,1,1), oma = c(0,0,0,0))
+empty_plot(text = "No Weir Data")
 ```
 
 ###### UGR

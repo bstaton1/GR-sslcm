@@ -23,8 +23,7 @@ make_legend_text = function(mn_post, sd_post, first_last_mn_diff_post) {
 }
 
 no_data_plot = function(main = NULL) {
-  plot(1,1, xlim = c(-1,1), ylim = c(-1,1), type = "n", xlab = "", ylab = "", xaxt = "n", yaxt = "n", main = main)
-  text(0,0, "No Data", font = 3)
+  empty_plot(text = "No Data", label_text = main)
 }
 ```
 
