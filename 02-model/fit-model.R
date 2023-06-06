@@ -336,7 +336,7 @@ units_r = ifelse(pred_hrs > 1, 2, 0)
 ##### STEP 5: GENERATE INITIAL VALUES #####
 
 # set random seed so at least initial values are reproducible
-set.seed(1234)
+set.seed(43210)
 
 # generate initial values
 jags_inits = lapply(1:jags_dims$n_chain, gen_initials, jags_data = jags_data)
