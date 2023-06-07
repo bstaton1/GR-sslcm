@@ -40,7 +40,6 @@ Phase,Component,Eq.,Description
 3,process,phi-Rb-Ra-random,Add stochasticity to migration survival from BON to LGR
 3,process,get-Ra,Obtain return abundance to natal tributary
 3,process,get-Sb,Obtain abundance of potential spawners reaching spawning grounds
-3,process,phi-Sb-Sa-random,Add stochasticity to pre-spawn survival
 3,process,get-Sa,Obtain abundance of successful spawners
 3,observation,Ra-data,Assumption for natal tributary return abundance data likelihood
 3,observation,upstream-surv-data,Assumption for migration from BON to LGR survival data likelihood
