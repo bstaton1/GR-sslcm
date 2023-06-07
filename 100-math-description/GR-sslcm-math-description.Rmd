@@ -49,6 +49,10 @@ header-includes:
   - \newcommand{\Ndist}{\mathcal{N}\hspace{-0.20em}}
   - \newcommand{\Bdist}{\mathcal{B}\hspace{-0.20em}}
   - \newcommand{\Mdist}{\mathcal{M}\hspace{-0.20em}}
+  # - \newcommand{\fall}{\mathrm{fall}}
+  # - \newcommand{\spring}{\mathrm{spring}}
+  # - \newcommand{\NOR}{\mathrm{NOR}}
+  # - \newcommand{\HOR}{\mathrm{HOR}}
 ---
 
 ```{r setup, include=FALSE}
@@ -96,36 +100,36 @@ All quantities are defined (i.e., symbology and the specific equations that use 
 * Parameters (e.g., survival terms, non-survival transition probabilities, coefficients in relationships, etc.) are denoted by Greek symbols, e.g., $\phi$ for survival rates or $\psi$ for maturation rates.
 * Subscripts denote the index of a quantity, e.g., $y$ denotes a specific year and $j$ a specific population (see Table \@ref(tab:index-table)).
 * We use the convention $b$ to indicate "before event" and $a$ to indicate "after event" for a quantity that occurs at the same life stage. E.g., $M^{b}$ represents smolt abundance _before_ out-of-basin migration and $M^{a}$ represents smolt abundance _after_ out-of-basin migration. As such, superscripts are most often used syntactically, not mathematically. E.g., $M^{b}$ is not "$M$ raised to the power $b$"; if we must raise the quantity $M^{b}$ to the power $c$, it will be written $(M^{b})^c$.
-* Survival terms to transition from state $A$ to state $B$ in year $y$ for population $j$ are denoted by $\phi^{A \rightarrow B}_{y,j}$.
-* We denote the expected value of a stochastic process with a dot, e.g., $\dot{\phi}^{A \rightarrow B}_j$ -- this is the value expected in the absence of process variability.
-* In some cases, we specify calculations performed on vectors rather than scalars (i.e., a scalar being a single element from a vector or higher-dimensional array). Vectors are denoted via boldface, and the dimension of the vector is denoted using 1:$n$ syntax. E.g., $\boldsymbol{\phi}^{A \rightarrow B}_{y,1:n_j}$ represents a vector of survival terms from state $A$ to state $B$ in year $y$, where each element of the vector represents the value for each population.
+* Survival terms to transition from state $A$ to state $B$ in year $y$ for population $j$ are denoted by $\phi^{A \to B}_{y,j}$.
+* We denote the expected value of a stochastic process with a dot, e.g., $\dot{\phi}^{A \to B}_j$ -- this is the value expected in the absence of process variability.
+* In some cases, we specify calculations performed on vectors rather than scalars (i.e., a scalar being a single element from a vector or higher-dimensional array). Vectors are denoted via boldface, and the dimension of the vector is denoted using 1:$n$ syntax. E.g., $\boldsymbol{\phi}^{A \to B}_{y,1:n_j}$ represents a vector of survival terms from state $A$ to state $B$ in year $y$, where each element of the vector represents the value for each population.
 * Mathematical operations performed on two vectors $\boldsymbol{C}$ and $\boldsymbol{D}$ are performed in an element-wise fashion, and the resulting vector will have identical dimensions to both $\boldsymbol{C}$ and $\boldsymbol{D}$.
 * In some cases, a calculation is performed differently for a subset of the possible index values. For example, to denote that $k$ should take on only the values of 1 and 3 (not 2), we would write, $k \in [1,3]$.
 * $\log\left(x\right)$ represents the natural logarithm of $x$ and it is implied that the constraint $x > 0$ is satisfied.
 * $\logit\left(p\right)$ represents the log odds of $p$ (i.e., $\log\left[p/(1-p)\right])$) and it is implied that the constraint $0 < p < 1$ is satisfied.
-* All quantities that have been empirically observed (or externally estimated from empirically observed data, and supplied to the model as "data") and are used in a likelihood component are denoted by a "hat", e.g., a survival term ($\hat{\phi}^{A \rightarrow B}_{y,j}$) and its logit-normal standard error ($\hat{\sigma}_{\phi^{A \rightarrow B}_{y,j}}$, which we use as a direct estimate of observation error variability).
+* All quantities that have been empirically observed (or externally estimated from empirically observed data, and supplied to the model as "data") and are used in a likelihood component are denoted by a "hat", e.g., a survival term ($\hat{\phi}^{A \to B}_{y,j}$) and its logit-normal standard error ($\hat{\sigma}_{\phi^{A \to B}_{y,j}}$, which we use as a direct estimate of observation error variability).
 * Stochastic processes are represented by $x_{y} \sim \mathcal{F}(\theta_{1}, \theta_{2})$, where $x_{y}$ is a random variable, $\mathcal{F}$ is some probability density (or mass) function ($\mathcal{N}$ is univariate normal, $\mathcal{MVN}$ is multivariate normal, $\mathcal{B}$ is binomial, and $\mathcal{M}$ is multinomial), and $\theta_{1}$ and $\theta_{2}$ are parameters of the probability distribution; generally $\theta_{1}$ is a location parameter specifying the expected value of $x_{y}$ and $\theta_{2}$ is a dispersion parameter specifying the variability of $x_{y}$ around the expected value.
 
 Process noise is introduced by assuming year-specific values are multivariate logit-normal random variables around the deterministic value.
 This is done to enable modeling covariability in process noise among populations (or origins, in the few cases where population structure is not modeled).
 The covariance matrix of these random variables are denoted by $\Sigma$, and have a common structure for all model components.
-Take the hypothetical survival term $\phi^{A \rightarrow B}_{y,j}$ as an example.
+Take the hypothetical survival term $\phi^{A \to B}_{y,j}$ as an example.
 We denote its random variability across years and populations as:
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{A \rightarrow B}_{y,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{A \rightarrow B}_{y,1:n_j}\right), \Sigma_{\phi^{A \rightarrow B}} \right]
+\logit\left(\boldsymbol{\phi}^{A \to B}_{y,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{A \to B}_{y,1:n_j}\right), \Sigma_{\phi^{A \to B}} \right]
 (\#eq:generic-random)
 \end{equation}
 
-where $\Sigma_{\phi^{A \rightarrow B}}$ is an $n_j \times n_j$ matrix constructed of population-specific variance terms $\left(\sigma_{\phi^{A \rightarrow B}_j}\right)^2$ and correlation terms specific to each pair of populations $j$ and $j^\prime$ $\rho_{\phi^{A \rightarrow B}_{j,j^{\prime}}}$:
+where $\Sigma_{\phi^{A \to B}}$ is an $n_j \times n_j$ matrix constructed of population-specific variance terms $\left(\sigma_{\phi^{A \to B}_j}\right)^2$ and correlation terms specific to each pair of populations $j$ and $j^\prime$ $\rho_{\phi^{A \to B}_{j,j^{\prime}}}$:
 
 \begin{equation}
 \left[
 \begin{array}{cccc}
-\left(\sigma_{\phi^{A \rightarrow B}_{j=1}}\right)^2 & \sigma_{\phi^{A \rightarrow B}_{j=1}} \cdot \sigma_{\phi^{A \rightarrow B}_{j=2}} \cdot \rho_{\phi^{A \rightarrow B}_{j=1,j^{\prime}=2}} & \dots & \sigma_{\phi^{A \rightarrow B}_{j=1}} \cdot \sigma_{\phi^{A \rightarrow B}_{j=n_j}} \cdot \rho_{\phi^{A \rightarrow B}_{j=1,j^{\prime}=n_j}} \\
-\sigma_{\phi^{A \rightarrow B}_{j=2}} \cdot \sigma_{\phi^{A \rightarrow B}_{j=1}} \cdot \rho_{\phi^{A \rightarrow B}_{j=2,j^{\prime}=1}} & \left(\sigma_{\phi^{A \rightarrow B}_{j=2}}\right)^2 & \dots & \sigma_{\phi^{A \rightarrow B}_{j=2}} \cdot \sigma_{\phi^{A \rightarrow B}_{j=n_j}} \cdot \rho_{\phi^{A \rightarrow B}_{j=2,j^{\prime}=n_j}} \\
+\left(\sigma_{\phi^{A \to B}_{j=1}}\right)^2 & \sigma_{\phi^{A \to B}_{j=1}} \cdot \sigma_{\phi^{A \to B}_{j=2}} \cdot \rho_{\phi^{A \to B}_{j=1,j^{\prime}=2}} & \dots & \sigma_{\phi^{A \to B}_{j=1}} \cdot \sigma_{\phi^{A \to B}_{j=n_j}} \cdot \rho_{\phi^{A \to B}_{j=1,j^{\prime}=n_j}} \\
+\sigma_{\phi^{A \to B}_{j=2}} \cdot \sigma_{\phi^{A \to B}_{j=1}} \cdot \rho_{\phi^{A \to B}_{j=2,j^{\prime}=1}} & \left(\sigma_{\phi^{A \to B}_{j=2}}\right)^2 & \dots & \sigma_{\phi^{A \to B}_{j=2}} \cdot \sigma_{\phi^{A \to B}_{j=n_j}} \cdot \rho_{\phi^{A \to B}_{j=2,j^{\prime}=n_j}} \\
 \vdots & \vdots & \ddots & \vdots \\
-\sigma_{\phi^{A \rightarrow B}_{j=n_j}} \cdot \sigma_{\phi^{A \rightarrow B}_{j=1}} \cdot \rho_{\phi^{A \rightarrow B}_{j=n_j,j^{\prime}=1}} & \sigma_{\phi^{A \rightarrow B}_{j=n_j}} \cdot \sigma_{\phi^{A \rightarrow B}_{j=2}} \cdot \rho_{\phi^{A \rightarrow B}_{j=n_j,j^{\prime}=2}} & \dots & \left(\sigma_{\phi^{A \rightarrow B}_{j=n_j}}\right)^2
+\sigma_{\phi^{A \to B}_{j=n_j}} \cdot \sigma_{\phi^{A \to B}_{j=1}} \cdot \rho_{\phi^{A \to B}_{j=n_j,j^{\prime}=1}} & \sigma_{\phi^{A \to B}_{j=n_j}} \cdot \sigma_{\phi^{A \to B}_{j=2}} \cdot \rho_{\phi^{A \to B}_{j=n_j,j^{\prime}=2}} & \dots & \left(\sigma_{\phi^{A \to B}_{j=n_j}}\right)^2
 \end{array}
 \right]
 (\#eq:generic-Sigma4by4)
@@ -136,15 +140,15 @@ In cases where a quantity varies annually and is different by origin but not by 
 \begin{equation}
 \left[
 \begin{array}{cc}
-\left(\sigma_{\phi^{A \rightarrow B}_{o=1}}\right)^2 & \sigma_{\phi^{A \rightarrow B}_{o=1}} \cdot \sigma_{\phi^{A \rightarrow B}_{o=2}} \cdot \rho_{\phi^{A \rightarrow B}} \\
-\sigma_{\phi^{A \rightarrow B}_{o=2}} \cdot \sigma_{\phi^{A \rightarrow B}_{o=1}} \cdot \rho_{\phi^{A \rightarrow B}} & \left(\sigma_{\phi^{A \rightarrow B}_{o=2}}\right)^2
+\left(\sigma_{\phi^{A \to B}_{o=1}}\right)^2 & \sigma_{\phi^{A \to B}_{o=1}} \cdot \sigma_{\phi^{A \to B}_{o=2}} \cdot \rho_{\phi^{A \to B}} \\
+\sigma_{\phi^{A \to B}_{o=2}} \cdot \sigma_{\phi^{A \to B}_{o=1}} \cdot \rho_{\phi^{A \to B}} & \left(\sigma_{\phi^{A \to B}_{o=2}}\right)^2
 \end{array}
 \right]
 (\#eq:generic-Sigma2by2)
 \end{equation}
 
 We estimated these covariance matrices by assigning their inverse ($\Sigma^{-1}$) a scaled Wishart prior distribution (Table \@ref(tab:param-table)).
-Although the stochastic process requires the $\Sigma$ term, is is the component $\sigma$ and $\rho$ terms that we were interested in for inference.
+Although the stochastic process requires the $\Sigma$ term, it is the component $\sigma$ and $\rho$ terms that we were interested in for inference.
 
 \clearpage
 
@@ -168,7 +172,7 @@ We supplied both quantities to the model assuming no error or inter-annual varia
 We assumed expected egg-to-parr survival was density-dependent following a Beverton-Holt relationship with productivity parameter $\alpha_j$ and capacity parameter $\beta_j$:
 
 \begin{equation}
-\dot{\phi}^{E \rightarrow P^{b}}_{y,j} = \frac{1}{\frac{1}{\alpha_j} + \frac{E_{y,j}}{\beta_j}}
+\dot{\phi}^{E \to P^{b}}_{y,j} = \frac{1}{\frac{1}{\alpha_j} + \frac{E_{y,j}}{\beta_j}}
 (\#eq:get-phi-E-Pb-dot)
 \end{equation}
 
@@ -185,18 +189,18 @@ We modeled parr recruitment capacity ($\beta_j$) as a function of this $\mathrm{
 
 where $\lambda$ is the expected change in parr capacity per 1 km change in weighted usable habitat length, and $\sigma_{\beta}$ is the log-normal standard deviation of variability in this relationship not captured by $\mathrm{WUL}$ values.
 
-We modeled realized (i.e., with process noise) egg-to-parr survival as a multivariate logit-normal random variable around the expected value ($\dot{\phi}^{E \rightarrow P^{b}}_{y,j}$) from eq. \@ref(eq:get-phi-E-Pb-dot).
-Rather than assume that inter-annual variability in egg-to-parr survival beyond that explained by density-dependence is completely random across years, we allowed the model to account for serial autocorrelation in egg survival anomalies via a lag-1 autoregressive process [AR(1); coefficient denoted $\kappa^{E \rightarrow P^{b}}_{j}$], wherein the white noise portion of the anomaly has covariance matrix $\Sigma_{\phi^{E \rightarrow P^{b}}}$:
+We modeled realized (i.e., with process noise) egg-to-parr survival as a multivariate logit-normal random variable around the expected value ($\dot{\phi}^{E \to P^{b}}_{y,j}$) from eq. \@ref(eq:get-phi-E-Pb-dot).
+Rather than assume that inter-annual variability in egg-to-parr survival beyond that explained by density-dependence is completely random across years, we allowed the model to account for serial autocorrelation in egg survival anomalies via a lag-1 autoregressive process [AR(1); coefficient denoted $\kappa^{E \to P^{b}}_{j}$], wherein the white noise portion of the anomaly has covariance matrix $\Sigma_{\phi^{E \to P^{b}}}$:
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{E \rightarrow P^{b}}_{y,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{E \rightarrow P^{b}}_{y,1:n_j}\right) + \boldsymbol{\kappa}^{E \rightarrow P^{b}}_{1:n_j} \cdot \left[\logit\left(\boldsymbol{\phi}^{E \rightarrow P^{b}}_{y-1,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{E \rightarrow P^{b}}_{y-1,1:n_j}\right)\right], \Sigma_{\phi^{E \rightarrow P^{b}}} \right\}
+\logit\left(\boldsymbol{\phi}^{E \to P^{b}}_{y,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{E \to P^{b}}_{y,1:n_j}\right) + \boldsymbol{\kappa}^{E \to P^{b}}_{1:n_j} \cdot \left[\logit\left(\boldsymbol{\phi}^{E \to P^{b}}_{y-1,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{E \to P^{b}}_{y-1,1:n_j}\right)\right], \Sigma_{\phi^{E \to P^{b}}} \right\}
 (\#eq:phi-E-Pb-random)
 \end{equation}
 
 Parr recruitment ($P^{b}_{y,j}$) to the end of summer was then the product of total egg production and egg-to-parr survival:
 
 \begin{equation}
-P^{b}_{y,j} = \phi^{E \rightarrow P^{b}}_{y,j} \cdot E_{y,j}
+P^{b}_{y,j} = \phi^{E \to P^{b}}_{y,j} \cdot E_{y,j}
 (\#eq:get-Pb)
 \end{equation}
 
@@ -240,18 +244,18 @@ Since there are only two migratory strategies, we obtained the proportion that a
 
 ### Survival to Smolt Stage and Smolt Mean Length
 
-We modeled expected survival from the parr (age-1) to in-basin smolt (age-2) stage (termed "overwinter" survival and denoted by $\dot{\phi}^{P^{a} \rightarrow M^{b}}_{y,i,j}$) as a logit-linear function of parr mean length:
+We modeled expected survival from the parr (age-1) to in-basin smolt (age-2) stage (termed "overwinter" survival and denoted by $\dot{\phi}^{P^{a} \to M^{b}}_{y,i,j}$) as a logit-linear function of parr mean length:
 
 \begin{equation}
-\logit\left(\dot{\phi}^{P^{a} \rightarrow M^{b}}_{y,i,j}\right) = \gamma_{0,i,j} + \gamma_{1,j} \cdot L^{*P^{b}}_{y,j}
+\logit\left(\dot{\phi}^{P^{a} \to M^{b}}_{y,i,j}\right) = \gamma_{0,i,j} + \gamma_{1,j} \cdot L^{*P^{b}}_{y,j}
 (\#eq:get-phi-Pa-Mb-dot)
 \end{equation}
 
 where $L^{*P^{b}}_{y,j}$ is parr mean length scaled and centered by subtracting the historical average observed parr mean length for population $j$ from $L^{P^{b}}_{y,j}$ and dividing by the historical observed standard deviation in mean length across years.
-Then, for each migratory strategy separately, overwinter survival was a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{P^{a} \rightarrow M^{b}}}$ (assumed common among migratory strategies):
+Then, for each migratory strategy separately, overwinter survival was a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{P^{a} \to M^{b}}}$ (assumed common among migratory strategies):
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{P^{a} \rightarrow M^{b}}_{y,i,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{P^{a} \rightarrow M^{b}}_{y,i,1:n_j}\right), \Sigma_{\phi^{P^{a} \rightarrow M^{b}}}\right]
+\logit\left(\boldsymbol{\phi}^{P^{a} \to M^{b}}_{y,i,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{P^{a} \to M^{b}}_{y,i,1:n_j}\right), \Sigma_{\phi^{P^{a} \to M^{b}}}\right]
 (\#eq:phi-Pa-Mb-random)
 \end{equation}
 
@@ -259,7 +263,7 @@ Since hatchery-origin smolts are released into the population in spring (see Sec
 The abundance of natural-origin (indexed by $o=\mathrm{NOR}$) smolt was then:
 
 \begin{equation}
-M^{b}_{y,i,o=\mathrm{NOR},j} = P^{a}_{y,i,j} \cdot \phi^{P^{a} \rightarrow M^{b}}_{y,i,j}
+M^{b}_{y,i,o=\mathrm{NOR},j} = P^{a}_{y,i,j} \cdot \phi^{P^{a} \to M^{b}}_{y,i,j}
 (\#eq:get-Mb-NOR)
 \end{equation}
 
@@ -271,21 +275,21 @@ Preliminary analyses on the observed mean length data revealed that smolt mean l
 To capture this non-linearity, we modeled the expected multiplicative change in mean length between the parr and smolt stage as a log-linear function of (standardized) parr mean length:
 
 \begin{equation}
-\log\left(\dot{\Delta}^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,j}\right) = \theta_{0,j} + \theta_{1,j} \cdot L^{*P^{b}}_{y,j}
+\log\left(\dot{\Delta}^{L^{P^{b}} \to L^{M^{b}}}_{y,j}\right) = \theta_{0,j} + \theta_{1,j} \cdot L^{*P^{b}}_{y,j}
 (\#eq:get-Delta-L-Pb-L-Mb-dot)
 \end{equation}
 
-and obtained the realized multiplicative change in mean length as being multivariate log-normally distributed around $\dot{\Delta}^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,j}$ with covariance matrix $\Sigma_{\Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}}$:
+and obtained the realized multiplicative change in mean length as being multivariate log-normally distributed around $\dot{\Delta}^{L^{P^{b}} \to L^{M^{b}}}_{y,j}$ with covariance matrix $\Sigma_{\Delta^{L^{P^{b}} \to L^{M^{b}}}}$:
 
 \begin{equation}
-\log\left(\boldsymbol{\Delta}^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,1:n_j}\right) \sim \MVNdist\left[\log\left(\boldsymbol{\dot{\Delta}}^{L^{P^{b} \rightarrow L^{M^{b}}}}_{y,1:n_j}\right), \Sigma_{\Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}}\right]
+\log\left(\boldsymbol{\Delta}^{L^{P^{b}} \to L^{M^{b}}}_{y,1:n_j}\right) \sim \MVNdist\left[\log\left(\boldsymbol{\dot{\Delta}}^{L^{P^{b} \to L^{M^{b}}}}_{y,1:n_j}\right), \Sigma_{\Delta^{L^{P^{b}} \to L^{M^{b}}}}\right]
 (\#eq:Delta-L-Pb-L-Mb-random)
 \end{equation}
 
 Smolt mean length was then the product:
 
 \begin{equation}
-L^{M^{b}}_{y,j} = L^{P^{b}}_{y,j} \cdot \Delta^{L^{P^{b}} \rightarrow L^{M^{b}}}_{y,j}
+L^{M^{b}}_{y,j} = L^{P^{b}}_{y,j} \cdot \Delta^{L^{P^{b}} \to L^{M^{b}}}_{y,j}
 (\#eq:get-L-Mb)
 \end{equation}
 
@@ -298,43 +302,43 @@ For all subsequent life stages, we tracked the abundance (and often survival) of
 
 All in-basin smolt ($M^{b}_{y,i,o,j}$) migrate to the ocean in the spring of the year they become age-2 regardless of their migratory strategy ($i$).
 We divide mortality experienced during this migration into two stages: (_i_) from in-basin to Lower Granite Dam (LGR), the first in a series of eight dams\todo{Insert reference to a document describing dams} encountered in the downstream migration, and (_ii_) from LGR to the ocean.
-For parameter identifiability in mortality stage (_i_), we were required to assume that survival from in-basin to LGR was identical between natural-origin fall and spring migrants (i.e., $\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{fall},o=\mathrm{NOR},j} = \phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}$, we thus omit the $i$ dimension when defining these quantities below), but we were able to model natural-origin survival separately from hatchery-origin because they are monitored separately (see Section \@ref(survival-data-sources)).
+For parameter identifiability in mortality stage (_i_), we were required to assume that survival from in-basin to LGR was identical between natural-origin fall and spring migrants (i.e., $\phi^{M^{b} \to M^{a}}_{y,i=\mathrm{fall},o=\mathrm{NOR},j} = \phi^{M^{b} \to M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}$, we thus omit the $i$ dimension when defining these quantities below), but we were able to model natural-origin survival separately from hatchery-origin because they are monitored separately (see Section \@ref(survival-data-sources)).
 
 We modeled expected out-of-basin migration survival for natural-origin smolt as a logit-linear function of smolt mean length:
 
 \begin{equation}
-\logit\left(\dot{\phi}^{M^{b} \rightarrow M^{a}}_{y,o=\mathrm{NOR},j}\right) = \tau_{0,j} + \tau_{1,j} \cdot L^{*M^{b}}_{y,j}
+\logit\left(\dot{\phi}^{M^{b} \to M^{a}}_{y,o=\mathrm{NOR},j}\right) = \tau_{0,j} + \tau_{1,j} \cdot L^{*M^{b}}_{y,j}
 (\#eq:get-phi-Mb-Ma-dot)
 \end{equation}
 
 where $L^{*M^{b}}_{y,j}$ has been scaled and centered by subtracting the historical average observed smolt mean length for population $j$ from $L^{M^{b}}_{y,j}$ and dividing by the historical observed standard deviation (just as for $L^{*P^{b}}_{y,j}$ for standardized parr mean length).
-For hatchery-origin smolt, we assumed this expected out-of-basin survival term was time-constant (i.e., all $\dot{\phi}^{M^{b} \rightarrow M^{a}}_{y,o=\mathrm{HOR},j}$ were equal within a population).
-For each origin separately, we modeled realized out-of-basin migration survival as a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{M^{b} \rightarrow M^{a}}}$ (assumed common across origin types):
+For hatchery-origin smolt, we assumed this expected out-of-basin survival term was time-constant (i.e., all $\dot{\phi}^{M^{b} \to M^{a}}_{y,o=\mathrm{HOR},j}$ were equal within a population).
+For each origin separately, we modeled realized out-of-basin migration survival as a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{M^{b} \to M^{a}}}$ (assumed common across origin types):
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{M^{b} \rightarrow M^{a}}_{y,o,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{b} \rightarrow M^{a}}_{y,o,1:n_j}\right), \Sigma_{\phi^{M^{b} \rightarrow M^{a}}}\right]
+\logit\left(\boldsymbol{\phi}^{M^{b} \to M^{a}}_{y,o,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{b} \to M^{a}}_{y,o,1:n_j}\right), \Sigma_{\phi^{M^{b} \to M^{a}}}\right]
 (\#eq:phi-Mb-Ma-random)
 \end{equation}
 
 and the abundance of smolt reaching LGR after surviving the migration out-of-basin was:
 
 \begin{equation}
-M^{a}_{y,i,o,j} = M^{b}_{y,i,o,j} \cdot \phi^{M^{b} \rightarrow M^{a}}_{y,o,j}
+M^{a}_{y,i,o,j} = M^{b}_{y,i,o,j} \cdot \phi^{M^{b} \to M^{a}}_{y,o,j}
 (\#eq:get-Ma)
 \end{equation}
 
-We modeled survival during the downstream migration through the hydrosystem on the Snake and Columbia rivers as a single survival rate, specific to each year and origin but shared among populations ($\phi^{M^{a} \rightarrow O^{0}}_{y,o}$).
-We assumed these survival rates were multivariate logit-normal random variables around a time-constant expected value ($\dot{\phi}^{M^{a} \rightarrow O^{0}}_{o}$) with covariance matrix $\Sigma_{\phi^{M^{a} \rightarrow O^{0}}}$:
+We modeled survival during the downstream migration through the hydrosystem on the Snake and Columbia rivers as a single survival rate, specific to each year and origin but shared among populations ($\phi^{M^{a} \to O^{0}}_{y,o}$).
+We assumed these survival rates were multivariate logit-normal random variables around a time-constant expected value ($\dot{\phi}^{M^{a} \to O^{0}}_{o}$) with covariance matrix $\Sigma_{\phi^{M^{a} \to O^{0}}}$:
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{M^{a} \rightarrow O^{0}}_{y,1:n_o}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{a} \rightarrow O^{0}}_{1:n_o}\right), \Sigma_{\phi^{M^{a} \rightarrow O^{0}}}\right]
+\logit\left(\boldsymbol{\phi}^{M^{a} \to O^{0}}_{y,1:n_o}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{a} \to O^{0}}_{1:n_o}\right), \Sigma_{\phi^{M^{a} \to O^{0}}}\right]
 (\#eq:phi-Ma-O0-random)
 \end{equation}
 
 and the abundance of fish reaching the ocean by origin and population was:
 
 \begin{equation}
-O^{0}_{y,o,j} = \phi^{M^{a} \rightarrow O^{0}}_{y,o} \sum_i^{n_i} M^{a}_{y,i,o,j}
+O^{0}_{y,o,j} = \phi^{M^{a} \to O^{0}}_{y,o} \sum_i^{n_i} M^{a}_{y,i,o,j}
 (\#eq:get-O0)
 \end{equation}
 
@@ -373,35 +377,35 @@ All five of these tag groups have their survival estimated from the time of tagg
 These estimates (and their associated standard errors) were used in logit-normal likelihoods by assuming:
 
 \begin{equation}
-\logit\left(\hat{\phi}^{P^{b} \rightarrow M^{a}}_{y,j}\right) \sim \Ndist\left[\logit\left(\frac{\sum_{i}^{n_i} M^{a}_{y,i,o=\mathrm{NOR},j}}{P^{b}_{y,j}}\right),\hat{\sigma}_{\phi^{P^{b} \rightarrow M^{a}}_{y,j}}\right]
+\logit\left(\hat{\phi}^{P^{b} \to M^{a}}_{y,j}\right) \sim \Ndist\left[\logit\left(\frac{\sum_{i}^{n_i} M^{a}_{y,i,o=\mathrm{NOR},j}}{P^{b}_{y,j}}\right),\hat{\sigma}_{\phi^{P^{b} \to M^{a}}_{y,j}}\right]
 (\#eq:summer-surv-data)
 \end{equation}
 
 for the summer tagging group, 
 
 \begin{equation}
-\logit\left(\hat{\phi}^{P^{a} \rightarrow M^{a}}_{y,i=\mathrm{fall},j}\right) \sim \Ndist\left[\logit\left(\frac{M^{a}_{y,i=\mathrm{fall},o=\mathrm{NOR},j}}{P^{a}_{y,i=\mathrm{fall},j}}\right),\hat{\sigma}_{\phi^{P^{a} \rightarrow M^{a}}_{y,i=\mathrm{fall},j}}\right]
+\logit\left(\hat{\phi}^{P^{a} \to M^{a}}_{y,i=\mathrm{fall},j}\right) \sim \Ndist\left[\logit\left(\frac{M^{a}_{y,i=\mathrm{fall},o=\mathrm{NOR},j}}{P^{a}_{y,i=\mathrm{fall},j}}\right),\hat{\sigma}_{\phi^{P^{a} \to M^{a}}_{y,i=\mathrm{fall},j}}\right]
 (\#eq:fall-surv-data)
 \end{equation}
 
 for the fall tagging group,
 
 \begin{equation}
-\logit\left(\hat{\phi}^{P^{a} \rightarrow M^{a}}_{y,i=\mathrm{spring},j}\right) \sim \Ndist\left[\logit\left(\frac{M^{a}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}}{P^{a}_{y,i=\mathrm{spring},j} \cdot \phi^{P^{b} \rightarrow P^{a}}_{j}}\right),\hat{\sigma}_{\phi^{P^{a} \rightarrow M^{a}}_{y,i=\mathrm{spring},j}}\right]
+\logit\left(\hat{\phi}^{P^{a} \to M^{a}}_{y,i=\mathrm{spring},j}\right) \sim \Ndist\left[\logit\left(\frac{M^{a}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}}{P^{a}_{y,i=\mathrm{spring},j} \cdot \phi^{P^{b} \to P^{a}}_{j}}\right),\hat{\sigma}_{\phi^{P^{a} \to M^{a}}_{y,i=\mathrm{spring},j}}\right]
 (\#eq:winter-surv-data)
 \end{equation}
 
-for the winter tagging group (where $\phi^{P^{b} \rightarrow P^{a}}_j$ is a time-constant model-estimated survival from summer tagging to winter tagging for parr that ultimately become spring migrants and $j \in [\mathrm{CAT}, \mathrm{LOS}, \mathrm{UGR}]$), 
+for the winter tagging group (where $\phi^{P^{b} \to P^{a}}_j$ is a time-constant model-estimated survival from summer tagging to winter tagging for parr that ultimately become spring migrants and $j \in [\mathrm{CAT}, \mathrm{LOS}, \mathrm{UGR}]$), 
 
 \begin{equation}
-\logit\left(\hat{\phi}^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}\right) \sim \Ndist\left[\logit\left(\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}\right),\hat{\sigma}_{\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}}\right]
+\logit\left(\hat{\phi}^{M^{b} \to M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}\right) \sim \Ndist\left[\logit\left(\phi^{M^{b} \to M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}\right),\hat{\sigma}_{\phi^{M^{b} \to M^{a}}_{y,i=\mathrm{spring},o=\mathrm{NOR},j}}\right]
 (\#eq:spring-surv-data)
 \end{equation}
 
 for the spring tagging group, and
 
 \begin{equation}
-\logit\left(\hat{\phi}^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}\right) \sim \Ndist\left[\logit\left(\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}\right),\hat{\sigma}_{\phi^{M^{b} \rightarrow M^{a}}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}}\right]
+\logit\left(\hat{\phi}^{M^{b} \to M^{a}}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}\right) \sim \Ndist\left[\logit\left(\phi^{M^{b} \to M^{a}}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}\right),\hat{\sigma}_{\phi^{M^{b} \to M^{a}}_{y,i=\mathrm{spring},o=\mathrm{HOR},j}}\right]
 (\#eq:spring-surv-HOR-data)
 \end{equation}
 
@@ -409,12 +413,12 @@ for hatchery-origin smolt releases ($j \in [\mathrm{CAT}, \mathrm{LOS}, \mathrm{
 
 Much quantitative research has been devoted to studying the survival of Chinook salmon smolt migrating through the hydrosystem located on the Snake and Columbia rivers and we thought it best to utilize the findings from some of this research as input data to our modeling effort rather than attempt to have our model freely estimate survival along this migration. Using external estimates of survival here so would give us the flexibility to more freely estimate quantities which have received less directed research, namely ocean survival.
 We used the output from a recent Comparative Survival Study report [@mccann-etal-2020, Table A.1 on page A-20 therein] to serve as empirical observations (with estimates of uncertainty) with which to inform this component of our model.
-Provided by @mccann-etal-2020 are annual estimates of in-stream survival along the migration from LGR through Bonneville Dam (BON); separate time series are available for natural-origin (we used the "Aggregate Wild Chinook" estimates as none were available for Grande Ronde populations only, denoted $\hat{\phi}^{M^{a} \rightarrow O^{0}}_{y,o=\mathrm{NOR}}$ here) and for hatchery-origin (we used the "Catherine Creek AP" estimates, denoted $\hat{\phi}^{M^{a} \rightarrow O^{0}}_{y,o=\mathrm{HOR}}$ here).
+Provided by @mccann-etal-2020 are annual estimates of in-stream survival along the migration from LGR through Bonneville Dam (BON); separate time series are available for natural-origin (we used the "Aggregate Wild Chinook" estimates as none were available for Grande Ronde populations only, denoted $\hat{\phi}^{M^{a} \to O^{0}}_{y,o=\mathrm{NOR}}$ here) and for hatchery-origin (we used the "Catherine Creek AP" estimates, denoted $\hat{\phi}^{M^{a} \to O^{0}}_{y,o=\mathrm{HOR}}$ here).
 We treated these estimates as representative of the survival for each population, which implies an assumption that the different populations we model experience similar conditions during this migration and ignores any effect of barge-transporting fish.
 Similar to the other survival data sets, we assumed these estimates are made with logit-normal random error around the life cycle model estimate to build the likelihood:
 
 \begin{equation}
-\logit\left(\hat{\phi}^{M^{a} \rightarrow O^{0}}_{y,o}\right) \sim \Ndist\left[\logit\left(\phi^{M^{a} \rightarrow O^{0}}_{y,o}\right),\hat{\sigma}_{\phi^{M^{a} \rightarrow O^{0}}_{y,o}}\right]
+\logit\left(\hat{\phi}^{M^{a} \to O^{0}}_{y,o}\right) \sim \Ndist\left[\logit\left(\phi^{M^{a} \to O^{0}}_{y,o}\right),\hat{\sigma}_{\phi^{M^{a} \to O^{0}}_{y,o}}\right]
 (\#eq:hydro-surv-data)
 \end{equation}
 
@@ -449,23 +453,23 @@ Due to the confounding of these parameters\todo{Insert a reference to a paper th
 
 ### Survival Rates {#ocean-survival}
 
-We assumed first year natural-origin^[All $o=\mathrm{NOR}$ in eq. \@ref(eq:phi-O0-O1-random), omitted for brevity.] ocean survival was a multivariate logit-normal random variable around a time-constant expected value ($\dot{\phi}^{O^{0} \rightarrow O^{1}}_{o=\mathrm{NOR},j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \rightarrow O^{1}}}$, but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion\todo{Include reference to papers that talk about ocean survival varying cyclically; e.g., Mantua et al. paper on PDO}:
+We assumed first year natural-origin^[All $o=\mathrm{NOR}$ in eq. \@ref(eq:phi-O0-O1-random), omitted for brevity.] ocean survival was a multivariate logit-normal random variable around a time-constant expected value ($\dot{\phi}^{O^{0} \to O^{1}}_{o=\mathrm{NOR},j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \to O^{1}}}$, but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion\todo{Include reference to papers that talk about ocean survival varying cyclically; e.g., Mantua et al. paper on PDO}:
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{O^{0} \rightarrow O^{1}}_{y,o,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \rightarrow O^{1}}_{o,1:n_j}\right) + \boldsymbol{\kappa}^{O^{0} \rightarrow O^{1}}_{1:n_j} \cdot \left[ \logit\left(\boldsymbol{\phi}^{O^{0} \rightarrow O^{1}}_{y-1,o,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \rightarrow O^{1}}_{o,1:n_j}\right)\right], \Sigma_{\phi^{O^{0} \rightarrow O^{1}}} \right\}
+\logit\left(\boldsymbol{\phi}^{O^{0} \to O^{1}}_{y,o,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \to O^{1}}_{o,1:n_j}\right) + \boldsymbol{\kappa}^{O^{0} \to O^{1}}_{1:n_j} \cdot \left[ \logit\left(\boldsymbol{\phi}^{O^{0} \to O^{1}}_{y-1,o,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \to O^{1}}_{o,1:n_j}\right)\right], \Sigma_{\phi^{O^{0} \to O^{1}}} \right\}
 (\#eq:phi-O0-O1-random)
 \end{equation}
 
-We assumed process variation was negligible in the second and third year ocean survival terms, thus we forced the year-specific values of $\phi^{O^{1} \rightarrow O^{2}}_{y,o=\mathrm{NOR},j}$ and $\phi^{O^{2} \rightarrow O^{3}}_{y,o=\mathrm{NOR},j}$ to take on the same value for all years (i.e., $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$, respectively).
-Because not all maturity and ocean survival terms were uniquely identifiable based on adult return abundance and age composition, we relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \rightarrow O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \rightarrow O^{3}}_{o=\mathrm{NOR},j}$ (Table \@ref(tab:param-table)).
+We assumed process variation was negligible in the second and third year ocean survival terms, thus we forced the year-specific values of $\phi^{O^{1} \to O^{2}}_{y,o=\mathrm{NOR},j}$ and $\phi^{O^{2} \to O^{3}}_{y,o=\mathrm{NOR},j}$ to take on the same value for all years (i.e., $\dot{\phi}^{O^{1} \to O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \to O^{3}}_{o=\mathrm{NOR},j}$, respectively).
+Because not all maturity and ocean survival terms were uniquely identifiable based on adult return abundance and age composition, we relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \to O^{2}}_{o=\mathrm{NOR},j}$ and $\dot{\phi}^{O^{2} \to O^{3}}_{o=\mathrm{NOR},j}$ (Table \@ref(tab:param-table)).
 \todo{Are we using priors or fixed values? Include reference to reports where we can reference the specific values used.}
 To obtain hatchery-origin ocean survival each year, we adjusted the natural-origin survival by a log-odds ratio ($\delta_{j}$) that was common across all ocean years and brood years but varied by population:
 
 \begin{equation}
 \begin{aligned}
-\logit\left(\phi^{O^{0} \rightarrow O^{1}}_{y,o=\mathrm{HOR},j}\right) &= \logit\left(\phi^{O^{0} \rightarrow O^{1}}_{y,o=\mathrm{NOR},j}\right) + \delta_j \\
-\logit\left(\phi^{O^{1} \rightarrow O^{2}}_{y,o=\mathrm{HOR},j}\right) &= \logit\left(\phi^{O^{1} \rightarrow O^{2}}_{y,o=\mathrm{NOR},j}\right) + \delta_j \\
-\logit\left(\phi^{O^{2} \rightarrow O^{3}}_{y,o=\mathrm{HOR},j}\right) &= \logit\left(\phi^{O^{2} \rightarrow O^{3}}_{y,o=\mathrm{NOR},j}\right) + \delta_j \\
+\logit\left(\phi^{O^{0} \to O^{1}}_{y,o=\mathrm{HOR},j}\right) &= \logit\left(\phi^{O^{0} \to O^{1}}_{y,o=\mathrm{NOR},j}\right) + \delta_j \\
+\logit\left(\phi^{O^{1} \to O^{2}}_{y,o=\mathrm{HOR},j}\right) &= \logit\left(\phi^{O^{1} \to O^{2}}_{y,o=\mathrm{NOR},j}\right) + \delta_j \\
+\logit\left(\phi^{O^{2} \to O^{3}}_{y,o=\mathrm{HOR},j}\right) &= \logit\left(\phi^{O^{2} \to O^{3}}_{y,o=\mathrm{NOR},j}\right) + \delta_j \\
 \end{aligned}
 (\#eq:get-phi-O-HOR)
 \end{equation}
@@ -493,9 +497,9 @@ We modeled ocean population dynamics as a sequence of survival, maturation of su
 
 \begin{equation}
 \begin{aligned}
-O^{1}_{y,o,j} &= O^{0}_{y,o,j} \cdot \phi^{O^{0} \rightarrow O^{1}}_{y,o,j} \\
-O^{2}_{y,o,j} &= O^{1}_{y,o,j} \cdot (1 - \psi^{O^{1}}_{y,o,j}) \cdot \phi^{O^{1} \rightarrow O^{2}}_{y,o,j} \\
-O^{3}_{y,o,j} &= O^{2}_{y,o,j} \cdot (1 - \psi^{O^{2}}_{y,o,j}) \cdot \phi^{O^{2} \rightarrow O^{3}}_{y,o,j} \\
+O^{1}_{y,o,j} &= O^{0}_{y,o,j} \cdot \phi^{O^{0} \to O^{1}}_{y,o,j} \\
+O^{2}_{y,o,j} &= O^{1}_{y,o,j} \cdot (1 - \psi^{O^{1}}_{y,o,j}) \cdot \phi^{O^{1} \to O^{2}}_{y,o,j} \\
+O^{3}_{y,o,j} &= O^{2}_{y,o,j} \cdot (1 - \psi^{O^{2}}_{y,o,j}) \cdot \phi^{O^{2} \to O^{3}}_{y,o,j} \\
 \end{aligned}
 (\#eq:get-Os)
 \end{equation}
@@ -540,14 +544,14 @@ We compiled the best available estimates but did not fit to them explicitly as p
 
 ### Processes Between BON and LGR
 
-Once fish reach BON, however, their survival to LGR has been monitored (since 2000; $y=10$) via PIT tags and so we did fit to those data and estimate the survival rate between BON and LGR as multivariate logit-normal random variables around expected values ($\dot{\phi}^{R^{b} \rightarrow R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \rightarrow R^{a}}}$.
+Once fish reach BON, however, their survival to LGR has been monitored (since 2000; $y=10$) via PIT tags and so we did fit to those data and estimate the survival rate between BON and LGR as multivariate logit-normal random variables around expected values ($\dot{\phi}^{R^{b} \to R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \to R^{a}}}$.
 In years without these PIT tag counts, however, the survival from BON to LGR is confounded with ocean survival, and so we assumed BON to LGR survival was equal to the expected value in these years for parameter identifiability purposes:
 
 \begin{equation}
-\logit\left(\boldsymbol{\phi}^{R^{b} \rightarrow R^{a}}_{y,1:n_o}\right)
+\logit\left(\boldsymbol{\phi}^{R^{b} \to R^{a}}_{y,1:n_o}\right)
 \begin{cases}
-= \logit\left(\boldsymbol{\dot{\phi}}^{R^{b} \rightarrow R^{a}}_{1:n_o}\right) & \mbox{if $y < 10$}\\
-\sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{R^{b} \rightarrow R^{a}}_{1:n_o}\right), \Sigma_{\phi^{R^{b} \rightarrow R^{a}}} \right] & \mbox{if $y \ge 10$}
+= \logit\left(\boldsymbol{\dot{\phi}}^{R^{b} \to R^{a}}_{1:n_o}\right) & \mbox{if $y < 10$}\\
+\sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{R^{b} \to R^{a}}_{1:n_o}\right), \Sigma_{\phi^{R^{b} \to R^{a}}} \right] & \mbox{if $y \ge 10$}
 \end{cases}
 (\#eq:phi-Rb-Ra-random)
 \end{equation}
@@ -562,7 +566,7 @@ We denote the age composition of these strays by $p^{G}_{k,j}$ (where $\sum_k^{n
 We can now define the abundance of adults arriving to their natal spawning tributaries by age and origin ($R^{a}_{y,k,o,j}$) as:
 
 \begin{equation}
-R^{a}_{y,k,o,j} = R^{b}_{y,k,o,j} \cdot (1 - U_{y,k,o}) \cdot \phi^{R^{b} \rightarrow R^{a}}_{y,o} + \left(G_{y,o,j} \cdot p^{G}_{k,j}\right)
+R^{a}_{y,k,o,j} = R^{b}_{y,k,o,j} \cdot (1 - U_{y,k,o}) \cdot \phi^{R^{b} \to R^{a}}_{y,o} + \left(G_{y,o,j} \cdot p^{G}_{k,j}\right)
 (\#eq:get-Ra)
 \end{equation}
 
@@ -580,12 +584,12 @@ S^{b}_{y,k,o,j} = \max\left(R^{a}_{y,k,o,j} - B_{y,k,o,j} - H_{y,k,o,j}, 1\right
 
 The maximum constraint was used to ensure all $S^{b}_{y,k,o,j} > 0$.
 As a final step prior to spawning, these adults must survive the challenges of finding adequate spawning habitat and avoid succumbing to stress and mortality prior to spawning.
-We treated these "pre-spawn survival" outcomes, denoted by $\phi^{S^{b} \rightarrow S^{a}}_{y,j}$, as having a time-constant value (i.e., all $\phi^{S^{b} \rightarrow S^{a}}_{y,j} = \dot{\phi}^{S^{b} \rightarrow S^{a}}_{j}$).
+We treated these "pre-spawn survival" outcomes, denoted by $\phi^{S^{b} \to S^{a}}_{y,j}$, as having a time-constant value (i.e., all $\phi^{S^{b} \to S^{a}}_{y,j} = \dot{\phi}^{S^{b} \to S^{a}}_{j}$).
 We desired to allow for time-varying pre-spawn survival probabilities, but discovered that the observational data were not informative enough for all populations to prevent parameter confounding with egg-to-parr survival.
 Thus, the abundance of successfully spawning individuals ($S^{a}_{y,k,o,j}$) was:
 
 \begin{equation}
-S^{a}_{y,k,o,j} = S^{b}_{y,k,o,j} \cdot \phi^{S^{b} \rightarrow S^{a}}_{y,j}
+S^{a}_{y,k,o,j} = S^{b}_{y,k,o,j} \cdot \phi^{S^{b} \to S^{a}}_{y,j}
 (\#eq:get-Sa)
 \end{equation}
 
@@ -612,7 +616,7 @@ For the observation model component informing migration survival upstream from B
 We assumed the latter was a binomial random variable to build the likelihood component for this data set:
 
 \begin{equation}
-\hat{x}^{\mathrm{LGR}}_{y,o} \sim \Bdist\left(\phi^{R^{b} \rightarrow R^{a}}_{y,o}, \hat{x}^{\mathrm{BON}}_{y,o}\right)
+\hat{x}^{\mathrm{LGR}}_{y,o} \sim \Bdist\left(\phi^{R^{b} \to R^{a}}_{y,o}, \hat{x}^{\mathrm{BON}}_{y,o}\right)
 (\#eq:upstream-surv-data)
 \end{equation}
 
@@ -622,7 +626,7 @@ Only females are counted this way because it is too difficult to tell if a male 
 We assumed these counts were gathered using binomial sampling to build the likelihood:
 
 \begin{equation}
-\hat{x}^{\mathrm{carcass,spawned}}_{y,j} \sim \Bdist\left(\phi^{S^{b} \rightarrow S^{a}}_{y,j}, \hat{x}^{\mathrm{carcass,total}}_{y,j}\right)
+\hat{x}^{\mathrm{carcass,spawned}}_{y,j} \sim \Bdist\left(\phi^{S^{b} \to S^{a}}_{y,j}, \hat{x}^{\mathrm{carcass,total}}_{y,j}\right)
 (\#eq:prespawn-surv-data)
 \end{equation}
 
@@ -708,8 +712,6 @@ include_graphics("GR-sslcm-diagram.pdf")
 \clearpage
 
 # Tables {-}
-
-\todo{Shorten the footnotes on the table describing the index notation -- they are excessively long.}
 
 ```{r index_table_cap}
 index_tab_cap = "The various indices and dimensional constants used in defining the structure and scope for the state-space life cycle model for Grande Ronde spring Chinook salmon."
