@@ -7,8 +7,8 @@ Phase,Symbol,Prior,Eqs.,Description
 1,"$\\omega_{0,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-L-Pb-dot,Intercept of density-dependent parr size relationship
 1,"$\\omega_{1,j}$","$\\mathcal{N}(0, 1 \\times 10^{-3})$",get-L-Pb-dot,Slope of density-dependent parr size relationship
 1,$\\Sigma_{L^{P^{b}}}$,"$\\mathcal{SIW}(0.10,2)$",L-Pb-random,"Covariance matrix for variability in parr mean length not explained by egg density; constructed of $\\sigma_{L_{j}^{P^{b}}}$ and $\\rho_{L^{P^{b}}_{j,j^{\\prime}}}$ following eq. \\ref{eq:generic-Sigma4by4}"
-1,"$\\dot{\\pi}_{i=\\mathrm{fall},j}$","$b(1,1)$",pi-random,Expected proportion of summer parr that are fall migrants
-1,$\\Sigma_{\\pi_{i = \\mathrm{fall}}}$,"$\\mathcal{SIW}(0.30,2)$",pi-random,"Covariance matrix for variability in the proportion of summer parr that are fall migrants; constructed of $\\sigma_{\\pi_{i=\\mathrm{fall},j}}$ and $\\rho_{\\pi_{i=\\mathrm{fall},j,j^{\\prime}}}$ following eq. \\ref{eq:generic-Sigma4by4}"
+1,"$\\dot{\\pi}_{i=\\fall,j}$","$b(1,1)$",pi-random,Expected proportion of summer parr that are fall migrants
+1,$\\Sigma_{\\pi_{i=\\fall}}$,"$\\mathcal{SIW}(0.30,2)$",pi-random,"Covariance matrix for variability in the proportion of summer parr that are fall migrants; constructed of $\\sigma_{\\pi_{i=\\mathrm{fall},j}}$ and $\\rho_{\\pi_{i=\\mathrm{fall},j,j^{\\prime}}}$ following eq. \\ref{eq:generic-Sigma4by4}"
 1,$\\phi^{P^{b} \\to P^{a}}_{j}$,"$b(1,1)$",winter-surv-data,Survival from summer tagging to winter tagging for summer parr that are spring migrants
 1,"$\\gamma_{0,i,j}$","$t(0,1.57^{-2}, 7.76)$",get-phi-Pa-Mb-dot,Intercept of overwinter survival vs. parr size relationship
 1,"$\\gamma_{1,j}$","$t(0,1.57^{-2}, 7.76)$",get-phi-Pa-Mb-dot,Slope of overwinter survival vs. parr size relationship
@@ -21,11 +21,11 @@ Phase,Symbol,Prior,Eqs.,Description
 1,$\\Sigma_{\\phi^{M^{b} \\to M^{a}}}$,"$\\mathcal{SIW}(0.30,2)$",phi-Mb-Ma-random,"Covariance matrix for variability in smolt migration survival to LGR not explained by smolt mean length; constructed of $\\sigma_{\\phi^{M^{b} \\to M^{a}}_{j}}$ and $\\rho_{\\phi^{M^{b} \\to M^{a}}_{j,j^{\\prime}}}$ following eq. \\ref{eq:generic-Sigma4by4}"
 1,$\\dot{\\phi}^{M^{a} \\to O^{0}}_{o}$,"$b(1,1)$",phi-Ma-O0-random,Expected migration survival from LGR to ocean
 1,$\\Sigma_{\\phi^{M^{a} \\to O^{0}}}$,"$\\mathcal{SIW}(0.30,2)$",phi-Ma-O0-random,Covariance matrix for variability in smolt migration survival from LGR to ocean; constructed of $\\sigma_{\\phi^{M^{a} \\to O^{0}}_{o}}$ and $\\rho_{\\phi^{M^{a} \\to O^{0}}}$ following eq. \\ref{eq:generic-Sigma2by2}
-2,"$\\dot{\\phi}^{O^{0} \\to O^{1}}_{o=\\mathrm{NOR},j}$","$b(1,9)$",phi-O0-O1-random,Expected first year ocean survival for natural origin fish
+2,"$\\dot{\\phi}^{O^{0} \\to O^{1}}_{o=\\NOR,j}$","$b(1,9)$",phi-O0-O1-random,Expected first year ocean survival for natural origin fish
 2,$\\Sigma_{\\phi^{O^{0} \\to O^{1}}}$,"$\\mathcal{SIW}(0.30,2)$",phi-O0-O1-random,"Covariance matrix for variability in first year ocean survival (white noise portion only); constructed of $\\sigma_{\\phi^{O^{0} \\to O^{1}}_{j}}$ and $\\rho_{\\phi^{O^{0} \\to O^{1}}_{j,j^{\\prime}}}$ following eq. \\ref{eq:generic-Sigma4by4}"
 2,$\\kappa^{O^{0} \\to O^{1}}_{j}$,"$\\mathcal{U}(-1,1)$",phi-O0-O1-random,Lag-1 autoregressive coefficient for first year ocean survival
-2,"$\\dot{\\phi}^{O^{1} \\to O^{2}}_{o=\\mathrm{NOR},j}$","$b(60,40)$",,Expected second year ocean survival for natural origin fish
-2,"$\\dot{\\phi}^{O^{2} \\to O^{3}}_{o=\\mathrm{NOR},j}$","$b(70,30)$",,Expected third year ocean survival for natural origin fish
+2,"$\\dot{\\phi}^{O^{1} \\to O^{2}}_{o=\\NOR,j}$","$b(60,40)$",,Expected second year ocean survival for natural origin fish
+2,"$\\dot{\\phi}^{O^{2} \\to O^{3}}_{o=\\NOR,j}$","$b(70,30)$",,Expected third year ocean survival for natural origin fish
 2,$\\delta_j$,"$t(0,1.57^{-2}, 7.76)$",get-phi-O-HOR,Log-odds ratio to convert natural origin to hatchery origin ocean survival
 2,"$\\dot{\\psi}^{O^{1}}_{o,j}$","$b(1,9)$",psi-random,Expected maturation rate after $w=1$ winter at sea
 2,"$\\dot{\\psi}^{O^{2}}_{o,j}$","$b(8.5,1.5)$",psi-random,Expected maturation rate after $w=2$ winters at sea

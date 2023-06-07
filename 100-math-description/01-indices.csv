@@ -1,9 +1,9 @@
 Type,Symbol,Description,Footnote
-index,$j$,"Population; $j \\in [\\mathrm{CAT}, \\mathrm{LOS}, \\mathrm{MIN}, \\mathrm{UGR}]$",1
+index,$j$,"Population; $j \\in [\\CAT, \\LOS, \\MIN, \\UGR]$",1
 index,$y$,"Year; $y \\in [1, \\dots, n_y]$",2
 index,$k$,"Age of maturation; $k \\in [1, \\dots, n_k]$",3
-index,$i$,"Juvenile migratory strategy; $i \\in [\\mathrm{fall}, \\mathrm{spring}]$",4
-index,$o$,"Origin type; either natural- or hatchery-origin; $o \\in [\\mathrm{NOR}, \\mathrm{HOR}]$",5
+index,$i$,"Juvenile migratory strategy; $i \\in [\\fall, \\spring]$",4
+index,$o$,"Origin type; either natural- or hatchery-origin; $o \\in [\\NOR, \\HOR]$",5
 index,$ko$,"Unique age/origin combinations; $ko \\in [1, \\dots, n_{ko}]$",6
 index,$w$,"Number of winters spent at sea prior to maturation; $w \\in [1,2,3]$",
 scope,$y_{\\mathrm{min}}$,First year modeled; equal to F_YEAR here; first brood year with juvenile data,2
