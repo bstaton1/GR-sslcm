@@ -40,3 +40,7 @@
 100-math-description/*.bbl
 100-math-description/*.tex
 100-math-description/*.tdo
+
+# ignore .docx files in math description subdirectory
+100-math-description/*.docx
+100-math-description/*.tmp
