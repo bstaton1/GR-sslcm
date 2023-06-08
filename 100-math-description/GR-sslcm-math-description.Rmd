@@ -66,6 +66,17 @@ library(knitr)
 library(kableExtra)
 ```
 
+```{r my-kable-fn}
+my_kable = function(x, ...) {
+  
+  # detect the kable format
+  kable_format = ifelse(is_latex_output(), "latex", "markdown")
+  
+  # build the kable with supplied options as well as my fixed defaults
+  kable(x = x, format = kable_format, escape = FALSE, booktabs = TRUE, linesep = "", ...)
+}
+```
+
 \pagenumbering{gobble}
 \clearpage
 \pagenumbering{arabic}
@@ -271,8 +282,6 @@ The abundance of natural-origin (indexed by $o=\NOR$) smolt was then:
 M^{b}_{y,i,o=\NOR,j} = P^{a}_{y,i,j} \cdot \phi^{P^{a} \to M^{b}}_{y,i,j}
 (\#eq:get-Mb-NOR)
 \end{equation}
-
-$\rho_{\pi_{i=\fall,j,j^{\prime}}}$
 
 We further wished to use the mean length of these surviving smolt ($L^{M^{b}}_{y,j}$) to later explain variability in survival along the migration out-of-basin.
 Because only spring migrants are measured for smolt mean length in the spring (as they pass the screw trap), we were forced to assume equal lengths for fall migrant smolt and we thus omit the $i$ subscript from these quantities related to smolt mean length.
@@ -694,7 +703,7 @@ which we used as the multinomial expected frequency to build the likelihood by a
 (\#eq:carcass-comp-data)
 \end{equation}
 
-\clearpage
+\newpage
 
 # Figures {-}
 
@@ -710,11 +719,11 @@ diagram_fig_cap = "Schematic of the primary states and transitions among states 
 include_graphics("GR-sslcm-diagram.pdf")
 ```
 
-\clearpage
+\newpage
 
 \missingfigure{Create a map figure to go here.}
 
-\clearpage
+\newpage
 
 # Tables {-}
 
@@ -722,7 +731,7 @@ include_graphics("GR-sslcm-diagram.pdf")
 index_tab_cap = "The various indices and dimensional constants used in defining the structure and scope for the state-space life cycle model for Grande Ronde spring Chinook salmon."
 ```
 
-```{r index-table}
+```{r index-table, warning = FALSE}
 # read in csv version of table
 tab = read.csv("01-indices.csv", allowEscapes = TRUE)
 
@@ -753,7 +762,7 @@ footnote_key = c(
 tab$Description = paste0(ifelse(is.na(tab$Footnote), "", paste0("\\textsuperscript{", tab$Footnote, "}")), tab$Description)
 
 # build the table
-kable(tab[,1:3], "latex", booktabs = TRUE, linesep = "", caption = index_tab_cap, escape = FALSE) %>%
+my_kable(x = tab[,1:3], caption = index_tab_cap) %>%
   kable_styling(full_width = FALSE, latex_options = c("HOLD")) %>%
   row_spec(0, bold = TRUE) %>%
   column_spec(1, width = "50px") %>%
@@ -763,13 +772,13 @@ kable(tab[,1:3], "latex", booktabs = TRUE, linesep = "", caption = index_tab_cap
   footnote(number = footnote_key, threeparttable = TRUE, escape = FALSE)
 ```
 
-\clearpage
+\newpage
 
 ```{r symbol_tab_cap}
 symbol_tab_cap = "The symbology used to represent the key states (i.e., abundance at life stage/group) and rates (i.e., transition probabilities among states) in the presentation of the state-space life cycle model for Grande Ronde spring Chinook salmon. The majority of rates presented in this table are hierarchically structured/estimated, where the population- and/or origin-specific expected value and standard deviation are free parameters (or a function of free parameters) presented in Table \\ref{tab:param-table}. Equation numbers reference any equation that uses that quantity -- these may include the equation where the quantity is first defined, where it is used in process model, or where it is used in the observation model."
 ```
 
-```{r symbol-table}
+```{r symbol-table, warning = FALSE}
 tab = read.csv("02-symbols.csv", allowEscapes = TRUE)
 
 type_key = c(
@@ -785,7 +794,11 @@ handle_eqs = function(x) {
   } else {
     x_split = unlist(stringr::str_split(x, ","))
     x_split = stringr::str_remove_all(x_split, " ")
-    x_refs = paste0("\\ref{eq:", x_split, "}")
+    if (is_latex_output()) {
+      x_refs = paste0("\\ref{eq:", x_split, "}")
+    } else {
+      x_refs = paste0("\\@ref(eq:", x_split, ")")
+    }
     out = paste(x_refs, collapse = ", ")
   }
   return(out)
@@ -794,7 +807,7 @@ handle_eqs = function(x) {
 tab$Eqs. = unname(sapply(tab$Eqs., handle_eqs))
 colnames(tab)[4] = "Eq(s)."
 
-kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = symbol_tab_cap, escape = FALSE, longtable = TRUE) %>%
+my_kable(x = tab[,2:5], caption = symbol_tab_cap, longtable = TRUE) %>%
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
                 ) %>%
@@ -809,13 +822,13 @@ kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = symbol_tab_ca
   collapse_rows(1, valign = "bottom", latex_hline = "full")
 ```
 
-\clearpage
+\newpage
 
 ```{r param_tab_cap}
 param_tab_cap = "All free parameters (i.e., that have a prior that is not function of other free parameters) estimated by the state-space life cycle model for Grande Ronde spring Chinook salmon. Distributions and their parameterizations are defined in the footnotes."
 ```
 
-```{r param-table}
+```{r param-table, warning = FALSE}
 tab = read.csv("03-params.csv", allowEscapes = TRUE)
 
 tab$Eqs. = unname(sapply(tab$Eqs., handle_eqs))
@@ -826,13 +839,13 @@ footnote_key = c(
   "3" = "Uniform Distribution: $\\\\mathcal{U}(\\\\mathrm{lower}$, $\\\\mathrm{upper})$",
   "4" = "$t$-Distribution: $t$(mean, precision, degrees of freedom); this prior results in approximately a $\\\\mathcal{U}(0,1)$ prior after inverse-logit transformation \\\\citep{dorazio-etal-2011}.",
   "5" = "Dirichlet Distribution: $\\\\mathcal{D}(\\\\mathrm{shape}_1$, $\\\\mathrm{shape}_2$, $\\\\mathrm{shape}_3)$",
-  "6" = "Scaled Inverse-Wishart Distribution: $\\\\mathcal{SIW}$(\\\\textbf{S}, degrees of freedom); \\\\textbf{S} is a vector of scale parameters for scaled-Wishart; see JAGS v4.3.0 user manual page 62 for details on this prior. Briefly, the scale parameters of 0.10 - 0.30 places higher prior weight on small values of the the component $\\\\sigma$ parameters, which was intentional because these represent variability on the log- or logit-scale. Setting the degrees of freedom to 2 results in a $\\\\mathcal{U}(-1,1)$ prior on the $\\\\rho$ components."
+  "6" = "Scaled Inverse-Wishart Distribution: $\\\\mathcal{SIW}$(\\\\textbf{S}, degrees of freedom); \\\\textbf{S} is a vector of scale parameters for scaled-Wishart; see JAGS v4.3.0 user manual page 62 for details on this prior. Briefly, the scale parameters of 0.10 - 0.30 places higher prior weight on small values of the component $\\\\sigma$ parameters, which was intentional because these represent variability on the log- or logit-scale. Setting the degrees of freedom to 2 results in a $\\\\mathcal{U}(-1,1)$ prior on the $\\\\rho$ components."
 )
 
 colnames(tab)[3] = "Prior\\textsuperscript{1,2,3,4,5,6}"
 colnames(tab)[4] = "Eq."
 
-kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = param_tab_cap, escape = FALSE, longtable = TRUE) %>%
+my_kable(x = tab[,2:5], caption = param_tab_cap, longtable = TRUE) %>%
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
                 ) %>%
@@ -848,13 +861,13 @@ kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = param_tab_cap
   footnote(number = footnote_key, number_title = "Prior Distributions:", title_format = c("italic", "underline"), escape = FALSE, threeparttable = TRUE)
 ```
 
-\clearpage
+\newpage
 
 ```{r data_tab_cap}
 data_tab_cap = "The symbology used to represent the data sources in the presentation of observation model components of the state-space life cycle model for Grande Ronde spring Chinook salmon. All data sources listed here have an explicit likelihood component and were thus assumed to be observed with error."
 ```
 
-```{r data-table}
+```{r data-table, warning = FALSE}
 tab = read.csv("04-data.csv", allowEscapes = TRUE)
 
 type_key = c(
@@ -870,7 +883,7 @@ tab$Type = type_key[as.character(tab$Type)]
 
 colnames(tab)[4] = "Eq."
 
-kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = data_tab_cap, escape = FALSE, longtable = TRUE) %>%
+my_kable(x = tab[,2:5], caption = data_tab_cap, longtable = TRUE) %>%
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
                 ) %>%
@@ -884,13 +897,13 @@ kable(tab[,2:5], "latex", booktabs = TRUE, linesep = "", caption = data_tab_cap,
   collapse_rows(1, valign = "bottom", latex_hline = "full")
 ```
 
-\clearpage
+\newpage
 
 ```{r equation_tab_cap}
 equation_tab_cap = "Catalog of all equations presented, separated by life phase (freshwater juvenile, ocean juvenile, or freshwater adult) and model component (process model or observation model)."
 ```
 
-```{r equation-table}
+```{r equation-table, warning = FALSE}
 tab = read.csv("05-equations.csv", allowEscapes = TRUE)
 
 component_key = c(
@@ -904,7 +917,7 @@ tab$Eq. = unname(sapply(tab$Eq., handle_eqs))
 tab$Component = component_key[as.character(tab$Component)]
 colnames(tab)[2] = "Model Component"
 
-kable(tab[,2:4], "latex", booktabs = TRUE, linesep = "", caption = equation_tab_cap, escape = FALSE, longtable = TRUE, align = "lrl") %>%
+my_kable(x = tab[,2:4], caption = equation_tab_cap, longtable = TRUE, align = "lrl") %>%
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
                 ) %>%
@@ -919,13 +932,13 @@ kable(tab[,2:4], "latex", booktabs = TRUE, linesep = "", caption = equation_tab_
   collapse_rows(1, valign = "bottom", latex_hline = "major")
 ```
 
-\clearpage
+\newpage
 
 ```{r}
 year_tab_caption = "Year of return based on age of return and brood year. For example, adults that were progeny of spawners in 2000 (their brood year) returned to spawn in 2003 as age-3, 2004 as age-4, and 2005 as age-5 (shown in blue). The return years with red brood years show the age-specific return abundances that were estimated because no previous states (e.g., parr, smolt) were available for these early brood years (see Section \\ref{return-to-columbia-river} for more details)."
 ```
 
-```{r year-table}
+```{r year-table, warning = FALSE}
 
 return_year = 1991:2022
 age_3 = 1988:2019
@@ -945,8 +958,8 @@ tab[,-1][tab[,-1] == 2000 & !is.na(tab[,-1])] = kableExtra::cell_spec(tab[,-1][t
 
 tab[is.na(tab)] = "$\\vdots$"
 
-kable(tab, "latex", booktabs = TRUE, align = "cccc", linesep = "", col.names = c("Return Year", "Age-3", "Age-4", "Age-5"), escape = FALSE,
-      caption = year_tab_caption, row.names = FALSE) %>%
+my_kable(x = tab, align = "cccc", col.names = c("Return Year", "Age-3", "Age-4", "Age-5"), 
+         caption = year_tab_caption, row.names = FALSE) %>%
   kable_styling(full_width = FALSE) %>%
   add_header_above(c(" " = 1, "Brood Year of Returning Adults by Age" = 3), bold = TRUE) %>%
   row_spec(0, bold = TRUE) %>%
@@ -954,10 +967,10 @@ kable(tab, "latex", booktabs = TRUE, align = "cccc", linesep = "", col.names = c
   column_spec(2:4, width = "50px")
 ```
 
-\clearpage
+\newpage
 
 \listoftodos
 
-\clearpage
+\newpage
 
 # References {-}
