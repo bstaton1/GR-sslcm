@@ -44,3 +44,7 @@
 # ignore .docx files in math description subdirectory
 100-math-description/*.docx
 100-math-description/*.tmp
+
+# ignore the .bib file in math description subdirectory
+# file is auto updated by zotero
+100-math-description/GR-sslcm-cites.bib
