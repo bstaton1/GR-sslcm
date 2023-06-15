@@ -1,6 +1,6 @@
 ---
-title: "\\textsc{Mathematical Description}"
-subtitle: "\\textsc{State-Space Life Cycle Model for Grande Ronde Spring Chinook Salmon}"
+title: "Mathematical Description"
+subtitle: "State-Space Life Cycle  Model for Grande Ronde Spring Chinook Salmon"
 output: 
   bookdown::pdf_document2:
     keep_tex: true
@@ -14,9 +14,10 @@ geometry: [top=1in,bottom=1in,left=0.25in,right=1.75in]
 linkcolor: cyan
 urlcolor: cyan
 citecolor: black
-bibliography: cites.bib
-link-citations: true
+bibliography: "GR-sslcm-cites.bib"
+link-citations: "`r ifelse(knitr::is_latex_output(), 'true', 'false')`"
 biblio-style: apalike
+csl: "https://raw.githubusercontent.com/citation-style-language/styles/master/canadian-journal-of-fisheries-and-aquatic-sciences.csl"
 editor_options: 
   chunk_output_type: console
 header-includes:
@@ -41,14 +42,6 @@ header-includes:
   - \titleformat{\subsubsection}{\itshape}{\thesubsubsection}{1em}{}
   - \renewcommand{\contentsname}{Table of Contents}
   - \renewcommand{\eqref}[1]{\ref{#1}}
-  - \renewcommand*{\log}{\mathrm{log}\hspace{-0.20em}}
-  - \renewcommand*{\max}{\mathrm{max}\hspace{-0.20em}}
-  - \newcommand{\logit}{\mathrm{logit}\hspace{-0.20em}}
-  - \newcommand{\ilogit}{\mathrm{logit}^{-1}\hspace{-0.20em}}
-  - \newcommand{\MVNdist}{\mathcal{MVN}\hspace{-0.20em}}
-  - \newcommand{\Ndist}{\mathcal{N}\hspace{-0.20em}}
-  - \newcommand{\Bdist}{\mathcal{B}\hspace{-0.20em}}
-  - \newcommand{\Mdist}{\mathcal{M}\hspace{-0.20em}}
   - \newcommand{\fall}{\mathrm{fall}}
   - \newcommand{\spring}{\mathrm{spring}}
   - \newcommand{\NOR}{\mathrm{NOR}}
@@ -64,6 +57,7 @@ header-includes:
 knitr::opts_chunk$set(echo = FALSE)
 library(knitr)
 library(kableExtra)
+library(officedown)
 ```
 
 ```{r my-kable-fn}
@@ -75,6 +69,55 @@ my_kable = function(x, ...) {
   # build the kable with supplied options as well as my fixed defaults
   kable(x = x, format = kable_format, escape = FALSE, booktabs = TRUE, linesep = "", ...)
 }
+```
+
+```{r bookdown-post-latex, eval = TRUE}
+# https://github.com/rstudio/bookdown/issues/8#issuecomment-564689497
+# easy method of placing bibliography somewhere other than at the end of the document always
+options(bookdown.post.latex = function(x) {
+  
+  # x is the content of the LaTeX output file
+  # str_replace can take a named vector of patterns and replacements
+  replace_patterns <- c(
+    "\\\\bibliography\\{GR-sslcm-cites.bib\\}" = "",         # Remove the default bibliography
+    "^BIB HERE$" = "\\\\bibliography{GR-sslcm-cites.bib}"    # Add it in a new spot
+  )
+  
+  stringr::str_replace_all(x, replace_patterns)
+})
+```
+
+```{r highlight-fn}
+highlight = function(note) {
+  if (knitr::is_latex_output()) {
+    paste0("\\hl{", note, "}")
+  } else {
+    ft = officer::fp_text(shading.color = "yellow", font.family = "Times New Roman", font.size = 11)
+    officer::ftext(toString(note), prop = ft)
+  }
+}
+```
+
+```{r new-commands, results = "asis"}
+# these are shortcut math mode commands
+# the hspace helps the appearance in latex, but it won't render to word
+# the code below removes it if rendered to word output
+commands = c(
+  "\\renewcommand*{\\log}{\\mathrm{log}\\hspace{-0.20em}}",
+  "\\renewcommand*{\\max}{\\mathrm{max}\\hspace{-0.20em}}",
+  "\\newcommand{\\logit}{\\mathrm{logit}\\hspace{-0.20em}}",
+  "\\newcommand{\\ilogit}{\\mathrm{logit}^{-1}\\hspace{-0.20em}}",
+  "\\newcommand{\\MVNdist}{\\mathcal{MVN}\\hspace{-0.20em}}",
+  "\\newcommand{\\Ndist}{\\mathcal{N}\\hspace{-0.20em}}",
+  "\\newcommand{\\Bdist}{\\mathcal{B}\\hspace{-0.20em}}",
+  "\\newcommand{\\Mdist}{\\mathcal{M}\\hspace{-0.20em}}"
+)
+
+if (!is_latex_output()) {
+  commands = stringr::str_remove(commands, "\\\\hspace\\{-0\\.20em\\}")
+}
+
+cat(commands, sep = "\n")
 ```
 
 \pagenumbering{gobble}
@@ -705,6 +748,10 @@ which we used as the multinomial expected frequency to build the likelihood by a
 
 \newpage
 
+`r if (is_latex_output()) "BIB HERE"`
+
+`r if (is_latex_output()) "\\newpage"`
+
 # Figures {-}
 
 \rhead{\empty}
@@ -719,7 +766,7 @@ diagram_fig_cap = "Schematic of the primary states and transitions among states 
 include_graphics("GR-sslcm-diagram.pdf")
 ```
 
-\newpage
+`r if (is_latex_output()) "\\newpage"`
 
 \missingfigure{Create a map figure to go here.}
 
@@ -845,6 +892,11 @@ footnote_key = c(
 colnames(tab)[3] = "Prior\\textsuperscript{1,2,3,4,5,6}"
 colnames(tab)[4] = "Eq."
 
+if (!is_latex_output()) {
+  tab$Description = stringr::str_replace_all(tab$Description, "``", '"')
+  tab$Description = stringr::str_replace_all(tab$Description, "''", '"')
+}
+
 my_kable(x = tab[,2:5], caption = param_tab_cap, longtable = TRUE) %>%
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
@@ -968,9 +1020,4 @@ my_kable(x = tab, align = "cccc", col.names = c("Return Year", "Age-3", "Age-4",
 ```
 
 \newpage
-
-\listoftodos
-
-\newpage
-
-# References {-}
+`r if (!is_latex_output()) "# References {-}"`
