@@ -7,16 +7,16 @@ Phase,Component,Eq.,Description
 1,process,beta-random,Parr capacity as a stochastic function of weighted usable habitat length
 1,process,phi-E-Pb-random,Add stochasticity to egg-to-parr survival
 1,process,get-Pb,Obtain total parr recruitment
-1,process,get-L-Pb-dot,Obtain expected mean parr length as a deterministic function of egg density
-1,process,L-Pb-random,Add stochasticity to mean parr length
+1,process,get-L-Pb-dot,Obtain expected parr mean length as a deterministic function of egg density
+1,process,L-Pb-random,Add stochasticity to parr mean length
 1,process,get-Pa,Obtain migratory strategy-specific parr abundance
 1,process,pi-random,Add stochasticity to migratory strategy apportionment rates
 1,process,get-phi-Pa-Mb-dot,Obtain expected overwinter survival; related to parr mean length
 1,process,phi-Pa-Mb-random,Add stochasticity to overwinter survival
 1,process,get-Mb-NOR,Obtain natural-origin smolt abundance prior to out-of-basin migration
-1,process,get-Delta-L-Pb-L-Mb-dot,Obtain expected multiplicative change from mean parr length to mean smolt length
-1,process,Delta-L-Pb-L-Mb-random,Add stochasticity to multiplicative change mean parr length to mean smolt length
-1,process,get-L-Mb,Obtain mean smolt length
+1,process,get-Delta-L-Pb-L-Mb-dot,Obtain expected multiplicative change in mean length from parr to smolt
+1,process,Delta-L-Pb-L-Mb-random,Add stochasticity to multiplicative change in mean length from parr to smolt
+1,process,get-L-Mb,Obtain smolt mean length
 1,process,get-phi-Mb-Ma-dot,Obtain expected migration survival from in-basin to LGR
 1,process,phi-Mb-Ma-random,Add stochasticity to migration survival from in-basin to LGR
 1,process,get-Ma,Obtain smolt abundance at LGR
@@ -30,8 +30,8 @@ Phase,Component,Eq.,Description
 1,observation,spring-surv-data,Assumption for spring tagging event survival data likelihood (NOR)
 1,observation,spring-surv-HOR-data,Assumption for spring tagging event survival data likelihood (HOR)
 1,observation,hydro-surv-data,Assumption for migration through hydrosystem survival data likelihood
-1,observation,L-Pb-data,Assumption for mean parr length data likelihood
-1,observation,L-Mb-data,Assumption for mean smolt length data likelihood
+1,observation,L-Pb-data,Assumption for parr mean length data likelihood
+1,observation,L-Mb-data,Assumption for smolt mean length data likelihood
 2,process,phi-O0-O1-random,Add stochasticity to first year ocean survival
 2,process,get-phi-O-HOR,Obtain HOR ocean survival
 2,process,psi-random,Add stochasticity to maturation rates
@@ -40,7 +40,6 @@ Phase,Component,Eq.,Description
 3,process,phi-Rb-Ra-random,Add stochasticity to migration survival from BON to LGR
 3,process,get-Ra,Obtain return abundance to natal tributary
 3,process,get-Sb,Obtain abundance of potential spawners reaching spawning grounds
-3,process,phi-Sb-Sa-random,Add stochasticity to pre-spawn survival
 3,process,get-Sa,Obtain abundance of successful spawners
 3,observation,Ra-data,Assumption for natal tributary return abundance data likelihood
 3,observation,upstream-surv-data,Assumption for migration from BON to LGR survival data likelihood
