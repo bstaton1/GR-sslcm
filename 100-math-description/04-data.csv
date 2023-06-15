@@ -15,10 +15,10 @@ Phase,Type,Symbol,Eqs.,Description
 1,surv,"$\\hat{\\sigma}_{\\phi^{M^{b} \\rightarrow M^{a}}_{y,i=\\spring,o=\\HOR,j}}$",spring-surv-HOR-data,Logit-normal SE of estimated survival of hatchery-origin smolt releases to LGR
 1,surv,"$\\hat{\\phi}^{M^{a} \\rightarrow O^{0}}_{y,o}$",hydro-surv-data,Estimated aggregate survival of smolt through hydrosystem
 1,surv,"$\\hat{\\sigma}_{\\phi^{M^{a} \\rightarrow O^{0}}_{y,o}}$",hydro-surv-data,Logit-normal SE of estimated aggregate survival of smolt through hydrosystem
-1,length,"$\\hat{L}^{P{^{b}}}_{y,j}$",L-Pb-data,Estimated mean parr length (mm fork length) at summer tagging
-1,length,"$\\hat{\\sigma}_{L^{P{^{b}}}_{y,j}}$",L-Pb-data,Log-normal SE of estimated mean parr length at summer tagging
-1,length,"$\\hat{L}^{M{^{b}}}_{y,j}$",L-Mb-data,Estimated mean smolt length (mm fork length) at spring tagging
-1,length,"$\\hat{\\sigma}_{L^{M{^{b}}}_{y,j}}$",L-Mb-data,Log-normal SE of estimated mean smolt length at spring tagging
+1,length,"$\\hat{L}^{P{^{b}}}_{y,j}$",L-Pb-data,Estimated parr mean length (mm fork length) at summer tagging
+1,length,"$\\hat{\\sigma}_{L^{P{^{b}}}_{y,j}}$",L-Pb-data,Log-normal SE of estimated parr mean length at summer tagging
+1,length,"$\\hat{L}^{M{^{b}}}_{y,j}$",L-Mb-data,Estimated smolt mean length (mm fork length) at spring tagging
+1,length,"$\\hat{\\sigma}_{L^{M{^{b}}}_{y,j}}$",L-Mb-data,Log-normal SE of estimated smolt mean length at spring tagging
 3,abund,"$\\hat{R}^{a}_{y,j}$",Ra-data,Estimated total adult return to tributary (all ages/origins)
 3,abund,"$\\hat{\\sigma}_{R^{a}_{y,j}}$",Ra-data,Log-normal SE of estimated total adult return to tributary
 3,surv,"$\\hat{x}^{\\mathrm{BON}}_{y,o}$",upstream-surv-data,Count of Grande Ronde-origin PIT-tagged adults detected at BON

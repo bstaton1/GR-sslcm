@@ -8,9 +8,11 @@ output:
     toc_depth: 3
     number_sections: true
     citation_package: natbib
-  # bookdown::word_document2
+  # bookdown::word_document2:
+  #   reference_docx: "C:/Users/bstaton/Desktop/Staton/3_general/Rmd-docx-template/Rmd-docx-template-basic-TNR.docx"
+  #   number_sections: true
 fontfamily: mathpazo
-geometry: [top=1in,bottom=1in,left=0.25in,right=1.75in]
+geometry: [top=1in,bottom=1in,left=1in,right=1in]
 linkcolor: cyan
 urlcolor: cyan
 citecolor: black
@@ -21,12 +23,15 @@ csl: "https://raw.githubusercontent.com/citation-style-language/styles/master/ca
 editor_options: 
   chunk_output_type: console
 header-includes:
+  - \usepackage{natbib}
+  - \usepackage{soul}
+  - \setcitestyle{aysep={}}
+  - \usepackage[hang,flushmargin,bottom]{footmisc}
   - \usepackage{microtype}
   - \usepackage{float}
   - \usepackage{xcolor}
-  - \definecolor{my-blue}{HTML}{E6F0FF}
-  - \usepackage[textwidth=1.5in]{todonotes}
-  - \setuptodonotes{backgroundcolor=my-blue,textcolor=black,linecolor=ProcessBlue,bordercolor=my-blue,size=footnotesize}
+  - \usepackage[textwidth=1.5in,tickmarkheight=3pt]{todonotes}
+  - \setuptodonotes{backgroundcolor=black!40,textcolor=white,linecolor=black!65,bordercolor=black!65,size=footnotesize}
   - \usepackage[labelfont={bf,sc},labelsep=period]{caption}
   - \captionsetup{width=\textwidth}
   - \usepackage{fancyhdr}
@@ -126,54 +131,53 @@ cat(commands, sep = "\n")
 
 # Model Overview
 
-The purpose of the state-space life cycle model for Grande Ronde spring Chinook salmon is to synthesize data sets that have been collected as part of routine monitoring programs into a self-contained and internally consistent population dynamics model.
-Such a synthesis can provide richer insights about unobserved quantities (e.g., total parr recruitment abundance) and the relationships between them than allowed by more piecemeal analyses.
-Further, because the model estimates expected values and the magnitude of inter-annual variability in a time series framework, the output will be useful for structuring simulation models of future population dynamics to evaluate different management strategies.
-Although this is the ultimate goal and purpose of developing the state-space life cycle model described herein, we do not discuss this concept further, as it is beyond the scope of the statistical population dynamics model, which is the topic of this document.
+The purpose of developing the state-space life cycle model for Grande Ronde spring Chinook salmon is to estimate posterior distributions of population dynamics parameters (e.g., average survival, rearing capacity, coefficients of relationships linking life stages, etc.).
+These posterior distributions can ultimately be sampled from to parameterize simulation models that evaluate habitat restoration and climate change scenarios grounded in empirical monitoring data.
+The model tracks the cohort-specific abundance of fish through various life stages and links these "state variables" over time across cohorts via production relationships (e.g., spawners produce eggs) or within cohorts via transition probabilities (e.g., parr become smolt after surviving overwinter).
+The model integrates many different data sources and fits to them simultaneously in a single joint likelihood; these data sources include rotary screw trap passage estimates, a variety of PIT tag-derived survival estimates, mean length data, hatchery smolt releases, adult return abundance, and the composition of adult returns by age and origin; other data sources that are used but are not fitted to include hatchery smolt release abundances, harvest information, fecundity estiamtes, and numbers of returning adults removed for hatchery operations.
+Four spawning populations within the Grande Ronde basin are simultaneously analyzed: Catherine Creek (CAT), Lostine River (LOS), Minam River (MIN) and the upper Grande Ronde River (UGR; `r highlight("FIGURE REFERENCE: map")`), and where relevant, the model stratifies life stages by juvenile migratory strategy (fall vs. spring migrants), rearing origin type (spawned in hatchery vs. natural setting), and adult return age (total age of 3, 4, or 5 years).
 
-The state-space life cycle model tracks the fates of multiple cohorts of fish from egg to adulthood within a statistical population dynamics model.
-The model receives input data in the form of empirical observations or pre-processed output from other models (e.g., to derive survival rates from PIT tag records) and estimates unknown parameters that must be internally consistent with the data and one another.
-The model is considered "state-space" because it captures two discrete types of variability: (_i_) process noise, i.e., variability in the biological and environmental processes that produce population dynamics and outcomes and (_ii_) observation error, i.e., variability in the measurement processes that result in the observed data representing an imperfect perception of the true value being measured.
-As such, the model is inherently a time series model: spawners in one year produce eggs, which move through several life stages and ultimately return as spawners in future years -- it is the same pool of fish at one life stage that is decremented (via survival rate transition probabilities) to become a pool of fish used in the calculations for a later stage of the life cycle.
-We have described the life cycle model calculations as divided into three distinct life "phases" (Figure \@ref(fig:diagram)): freshwater juvenile, ocean juvenile, and freshwater adult.
+Central to the notion of a "state-space" model is the partitioning of variability in the observed data sets into two types: (_i_) process noise, i.e., variability in the biological and environmental processes that produce population outcomes and (_ii_) observation error, i.e., variability in the measurement processes that result in an imperfect perception of the true value being measured.
+This is accomplished by (_i_) specifying a set of process equations that represent expected population responses to intrinsic (e.g., density affects survival) and extrinsic (e.g., quantity of available habitat affects capacity) drivers, (_ii_) adding process noise to obtain the "realized" or "latent" (i.e., true but partially or imperfectly observed) state, and (_iii_) assuming the data values have been observed conditioned on the latent values.
+The model does not attempt to estimate the magnitude of both process and observation noise variance; it is supplied estimates of the latter and attributes the remaining noise unexplained by process equations to process noise.
+This aspect critical because only variability due to the processes is of interest for parameterizing simulation models of future population dynamics, yet the data sets vary in their precision.
+Further, the state-space model is inherently a time series model, making it suitable for handling the time lags and linkages involved with modeling age-structured populations.
 
-The model has several dimensions and the majority of processes are assumed to operate differently (i.e., have varying numerical values) along each dimension. These include:
+Bayesian methods were used to fit the state-space life cycle model to data, as it is intuitive for the necessary integration over the many layers of uncertainty (i.e., process vs. observational variability).
+Further, Bayesian inference provides an intuitive framework to constrain parameters to take on only values known _a priori_ to be plausible -- mostly uninformative priors were intentionally used but several cases involved priors that were moderately or strongly informative.
+An additional benefit of using the Bayesian framework is the seamless propagation of uncertainty from estimated parameters to derived quantities -- all unknown quantities receive a posterior distribution.
+Markov Chain Monte Carlo methods [MCMC, implemented via the JAGS v4.3.1 probabilistic programming language, @plummer-2003] were used to sample from the joint posterior distribution.
 
-* **Age of Return** -- Anadromous Chinook salmon in the Grande Ronde basin return predominately as age-3, age-4, or age-5 adults. This means that monitoring activities in one year of adult returns sample fish that are progeny from from 3 consecutive brood (i.e., i.e., spawning) years, creating time linkages in the time series that are important to account for.
-* **Origin** -- Adults returning in any given year may be the result of either natural spawning/rearing in the wild or via captive spawning/rearing in a hatchery setting. These are critical to track separately because the productivity and capacity of naturally spawning salmon are key outputs of the model.
-* **Juvenile Migratory Strategy** -- Grande Ronde spring Chinook salmon juveniles exhibit two main phenological migratory strategies which may have different vital rates and require additional complexity in the observation model.
-* **Population** -- Four tributaries of the Grande Ronde River have been monitored using largely consistent methods for nearly three decades; these include Catherine Creek, Lostine River, Minam River, and Upper Grande Ronde River. We track the abundance and survival of each separately because they are monitored separately and local environmental conditions and/or genetic adaptations may result in population dynamics differing in terms of productivity, capacity, or overall life cycle fitness. 
-
-We used the Bayesian mode of inference to fit the model to data, as it is intuitive for the necessary integration over the many layers of uncertainty (i.e., process vs. observational variability).
-Further, Bayesian inference provides an intuitive framework to constrain parameters to take on only values known _a priori_ to be plausible -- we intentionally employ nearly exclusively uninformative prior information, but in several cases we were required to use auxiliary information in the form of reasonably strong priors (Table \@ref(tab:param-table)).
-An additional benefit of using the Bayesian framework is the seamless propagation of uncertainty from estimated parameters to derived quantities (of which there are many) -- all unknown quantities receive a posterior distribution.
-We employed Markov Chain Monte Carlo methods (implemented via the JAGS probabilistic programming language) to sample from the joint posterior distribution of all unknown quantities in the model.
+`r if (is_latex_output()) "\\newpage"`
 
 # Syntactical and Statistical Conventions
 
-We have striven for consistency in our mathematical representation of quantities in the model but this has created somewhat non-intuitive conventions which require devoted explanation.
-All quantities are defined (i.e., symbology and the specific equations that use them) in Tables \@ref(tab:index-table), \@ref(tab:symbol-table), \@ref(tab:param-table), and \@ref(tab:data-table) for reference and a catalog of all equations is provided in Table \@ref(tab:equation-table).
+The state-space life cycle model symbology aims for consistency in mathematical representation of quantities but this has created some conventions that require devoted explanation.
+All quantities are defined in Tables \@ref(tab:index-table), \@ref(tab:symbol-table), \@ref(tab:param-table), and \@ref(tab:data-table) and a catalog of all equations is provided in Table \@ref(tab:equation-table).
 
-* For simplicity, we use the term "adult" to refer to any mature individual returning to spawn including age-3 "jacks".
-* Life stage-specific states are defined by capital letters, e.g., parr ($P$), smolt ($M$), or spawners ($S$)
-* Parameters (e.g., survival terms, non-survival transition probabilities, coefficients in relationships, etc.) are denoted by Greek symbols, e.g., $\phi$ for survival rates or $\psi$ for maturation rates.
-* Subscripts denote the index of a quantity, e.g., $y$ denotes a specific year and $j$ a specific population (see Table \@ref(tab:index-table)).
-* We use the convention $b$ to indicate "before event" and $a$ to indicate "after event" for a quantity that occurs at the same life stage. E.g., $M^{b}$ represents smolt abundance _before_ out-of-basin migration and $M^{a}$ represents smolt abundance _after_ out-of-basin migration. As such, superscripts are most often used syntactically, not mathematically. E.g., $M^{b}$ is not "$M$ raised to the power $b$"; if we must raise the quantity $M^{b}$ to the power $c$, it will be written $(M^{b})^c$.
+* For simplicity, the term "adult" is used to refer to any mature individual returning to spawn, including age-3 "jacks".
+* Life stage-specific states are defined by capital letters, these include: eggs ($E$), parr ($P$), smolt ($M$), ocean juveniles ($O$), adults returning to river ($R$), or adults with potential to spawn ($S$).
+* Parameters (e.g., survival terms, non-survival transition probabilities, coefficients in relationships, etc.) are predominately denoted by Greek symbols and are used consistently where possible, e.g., $\phi$ for survival rates or $\psi$ for maturation rates.
+* Subscripts denote placement of a quantity in a larger array (i.e., the index), e.g., $y$ denotes a specific year and $j$ a specific population (see Table \@ref(tab:index-table)).
+* Superscripts are most often used syntactically to further describe the quantity, not in a mathematical sense.
+E.g., $M^{b}$ represents smolt abundance _before_ out-of-basin migration and $M^{a}$ represents smolt abundance _after_ out-of-basin migration.
+As such, $M^{b}$ is not "$M$ raised to the power $b$"; if the quantity $M^{b}$ must be raised to the power $c$, it will be written $(M^{b})^c$.
 * Survival terms to transition from state $A$ to state $B$ in year $y$ for population $j$ are denoted by $\phi^{A \to B}_{y,j}$.
-* We denote the expected value of a stochastic process with a dot, e.g., $\dot{\phi}^{A \to B}_j$ -- this is the value expected in the absence of process variability.
-* In some cases, we specify calculations performed on vectors rather than scalars (i.e., a scalar being a single element from a vector or higher-dimensional array). Vectors are denoted via boldface, and the dimension of the vector is denoted using 1:$n$ syntax. E.g., $\boldsymbol{\phi}^{A \to B}_{y,1:n_j}$ represents a vector of survival terms from state $A$ to state $B$ in year $y$, where each element of the vector represents the value for each population.
+* The expected value of a stochastic process is expressed by a dot, e.g., $\dot{\phi}^{A \to B}_j$ -- this is the value expected in the absence of process (biological/environmental) variability.
+* In some cases, calculations are performed on vectors rather than scalars.
+Vectors are denoted via boldface, and the dimension of the vector is denoted using 1:$n$ syntax. E.g., $\boldsymbol{\phi}^{A \to B}_{y,1:n_j}$ represents a vector of parameters representing the transition (survival) probability from state $A$ to state $B$ in year $y$, where each element stores the value for each population.
 * Mathematical operations performed on two vectors $\boldsymbol{C}$ and $\boldsymbol{D}$ are performed in an element-wise fashion, and the resulting vector will have identical dimensions to both $\boldsymbol{C}$ and $\boldsymbol{D}$.
 * In some cases, a calculation is performed differently for a subset of the possible index values. For example, to denote that $k$ should take on only the values of 1 and 3 (not 2), we would write, $k \in [1,3]$.
 * $\log\left(x\right)$ represents the natural logarithm of $x$ and it is implied that the constraint $x > 0$ is satisfied.
 * $\logit\left(p\right)$ represents the log odds of $p$ (i.e., $\log\left[p/(1-p)\right])$) and it is implied that the constraint $0 < p < 1$ is satisfied.
-* All quantities that have been empirically observed (or externally estimated from empirically observed data, and supplied to the model as "data") and are used in a likelihood component are denoted by a "hat", e.g., a survival term ($\hat{\phi}^{A \to B}_{y,j}$) and its logit-normal standard error ($\hat{\sigma}_{\phi^{A \to B}_{y,j}}$, which we use as a direct estimate of observation error variability).
-* Stochastic processes are represented by $x_{y} \sim \mathcal{F}(\theta_{1}, \theta_{2})$, where $x_{y}$ is a random variable, $\mathcal{F}$ is some probability density (or mass) function ($\mathcal{N}$ is univariate normal, $\mathcal{MVN}$ is multivariate normal, $\mathcal{B}$ is binomial, and $\mathcal{M}$ is multinomial), and $\theta_{1}$ and $\theta_{2}$ are parameters of the probability distribution; generally $\theta_{1}$ is a location parameter specifying the expected value of $x_{y}$ and $\theta_{2}$ is a dispersion parameter specifying the variability of $x_{y}$ around the expected value.
+* All quantities are used in a likelihood component are denoted by a "hat", e.g., a survival term ($\hat{\phi}^{A \to B}_{y,j}$) and its logit-normal standard error ($\hat{\sigma}_{\phi^{A \to B}_{y,j}}$, which is used as a direct estimate of observation error variability).
+* Stochastic processes are represented by $x_{y} \sim \mathcal{F}(\theta_{1}, \theta_{2})$, where $x_{y}$ is a random variable, $\mathcal{F}$ is some probability density (mass) function ($\mathcal{N}$ is univariate normal, $\mathcal{MVN}$ is multivariate normal, $\mathcal{B}$ is binomial, and $\mathcal{M}$ is multinomial), and $\theta_{1}$ and $\theta_{2}$ are parameters of the probability distribution.
 
-Process noise is introduced by assuming year-specific values are multivariate logit-normal random variables around the deterministic value.
-This is done to enable modeling covariability in process noise among populations (or origins, in the few cases where population structure is not modeled).
-The covariance matrix of these random variables are denoted by $\Sigma$, and have a common structure for all model components.
+Process noise is modeled by assuming year-specific values are multivariate logit-normal random variables around the deterministic value.
+This enables modeling covariability in demographic rates [@riecke-etal-2019; @bouchard-etal-2022] among populations or origins, which is advantageous for estimation involving incompletely overlapping time series and quantifies synchrony in demographic rates which influences the stability of the return aggregated across populations [@thorson-etal-2014; @connors-etal-2022].
+The covariance matrices of these random variables are denoted by $\Sigma$, and have a common structure for all model components.
 Take the hypothetical survival term $\phi^{A \to B}_{y,j}$ as an example.
-We denote its random variability across years and populations as:
+The random process introducing inter-annual variability and inter-population covariability is expressed as:
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{A \to B}_{y,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{A \to B}_{y,1:n_j}\right), \Sigma_{\phi^{A \to B}} \right]
@@ -194,7 +198,7 @@ where $\Sigma_{\phi^{A \to B}}$ is an $n_j \times n_j$ matrix constructed of pop
 (\#eq:generic-Sigma4by4)
 \end{equation}
 
-In cases where a quantity varies annually and is different by origin but not by population, $\Sigma$ would have dimensions $n_o \times n_o$:
+In cases where a quantity varies annually and covaries by origin but is identical across populations, $\Sigma_{\phi^{A \to B}}$ would have dimensions $n_o \times n_o$:
 
 \begin{equation}
 \left[
@@ -206,8 +210,8 @@ In cases where a quantity varies annually and is different by origin but not by 
 (\#eq:generic-Sigma2by2)
 \end{equation}
 
-We estimated these covariance matrices by assigning their inverse ($\Sigma^{-1}$) a scaled Wishart prior distribution (Table \@ref(tab:param-table)).
-Although the stochastic process requires the $\Sigma$ term, it is the component $\sigma$ and $\rho$ terms that we were interested in for inference.
+These covariance matrices were estimated by assigning their inverse ($\Sigma^{-1}$) a scaled Wishart prior distribution [@gelman-etal-2014; @plummer-2017, Table \@ref(tab:param-table)].
+Although the stochastic process requires the $\Sigma$ term, it is the component $\sigma$ and $\rho$ terms that were of interest for inference.
 
 \clearpage
 
@@ -217,29 +221,29 @@ Although the stochastic process requires the $\Sigma$ term, it is the component 
 
 ### Egg Production, Parr Recruitment, and Parr Mean Length
 
-We begin our description of the life cycle at the egg stage immediately after spawning.
-We assumed total egg production was the sum product of age-specific spawner abundance (from eq. \@ref(eq:get-Sa), below), proportion female, and fecundity:
+The life cycle begins at the egg stage immediately after spawning.
+Total egg production was the sum product of age-specific spawner abundance ($S^{a}_{y,k,o,j}$, from eq. \@ref(eq:get-Sa), below), proportion female-at-age ($\Omega_k$), and fecundity-at-age ($f_{y,k,j}$):
 
 \begin{equation}
 E_{y,j} = \sum_o^{n_o} \sum_k^{n_k} S^{a}_{y,k,o,j} \cdot \Omega_{k} \cdot f_{y,k,j}
 (\#eq:get-E)
 \end{equation}
 
-We assumed that spawners age-4 or age-5 were 50% female and age-3 spawners were all male (i.e., $\Omega_{k=1} = 0;\;\Omega_{k \in [2,3]} = 0.5$; approximately equal to values estimated from carcass data) and estimated fecundity ($f_{y,k,j}$) from length-fecundity relationships based on Grande Ronde-origin hatchery broodstock.
-We supplied both quantities to the model assuming no error or inter-annual variability.
+Spawners of age-4 or age-5 were assumed to be 50% female and age-3 spawners were assumed 100% male (i.e., $\Omega_{k=1} = 0;\;\Omega_{k \in [2,3]} = 0.5$; approximately equal to values estimated from carcass data).
+Fecundity was predicted from length-fecundity relationships based on Grande Ronde-origin hatchery broodstock and time-varying mean length-at-age data.
+Both $\Omega_k$ and $f_{y,k,j}$ were assumed known without error.
 
-We assumed expected egg-to-parr survival was density-dependent following a Beverton-Holt relationship with productivity parameter $\alpha_j$ and capacity parameter $\beta_j$:
+Expected egg-to-parr survival was assumed to be a density-dependent process following Beverton-Holt dynamics with "productivity" parameter $\alpha_j$ (i.e., theoretical maximum egg-to-parr survival probability, in the absence of density effects) and capacity parameter $\beta_j$ (i.e., theoretical maximum parr recruitment abundance):
 
 \begin{equation}
 \dot{\phi}^{E \to P^{b}}_{y,j} = \frac{1}{\frac{1}{\alpha_j} + \frac{E_{y,j}}{\beta_j}}
 (\#eq:get-phi-E-Pb-dot)
 \end{equation}
 
-To facilitate later analyses (not documented here) investigating the effects of habitat restoration and climate change on population dynamics, we modeled parr capacity as a function of weighted usable habitat length ($\WUL_j$)^[Derivation of $\WUL_j$ is too detailed to describe fully here.
+To facilitate later analyses (not documented here) investigating the effects of habitat restoration and climate change on population dynamics, parr capacity was modeled as a function of weighted usable habitat length specific to each population ($\WUL_j$)^[Derivation of $\WUL_j$ is too detailed to describe fully here.
 Briefly, the relative ability of stream segments with different habitat characteristics to hold rearing parr was expressed in terms of the density of fish predicted to reside there by a complex generalized linear mixed model.
 The model was fitted to density estimates based on detectability-adjusted [@staton-etal-2022] summer snorkel counts with local habitat characteristics (e.g., pool frequency, water temperature, large wood density, etc.) as predictor variables.
-The weight of each stream segment was assigned based on the predicted density relative value to the segment with the highest value; $\WUL_j$ was then equal to the sum of segment-specific weight and length within the known spawning and rearing extent for each population.].
-We modeled parr recruitment capacity ($\beta_j$) as a function of this $\WUL_j$ metric:
+The weight of each stream segment was assigned based on the predicted density relative value to the segment with the highest value; $\WUL_j$ was then equal to the sum of segment-specific weight and length within the known spawning and rearing extent for each population.]:
 
 \begin{equation}
 \log\left(\beta_j\right) \sim \Ndist\left[\log\left(\lambda \cdot \WUL_j\right), \sigma_{\beta} \right]
@@ -248,24 +252,25 @@ We modeled parr recruitment capacity ($\beta_j$) as a function of this $\WUL_j$ 
 
 where $\lambda$ is the expected change in parr capacity per 1 km change in weighted usable habitat length, and $\sigma_{\beta}$ is the log-normal standard deviation of variability in this relationship not captured by $\WUL$ values.
 
-We modeled realized (i.e., with process noise) egg-to-parr survival as a multivariate logit-normal random variable around the expected value ($\dot{\phi}^{E \to P^{b}}_{y,j}$) from eq. \@ref(eq:get-phi-E-Pb-dot).
-Rather than assume that inter-annual variability in egg-to-parr survival beyond that explained by density-dependence is completely random across years, we allowed the model to account for serial autocorrelation in egg survival anomalies via a lag-1 autoregressive process [AR(1); coefficient denoted $\kappa^{E \to P^{b}}_{j}$], wherein the white noise portion of the anomaly has covariance matrix $\Sigma_{\phi^{E \to P^{b}}}$:
+Realized (i.e., with process noise) egg-to-parr survival was a multivariate logit-normal random variable around the expected value ($\dot{\phi}^{E \to P^{b}}_{y,j}$) from eq. \@ref(eq:get-phi-E-Pb-dot).
+Rather than assume egg-to-parr survival anomalies (i.e., inter-annual variability in egg-to-parr survival beyond that explained by density-dependence) are completely random across years, a lag-1 autoregressive process [AR(1); coefficient denoted $\kappa^{E \to P^{b}}_{j}$] was used to account for serial autocorrelation:
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{E \to P^{b}}_{y,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{E \to P^{b}}_{y,1:n_j}\right) + \boldsymbol{\kappa}^{E \to P^{b}}_{1:n_j} \cdot \left[\logit\left(\boldsymbol{\phi}^{E \to P^{b}}_{y-1,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{E \to P^{b}}_{y-1,1:n_j}\right)\right], \Sigma_{\phi^{E \to P^{b}}} \right\}
 (\#eq:phi-E-Pb-random)
 \end{equation}
 
-Parr recruitment ($P^{b}_{y,j}$) to the end of summer was then the product of total egg production and egg-to-parr survival:
+Thus, the covariance matrix $\Sigma_{\phi^{E \to P^{b}}}$ captures variability in the white noise (i.e., non-correlated) portion of the survival anomaly.
+Total parr recruitment ($P^{b}_{y,j}$) was then the product of total egg production and egg-to-parr survival:
 
 \begin{equation}
 P^{b}_{y,j} = \phi^{E \to P^{b}}_{y,j} \cdot E_{y,j}
 (\#eq:get-Pb)
 \end{equation}
 
-In addition to density-dependent egg-to-parr survival (eq. \@ref(eq:get-phi-E-Pb-dot)), we also wished to model the size of parr at the end of summer as a function of density.
-It is well known that juvenile survival is related to body size \todo{Insert references about survival being related to size} and if parr size is density-dependent, that would provide the possibility of modeling variability in survival later in life (overwinter rearing and migration out-of-basin) based on a density-dependent process that occurred earlier.
-We modeled expected parr mean length ($\dot{L}^{P^{b}}_{y,j}$, mm fork length) as a power function of egg density, which expressed on the logarithmic scale was:
+In addition to density-dependent egg-to-parr survival (eq. \@ref(eq:get-phi-E-Pb-dot)), there was reason to expect that parr growth/size is density-dependent, both from the literature on salmonid early life history [@grant-imre-2005; @copeland-venditti-2009; @walters-etal-2013; @myrvold-kennedy-2015; @grossman-simon-2020] and previous analyses on Grande Ronde Spring Chinook salmon populations [@cooney-etal-2017; @justice-etal-2023].
+Given the established relationships between size and survival  [@zabel-achord-2004; @hostetter-etal-2015], growth and density [e.g., @grant-imre-2005], and survival and density [@achord-etal-2003; @walters-etal-2013], it is possible that growth could be a useful mechanism to model density effects on post-recruitment juvenile survival.
+Expected parr mean length ($\dot{L}^{P^{b}}_{y,j}$, mm fork length) was modeled as a power function of egg density, which expressed on the logarithmic scale was:
 
 \begin{equation}
 \log\left(\dot{L}^{P^{b}}_{y,j}\right) = \omega_{0,j} + \omega_{1,j} \cdot \log\left(\frac{E_{y,j}}{\WUL_j}\right)
@@ -281,10 +286,10 @@ and the realized parr mean length as being multivariate log-normally distributed
 
 ### Migratory Strategy Apportionment
 
-Like many populations of stream-type spring Chinook salmon in the Columbia River basin \todo{Insert references about other CRB populations displaying the fall/spring migratory strategy}, there is life history diversity among the juveniles with respect to their migratory phenology and habitat types occupied for rearing overwinter.
-Some portion of the summer parr ($P^{b}_{y,j}$)  migrate out of the headwaters near where they were spawned in the fall and rear farther downstream (termed "fall migrants" and indexed by $i = \fall$) and the remaining portion migrate out the following spring (termed "spring migrants" and indexed by $i = \spring$).
-Due to this difference in migratory phenology, these two groups of fish are monitored separately \todo{Insert a reference to a recent ODFW screw trap monitoring report where it is stated (or implied) that migratory strategies are monitored separately.} depending on when they pass the rotary screw trap located in each tributary\todo{Create a map and include reference it here}.
-To enable building an observation model that could accommodate this feature of the populations in our model, we apportioned summer parr to each of these two strategies:
+Like many populations of stream-type spring Chinook salmon in the Columbia River basin, those in the Grande Ronde display life history diversity with respect to juvenile migratory phenology and overwinter rearing habitat use [copeland-etal-2014].
+Some portion of parr recruits ($P^{b}_{y,j}$)  migrate from the headwaters rearing areas in the fall and rear overwinter farther downstream (termed "fall migrants" and indexed by $i = \fall$) and the remaining portion migrate the following spring during the out-of-basin migration (termed "spring migrants" and indexed by $i = \spring$).
+Due to this difference in migratory phenology, these two groups of fish are monitored separately (`r highlight("REPORT CITATION NEEDED")`) depending on when they pass the rotary screw trap located in each tributary (`r highlight("FIGURE REFERENCE: map")`).
+Separate abundance and survival data in the observation model required that the process model track fish using these strategies separately, thus they were apportioned:
 
 \begin{equation}
 P^{a}_{y,i,j} = P^{b}_{y,j} \cdot \pi_{y,i,j}
@@ -292,51 +297,54 @@ P^{a}_{y,i,j} = P^{b}_{y,j} \cdot \pi_{y,i,j}
 \end{equation}
 
 where $P^{a}_{y,i,j}$ is migratory strategy-specific parr abundance and $\pi_{y,i,j}$ is the proportion that take on each migratory strategy.
-We assumed the expected value of this proportion for fall migrants ($\dot{\pi}_{i = \fall,j}$) was time-constant and modeled the realized values as having a multivariate logit-normal distribution with covariance matrix $\Sigma_{\pi_{i = \fall}}$:
+The expected value of the proportion of fall migrants ($\dot{\pi}_{i = \fall,j}$) was assumed to be time-constant and the realized values were modeled as having a multivariate logit-normal distribution with covariance matrix $\Sigma_{\pi_{i = \fall}}$:
 
 \begin{equation}
 \logit\left(\boldsymbol{\pi}_{y,i = \fall,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\pi}}_{i = \fall,1:n_j}\right), \Sigma_{\pi_{i = \fall}}\right]
 (\#eq:pi-random)
 \end{equation}
 
-Since there are only two migratory strategies, we obtained the proportion that are spring migrants as the complement ($\pi_{y,i = \spring,j} = 1 - \pi_{y,i = \fall,j}$).
+With only two migratory strategies, the proportion that were spring migrants was obtained as the complement: $\pi_{y,i = \spring,j} = 1 - \pi_{y,i = \fall,j}$.
 
 ### Survival to Smolt Stage and Smolt Mean Length
 
-We modeled expected survival from the parr (age-1) to in-basin smolt (age-2) stage (termed "overwinter" survival and denoted by $\dot{\phi}^{P^{a} \to M^{b}}_{y,i,j}$) as a logit-linear function of parr mean length:
+The model assumed that some inter-annual variability in overwinter survival (i.e., the transition from age-1 parr to age-2 smolt prior to out-migration) can be explained by parr mean length^[The assumption that parr length is related to overwinter survival can be relaxed by forcing $\gamma_{1,j}$ in eq. \@ref(eq:get-phi-Pa-Mb-dot) to zero rather than assigning it an uninformative prior distribution; in this case overwinter survival would be assumed to fluctuate around a time-constant expected value.].
+This was achieved by modeling expected overwinter survival (denoted by $\dot{\phi}^{P^{a} \to M^{b}}_{y,i,j}$) as a logit-linear function of parr mean length:
 
 \begin{equation}
 \logit\left(\dot{\phi}^{P^{a} \to M^{b}}_{y,i,j}\right) = \gamma_{0,i,j} + \gamma_{1,j} \cdot L^{*P^{b}}_{y,j}
 (\#eq:get-phi-Pa-Mb-dot)
 \end{equation}
 
-where $L^{*P^{b}}_{y,j}$ is parr mean length scaled and centered by subtracting the historical average observed parr mean length for population $j$ from $L^{P^{b}}_{y,j}$ and dividing by the historical observed standard deviation in mean length across years.
-Then, for each migratory strategy separately, overwinter survival was a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{P^{a} \to M^{b}}}$ (assumed common among migratory strategies):
+where $L^{*P^{b}}_{y,j}$ is parr mean length centered and scaled based on the mean and standard deviation of observed mean lengths (denoted $\hat{L}^{P^{b}}_{y,j}$) across years for population $j$, respectively.
+Thus, $\gamma_{0,i,j}$ represents the expected log-odds of survival for type $i$ in population $j$ in a year with average parr mean length, and $\gamma_{1,j}$ represents the expected change in the log-odds for every additional standard deviation increase in parr mean length.
+Then, for each migratory strategy separately, realized overwinter survival was a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{P^{a} \to M^{b}}}$ (assumed common among migratory strategies):
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{P^{a} \to M^{b}}_{y,i,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{P^{a} \to M^{b}}_{y,i,1:n_j}\right), \Sigma_{\phi^{P^{a} \to M^{b}}}\right]
 (\#eq:phi-Pa-Mb-random)
 \end{equation}
 
-Since hatchery-origin smolts are released into the population in spring (see Section \@ref(hatchery-inputs)), we introduce the origin index ($o$) starting at the in-basin smolt stage prior to out-migration ($M^{b}_{y,i,o,j}$).
-The abundance of natural-origin (indexed by $o=\NOR$) smolt was then:
+The abundance of natural origin smolt (indexed by $o=\NOR$, hatchery-origin smolt releases described in Section \@ref(hatchery-inputs)) before out-migration was then:
 
 \begin{equation}
 M^{b}_{y,i,o=\NOR,j} = P^{a}_{y,i,j} \cdot \phi^{P^{a} \to M^{b}}_{y,i,j}
 (\#eq:get-Mb-NOR)
 \end{equation}
 
-We further wished to use the mean length of these surviving smolt ($L^{M^{b}}_{y,j}$) to later explain variability in survival along the migration out-of-basin.
-Because only spring migrants are measured for smolt mean length in the spring (as they pass the screw trap), we were forced to assume equal lengths for fall migrant smolt and we thus omit the $i$ subscript from these quantities related to smolt mean length.
-Preliminary analyses on the observed mean length data revealed that smolt mean length was positively related with parr mean length, but that the relationship was non-linear.
-To capture this non-linearity, we modeled the expected multiplicative change in mean length between the parr and smolt stage as a log-linear function of (standardized) parr mean length:
+Similar to the use of parr mean length to explain inter-annual variability in overwinter survival, smolt mean length ($L^{M^{b}}_{y,j}$) may be useful for explaining inter-annual variability in out-migration survival.
+Only spring migrant smolt have been measured for mean length (as they pass the screw trap), thus the $i$ subscript is omitted from quantities related to smolt mean length.
+Preliminary analyses revealed that smolt mean length was positively related to parr mean length, but that the relationship was non-linear.
+
+Preliminary analyses on the observed mean length data revealed that smolt mean length was positively related with parr mean length, but that the relationship was non-linear [@justice-etal-2023].
+This non-linearity was captured by modeling the expected multiplicative change in mean length from the parr to smolt stages as a log-linear function of (scaled and centered) parr mean length:
 
 \begin{equation}
 \log\left(\dot{\Delta}^{L^{P^{b}} \to L^{M^{b}}}_{y,j}\right) = \theta_{0,j} + \theta_{1,j} \cdot L^{*P^{b}}_{y,j}
 (\#eq:get-Delta-L-Pb-L-Mb-dot)
 \end{equation}
 
-and obtained the realized multiplicative change in mean length as being multivariate log-normally distributed around $\dot{\Delta}^{L^{P^{b}} \to L^{M^{b}}}_{y,j}$ with covariance matrix $\Sigma_{\Delta^{L^{P^{b}} \to L^{M^{b}}}}$:
+The realized multiplicative change in mean length was multivariate log-normally distributed around $\dot{\Delta}^{L^{P^{b}} \to L^{M^{b}}}_{y,j}$ with covariance matrix $\Sigma_{\Delta^{L^{P^{b}} \to L^{M^{b}}}}$:
 
 \begin{equation}
 \log\left(\boldsymbol{\Delta}^{L^{P^{b}} \to L^{M^{b}}}_{y,1:n_j}\right) \sim \MVNdist\left[\log\left(\boldsymbol{\dot{\Delta}}^{L^{P^{b} \to L^{M^{b}}}}_{y,1:n_j}\right), \Sigma_{\Delta^{L^{P^{b}} \to L^{M^{b}}}}\right]
@@ -352,25 +360,25 @@ L^{M^{b}}_{y,j} = L^{P^{b}}_{y,j} \cdot \Delta^{L^{P^{b}} \to L^{M^{b}}}_{y,j}
 
 ### Hatchery Inputs
 
-For populations with hatchery supplementation (CAT, LOS, and UGR), hatchery-origin smolt releases (assumed known without error \todo{Insert reference to a document that gives info about these smolt releases}) were stored in the variable $M^{b}_{y,i=\spring,o=\HOR,j}$; we assumed no hatchery-origin parr were released the prior year, thus $M^{b}_{y,i=\fall,o=\HOR,j} = 0$.
-For all subsequent life stages, we tracked the abundance (and often survival) of hatchery-origin fish separately from natural-origin fish.
+For populations with hatchery supplementation (CAT, LOS, and UGR), hatchery-origin smolt releases (assumed known without error; `r highlight("REPORT CITATION NEEDED")`) were stored in the variable $M^{b}_{y,i=\spring,o=\HOR,j}$; the very rare occasions in which hatchery-origin parr were released the prior year were ignored, thus $M^{b}_{y,i=\fall,o=\HOR,j} = 0$ for all $y$ and $j$.
+Abundance (and often survival) of hatchery-origin fish was tracked separately from natural-origin fish for all subsequent life stages.
 
 ### Seaward Migration
 
-All in-basin smolt ($M^{b}_{y,i,o,j}$) migrate to the ocean in the spring of the year they become age-2 regardless of their migratory strategy ($i$).
-We divide mortality experienced during this migration into two stages: (_i_) from in-basin to Lower Granite Dam (LGR), the first in a series of eight dams\todo{Insert reference to a document describing dams} encountered in the downstream migration, and (_ii_) from LGR to the ocean.
-For parameter identifiability in mortality stage (_i_), we were required to assume that survival from in-basin to LGR was identical between natural-origin fall and spring migrants (i.e., $\phi^{M^{b} \to M^{a}}_{y,i=\fall,o=\NOR,j} = \phi^{M^{b} \to M^{a}}_{y,i=\spring,o=\NOR,j}$, we thus omit the $i$ dimension when defining these quantities below), but we were able to model natural-origin survival separately from hatchery-origin because they are monitored separately (see Section \@ref(survival-data-sources)).
+The model separates mortality sources experienced during seaward migration into two stages: (_i_) from the natal tributary to Lower Granite Dam (LGR), the first in a series of eight hydroelectric dams encountered during the downstream migration through the Snake and Columbia rivers, and (_ii_) from LGR to the ocean.
+Mortality source (_i_) was not identifiable when separated by migratory strategy, thus it was assumed identical between natural-origin fall and spring migrants (i.e., $\phi^{M^{b} \to M^{a}}_{y,i=\fall,o=\NOR,j} = \phi^{M^{b} \to M^{a}}_{y,i=\spring,o=\NOR,j}$ for all $j$ and $y$); the $i$ dimension is thus omitted when defining these quantities below.
+Both mortality sources were separable by origin type (see Section \@ref(survival-data-sources))
 
-We modeled expected out-of-basin migration survival for natural-origin smolt as a logit-linear function of smolt mean length:
+Expected out-of-basin migration survival for natural-origin smolt was a logit-linear function of smolt mean length:
 
 \begin{equation}
 \logit\left(\dot{\phi}^{M^{b} \to M^{a}}_{y,o=\NOR,j}\right) = \tau_{0,j} + \tau_{1,j} \cdot L^{*M^{b}}_{y,j}
 (\#eq:get-phi-Mb-Ma-dot)
 \end{equation}
 
-where $L^{*M^{b}}_{y,j}$ has been scaled and centered by subtracting the historical average observed smolt mean length for population $j$ from $L^{M^{b}}_{y,j}$ and dividing by the historical observed standard deviation (just as for $L^{*P^{b}}_{y,j}$ for standardized parr mean length).
-For hatchery-origin smolt, we assumed this expected out-of-basin survival term was time-constant (i.e., all $\dot{\phi}^{M^{b} \to M^{a}}_{y,o=\HOR,j}$ were equal within a population).
-For each origin separately, we modeled realized out-of-basin migration survival as a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{M^{b} \to M^{a}}}$ (assumed common across origin types):
+where $L^{*M^{b}}_{y,j}$ has been centered and scaled on the measured smolt mean length values ($\hat{L}^{M^{b}}_{y,j}$), just as for $L^{*P^{b}}_{y,j}$ in eqs. \@ref(eq:get-phi-Pa-Mb-dot) and \@ref(eq:get-Delta-L-Pb-L-Mb-dot).
+For hatchery-origin smolt, expected out-of-basin survival was assumed to be time-constant (i.e., all $\dot{\phi}^{M^{b} \to M^{a}}_{y,o=\HOR,j}$ were equal within a population).
+For each origin separately, realized out-of-basin migration survival was a multivariate logit-normal random variable around the expected value with covariance matrix $\Sigma_{\phi^{M^{b} \to M^{a}}}$ (assumed common across origin types):
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{M^{b} \to M^{a}}_{y,o,1:n_j}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{b} \to M^{a}}_{y,o,1:n_j}\right), \Sigma_{\phi^{M^{b} \to M^{a}}}\right]
@@ -384,8 +392,8 @@ M^{a}_{y,i,o,j} = M^{b}_{y,i,o,j} \cdot \phi^{M^{b} \to M^{a}}_{y,o,j}
 (\#eq:get-Ma)
 \end{equation}
 
-We modeled survival during the downstream migration through the hydrosystem on the Snake and Columbia rivers as a single survival rate, specific to each year and origin but shared among populations ($\phi^{M^{a} \to O^{0}}_{y,o}$).
-We assumed these survival rates were multivariate logit-normal random variables around a time-constant expected value ($\dot{\phi}^{M^{a} \to O^{0}}_{o}$) with covariance matrix $\Sigma_{\phi^{M^{a} \to O^{0}}}$:
+Survival during the downstream migration through the hydrosystem on the Snake and Columbia rivers was modeled as a single survival rate, specific to each year and origin but shared among populations ($\phi^{M^{a} \to O^{0}}_{y,o}$).
+Realized survival rates were multivariate logit-normal random variables around a time-constant expected value ($\dot{\phi}^{M^{a} \to O^{0}}_{o}$) with covariance matrix $\Sigma_{\phi^{M^{a} \to O^{0}}}$:
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{M^{a} \to O^{0}}_{y,1:n_o}\right) \sim \MVNdist\left[\logit\left(\boldsymbol{\dot{\phi}}^{M^{a} \to O^{0}}_{1:n_o}\right), \Sigma_{\phi^{M^{a} \to O^{0}}}\right]
@@ -399,18 +407,22 @@ O^{0}_{y,o,j} = \phi^{M^{a} \to O^{0}}_{y,o} \sum_i^{n_i} M^{a}_{y,i,o,j}
 (\#eq:get-O0)
 \end{equation}
 
-Note the summation across migratory strategies ($i$) in eq. \@ref(eq:get-O0), which indicates that the fates of fish with these different strategies were assumed to be the result of identical processes following arrival to LGR.
+The summation across migration strategies ($i$) in eq. \@ref(eq:get-O0) indicates that the fates of fish with differing migratory strategies were not tracked separately after the $M^{a}_{y,i,o,j}$ stage.
 
 ## Observation Model
 
-The observation model components for the freshwater juvenile life stage were fitted to three primary data types: (_i_) abundance of juveniles passing rotary smolt traps (located in each tributary, \todo{Include reference to document describing methods of juvenile passage estimation}) in either the fall or spring, (_ii_) survival of juveniles from several PIT tagging events to LGR \todo{Include reference to document describing methods of juvenile survival estimation based on PIT tags}, and (_iii_) the mean length of sampled individuals during two of the PIT tagging events \todo{Include reference to document describing methods of juvenile mean length estimation}.
+The observation model components for the freshwater juvenile life stage were fitted to three primary data types: (_i_) abundance of juveniles passing rotary smolt traps (located in each tributary, `r highlight("REPORT CITATION NEEDED")`) in either the fall or spring, (_ii_) survival of juveniles from several PIT-tagging events to LGR (`r highlight("REPORT CITATION NEEDED")`), and (_iii_) the mean length of sampled individuals during two of the PIT-tagging events (`r highlight("REPORT CITATION NEEDED")`).
 For all types, the information supplied to the model were externally compiled estimates (e.g., survival from Cormack-Jolly-Seber models) and the estimated standard error was supplied to the model as a measure of observation error variability.
-A more fully integrated model would involve constructing the likelihood based on the frequency of PIT tag detection histories, however we thought unnecessary given the pre-compiled nature of currently available estimates and their uncertainty  \todo{Consider citing Staton et al. (2017) integrated vs. sequential SSSRA paper here}.
+
+An even more fully integrated model would involve constructing the join likelihood based on the frequency of PIT-tag detection histories.
+This was deemed unnecessary given (_a_) external estimates have been pre-compiled as well as their estimates of uncertainty (thus the model is consistent with published/established estimates), (_b_) much additional observational model complexity would be needed (e.g., detection probabilities), and (_c_) it would be unlikely to lead to greater parameter identifiability in the process model (e.g., allowing $\phi^{M^{b} \to M^{a}}_{y,i=\fall,o=\NOR,j} \ne \phi^{M^{b} \to M^{a}}_{y,i=\spring,o=\NOR,j}$).
+The practice of performing estimation based on raw data versus pre-compiled estimates that are treated as data is recommended to be avoided, especially if the uncertainty in pre-compiled estimates cannot be acknowledged [@brooks-deroba-2015].
+However, @staton-etal-2017a investigated this topic in the context of state-space (adult-to-adult age-structured spawner-recruit) models and found little difference in inferences between models that were integrated to varying degrees with respect to the extent of data pre-compilation, so long as uncertainty from the compilation step is accounted for.
 
 ### Abundance Data Sources
 
 Fish with the fall migratory strategy pass the screw trap in the fall as parr and fish with the spring migratory strategy pass the screw trap the following spring as smolt.
-The estimated passage during these time periods were used in log-normal likelihoods by assuming:
+The estimated passage abundances during these time periods were used in log-normal likelihoods by assuming:
 
 \begin{equation}
 \log\left(\hat{P}^{a}_{y,i=\fall,j}\right) \sim \Ndist\left[\log\left(P^{a}_{y,i=\fall,j} \right), \hat{\sigma}_{P^{a}_{y,i=\fall,j}}\right]
@@ -428,38 +440,42 @@ for the spring screw trap estimate.
 
 ### Survival Data Sources
 
-Natural-origin juveniles have been PIT-tagged during four separate events in most years and populations: (_i_) at the end of summer prior to migratory strategy apportionment, (_ii_) as fall migrant parr pass the screw trap in the fall, (_iii_) at the start of winter in the headwaters (after fall migrants leave, so applies only to spring migrants; also not available for Minam River), and (_iv_) as spring migrant smolt pass the screw trap.
-Hatchery-origin smolt released in the spring have also been PIT-tagged.
+Natural-origin juveniles have been PIT-tagged during four separate events in most years and populations: (_i_) in summer prior to migratory strategy divergence, (_ii_) as fall migrant parr that pass the screw trap in the fall, (_iii_) in winter in the headwaters (after fall migrants leave, thus applies only to spring migrants; also not available for Minam River), and (_iv_) as spring migrant smolt pass the screw trap.
+Hatchery-origin smolt released in the spring were also PIT-tagged prior to release.
 All five of these tag groups have their survival estimated from the time of tagging to their arrival at LGR.
-These estimates (and their associated standard errors) were used in logit-normal likelihoods by assuming:
+These estimates (and their associated standard errors) were used in logit-normal likelihoods by assuming the following for each tag group.
+
+Summer tag group:
 
 \begin{equation}
 \logit\left(\hat{\phi}^{P^{b} \to M^{a}}_{y,j}\right) \sim \Ndist\left[\logit\left(\frac{\sum_{i}^{n_i} M^{a}_{y,i,o=\NOR,j}}{P^{b}_{y,j}}\right),\hat{\sigma}_{\phi^{P^{b} \to M^{a}}_{y,j}}\right]
 (\#eq:summer-surv-data)
 \end{equation}
 
-for the summer tagging group, 
+Fall tag group:
 
 \begin{equation}
 \logit\left(\hat{\phi}^{P^{a} \to M^{a}}_{y,i=\fall,j}\right) \sim \Ndist\left[\logit\left(\frac{M^{a}_{y,i=\fall,o=\NOR,j}}{P^{a}_{y,i=\fall,j}}\right),\hat{\sigma}_{\phi^{P^{a} \to M^{a}}_{y,i=\fall,j}}\right]
 (\#eq:fall-surv-data)
 \end{equation}
 
-for the fall tagging group,
+Winter tag group:
 
 \begin{equation}
 \logit\left(\hat{\phi}^{P^{a} \to M^{a}}_{y,i=\spring,j}\right) \sim \Ndist\left[\logit\left(\frac{M^{a}_{y,i=\spring,o=\NOR,j}}{P^{a}_{y,i=\spring,j} \cdot \phi^{P^{b} \to P^{a}}_{j}}\right),\hat{\sigma}_{\phi^{P^{a} \to M^{a}}_{y,i=\spring,j}}\right]
 (\#eq:winter-surv-data)
 \end{equation}
 
-for the winter tagging group (where $\phi^{P^{b} \to P^{a}}_j$ is a time-constant model-estimated survival from summer tagging to winter tagging for parr that ultimately become spring migrants and $j \in [\CAT, \LOS, \UGR]$), 
+(where $\phi^{P^{b} \to P^{a}}_j$ is a time-constant model-estimated survival from summer tagging to winter tagging for parr that ultimately become spring migrants and $j \in [\CAT, \LOS, \UGR]$).
+
+Spring tag group:
 
 \begin{equation}
 \logit\left(\hat{\phi}^{M^{b} \to M^{a}}_{y,i=\spring,o=\NOR,j}\right) \sim \Ndist\left[\logit\left(\phi^{M^{b} \to M^{a}}_{y,i=\spring,o=\NOR,j}\right),\hat{\sigma}_{\phi^{M^{b} \to M^{a}}_{y,i=\spring,o=\NOR,j}}\right]
 (\#eq:spring-surv-data)
 \end{equation}
 
-for the spring tagging group, and
+Hatchery smolt tag group:
 
 \begin{equation}
 \logit\left(\hat{\phi}^{M^{b} \to M^{a}}_{y,i=\spring,o=\HOR,j}\right) \sim \Ndist\left[\logit\left(\phi^{M^{b} \to M^{a}}_{y,i=\spring,o=\HOR,j}\right),\hat{\sigma}_{\phi^{M^{b} \to M^{a}}_{y,i=\spring,o=\HOR,j}}\right]
@@ -468,11 +484,11 @@ for the spring tagging group, and
 
 for hatchery-origin smolt releases ($j \in [\CAT, \LOS, \UGR]$).
 
-Much quantitative research has been devoted to studying the survival of Chinook salmon smolt migrating through the hydrosystem located on the Snake and Columbia rivers and we thought it best to utilize the findings from some of this research as input data to our modeling effort rather than attempt to have our model freely estimate survival along this migration. Using external estimates of survival here so would give us the flexibility to more freely estimate quantities which have received less directed research, namely ocean survival.
-We used the output from a recent Comparative Survival Study report [@mccann-etal-2020, Table A.1 on page A-20 therein] to serve as empirical observations (with estimates of uncertainty) with which to inform this component of our model.
+Much research has been devoted to studying the survival of Chinook salmon smolts migrating through the hydrosystem on the Snake and Columbia rivers. 
+In particular, the Comparative Survival Study has tracked the survival of a variety of tagging groups going back to the early 2000s; estimates from a recent report [@mccann-etal-2020, Table A.1 on page A-20 therein] were used to serve as empirical observations (with estimates of uncertainty) with which to inform this component of our model.
 Provided by @mccann-etal-2020 are annual estimates of in-stream survival along the migration from LGR through Bonneville Dam (BON); separate time series are available for natural-origin (we used the "Aggregate Wild Chinook" estimates as none were available for Grande Ronde populations only, denoted $\hat{\phi}^{M^{a} \to O^{0}}_{y,o=\NOR}$ here) and for hatchery-origin (we used the "Catherine Creek AP" estimates, denoted $\hat{\phi}^{M^{a} \to O^{0}}_{y,o=\HOR}$ here).
-We treated these estimates as representative of the survival for each population, which implies an assumption that the different populations we model experience similar conditions during this migration and ignores any effect of barge-transporting fish.
-Similar to the other survival data sets, we assumed these estimates are made with logit-normal random error around the life cycle model estimate to build the likelihood:
+These estimates were treated as representative of the survival for each population, which implies an assumption that the different populations experienced similar conditions during this migration and attributes all variability to either random process or observation noise (i.e., no factors known to influence hydrosystem survival such as size, flood pulses, barging intensity were included).
+Similar to the other survival data sets, these estimates were assumed to have been made with logit-normal random error around the process model values to build the likelihood:
 
 \begin{equation}
 \logit\left(\hat{\phi}^{M^{a} \to O^{0}}_{y,o}\right) \sim \Ndist\left[\logit\left(\phi^{M^{a} \to O^{0}}_{y,o}\right),\hat{\sigma}_{\phi^{M^{a} \to O^{0}}_{y,o}}\right]
@@ -481,8 +497,8 @@ Similar to the other survival data sets, we assumed these estimates are made wit
 
 ### Mean Length Data Sources
 
-Upon capture for PIT tagging, individual fish lengths are measured.
-We calculated the mean length (and the associated standard errors) of all captured fish (tagged and untagged; only fish $\ge$ 55mm can receive a PIT tag) and used them in log-normal likelihoods by assuming:
+Individual fish lengths have been measured upon capture for PIT-tagging (`r highlight("REPORT CITATION NEEDED")`).
+The mean length (and the associated standard errors) of all captured fish (tagged and untagged; only fish $\ge$ 55mm can receive a PIT-tag) was used in log-normal likelihoods by assuming:
 
 \begin{equation}
 \log\left(\hat{L}^{P^{b}}_{y,j}\right) \sim \Ndist\left[\log\left(L^{P^{b}}_{y,j}\right), \hat{\sigma}_{L^{P^{b}}_{y,j}}\right]
@@ -497,30 +513,33 @@ for mean length data for the summer parr tagging group and
 \end{equation}
 
 for mean length data for the smolt tagging group.
-Because the each population has approximately 1,000 fish tagged and measured during each tagging event, the standard errors on the mean length estimates were quite small.
+Because the each population had approximately 1,000 fish tagged and measured during each tagging event, the standard errors on the mean length estimates were quite small.
+
+Preliminary analyses revealed that parr mean length estimates had inter-annual variability attributable to the median sample date (capture method is active), so a standardization was devised and applied prior to model fitting [@justice-etal-2023, Figure 26 therein].
+All uses of $\hat{L}^{P^{b}}_{y,j}$ in this document refer to the standardized version.
+Although timing has varied for smolt mean length estimates ($\hat{L}^{M^{b}}_{y,j}$), it was caused by migratory timing not sample timing, thus should treated as process noise.
 
 # Ocean Juvenile Phase
 
 ## Process Model
 
 Spring Chinook salmon in the Grande Ronde basin migrate to sea as age-2 smolt and can return as either age-3, age-4, or age-5 adults.
-That is, ocean juveniles spend between 1 and 3 winters at sea and some fraction will make the return migration after each winter and before the following winter at sea.
-Thus, we divided ocean population dynamics into two types of demographic rates and their process noise: survival and maturation.
-Due to the confounding of these parameters\todo{Insert a reference to a paper that describes this ocean survival/maturation rate confounding?}, we were unable to freely estimate all rates and were instead required to make some simplifying assumptions and use more informative priors than in other parts of the model.
+That is, ocean juveniles spend between 1 and 3 winters at sea and some fraction make the return migration after each winter.
+Thus, ocean dynamics were divided into two types of demographic rates: survival and maturation.
+Attempting to freely estimate all desired parameters (i.e., time varying year-1, year-2, and year-3 survival rates and maturation rates after year-1 and year-2) revealed that these parameters were confounded given the available data, requiring more simplifying assumptions and stronger prior information than in other parts of the model.
 
 ### Survival Rates {#ocean-survival}
 
-We assumed first year natural-origin^[All $o=\NOR$ in eq. \@ref(eq:phi-O0-O1-random), omitted for brevity.] ocean survival was a multivariate logit-normal random variable around a time-constant expected value ($\dot{\phi}^{O^{0} \to O^{1}}_{o=\NOR,j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \to O^{1}}}$, but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion\todo{Include reference to papers that talk about ocean survival varying cyclically; e.g., Mantua et al. paper on PDO}:
+Year-1 natural-origin^[All $o=\NOR$ in eq. \@ref(eq:phi-O0-O1-random), omitted for brevity.] ocean survival was modeled as a multivariate logit-normal random variable around a time-constant expected value ($\dot{\phi}^{O^{0} \to O^{1}}_{o=\NOR,j}$) with covariance matrix $\Sigma_{\phi^{O^{0} \to O^{1}}}$, but included a lag-1 autoregressive process as a means to account for ocean conditions that may affect survival in a temporally non-independent fashion [e.g., @mantua-etal-1997]:
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{O^{0} \to O^{1}}_{y,o,1:n_j}\right) \sim \MVNdist\left\{\logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \to O^{1}}_{o,1:n_j}\right) + \boldsymbol{\kappa}^{O^{0} \to O^{1}}_{1:n_j} \cdot \left[ \logit\left(\boldsymbol{\phi}^{O^{0} \to O^{1}}_{y-1,o,1:n_j}\right) - \logit\left(\boldsymbol{\dot{\phi}}^{O^{0} \to O^{1}}_{o,1:n_j}\right)\right], \Sigma_{\phi^{O^{0} \to O^{1}}} \right\}
 (\#eq:phi-O0-O1-random)
 \end{equation}
 
-We assumed process variation was negligible in the second and third year ocean survival terms, thus we forced the year-specific values of $\phi^{O^{1} \to O^{2}}_{y,o=\NOR,j}$ and $\phi^{O^{2} \to O^{3}}_{y,o=\NOR,j}$ to take on the same value for all years (i.e., $\dot{\phi}^{O^{1} \to O^{2}}_{o=\NOR,j}$ and $\dot{\phi}^{O^{2} \to O^{3}}_{o=\NOR,j}$, respectively).
-Because not all maturity and ocean survival terms were uniquely identifiable based on adult return abundance and age composition, we relied on reasonably strong priors to inform $\dot{\phi}^{O^{1} \to O^{2}}_{o=\NOR,j}$ and $\dot{\phi}^{O^{2} \to O^{3}}_{o=\NOR,j}$ (Table \@ref(tab:param-table)).
-\todo{Are we using priors or fixed values? Include reference to reports where we can reference the specific values used.}
-To obtain hatchery-origin ocean survival each year, we adjusted the natural-origin survival by a log-odds ratio ($\delta_{j}$) that was common across all ocean years and brood years but varied by population:
+The first simplifying assumption surrounding ocean survival rates was that process variation was negligible in year-2 and year-3, thus we forced the brood year-specific values of $\phi^{O^{1} \to O^{2}}_{y,o=\NOR,j}$ and $\phi^{O^{2} \to O^{3}}_{y,o=\NOR,j}$ to take on the same value for all years (i.e., $\dot{\phi}^{O^{1} \to O^{2}}_{o=\NOR,j}$ and $\dot{\phi}^{O^{2} \to O^{3}}_{o=\NOR,j}$, respectively).
+Further, it was discovered that reasonably strong priors would be needed to inform $\dot{\phi}^{O^{1} \to O^{2}}_{o=\NOR,j}$ and $\dot{\phi}^{O^{2} \to O^{3}}_{o=\NOR,j}$ to allow identifiability of the maturity parameters (Table \@ref(tab:param-table)); priors were used for ocean survival rather than maturity parameters because commonly assumed values were available for the former [@ctc-1988].
+The second simplifying assumption was that natural- and hatchery-origin ocean survival rates were perfectly correlated across years within populations, but offset by a time-constant log-odds ratio ($\delta_{j}$):
 
 \begin{equation}
 \begin{aligned}
@@ -531,11 +550,9 @@ To obtain hatchery-origin ocean survival each year, we adjusted the natural-orig
 (\#eq:get-phi-O-HOR)
 \end{equation}
 
-This $\delta_j$ parameter allows hatchery- and natural-origin to have different survival for each ocean year, but assumes the origin effect is equal for all brood years and ocean ages within a population, implying an assumption that ocean survival among origins is perfectly correlated.
-
 ### Maturation Rates {#maturity}
 
-We treated realized maturation rates (i.e., the proportion of fish from a given brood year alive and in the ocean at the beginning of a year that make the return migration that year) as multivariate logit-normal random variables around time-constant expected values ($\dot{\psi}^{O^{w}}_{o,j}$; $w$ is the number of winters spent in the ocean) with covariance matrix $\Sigma_{\psi^{O^{w}}}$ (assumed common across origins):
+Realized maturation rates (i.e., the proportion of fish from a given brood year alive and in the ocean at the beginning of a year that make the return migration that year) were modeled as multivariate logit-normal random variables around time-constant expected values ($\dot{\psi}^{O^{w}}_{o,j}$; $w$ is the number of winters spent in the ocean) with covariance matrix $\Sigma_{\psi^{O^{w}}}$ (assumed common across origins):
 
 \begin{equation}
 \begin{aligned}
@@ -545,12 +562,11 @@ We treated realized maturation rates (i.e., the proportion of fish from a given 
 (\#eq:psi-random)
 \end{equation}
 
-Since we assumed age-5 to be the last age of maturity, all fish alive and in the ocean after the third year at sea must mature and return that year (i.e., all $\psi^{O^{3}}_{y,o,j} = 1$).
+Since age-5 was the last modeled age of maturity, all fish alive and in the ocean after the third year at sea mature and return that year (i.e., all $\psi^{O^{3}}_{y,o,j} = 1$).
 
 ### Return to Columbia River {#return-to-columbia-river}
 
-Now that we have defined the sources of process noise in the ocean demographic rates, we can define the process equations that result in transitioning ocean juveniles through the various ocean ages and ultimately at the mouth of the Columbia River for the upstream migration.
-We modeled ocean population dynamics as a sequence of survival, maturation of surviving fish, and survival of non-maturing fish:
+Based on the sources of process variation modeled in eqs. \@ref(eq:phi-O0-O1-random), \@ref(eq:get-phi-O-HOR), and \@ref(eq:psi-random) and the initial abundance of ocean juveniles ($O^{0}_{y,o,j}$, eq. \@ref(eq:get-O0)), the abundance of ocean juveniles after a given number of winters ($w$, superscripts in all $O^{w}$ symbols) was modeled as a sequence of survival, maturation of surviving fish, and survival of non-maturing fish:
 
 \begin{equation}
 \begin{aligned}
@@ -563,9 +579,8 @@ O^{3}_{y,o,j} &= O^{2}_{y,o,j} \cdot (1 - \psi^{O^{2}}_{y,o,j}) \cdot \phi^{O^{2
 
 That is, fish reaching the ocean as age-2 juveniles ($O^{0}_{y,o,j}$) must survive one winter to become age-3 ocean juveniles ($O^{1}_{y,o,j}$); if they do not mature at age-3 (with probability $1 - \psi^{O^{1}}_{y,o,j}$), then they must survive another winter to become age-4 ocean juveniles ($O^{2}_{y,o,j}$), and if they do not mature at that point (with probability $1 - \psi^{O^{2}}_{y,o,j}$), they must survive a third winter to become age-5 ocean juveniles ($O^{3}_{y,o,j}$).
 
-The abundances of ocean juveniles ($O^{1}_{y,o,j}$, $O^{2}_{y,o,j}$, and $O^{3}_{y,o,j}$) are organized by brood year, however they will return in different years to spawn (and be observed) because they are of different ages.
-We placed returning mature fish into the correct year and age of return to the mouth of the Columbia River before the upstream migration ($R^{b}_{y,k,o,j}$) based on the following rule.
-Fish spawned in year $y$ will return as the $k^{\mathrm{th}}$ possible age of maturity in year $y + A_{\mathrm{min}} + k - 1$ (age-3 is the first possible total age of maturity, thus $A_{\mathrm{min}}$ = 3).
+The abundances of ocean juveniles ($O^{1}_{y,o,j}$, $O^{2}_{y,o,j}$, and $O^{3}_{y,o,j}$) from a given cohort were organized by brood year, however they returned in different years and ages to spawn.
+Returning mature fish were placed into the correct year and age of return to the mouth of the Columbia River before the upstream migration ($R^{b}_{y,k,o,j}$) based on the following rule: members of the cohort spawned in brood year $y$ returned at the $k^{\mathrm{th}}$ possible age of maturity to produce the cohort for brood year $y + A_{\mathrm{min}} + k - 1$.
 As an example, fish spawned in brood year $y$ = 2000 will return in 2003 as age-3 ($k$ = 1), in 2004 as age-4 ($k$ = 2), or in 2005 as age-5 ($k$ = 3) -- see Table \@ref(tab:year-table) for a visual of this example.
 Thus, the abundance of fish spawned in brood year $y$ returning as age-3, age-4, and age-5, respectively, was:
 
@@ -578,10 +593,10 @@ R^{b}_{y+A_{\mathrm{min}} + 3 - 1,3,o,j} &= O^{3}_{y,o,j} \cdot \psi^{O^{3}}_{y,
 (\#eq:get-Rbs)
 \end{equation}
 
-Note, however, that this leaves 12 age/year combinations per origin unpopulated with returning adults (the first 3 missing years for age-3 returns, first 4 missing years for age-4 returns, and first 5 missing years for age-5 returns; see Table \@ref(tab:year-table)).
-This is because no juvenile process model outcomes existed that would ultimately become these $R^{b}_{y,k,o,j}$ values in these early years.
-Thus, to initialize the adult returns for natural-origin fish (and as a result, the rest of the life cycle), we estimated these 12 year/age return abundances as unknown parameters with fairly restrictive priors (Table \@ref(tab:param-table)) with boundaries loosely informed by the ranges of adult returns at age observed in the early years of the data time series.
-Initial abundance of hatchery-origin returns was handled by the "straying model" (see Section \@ref(processes-between-bon-and-lgr), below).
+This, however, leaves 12 ($\sum_{k}^{n_k} A_{\mathrm{min}} + k - 1$) age/year combinations per origin unpopulated with returning adults (the first 3 missing years for age-3 returns, first 4 missing years for age-4 returns, and first 5 missing years for age-5 returns; see Table \@ref(tab:year-table)).
+This occurs because no juvenile process model outcomes existed that would ultimately become these $R^{b}_{y,k,o,j}$ values in these early years.
+Thus, to initialize the adult returns for natural-origin fish, these 12 year/age return abundances were estimated as unknown parameters with fairly restrictive priors (Table \@ref(tab:param-table)) with boundaries loosely informed by the ranges of adult returns-at-age observed in the early years of the data time series.
+Initial abundances of age-specific hatchery-origin returns were handled by the "straying model" (see Section \@ref(processes-between-bon-and-lgr), below).
 
 ## Observation Model
 
@@ -591,18 +606,19 @@ No data sources were used to inform ocean juvenile population dynamics -- estima
 
 ## Process Model
 
-We attempted to partition several sources of mortality that occur between the upstream migration from the mouth of the Columbia River to the point of spawning in natal tributaries in Grande Ronde basin.
+There are a variety of mortality sources that occur along the upstream migration from the mouth of the Columbia River to the point of spawning in natal tributaries in Grande Ronde basin.
 For ease of presentation, we separate these processes into three categories depending on where they occur spatiotemporally: (_i_) downstream of Bonneville Dam (BON) at the beginning of the upstream migration, (_ii_) along the upstream migration in the mainstem Columbia and Snake rivers between BON and LGR, and (_iii_) after arrival to the natal tributaries and up until the point of spawning.
 
 ### Processes Downstream of BON
 
-Prior to reaching BON, we subject returning adults to harvest mortality from fisheries (harvest rate denoted by $U_{y,k,o}$).\todo{Insert information about where harvest rate estimates came from.}
-We compiled the best available estimates but did not fit to them explicitly as part of the observation model (as we do with many other data sources) -- instead we passed them to the model as non-stochastic quantities that were assumed to be known without error (used in eq. \@ref(eq:get-Ra), below).
+Prior to reaching BON, returning adults are subjected to harvest mortality from fisheries (harvest rate denoted by $U_{y,k,o}$; `r highlight("REPORT CITATION NEEDED")`).
+These estimates were supplied to the model as known without error (i.e., non-stochastic; used in eq. \@ref(eq:get-Ra), below).
 
 ### Processes Between BON and LGR
 
-Once fish reach BON, however, their survival to LGR has been monitored (since 2000; $y=10$) via PIT tags and so we did fit to those data and estimate the survival rate between BON and LGR as multivariate logit-normal random variables around expected values ($\dot{\phi}^{R^{b} \to R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \to R^{a}}}$.
-In years without these PIT tag counts, however, the survival from BON to LGR is confounded with ocean survival, and so we assumed BON to LGR survival was equal to the expected value in these years for parameter identifiability purposes:
+Upon arrival to BON, survival to LGR has been monitored (since 2000; $y=10$) via PIT-tags with high (>0.95) detection probabilities, enabling estimation of survival along this portion of the migration.
+The survival rate between BON and LGR was assumed to vary by origin (but not by population) as multivariate logit-normal random variables around expected values ($\dot{\phi}^{R^{b} \to R^{a}}_{o}$) with covariance matrix $\Sigma_{\phi^{R^{b} \to R^{a}}}$.
+In years without these PIT-tag counts, however, the survival from BON to LGR was found to be confounded with ocean survival; this was resolved by using the expected value rather than estimating the value for these years:
 
 \begin{equation}
 \logit\left(\boldsymbol{\phi}^{R^{b} \to R^{a}}_{y,1:n_o}\right)
@@ -613,14 +629,14 @@ In years without these PIT tag counts, however, the survival from BON to LGR is 
 (\#eq:phi-Rb-Ra-random)
 \end{equation}
 
-Examination of the adult composition data indicated that hatchery-origin adults returned to Grande Ronde populations in years that could not be attributed to hatchery-origin smolt releases to these populations.
-Further, the Minam River population (which has no hatchery supplementation program) has had hatchery adults return in many of the years included in our model.
-Since there were non-zero observations of hatchery-origin adults in cases without a process model component to produce them, we required a process model mechanism to populate non-zero expected values for the observation model to remain valid based on the available data.
-We term this model component the "straying model", and applied it only in years/populations in which the presence of non-zero hatchery-origin returning adults could not otherwise be explained due to zero-valued hatchery-origin smolt releases.
-We denote the total number of strays that entered population $j$ in year $y$ as $G_{y,o,j}$; we forced all $G_{y,o=\NOR,j} = 0$ and forced all $G_{y,o=\HOR,j} = 0$ in years where non-zero hatchery-origin smolt releases to population $j$ could have explained non-zero hatchery-origin adult returns in year $y$ at age $k$.
-We denote the age composition of these strays by $p^{G}_{k,j}$ (where $\sum_k^{n_k} p^{G}_{k,j} = 1$) and apportioned $G_{y,o,j}$ to age-specific values by $G_{y,k,o,j}=G_{y,o,j} \cdot p^{G}_{k,j}$.
+Examination of the adult composition data indicated that hatchery-origin adults returned to Grande Ronde populations in early years that could not be attributed to hatchery-origin smolt releases to these populations.
+Further, the Minam River population (which has no hatchery supplementation program) has had hatchery adults found in carcass surveys in many of the years since monitoring began.
+Without a process model adjustment, the observation model would treat these unexpected non-zero hatchery-origin counts as impossible.
+This model component is referred to as the "straying model" (total abundance of entering strays denoted $G_{y,o,j}$), and it applied only in years/populations in which the presence of non-zero hatchery-origin returning adults could not otherwise be explained due to zero-valued hatchery-origin smolt releases.
+Thus, all $G_{y,o=\NOR,j} = 0$ and all $G_{y,o=\HOR,j} = 0$ in years where non-zero hatchery-origin smolt releases to population $j$ could have explained non-zero hatchery-origin adult returns in year $y$ at age $k$.
+The age composition of these strays was assumed to be time-constant ($p^{G}_{k,j}$; where $\sum_k^{n_k} p^{G}_{k,j} = 1$) and was used to apportion $G_{y,o,j}$.
 
-We can now define the abundance of adults arriving to their natal spawning tributaries by age and origin ($R^{a}_{y,k,o,j}$) as:
+The abundance of adults arriving to natal spawning tributaries by age and origin ($R^{a}_{y,k,o,j}$) as:
 
 \begin{equation}
 R^{a}_{y,k,o,j} = R^{b}_{y,k,o,j} \cdot (1 - U_{y,k,o}) \cdot \phi^{R^{b} \to R^{a}}_{y,o} + \left(G_{y,o,j} \cdot p^{G}_{k,j}\right)
@@ -630,9 +646,8 @@ R^{a}_{y,k,o,j} = R^{b}_{y,k,o,j} \cdot (1 - U_{y,k,o}) \cdot \phi^{R^{b} \to R^
 ### Processes in Natal Tributary
 
 Upon arrival to the natal tributary, populations with a weir and hatchery program (all populations except the Minam River, indexed by $j = \MIN$) have some number of adults removed each year for broodstock and as a means to minimize natural spawning of hatchery-origin fish.
-We supplied these weir removals (denoted by $B_{y,k,o,j}$) to the model as known without error and set all $B_{y,k,o,j=\MIN} = 0$.
-Similarly, fish are harvested in the natal tributaries prior to spawning, and we additionally supplied estimates of fish harvested ($H_{y,k,o,j}$).
-Thus, the abundance of adults that would have a chance to spawn each year was:
+These weir removals (denoted by $B_{y,k,o,j}$; all $B_{y,k,o,j=\MIN} = 0$) were supplied to the model as known without error, as were the number of fish estimated to have been in the natal tributaries prior to spawning.
+Thus, the abundance of potential spawners was:
 
 \begin{equation}
 S^{b}_{y,k,o,j} = \max\left(R^{a}_{y,k,o,j} - B_{y,k,o,j} - H_{y,k,o,j}, 1\right)
@@ -640,27 +655,26 @@ S^{b}_{y,k,o,j} = \max\left(R^{a}_{y,k,o,j} - B_{y,k,o,j} - H_{y,k,o,j}, 1\right
 \end{equation}
 
 The maximum constraint was used to ensure all $S^{b}_{y,k,o,j} > 0$.
-As a final step prior to spawning, these adults must survive the challenges of finding adequate spawning habitat and avoid succumbing to stress and mortality prior to spawning.
-We treated these "pre-spawn survival" outcomes, denoted by $\phi^{S^{b} \to S^{a}}_{y,j}$, as having a time-constant value (i.e., all $\phi^{S^{b} \to S^{a}}_{y,j} = \dot{\phi}^{S^{b} \to S^{a}}_{j}$).
-We desired to allow for time-varying pre-spawn survival probabilities, but discovered that the observational data were not informative enough for all populations to prevent parameter confounding with egg-to-parr survival.
-Thus, the abundance of successfully spawning individuals ($S^{a}_{y,k,o,j}$) was:
+
+It is well-known that some potential spawners die prior to spawning; these "pre-spawn survival" outcomes, denoted by $\phi^{S^{b} \to S^{a}}_{y,j}$, were modeled as having time-constant values (i.e., all $\phi^{S^{b} \to S^{a}}_{y,j} = \dot{\phi}^{S^{b} \to S^{a}}_{j}$) for each population.
+The initial desire was to allow for time-varying pre-spawn survival probabilities, but it was discovered that the observational data (counts of spawned vs. gravid female carcasses, see eq. \@ref(eq:prespawn-surv-data)) were not informative enough for all populations to prevent parameter confounding with egg-to-parr survival.
 
 \begin{equation}
 S^{a}_{y,k,o,j} = S^{b}_{y,k,o,j} \cdot \phi^{S^{b} \to S^{a}}_{y,j}
 (\#eq:get-Sa)
 \end{equation}
 
-It is this $S^{a}_{y,k,o,j}$ value from which total egg production ($E_{y,j}$) is calculated in eq. \@ref(eq:get-E) to complete the life cycle.
+This $S^{a}_{y,k,o,j}$ value was used to calculate total egg production ($E_{y,j}$) in eq. \@ref(eq:get-E) to link the the spawner abundance to the parr recruitment abundance in the next generation.
 
 ## Observation Model
 
-The adult observation model relies on three primary data types: (_i_) total abundance of adult returns to the natal tributaries, (_ii_) information about survival on the upstream migration between LGR and BON as well as on the spawning grounds, and (_iii_) composition data to inform the relative abundance of adults of different ages and origins.
+The adult observation model relied on three primary data types: (_i_) total abundance of adult returns to the natal tributaries, (_ii_) information about survival on the upstream migration between LGR and BON as well as on the spawning grounds, and (_iii_) composition data to inform the relative abundance of adults of different ages and origins returning each year.
 
 ### Abundance Data Source
 
-Total return abundance is estimated annually external to the model using a combination of weir counts, mark-recapture methods, and spawning ground surveys\todo{Insert reference about adult return monitoring methods}.
-For each population and year, these have been compiled into a point estimate ($\hat{R}^{a}_{y,j}$; note the lack of $o$ or $k$ indices -- this indicates the estimate is aggregated across these dimensions) and an estimate of observation uncertainty ($\hat{\sigma}_{R^{a}_{y,j}}$, expressed as a log-normal standard error).
-We assumed the point estimate is made with log-normal observation error around the model-predicted total returns to the tributary to build the likelihood for this component:
+Total tributary return abundance has been estimated annually external to the model using a combination of weir counts, mark-recapture methods, and spawning ground surveys (`r highlight("REPORT CITATION NEEDED")`).
+For each population and year, these have been compiled into a point estimate ($\hat{R}^{a}_{y,j}$; the lack of $o$ or $k$ indices indicates the estimate is aggregated across these dimensions) and an estimate of observation uncertainty ($\hat{\sigma}_{R^{a}_{y,j}}$, expressed as a log-normal standard error).
+The model assumed the point estimate is made with log-normal observation error around the model-predicted total returns to the tributary to build the likelihood for this component:
 
 \begin{equation}
 \log\left(\hat{R}^{a}_{y,j}\right) \sim \Ndist\left[\log\left(\sum_o^{n_o} \sum_k^{n_k} R^{a}_{y,k,o,j}\right), \hat{\sigma}_{R^{a}_{y,j}}\right]
@@ -669,8 +683,8 @@ We assumed the point estimate is made with log-normal observation error around t
 
 ### Survival Data Sources
 
-For the observation model component informing migration survival upstream from BON to LGR, we relied on counts of PIT tag detections of known Grande Ronde-origin fish passing BON ($\hat{x}^{\mathrm{BON}}_{y,o}$) and LGR ($\hat{x}^{\mathrm{LGR}}_{y,o}$)\todo{Insert reference to DART website where we obtained the BON to LGR PIT tag count data}.
-We assumed the latter was a binomial random variable to build the likelihood component for this data set:
+The model fitted to counts of PIT-tag detections of known Grande Ronde-origin fish passing BON ($\hat{x}^{\mathrm{BON}}_{y,o}$) and LGR ($\hat{x}^{\mathrm{LGR}}_{y,o}$) to inform the migratory survival rate between these two locations, queried using the DART Adult Return Conversion Rate tool^[https://www.cbr.washington.edu/dart/query/pitadult_conrate; exact query settings described at https://github.com/bstaton1/GR-sslcm/issues/93.].
+The latter was assumed to be a binomial random variable to build the likelihood component for this data set:
 
 \begin{equation}
 \hat{x}^{\mathrm{LGR}}_{y,o} \sim \Bdist\left(\phi^{R^{b} \to R^{a}}_{y,o}, \hat{x}^{\mathrm{BON}}_{y,o}\right)
@@ -678,9 +692,8 @@ We assumed the latter was a binomial random variable to build the likelihood com
 \end{equation}
 
 The other survival data set informing the freshwater adult observation model was for spawning success, i.e., pre-spawn survival.
-In annual spawning ground carcass surveys, surveyors record the counts of total females encountered ($\hat{x}^{\mathrm{carcass,total}}_{y,j}$) and counts of those found to have successfully spawned ($\hat{x}^{\mathrm{carcass,spawned}}_{y,j}$; \todo{Insert reference about carcass/spawning success data monitoring methods}).
-Only females are counted this way because it is too difficult to tell if a male has successfully spawned based on their gonads alone, thus we assumed that males and females experience the same pre-spawn survival.
-We assumed these counts were gathered using binomial sampling to build the likelihood:
+Surveyors in annual spawning ground carcass surveys have recorded counts of total females encountered ($\hat{x}^{\mathrm{carcass,total}}_{y,j}$) and counts of those found to have successfully spawned ($\hat{x}^{\mathrm{carcass,spawned}}_{y,j}$; `r highlight("REPORT CITATION NEEDED")`).
+These counts were treated as binomial random variables to build the likelihood:
 
 \begin{equation}
 \hat{x}^{\mathrm{carcass,spawned}}_{y,j} \sim \Bdist\left(\phi^{S^{b} \to S^{a}}_{y,j}, \hat{x}^{\mathrm{carcass,total}}_{y,j}\right)
@@ -689,11 +702,10 @@ We assumed these counts were gathered using binomial sampling to build the likel
 
 ### Composition Data Sources
 
-Since the model is both age- and origin-structured, we required data to inform the relative abundance of adults returning according to these different classes.
-These took the form of two sources: (_i_) those collected at the weirs located within three of the four populations we model ($\hat{x}^{R^{a}}_{y,ko,j}$) and (_ii_) those collected during carcass surveys ($\hat{x}^{S^{a^{\prime}}}_{y,ko,j}$), given the Minam River population does not have a weir.
-We assumed the weir sampled fish representatively with respect to age and origin composition, however we discovered there was an age sampling bias for carcass surveys relative to the weir which required a correction factor (see eqs. \@ref(eq:z-random) -- \@ref(eq:get-pSa-prime), below).
-We fitted to these data assuming multinomial sampling in which there were $n_{ko} = 6$ possible outcomes: $n_k = 3$ ages of return by $n_o = 2$ origins.
-Further, we chose to use the observed sample size ($\sum_{ko}^{n_{ko}} \hat{x}^{R^{a}}_{y,ko,j}$) as the multinomial sample size rather than attempting to adjust it for non-independent sampling.
+Since the model is both age- and origin-structured, it required data to inform the relative abundance of adults returning according to these different classes.
+These data took the form of two sources: (_i_) those collected at weirs located within three of the four populations ($\hat{x}^{R^{a}}_{y,ko,j}$) and (_ii_) those collected during carcass surveys ($\hat{x}^{S^{a^{\prime}}}_{y,ko,j}$), given the Minam River population does not have a weir.
+The weir was assumed to have fish representatively with respect to age and origin composition and both data sources were fitted to by assuming multinomial sampling in which there were $n_{ko} = 6$ possible outcomes: $n_k = 3$ ages of return by $n_o = 2$ origins.
+Further,the observed sample size ($\sum_{ko}^{n_{ko}} \hat{x}^{R^{a}}_{y,ko,j}$) as the multinomial sample size rather than attempting to adjust it for non-independent sampling [@maunder-2011]; alternative sample size selections would likely be arbitrary, and past analyses have suggested that inferences are robust to rational alternatives [see Supplement A of @staton-etal-2021].
 The model-expected composition by age and origin ($p^{R^{a}}_{y,ko,j}$) was calculated from the return abundance by age and origin, reorganized such that age and origin fell along the same array dimension ($R^{a}_{y,ko,j}$) rather than along two dimensions as shown in the process model ($R^{a}_{y,k,o,j}$):
 
 \begin{equation}
@@ -701,15 +713,15 @@ p^{R^{a}}_{y,ko,j} = \frac{R^{a}_{y,ko,j}}{\sum_{ko}^{n_{ko}} R^{a}_{y,ko,j}}
 (\#eq:get-pRa)
 \end{equation}
 
-which we used as the multinomial expected frequency to build the likelihood:
+which was used as the multinomial expected frequency to build the likelihood:
 
 \begin{equation}
 \boldsymbol{\hat{x}}^{R^{a}}_{y,1:n_{ko},j} \sim \Mdist\left(\boldsymbol{p}^{R^{a}}_{y,1:n_{ko},j}, \sum_{ko}^{n_{ko}} \hat{x}^{R^{a}}_{y,ko,j}\right)
 (\#eq:weir-comp-data)
 \end{equation}
 
-Due to the age sampling bias of carcass surveys we discovered, we required a correction to ensure reliable fits to all data sets while still recovering unbiased true age composition data for the Minam River population, which had only carcass composition data (the other three populations had both weir and carcass composition data).
-For the three populations with paired composition data (i.e., $j \in [\CAT, \LOS, \UGR]$), we estimated correction factors in a hierarchical fashion:
+Preliminary analyses revealed an age sampling bias of carcass surveys relative to weir sampling, which required a correction to ensure reliable fits to all data sets while recovering unbiased true age composition data for the Minam River population, which had only carcass composition data.
+For the three populations with paired composition data (i.e., $j \in [\CAT, \LOS, \UGR]$), correction factors were estimated in a hierarchical fashion:
 
 \begin{equation}
 z_{k,j} \sim \Ndist(\dot{z}_{k}, \sigma_{z_k})
@@ -732,14 +744,14 @@ These correction factors were averaged across populations to obtain the correcti
 (\#eq:get-zeta-minam)
 \end{equation}
 
-We used these correction factors to calculate the expected proportions by age and origin for carcass surveys ($p^{S^{a^{\prime}}}_{y,ko,j}$):
+These correction factors were used to calculate the expected proportions by age and origin for carcass surveys ($p^{S^{a^{\prime}}}_{y,ko,j}$):
 
 \begin{equation}
 p^{S^{a^{\prime}}}_{y,ko,j} = \frac{S^{a}_{y,ko,j} \cdot \zeta_{k,j}}{\sum_{ko}^{n_{ko}} S^{a}_{y,ko,j} \cdot \zeta_{k,j}}
 (\#eq:get-pSa-prime)
 \end{equation}
 
-which we used as the multinomial expected frequency to build the likelihood by assuming:
+which was used as the multinomial expected frequency to build the likelihood by assuming:
 
 \begin{equation}
 \boldsymbol{\hat{x}}^{S^{a^{\prime}}}_{y,1:n_{ko},j} \sim \Mdist\left(\boldsymbol{p}^{S^{a^{\prime}}}_{y,1:n_{ko},j}, \sum_{ko}^{n_{ko}} \hat{x}^{S^{a^{\prime}}}_{y,ko,j}\right)
@@ -886,7 +898,7 @@ footnote_key = c(
   "3" = "Uniform Distribution: $\\\\mathcal{U}(\\\\mathrm{lower}$, $\\\\mathrm{upper})$",
   "4" = "$t$-Distribution: $t$(mean, precision, degrees of freedom); this prior results in approximately a $\\\\mathcal{U}(0,1)$ prior after inverse-logit transformation \\\\citep{dorazio-etal-2011}.",
   "5" = "Dirichlet Distribution: $\\\\mathcal{D}(\\\\mathrm{shape}_1$, $\\\\mathrm{shape}_2$, $\\\\mathrm{shape}_3)$",
-  "6" = "Scaled Inverse-Wishart Distribution: $\\\\mathcal{SIW}$(\\\\textbf{S}, degrees of freedom); \\\\textbf{S} is a vector of scale parameters for scaled-Wishart; see JAGS v4.3.0 user manual page 62 for details on this prior. Briefly, the scale parameters of 0.10 - 0.30 places higher prior weight on small values of the component $\\\\sigma$ parameters, which was intentional because these represent variability on the log- or logit-scale. Setting the degrees of freedom to 2 results in a $\\\\mathcal{U}(-1,1)$ prior on the $\\\\rho$ components."
+  "6" = "Scaled Inverse-Wishart Distribution: $\\\\mathcal{SIW}$(\\\\textbf{S}, degrees of freedom); \\\\textbf{S} is a vector of scale parameters for scaled-Wishart; see \\\\cite{plummer-2017} page 62 for details on this prior. Briefly, the scale parameters of 0.10 - 0.30 places higher prior weight on small values of the component $\\\\sigma$ parameters, which was intentional because these represent variability on the log- or logit-scale. Setting the degrees of freedom to 2 results in a $\\\\mathcal{U}(-1,1)$ prior on the $\\\\rho$ components."
 )
 
 colnames(tab)[3] = "Prior\\textsuperscript{1,2,3,4,5,6}"
