@@ -738,6 +738,21 @@ legend("topright", title = "LGR Smolt", legend = c("Mean", "CV"), pch = 15,
        col = cols, pt.cex = 1.5, bty = "n", text.col = par("col.axis"), cex = 0.8)
 ```
 
+\newpage
+
+```{r time-table}
+# calculate times elapsed for each chunk
+tab = data.frame(
+  Item = names(start_times),
+  Minutes = round(sapply(1:length(start_times), function(i) lubridate::int_length(lubridate::int_diff(c(start_times[[i]], end_times[[i]])))/60), 1)
+)
+
+# add a total time elapsed
+tab = rbind(tab, data.frame(Item = "Total", "Minutes" = sum(tab$Minutes)))
+
+# create the table
+kbl(tab, format = "latex", booktabs = TRUE, longtable = FALSE, linesep = "", caption = "Time elapsed in calculating the content in this document.") %>%
+  kable_styling(full_width = FALSE, latex_options = "HOLD_position") %>%
   row_spec(0, bold = TRUE) %>%
   column_spec(1, monospace = TRUE) %>%
   row_spec(nrow(tab), bold = TRUE)
