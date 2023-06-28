@@ -1,0 +1,91 @@
+---
+output: 
+  pdf_document:
+    keep_tex: true
+params:
+  scenario:
+    label: "Scenario"
+    value: "base_vlong"
+    input: text
+  thin_percent:
+    label: "Proportion of Posterior Samples to Retain?"
+    value: 1
+    input: numeric
+  include_sim_years:
+    label: "Include Simulated Years on Plots?"
+    value: FALSE
+header-includes:
+  - \usepackage{sansmathfonts}
+  - \usepackage{helvet}
+  - \renewcommand{\rmdefault}{\sfdefault}
+  - \usepackage{float}
+  - \usepackage[labelfont={bf,sc},labelsep=period]{caption}
+  - \captionsetup{width=\textwidth}
+editor_options: 
+  chunk_output_type: console
+---
+
+\rule{\textwidth}{1pt}
+
+\vspace{-6pt}
+
+::: {.Huge data-latex=""}
+**Potential Manuscript Content**
+:::
+
+\vspace{-6pt}
+
+::: {.Large data-latex=""}
+**GR-sslcm**
+:::
+
+\vspace{-6pt}
+
+\rule{\textwidth}{1pt}
+
+\listoftables
+
+\listoffigures
+
+\pagenumbering{gobble}
+\newpage
+\pagenumbering{arabic}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", fig.pos = "H")
+knitr::opts_knit$set(root.dir = "C:/Users/bstaton/Desktop/Staton/1_critfc/analyses/GR-sslcm/03-post-process")
+
+# set up a chunk hook to calculate how long chunks took to run
+# modified from https://bookdown.org/yihui/rmarkdown-cookbook/time-chunk.html#time-chunk
+
+start_times = list()  # store the time for each chunk
+end_times = list()  # store the time for each chunk
+knitr::knit_hooks$set(time_it = local({
+  function(before, options) {
+    if (before) {
+      start_times[[options$label]] <<- lubridate::now()
+    } else {
+      end_times[[options$label]] <<- lubridate::now()
+    }
+  }
+}))
+```
+
+```{r load-post, time_it = TRUE}
+source("C:/Users/bstaton/Desktop/source_rmd_chunk.R")
+rmd_file = "C:/Users/bstaton/Desktop/Staton/1_critfc/analyses/GR-sslcm/03-post-process/output-plots.Rmd"
+source_rmd_chunk(rmd_file, "setup")
+source_rmd_chunk(rmd_file, "dimension-ids")
+knitr::opts_chunk$set(out.width = "100%", dev = "cairo_pdf")
+```
+
+```{r load-packages}
+source("../00-packages.R")
+```
+
+```{r plot-settings}
+solid_col = "grey30"
+tranp_col = alpha(solid_col, 0.25)
+pt_cex = 1.3
+```
+
