@@ -101,6 +101,12 @@ relationship_caption = "
   Panels within the same row show the process model relationship for each of the four populations; _x_- and _y_-axis limits are identical for all panels within a row.
 "
 
+no_fall_caption = "
+  Ratios between the across-year mean (dark grey) and coefficient of variation (light grey) abundance of natural-origin smolt reaching Lower Granite Dam with (denominator) and without (numerator) the fall migrant life history strategy.
+  The 'without' scenario was calculated by assuming all parr recruits experienced freshwater survival rates of spring migrants.
+  Mean ratios <1 and CV ratios >1 indicate LGR smolt abundance would be lower and more variable, respectively, in the absence of the fall migrant strategy.
+  Values presented are posterior means and 95% credible regions.
+"
 ```
 
 ```{r beta-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(beta_caption), time_it = TRUE}
@@ -646,3 +652,93 @@ junk = sapply(1:4, function(j) {
 
 ```
 
+\newpage
+
+```{r no-fall-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(no_fall_caption), time_it = TRUE}
+cv = function(x) {sd(x, na.rm = TRUE)/mean(x, na.rm = TRUE)}
+
+##### STEP 1: EXTRACT POSTERIOR SAMPLES OF QUANTITIES NEEDED #####
+
+# total parr recruitment (regardless of LH type)
+Pb = post_subset(post, "^Pb[", matrix = TRUE)
+
+# total smolt at LGR (separated by LH type)
+Ma = post_subset(post, "^Ma[", matrix = TRUE)
+
+# overwinter survival (separated by LH type)
+phi_Pa_Mb = post_subset(post, "^phi_Pa_Mb[", matrix = TRUE)
+
+# migration survival (separated by LH type, but assumed constant)
+phi_Mb_Ma = post_subset(post, "^phi_Mb_Ma[", matrix = TRUE)
+
+##### STEP 2: DEFINE A FUNCTION TO CALCULATE THE DESIRED STATS FOR A GIVEN POSTERIOR SAMPLE #####
+f = function(i) {
+  # put the values from this draw into the format used in the model
+  Pb_i = array_format(Pb[i,])
+  Ma_i = array_format(Ma[i,])
+  phi_Pa_Mb_i = array_format(phi_Pa_Mb[i,])[,i_spring,]
+  phi_Mb_Ma_i = array_format(phi_Mb_Ma[i,])[,i_spring,o_nor,]
+  
+  # calculate hypothetical NOR smolt reaching LGR if all parr were spring migrants
+  Ma_tot_hyp_i = Pb_i * phi_Pa_Mb_i * phi_Mb_Ma_i
+  
+  # calculate actual NOR smolt reaching LGR
+  Ma_tot_real_i = Ma_i[,i_fall,o_nor,] + Ma_i[,i_spring,o_nor,]
+  
+  # add columns storing the aggregate across populations
+  Ma_tot_hyp_i = cbind(Ma_tot_hyp_i, rowSums(Ma_tot_hyp_i))
+  Ma_tot_real_i = cbind(Ma_tot_real_i, rowSums(Ma_tot_real_i))
+  
+  # calculate the ratios between the actual and hypothetical
+  mean_p_ratio = colMeans(Ma_tot_hyp_i/Ma_tot_real_i, na.rm = TRUE)
+  cv_ratio = apply(Ma_tot_hyp_i, 2, cv)/apply(Ma_tot_real_i, 2, cv)
+  
+  names(mean_p_ratio) = paste0("mean_p_ratio[", 1:5, "]")
+  names(cv_ratio) = paste0("cv_ratio[", 1:5, "]")
+  c(mean_p_ratio, cv_ratio)
+}
+
+##### STEP 3: APPLY FUNCTION TO ALL POSTERIOR SAMPLES, FORMAT, AND SUMMARIZE #####
+
+# apply
+ratio_out = t(sapply(1:nrow(Pb), f))
+
+# format
+ratio_post = post_convert(cbind(postpack:::id_mat(post), ratio_out))
+
+# summarize
+mean_summ = post_summ(ratio_post, "mean")
+cv_summ = post_summ(ratio_post, "cv")
+
+# format the summaries for barplotting
+mns = rbind(mean_summ["mean",], cv_summ["mean",])
+lwrs = rbind(mean_summ["2.5%",], cv_summ["2.5%",])
+uprs = rbind(mean_summ["97.5%",], cv_summ["97.5%",])
+
+# set the colors
+cols = c("grey50", "grey80")
+
+# make the plot
+mypar(mfrow = c(1,1), col.axis = "black")
+mp = barplot(mns, beside = TRUE, names.arg = c(pops, "TOTAL"),
+             ylim = c(0, 1.35), border = NA, col = cols)
+
+# draw error bars
+segments(mp, lwrs, mp, uprs)
+
+# draw x-axis
+segments(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[3], xpd = TRUE, col = par("col.axis"))
+axis_labels("Population", "Without:With Fall Migrant Strategy")
+
+# draw a reference line
+abline(h = 1, lty = 2)
+
+# draw a legend
+legend("topright", title = "LGR Smolt", legend = c("Mean", "CV"), pch = 15,
+       col = cols, pt.cex = 1.5, bty = "n", text.col = par("col.axis"), cex = 0.8)
+```
+
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, monospace = TRUE) %>%
+  row_spec(nrow(tab), bold = TRUE)
+```
