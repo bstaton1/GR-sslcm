@@ -365,15 +365,6 @@ tmp_summ =  summarize_diags(tmp_diags)
 diags_out = rbind(diags_out, tmp_diags)
 summs_out = rbind(summs_out, tmp_summ)
 
-# Pre-spawn Survival
-L1 = "Pre-spawn Survival"
-L2 = c("Mean")
-match = c("mu_phi_Sb_Sa")
-tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
-tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
-diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
-summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
-
 # Carcass Correction
 L1 = "Carcass Correction Factor"
 L2 = c("Among-Pop Mean", "Among-Pop SD", "Pop-Specific")

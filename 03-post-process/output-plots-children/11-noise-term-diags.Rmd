@@ -902,15 +902,6 @@ axis_labels("Return Year", "Count of PIT Tagged Adults at LGR QResidual")
 obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
 ```
 
-#### Pre-spawn
-
-```{r pre-spawn-surv-resid, fig.width = p4_width, fig.height = p4_height}
-mypar()
-tmp = lapply(1:jags_data$nj, function(j) plot_obs_qresid("x_carcass_spawned_obs_qresid[year,pop]", pop = j, main = pops[j]))
-axis_labels("Return Year", "Count of Female Spawned-out Carcasses QResidual")
-obs_error_ests = rbind(obs_error_ests, do.call(rbind, tmp))
-```
-
 ### Length Data {.tabset .tabset-pills}
 
 #### Parr Mean Length
