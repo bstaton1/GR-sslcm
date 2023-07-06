@@ -72,7 +72,7 @@ plot_f = function(ko) {
   oname = ifelse(ko %in% ko_origin$ko_nor, "NOR", "HOR")
   aname = ifelse(ko %in% ko_age$ko_3, "3", ifelse(ko %in% ko_age$ko_4, "4", "5"))
   
-  ylim = c(0, max(jags_data$U, na.rm = TRUE))
+  ylim = make_lim(c(0, max(jags_data$U, na.rm = TRUE)))
   known_plot(y_val, label = paste0("Age-", aname, " (", oname, ")"), ylim = ylim)
 }
 
@@ -183,6 +183,8 @@ axis_labels("Return Year", "Removals at Weir")
 
 The fraction of the return estimated to have been removed at the weir based on the data alone, i.e., weir removals divided by the return-to-river estimate apportioned to age/origin by the proportional contribution observed at the weir that year.
 
+It is possible for the raw data values to suggest >100% of the fish at a given age/origin combo were taken -- the SSM prevents this from happening.
+
 ```{r known-Bu-fn}
 # function to make the plot for one age/origin combo for one population
 plot_f = function(j, ko) {
@@ -281,12 +283,12 @@ glmmTMB::glmmTMB(
 )
 ```
 
-Where `yes` and `no` are vectors storing as elements the number of female carcasses examined in a given return year (`year`) for one population (`one_pop`) that were and were not successful in spawning ("successful" spawning is assigned by the absence of >50% the potential total eggs carried by that female).
+Where `yes` and `no` are vectors storing the number of female carcasses examined each return year (`year`) for one population (`one_pop`) that were and were not successful in spawning ("successful" spawning is assigned by the absence of >50% the potential total eggs carried by that female).
 Values were bounded on the interval [0.4,1); several years for UGR suggested very low survival with low sample size.
 
 </details>
 
-```{r known-phi-Sb-Sa-fn}
+```{r known-phi-Sb-Sa-fn, fig.width = p4_width, fig.height = p4_height}
 # function to make the plot for one population
 plot_f = function(j) {
   y_val = jags_data$phi_Sb_Sa[,j]

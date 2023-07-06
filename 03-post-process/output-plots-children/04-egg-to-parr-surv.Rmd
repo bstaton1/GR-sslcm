@@ -237,7 +237,7 @@ plot_f = function(j) {
                yrs = all_yrs[ts_yrs], label_text = pops[j], y_scale = 1000)
   
   # add a time series mean
-  mn = mean(est["mean",])
+  mn = mean(est["mean",])/1000
   segments(min(all_yrs[ts_yrs]), mn, max(all_yrs[ts_yrs]), mn, lty = 2, lwd = 2, col = main_cols["model"])
 }
 
@@ -308,7 +308,7 @@ plot_f = function(j) {
                yrs = all_yrs[ts_yrs], label_text = pops[j], y_scale = 1000)
   
   # add a time series mean
-  mn = mean(est["mean",])
+  mn = mean(est["mean",])/1000
   segments(min(all_yrs[ts_yrs]), mn, max(all_yrs[ts_yrs]), mn, lty = 2, lwd = 2, col = main_cols["model"])
 }
 

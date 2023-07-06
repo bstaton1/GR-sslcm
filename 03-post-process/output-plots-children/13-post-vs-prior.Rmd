@@ -519,3 +519,8 @@ post_v_prior(post_samps = post_subset(post, "rho_Lphi_Rb_Ra[2,1]", matrix = TRUE
 mtext(side = 1, outer = TRUE, line = 0, "Parameter Value")
 mtext(side = 2, outer = TRUE, line = 0.5, "Probability")
 ```
+
+```{r}
+knitr::opts_chunk$set(out.width = "75%")
+```
+
