@@ -57,6 +57,14 @@ standardize_mean_length = function(len_mean, jday_med, resid_type) {
   return(len_mean_adj)
 }
 
+##### MERGE MULTIPLE DATA SETS TOGETHER #####
+
+# shorthand, allows quickly piping many commands together to build large complete dataset
+
+my_merge = function(x, y, by = c("population", "brood_year"), all = TRUE) {
+  merge(x = x, y = y, by = by, all = all)
+}
+
 ##### CREATE NAMES FOR A SPECIFIC COMPOSITION DATA SET #####
 # o_names = c("NOR", "HOR")
 # k_names = c(3, 4, 5)
