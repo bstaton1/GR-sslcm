@@ -1016,7 +1016,6 @@ obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "Lphi_obs_Pa_M
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "Lphi_obs_Mb_Ma_qresid\\[year,LH_type,origin,pop\\]", "Spring Tagging -> LGR")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "Lphi_obs_Ma_O0_qresid\\[year,origin\\]", "LGR Smolt -> Ocean")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "x_LGR_obs_qresid\\[year,origin\\]", "BON Adults -> LGR")
-obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "x_carcass_spawned_obs_qresid\\[year,pop\\]", "Pre-spawn")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "lL_Pb_obs_qresid\\[year,pop\\]", "Summer Parr")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "lL_Mb_obs_qresid\\[year,pop\\]", "Spring Smolt")
 obs_error_ests$param = stringr::str_replace(obs_error_ests$param, "x_Ra_obs_qresid\\[year,age,pop\\]", "Weir")
@@ -1030,7 +1029,6 @@ obs_error_ests$origin[obs_error_ests$param == "Adult Return"] = 3
 
 # correct origin indices
 obs_error_ests$origin[stringr::str_detect(obs_error_ests$param, "Tagging")] = 1
-obs_error_ests$origin[obs_error_ests$param == "Pre-spawn"] = 3
 obs_error_ests$origin[obs_error_ests$param %in% c("Summer Parr", "Spring Smolt")] = 1
 
 # correct LH_type indices
@@ -1054,14 +1052,13 @@ obs_error_ests$age[is.na(obs_error_ests$age)] = "Combined"
 obs_error_ests$type = NA
 obs_error_ests$type = ifelse(obs_error_ests$param %in% c("Fall Screw Trap", "Spring Screw Trap", "Adult Return"), 1, obs_error_ests$type)
 obs_error_ests$type = ifelse(stringr::str_detect(obs_error_ests$param, "->"), 2, obs_error_ests$type)
-obs_error_ests$type = ifelse(stringr::str_detect(obs_error_ests$param, "Pre-spawn"), 2, obs_error_ests$type)
 obs_error_ests$type = ifelse(obs_error_ests$param %in% c("Weir", "Carcass"), 3, obs_error_ests$type)
 obs_error_ests$type = ifelse(obs_error_ests$param %in% c("Summer Parr", "Spring Smolt"), 4, obs_error_ests$type)
 obs_error_ests$type = c("Abundance", "Survival", "Composition", "Mean Length")[obs_error_ests$type]
 
 # add levels to each variable
 obs_error_ests$type = factor(obs_error_ests$type, levels = c("Abundance", "Survival", "Mean Length", "Composition"))
-obs_error_ests$param = factor(obs_error_ests$param, levels = c("Fall Screw Trap", "Spring Screw Trap", "Adult Return", "Summer Tagging -> LGR", "Fall Tagging -> LGR", "Winter Tagging -> LGR", "Spring Tagging -> LGR", "Smolt Release -> LGR", "LGR Smolt -> Ocean", "BON Adults -> LGR", "Pre-spawn", "Summer Parr", "Spring Smolt", "Weir", "Carcass"))
+obs_error_ests$param = factor(obs_error_ests$param, levels = c("Fall Screw Trap", "Spring Screw Trap", "Adult Return", "Summer Tagging -> LGR", "Fall Tagging -> LGR", "Winter Tagging -> LGR", "Spring Tagging -> LGR", "Smolt Release -> LGR", "LGR Smolt -> Ocean", "BON Adults -> LGR", "Summer Parr", "Spring Smolt", "Weir", "Carcass"))
 obs_error_ests$origin = factor(obs_error_ests$origin, levels = c("NOR", "HOR", "Combined"))
 obs_error_ests$LH_type = factor(obs_error_ests$LH_type, levels = c("Fall Mig.", "Spring Mig.", "Combined"))
 obs_error_ests$age = factor(obs_error_ests$age, levels = c("Age-3", "Age-4", "Age-5", "Combined"))
