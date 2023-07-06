@@ -175,7 +175,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Total Egg Production (Millions)", "Parr Recruits (Thousands)")
 ```
 
-## Total Eggs vs. Total Spawners
+## Total Eggs vs. Total Spawners {.tabset .tabset-pills}
+
+### Scatterplot
 
 This figure shows that total spawner abundance is a reasonable index of total egg production, according to the assumptions of our model (eggs = spawners-age-4/5 * 50% * age-specific fecundity).
 The three lines illustrate the relationship if each spawner (regardless of age or sex) had a fixed number of eggs.
