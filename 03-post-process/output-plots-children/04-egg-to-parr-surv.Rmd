@@ -223,3 +223,97 @@ mypar()
 junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Total Spawners", "Total Egg Production (Millions)")
 ```
+
+### Eggs per Spawner
+
+Calculated as total annual egg production divided by the sum of all spawners (regardless of age or sex).
+Dashed line shows the time series average for reference.
+
+```{r eggs-per-spawner, fig.width = p4_width, fig.height = p4_height}
+# function to create the plot for one population
+plot_f = function(j) {
+  est = post_summ(post, sub_index("^E_per_Sa[year,pop]$", year = ts_yrs, pop = j))
+  plot_tseries(est = est,
+               yrs = all_yrs[ts_yrs], label_text = pops[j], y_scale = 1000)
+  
+  # add a time series mean
+  mn = mean(est["mean",])
+  segments(min(all_yrs[ts_yrs]), mn, max(all_yrs[ts_yrs]), mn, lty = 2, lwd = 2, col = main_cols["model"])
+}
+
+# loop over populations
+mypar()
+junk = sapply(1:jags_data$nj, plot_f)
+axis_labels("Return Year", "Eggs per Spawner (1000s)")
+```
+
+### Eggs per Female
+
+Calculated as total annual egg production divided by the sum of half of all age-4 and age-5 spawners.
+Dashed line shows the time series average for reference.
+
+```{r eggs-per-female, fig.width = p4_width, fig.height = p4_height}
+# function to calculate eggs-per-female posterior samples
+f = function() {
+  # extract posterior samples of relevant quantities
+  Sa = post_subset(post, "^Sa[", matrix = TRUE)
+  E = post_subset(post, "^E[", matrix = TRUE)
+  
+  # function to perform derived quantity calculation for each posterior sample
+  g = function(i) {
+    
+    # format
+    Sa_i = array_format(Sa[i,])
+    E_i = array_format(E[i,])
+    
+    # drop age-3
+    no_jacks = Sa_i[,-1,,]
+    
+    # add hor and nor
+    no_jacks = no_jacks[,,1,] + no_jacks[,,2,]
+    
+    # calculate females at age and sum
+    females = no_jacks[,1,] * jags_data$Omega[2] + no_jacks[,2,] * jags_data$Omega[3]
+    
+    # calculate eggs per female
+    as.numeric(E_i/females)
+  }
+  
+  # apply to each posterior sample
+  out = t(sapply(1:nrow(Sa), g))
+  
+  # build element indices: the year
+  y_ind = rep(1:jags_data$ny, jags_data$nj)
+  
+  # build element indices: the population
+  j_ind = rep(1:jags_data$nj, each = jags_data$ny)
+  
+  # build element names
+  colnames(out) = paste0("E_per_Sa_female[", y_ind, ",", j_ind, "]")
+  
+  # determine which should be dropped due to NA values
+  na_ind = which(!is.na(out[1,]))
+
+  # combine with remainder of posterior samples
+  post_bind(post, out[,na_ind])
+}
+
+# apply the function
+post = f()
+
+# function to create the plot for one population
+plot_f = function(j) {
+  est = post_summ(post, sub_index("^E_per_Sa_female[year,pop]$", year = ts_yrs, pop = j))
+  plot_tseries(est = est,
+               yrs = all_yrs[ts_yrs], label_text = pops[j], y_scale = 1000)
+  
+  # add a time series mean
+  mn = mean(est["mean",])
+  segments(min(all_yrs[ts_yrs]), mn, max(all_yrs[ts_yrs]), mn, lty = 2, lwd = 2, col = main_cols["model"])
+}
+
+# loop over populations
+mypar()
+junk = sapply(1:jags_data$nj, plot_f)
+axis_labels("Return Year", "Eggs per Female (1000s)")
+```
