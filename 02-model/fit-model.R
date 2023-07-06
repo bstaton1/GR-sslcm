@@ -96,6 +96,10 @@ jags_data = create_jags_data_mult(
   last_y = max(bio_dat$brood_year)
 )
 
+# set observation CV on mean length data to something higher
+jags_data$sig_L_Pb_obs[!is.na(jags_data$sig_L_Pb_obs)] = 0.01
+jags_data$sig_L_Mb_obs[!is.na(jags_data$sig_L_Mb_obs)] = 0.01
+
 # plug in values for harvest rates not yet available
 jags_data$U[c("2020", "2021", "2022"),,] = jags_data$U[c("2017", "2018", "2019"),,]
 
