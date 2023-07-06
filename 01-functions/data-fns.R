@@ -57,6 +57,14 @@ standardize_mean_length = function(len_mean, jday_med, resid_type) {
   return(len_mean_adj)
 }
 
+##### MERGE MULTIPLE DATA SETS TOGETHER #####
+
+# shorthand, allows quickly piping many commands together to build large complete dataset
+
+my_merge = function(x, y, by = c("population", "brood_year"), all = TRUE) {
+  merge(x = x, y = y, by = by, all = all)
+}
+
 ##### CREATE NAMES FOR A SPECIFIC COMPOSITION DATA SET #####
 # o_names = c("NOR", "HOR")
 # k_names = c(3, 4, 5)
@@ -88,7 +96,7 @@ create_comp_names = function(type, o_names, k_names) {
 # first_y: the first return year with adult return data for any population
 # last_y: the last return year with adult return data for any population
 
-create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
+create_jags_data_one = function(pop, first_y, last_y) {
   
   ## ERROR HANDLER: make sure bio_dat object is available
   if (!exists("bio_dat")) {
@@ -295,10 +303,9 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
   
   ### ADULT PRESPAWN DATA ###
   
-  # number of carcasses sampled and found to have spawned successfully
-  x_carcass_spawned = x_carcass_total = rep(NA, ny); names(x_carcass_spawned) = names(x_carcass_total) = y_names
-  x_carcass_spawned[y_names %in% sub$brood_year] = sub$carcs_status_spawned
-  x_carcass_total[y_names %in% sub$brood_year] = sub$carcs_samp_for_status
+  # proportion of carcasses sampled and found to have spawned successfully
+  phi_Sb_Sa = rep(NA, ny); names(phi_Sb_Sa) = y_names
+  phi_Sb_Sa[y_names %in% sub$brood_year] = sub$prespawn_surv
   
   ### ADULT FECUNDITY ###
   
@@ -403,11 +410,8 @@ create_jags_data_one = function(pop, first_y = 1991, last_y = 2019) {
     x_Sa_prime = x_Sa_prime,
     nx_Sa_prime = nx_Sa_prime,   # multinomial sample size
     
-    # number of carcasses sampled for spawn status
-    x_carcass_total = x_carcass_total,
-    
-    # number of carcasses found to have spawned successfully
-    x_carcass_spawned = x_carcass_spawned,
+    # proportion of carcasses found to have spawned successfully (pre-spawn survival)
+    phi_Sb_Sa = phi_Sb_Sa,
     
     # weighted usable length
     wul = WUL[pop],
@@ -506,13 +510,11 @@ create_jags_data_mult = function(pops, first_y = 1991, last_y = 2019) {
     # weir removals
     B = abind(lapply(main_list, function(x) x$B), along = 4),
     
+    # fecundity
     f = abind(lapply(main_list, function(x) x$f), along = 3),
     
-    # number of carcasses sampled for spawn status
-    x_carcass_total = abind(lapply(main_list, function(x) x$x_carcass_total), along = 2),
-    
-    # number of carcasses sampled with successful spawning status
-    x_carcass_spawned = abind(lapply(main_list, function(x) x$x_carcass_spawned), along = 2),
+    # proportion of carcasses sampled with successful spawning status
+    phi_Sb_Sa = abind(lapply(main_list, function(x) x$phi_Sb_Sa), along = 2),
     
     # weighted usable length
     wul = abind(lapply(main_list, function(x) x$wul), along = 1)
@@ -565,8 +567,7 @@ append_no_na_indices = function(jags_data) {
       fit_Lphi_Mb_Ma = find_no_na_indices(Lphi_obs_Mb_Ma),
       fit_Lphi_Ma_O0 = find_no_na_indices(Lphi_obs_Ma_O0),
       fit_x_LGR = find_no_na_indices(x_LGR),
-      fit_Ra = find_no_na_indices(Ra_obs),
-      fit_x_carcass_spawned = find_no_na_indices(x_carcass_spawned)
+      fit_Ra = find_no_na_indices(Ra_obs)
     )
   })
   
@@ -688,6 +689,20 @@ append_values_for_sim = function(jags_data) {
   
   # append with observed period to be passed to the model
   jags_data$f = abind(jags_data$f, x, along = 1)
+  
+  ### KNOWN VALUES SOURCE X: PRE-SPAWN SURVIVAL RATES ###
+  
+  # extract the values from the observed period
+  x = jags_data$phi_Sb_Sa
+  
+  # insert a value in the old "year-0" position
+  x[1,] = x[2,]
+  
+  # change the year names
+  dimnames(x)[[1]] = 1:ny_sim + last_obs_yr
+  
+  # append with observed period to be passed to the model
+  jags_data$phi_Sb_Sa = abind(jags_data$phi_Sb_Sa, x, along = 1)
   
   # return the updated jags_data object
   return(jags_data)

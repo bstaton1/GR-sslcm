@@ -46,7 +46,7 @@ discard_params = c(
 no_mcmc_diags_Minam = lapply(discard_params, sub_index, pop = j_min) |>
   lapply(sub_index, LH_type = i_spring) |>
   lapply(sub_index, origin = o_hor) |>
-  lapply(sub_index, year = ts_yrs) |>
+  lapply(sub_index, year = observable) |>
   lapply(unique) |>
   unlist()
 
@@ -364,15 +364,6 @@ tmp_diags = summarize_posterior("rho_Lphi_Rb_Ra[2,1]", L1 = L1, L2 ="Among-origi
 tmp_summ =  summarize_diags(tmp_diags)
 diags_out = rbind(diags_out, tmp_diags)
 summs_out = rbind(summs_out, tmp_summ)
-
-# Pre-spawn Survival
-L1 = "Pre-spawn Survival"
-L2 = c("Mean")
-match = c("mu_phi_Sb_Sa")
-tmp_diags = lapply(1:length(match), function(i) summarize_posterior(match[i], L1 = L1, L2 = L2[i]))
-tmp_summ = lapply(tmp_diags, function(i) summarize_diags(i))
-diags_out = rbind(diags_out, do.call(rbind, tmp_diags))
-summs_out = rbind(summs_out, do.call(rbind, tmp_summ))
 
 # Carcass Correction
 L1 = "Carcass Correction Factor"

@@ -187,18 +187,6 @@ x_Sa_prime_bp = data.frame(
 )
 rownames(x_Sa_prime_bp) = NULL
 
-# pre-spawn survival
-new = post_subset(post, "x_carcass_spawned_new_dev", TRUE)
-obs = post_subset(post, "x_carcass_spawned_dev", TRUE)
-bp = array_format(colMeans(obs > new))
-dimnames(bp) = list(all_yrs[1:dim(bp)[1]], pops)
-x_carcass_spawned_bp = data.frame(
-  name = rep("Prespawn", 4), pop = pops,
-  origin = rep("Combined", 4), LH_type = rep("Combined", 4),
-  summarize_bp(bp)
-)
-rownames(x_carcass_spawned_bp) = NULL
-
 # movement survival from BON to LGR
 new = post_subset(post, "x_LGR_new_dev", TRUE)
 obs = post_subset(post, "x_LGR_dev", TRUE)
@@ -215,7 +203,7 @@ rownames(x_LGR_bp) = NULL
 bp_tab = rbind(
   Pa_bp, Mb_bp, Ra_bp,
   phi_Pb_Ma_bp, phi_Pa_Ma_bp, phi_Mb_Ma_bp,
-  phi_Ma_O0_bp, L_Pb_bp, L_Mb_bp, x_Ra_bp, x_Sa_prime_bp, x_carcass_spawned_bp, x_LGR_bp
+  phi_Ma_O0_bp, L_Pb_bp, L_Mb_bp, x_Ra_bp, x_Sa_prime_bp, x_LGR_bp
 )
 
 # add a main data category variable

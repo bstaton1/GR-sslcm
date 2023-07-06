@@ -96,9 +96,6 @@ jags_model_code = function() {
     # hatchery origin movement survival (trib to LGD): have spring migrants only
     mu_phi_Mb_Ma[i_spring,o_hor,j] ~ dbeta(1, 1)
     
-    # pre-spawn survival (after brood-stock removal to successful spawning)
-    mu_phi_Sb_Sa[j] ~ dbeta(1, 1)
-    
     ### PRIORS: MATURATION ###
     # age/origin-specific maturation probabilities
     for (o in 1:no) {
@@ -249,9 +246,6 @@ jags_model_code = function() {
     Lphi_O1_O2[y,o_hor,1:nj] <- Lphi_O1_O2[y,o_nor,1:nj] + delta_O1_O2[1:nj]
     Lphi_O2_O3[y,o_hor,1:nj] <- Lphi_O2_O3[y,o_nor,1:nj] + delta_O2_O3[1:nj]
     
-    # pre-spawn survival
-    Lphi_Sb_Sa[y,1:nj] <- logit(mu_phi_Sb_Sa[1:nj])
-
     # movement survival (juveniles LGR to BON)
     Lphi_Ma_O0[y,1:no] ~ dmnorm(logit(mu_phi_Ma_O0[1:no]), Tau_Lphi_Ma_O0[1:no,1:no])
 
@@ -310,8 +304,6 @@ jags_model_code = function() {
       # assume movement survival trib to LGR for NOR fish is equal between LH types
       phi_Mb_Ma[y,i_fall,o_nor,j] <- phi_Mb_Ma[y,i_spring,o_nor,j]
       
-      # pre-spawn survival
-      phi_Sb_Sa[y,j] <- ilogit(Lphi_Sb_Sa[y,j])
     }
     
     # transform quantities common to all pops but different by origin
@@ -754,28 +746,6 @@ jags_model_code = function() {
     
     # calculate observation model residuals
     x_LGR_obs_qresid[fit_x_LGR[d,1],fit_x_LGR[d,2]] <- pbin(x_LGR[fit_x_LGR[d,1],fit_x_LGR[d,2]], phi_Rb_Ra[fit_x_LGR[d,1],fit_x_LGR[d,2]], x_BON[fit_x_LGR[d,1],fit_x_LGR[d,2]])
-  }
-  
-  # pre-spawn survival
-  for (d in 1:nfit_x_carcass_spawned) {
-    # data likelihood
-    x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] ~ dbin(phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
-    
-    # simulate new data
-    x_carcass_spawned_new[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] ~ dbin(phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
-    
-    # calculate expected count
-    expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] * x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]
-
-    # calculate fit statistic: Freeman-Tukey statistic
-    x_carcass_spawned_dev[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- (sqrt(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]) - sqrt(expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]))^2
-    x_carcass_spawned_new_dev[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- (sqrt(x_carcass_spawned_new[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]) - sqrt(expected_x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]]))^2
-
-    # calculate log posterior predictive density
-    x_carcass_spawned_lppd[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- logdensity.bin(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
-    
-    # calculate observation model residuals
-    x_carcass_spawned_obs_qresid[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]] <- pbin(x_carcass_spawned[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], phi_Sb_Sa[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]], x_carcass_total[fit_x_carcass_spawned[d,1],fit_x_carcass_spawned[d,2]])
   }
   
   ### CALCULATE ALL PROCESS MODEL RESIDUALS ###

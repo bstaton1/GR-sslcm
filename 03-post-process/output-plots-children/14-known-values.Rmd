@@ -1,0 +1,304 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# Assumed-Known Quantities {.tabset .tabset-dropdown}
+
+This section displays values of quantities passed to the model as non-stochastic, i.e., as being assumed known without error.
+These are quantities for which data exist to inform their inter-annual variability, but no process or observation model component exists to explain it.
+Dashed lines show the average across all years with non-missing and non-zero values.
+
+```{r known-plot-fn}
+known_plot = function(y_val, label, ylim = NULL, y_scale = 1, is_empty = FALSE) {
+  
+  # control whether to make the plot an empty panel or not
+  if (is_empty) {
+    empty_plot()
+  } else {
+    # create a blank plot
+    plot(y_val ~ all_yrs, type = "n", ylim = ylim,
+         yaxt = "n", xaxt = "n")
+    
+    # add the time series as lines, broken if needed
+    lines(y_val ~ all_yrs, col = main_cols["data"], lwd = 2)
+    
+    # add the time series as points, to show all years 
+    points(y_val ~ all_yrs, col = "white", bg = "white", pch = 21, cex = pt_cex)
+    points(y_val ~ all_yrs, col = main_cols["data"], bg = tran_cols["data"], pch = 21, cex = pt_cex)
+    
+    # add a horizontal line showing the time series average value
+    mn = mean(y_val, na.rm = TRUE)
+    segments(min(all_yrs[!is.na(y_val)]), mn, max(all_yrs[!is.na(y_val)]), mn,
+             col = par("col.axis"), lty = 3, lwd = 2)
+    
+    # draw axes
+    at_x = axisTicks(par("usr")[1:2], log = FALSE)
+    at_y = axisTicks(par("usr")[3:4], log = FALSE)
+    axis(side = 1, at = at_x, labels = paste0("'", substr(at_x, 3, 4)))
+    axis(side = 2, at = at_y, labels = at_y/y_scale)
+  }
+  
+  # draw panel label
+  panel_label(label)
+}
+```
+
+## HOR Smolt Releases
+
+```{r known-Mb-obs, fig.width = p4_width, fig.height = p4_height}
+# function to make plot for one population
+plot_f = function(j) {
+  y_val = jags_data$Mb_obs[,i_spring,o_hor,j]
+  y_val[y_val == 0] = NA
+  ylim = c(0, max(jags_data$Mb_obs[,i_spring,o_hor,], na.rm = TRUE))
+  known_plot(y_val, label = pops[j], is_empty = j == 3, ylim = ylim, y_scale = 1000)
+}
+
+# make plot for all populations
+mypar()
+junk = lapply(1:jags_data$nj, plot_f)
+axis_labels("Brood Year", "HOR Smolt Releases (1000s)")
+```
+
+## Harvest Rate Downstream of BON
+
+```{r known-U, fig.width = p4_width, fig.height = p4_height}
+# function to make plot for one age/origin combo
+plot_f = function(ko) {
+  U = cbind(jags_data$U[,,1], jags_data$U[,,2])
+  y_val = U[,ko]
+  y_val[y_val == 0] = NA
+  oname = ifelse(ko %in% ko_origin$ko_nor, "NOR", "HOR")
+  aname = ifelse(ko %in% ko_age$ko_3, "3", ifelse(ko %in% ko_age$ko_4, "4", "5"))
+  
+  ylim = make_lim(c(0, max(jags_data$U, na.rm = TRUE)))
+  known_plot(y_val, label = paste0("Age-", aname, " (", oname, ")"), ylim = ylim)
+}
+
+# make plot for all ages/origin combos
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f)
+axis_labels("Return Year", "Harvest Rate Downstream of BON")
+```
+
+## Tributary Harvest {.tabset .tabset-pills}
+
+```{r known-H-fn, fig.width = p4_width, fig.height = p4_height}
+# function to make plot for one age/origin combo for one population
+plot_f = function(j, ko) {
+  Hj = cbind(jags_data$H[,,o_nor,j], jags_data$H[,,o_hor,j])
+  y_val = Hj[,ko]
+  y_val[y_val == 0] = NA
+  oname = ifelse(ko %in% ko_origin$ko_nor, "NOR", "HOR")
+  aname = ifelse(ko %in% ko_age$ko_3, "3", ifelse(ko %in% ko_age$ko_4, "4", "5"))
+  
+  ylim = c(0, max(jags_data$H, na.rm = TRUE))
+  known_plot(y_val, label = paste0("Age-", aname, " (", oname, ")"), ylim = ylim)
+}
+```
+
+### CAT
+
+```{r known-H-CAT, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_cat)
+axis_labels("Return Year", "Harvest")
+```
+
+### LOS
+
+```{r known-H-LOS, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_los)
+axis_labels("Return Year", "Harvest")
+```
+
+### MIN
+
+```{r known-H-MIN, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_min)
+axis_labels("Return Year", "Harvest")
+```
+
+### UGR
+
+```{r known-H-UGR, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_ugr)
+axis_labels("Return Year", "Harvest")
+```
+
+## Weir Removals {.tabset .tabset-pills}
+
+### Numbers of Fish {.tabset .tabset-pills}
+
+```{r known-B-fn}
+# function to make the plot for one age/origin combo for one population
+plot_f = function(j, ko) {
+  Bj = cbind(jags_data$B[,,o_nor,j], jags_data$B[,,o_hor,j])
+  y_val = Bj[,ko]
+  oname = ifelse(ko %in% ko_origin$ko_nor, "NOR", "HOR")
+  aname = ifelse(ko %in% ko_age$ko_3, "3", ifelse(ko %in% ko_age$ko_4, "4", "5"))
+  y_val[y_val == 0] = NA
+  ylim = make_lim(c(0, max(y_val, na.rm = TRUE)))
+  known_plot(y_val, label = paste0("Age-", aname, " (", oname, ")"), is_empty = j == 3, ylim = ylim)
+}
+```
+
+#### CAT
+
+```{r known-B-CAT, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_cat)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+#### LOS
+
+```{r known-B-LOS, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_los)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+#### MIN
+
+```{r known-B-MIN, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_min)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+#### UGR
+
+```{r known-B-UGR, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_ugr)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+### Proportion of Return-to-River {.tabset .tabset-pills}
+
+The fraction of the return estimated to have been removed at the weir based on the data alone, i.e., weir removals divided by the return-to-river estimate apportioned to age/origin by the proportional contribution observed at the weir that year.
+
+It is possible for the raw data values to suggest >100% of the fish at a given age/origin combo were taken -- the SSM prevents this from happening.
+
+```{r known-Bu-fn}
+# function to make the plot for one age/origin combo for one population
+plot_f = function(j, ko) {
+  Bj = cbind(jags_data$B[,,o_nor,j], jags_data$B[,,o_hor,j])
+  Ra = 
+  p_Ra = jags_data$x_Ra[,ko,j]/jags_data$nx_Ra[,j]
+
+  y_val = Bj[,ko]/(jags_data$Ra_obs[,j] * p_Ra)
+  oname = ifelse(ko %in% ko_origin$ko_nor, "NOR", "HOR")
+  aname = ifelse(ko %in% ko_age$ko_3, "3", ifelse(ko %in% ko_age$ko_4, "4", "5"))
+  y_val[y_val == 0] = NA
+  # y_val[y_val > 1] = 1
+  # ylim = make_lim(c(0, max(y_val, na.rm = TRUE)))
+  ylim = make_lim(c(0, 1.05))
+  known_plot(y_val, label = paste0("Age-", aname, " (", oname, ")"), is_empty = j == 3, ylim = ylim)
+}
+```
+
+#### CAT
+
+```{r known-Bu-CAT, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_cat)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+#### LOS
+
+```{r known-Bu-LOS, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_los)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+#### MIN
+
+```{r known-Bu-MIN, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_min)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+#### UGR
+
+```{r known-Bu-UGR, fig.width = p6_width, fig.height = p6_height}
+mypar(mfrow = c(2,3))
+junk = lapply(1:jags_data$nko, plot_f, j = j_ugr)
+axis_labels("Return Year", "Removals at Weir")
+```
+
+## Fecundity {.tabset .tabset-pills}
+
+Time- and population-varying fecundity estimates were derived from annual mean length-at-age data, and a length-fecundity relationship derived from hatchery spawned females.
+Imputation of mean length-at-age data was needed; exploratory analyses revealed that LOS was much different in mean length than the other three populations, thus missing years in the former were imputed separately from the latter group, and populations in the latter group all share identical mean length (thus fecundity) time series.
+Age-3 spawners were assumed to be 100% male, thus had assigned fecundity of zero in all years.
+
+```{r known-f-fn}
+# function to make the plot for one population/age
+f = function(j, k) {
+  y_val = jags_data$f[,k,j]
+  aname = c(3,4,5)[k]
+  y_val[y_val == 0] = NA
+  ylim = make_lim(jags_data$f[,2:3,])
+  known_plot(y_val, label = paste0("Age-", aname), ylim = ylim, y_scale = 1000)
+}
+```
+
+### LOS
+
+```{r known-f-LOS, fig.width = p2_width, fig.height = p2_height}
+mypar(mfrow = c(1,2))
+junk = lapply(2:3, f, j = j_los)
+axis_labels("Return Year", "Eggs Per Female (1000s)")
+```
+
+### CAT, MIN, UGR
+
+```{r known-f-CAT-MIN-UGR, fig.width = p2_width, fig.height = p2_height}
+mypar(mfrow = c(1,2))
+junk = lapply(2:3, f, j = j_cat)
+axis_labels("Return Year", "Eggs Per Female (1000s)")
+```
+
+## Pre-Spawn Survival
+
+These values are obtained as the model-predicted value from a GLMM fitted to counts of carcasses found with different spawn statuses.
+
+<details>
+  <summary>Show model details</summary>
+
+```{r, eval = FALSE, echo = TRUE}
+glmmTMB::glmmTMB(
+  cbind(yes,no) ~ 1 + (1|year), 
+  data = subset(data, population == one_pop), 
+  family = binomial
+)
+```
+
+Where `yes` and `no` are vectors storing the number of female carcasses examined each return year (`year`) for one population (`one_pop`) that were and were not successful in spawning ("successful" spawning is assigned by the absence of >50% the potential total eggs carried by that female).
+Values were bounded on the interval [0.4,1); several years for UGR suggested very low survival with low sample size.
+
+</details>
+
+```{r known-phi-Sb-Sa-fn, fig.width = p4_width, fig.height = p4_height}
+# function to make the plot for one population
+plot_f = function(j) {
+  y_val = jags_data$phi_Sb_Sa[,j]
+  y_val[y_val == 0] = NA
+  ylim = make_lim(jags_data$phi_Sb_Sa)
+  known_plot(y_val, label = pops[j], ylim = ylim)
+}
+
+# make the plot for all populations
+mypar()
+junk = lapply(1:jags_data$nj, plot_f)
+axis_labels("Return Year", "Pre-Spawn Survival")
+```

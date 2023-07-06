@@ -573,28 +573,29 @@ hydro_surv = tmp; rm(tmp)
 ##### COMBINE THESE DATA SOURCES INTO ONE DATA FRAME #####
 
 # merge together the various data sets
-bio_dat = merge(juvenile_abundance, juvenile_survival, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, juvenile_length, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, adult_abundance, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, adult_carc_composition, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, adult_weir_composition, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, adult_rm_composition, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, harv_composition, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, fecundity, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, adult_prespawn, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, hatchery_release_survival, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, hydro_surv, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, dam_adult_counts, by = c("population", "brood_year"), all = T)
-bio_dat = merge(bio_dat, harvest_rates, by = c("population", "brood_year"), all = T)
+bio_dat = juvenile_abundance |>
+  my_merge(juvenile_survival) |>
+  my_merge(juvenile_length) |>
+  my_merge(adult_abundance) |>
+  my_merge(adult_carc_composition) |>
+  my_merge(adult_weir_composition) |>
+  my_merge(adult_rm_composition) |>
+  my_merge(harv_composition) |>
+  my_merge(fecundity) |>
+  my_merge(read.csv(file.path(data_dir, "prespawn-surv.csv"))) |>
+  my_merge(hatchery_release_survival) |>
+  my_merge(hydro_surv) |>
+  my_merge(dam_adult_counts) |>
+  my_merge(harvest_rates)
 
-# create an empty data frame for merging
-# this ensures all populations have rows for every year
-empty_df = with(bio_dat, expand.grid(population = unique(population), brood_year = seq(min(brood_year), max(brood_year))))
-bio_dat = merge(bio_dat, empty_df, by = c("population", "brood_year"), all = T)
+# ensure all populations have rows for every year
+bio_dat = with(bio_dat, expand.grid(population = unique(population), brood_year = seq(min(brood_year), max(brood_year)))) |>
+  my_merge(bio_dat)
 
 # make hatchery releases be zero if NA
 bio_dat$hatchery_smolt[is.na(bio_dat$hatchery_smolt) & bio_dat$population != "ALL"] = 0
 
+# reformat column names
 colnames(bio_dat) = stringr::str_replace(colnames(bio_dat), "Nat", "NOR")
 colnames(bio_dat) = stringr::str_replace(colnames(bio_dat), "Hat", "HOR")
 
