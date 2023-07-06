@@ -464,7 +464,8 @@ if (args$rmd) {
   # render the output
   render(input = "output-plots.Rmd",
          output_file = rmd_out_file,
-         params = list(scenario = scenario),
+         params = list(scenario = scenario,
+                       include_sim_years = args$sim),
          quiet = TRUE
   )
   

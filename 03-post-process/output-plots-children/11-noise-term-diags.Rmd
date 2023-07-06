@@ -325,7 +325,7 @@ post = post_bind(post, qresid_post)
 
 ```{r plot-proc-resid-fn}
 
-plot_proc_qresid = function(qresid_param, year = ts_yrs, pop = NULL, origin = NULL, LH_type = NULL, age = NULL, main = NULL) {
+plot_proc_qresid = function(qresid_param, year = observable, pop = NULL, origin = NULL, LH_type = NULL, age = NULL, main = NULL) {
   
   # extract posterior samples of residual time series
   qresid_post = post_subset(post, sub_index(qresid_param, year = year, pop = pop, origin = origin, LH_type = LH_type, age = age), matrix = TRUE)
@@ -500,7 +500,7 @@ proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 
 ```{r yr1-ocean-surv-noise, fig.width = p4_width, fig.height = p4_height}
 mypar()
-tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_O0_O1_qresid[year,origin,pop]", origin = 1, year = c(ts_yrs), pop = j, main = pops[j]))
+tmp = lapply(1:jags_data$nj, function(j) plot_proc_qresid("Lphi_O0_O1_qresid[year,origin,pop]", origin = 1, pop = j, main = pops[j]))
 axis_labels("Brood Year", "logit(Yr1 Ocean Survival) QResidual")
 proc_error_ests = rbind(proc_error_ests, do.call(rbind, tmp))
 ```
