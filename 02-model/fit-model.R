@@ -223,7 +223,7 @@ jags_params = c(
   
   # hyperparameters: central tendency
   "mu_pi", "mu_phi_Mb_Ma", "mu_phi_Ma_O0",
-  "mu_psi_O1", "mu_psi_O2", "mu_phi_Sb_Sa",
+  "mu_psi_O1", "mu_psi_O2",
   "mu_phi_O0_O1", "mu_phi_O1_O2", "mu_phi_O2_O3", "mu_phi_Rb_Ra",
   
   # "dot" parameters -- expected values after accounting for relationships (dot), AR(1) (dot2)
@@ -232,7 +232,7 @@ jags_params = c(
   
   # year-specific parameters
   "pi", "phi_Pa_Mb", "phi_Mb_Ma", "phi_Ma_O0", 
-  "psi_O1", "psi_O2", "phi_Sb_Sa",
+  "psi_O1", "psi_O2",
   "phi_O0_O1", "phi_O1_O2", "phi_O2_O3",
   "phi_Rb_Ra", "Delta_L_Pb_Mb",
   
@@ -270,7 +270,7 @@ jags_params = c(
   "x_Ra_obs_qresid", "x_Sa_prime_obs_qresid",
   "lPa_obs_qresid", "lMb_obs_qresid", "lRa_obs_qresid",
   "Lphi_obs_Pb_Ma_qresid", "Lphi_obs_Pa_Ma_qresid", "Lphi_obs_Mb_Ma_qresid",
-  "Lphi_obs_Ma_O0_qresid", "x_LGR_obs_qresid", "x_carcass_spawned_obs_qresid",
+  "Lphi_obs_Ma_O0_qresid", "x_LGR_obs_qresid",
   "lL_Pb_obs_qresid", "lL_Mb_obs_qresid",
   
   # AR(1) coefficients
@@ -291,7 +291,7 @@ pp_check_params = c(
 lppd_params = c(
   "x_Ra_lppd", "x_Sa_prime_lppd", "Pa_obs_lppd", "Mb_obs_lppd", "Ra_obs_lppd",
   "Lphi_obs_Pb_Ma_lppd", "Lphi_obs_Pa_Ma_lppd", "Lphi_obs_Mb_Ma_lppd",
-  "Lphi_obs_Ma_O0_lppd", "x_carcass_spawned_lppd", "x_LGR_lppd"
+  "Lphi_obs_Ma_O0_lppd", "x_LGR_lppd"
 )
 
 # nodes for monitoring potentially non-vague prior densities
@@ -326,7 +326,7 @@ jags_dims = list(
 )
 
 # calculate expected time to run and misc values for nice printing
-hrs_per_10k = ifelse(args$sim, 0.9, 1.85)
+hrs_per_10k = ifelse(args$sim, 0.9, 2.5)
 iters = with(jags_dims, (n_burn + n_post) * ifelse(parallel, 1, n_chain))
 pred_hrs = iters/1e4 * hrs_per_10k
 units_c = ifelse(pred_hrs > 1, "hour(s)", "minute(s)")

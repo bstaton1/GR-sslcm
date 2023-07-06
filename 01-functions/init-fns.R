@@ -74,7 +74,7 @@ get_E_obs = function(jags_data, fill_missing = FALSE, append_sim_yrs = FALSE) {
     harvest = do.call(abind, append(harvest, list(along = 3)))
     
     # get the pre-spawn survival
-    prespawn_surv = colSums(x_carcass_spawned, na.rm = TRUE)/colSums(x_carcass_total, na.rm = TRUE)
+    prespawn_surv = colMeans(phi_Sb_Sa, na.rm = TRUE)
     
     # get the age/origin compositon of the total adult return
     # assume 60% pHOS and 20%, 60%, 20% of age 3, 4, and 5
