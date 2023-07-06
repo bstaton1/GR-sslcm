@@ -54,6 +54,9 @@ params:
   include_post_v_prior:
     label: "Include Posterior vs. Prior Densities?"
     value: TRUE
+  include_known:
+     label: "Include Non-Stochastic Quantities?"
+     value: TRUE
   include_jags_info:
     label: "Include JAGS Code/Data?"
     value: TRUE
@@ -232,5 +235,8 @@ ylim_01 = c(0, 1.05)
 ```{r post-v-prior, child = "output-plots-children/13-post-vs-prior.Rmd", eval = params$include_post_v_prior}
 ```
 
-```{r jags-info, child = "output-plots-children/14-jags-model-info.Rmd", eval = params$include_jags_info}
+```{r known-values, child = "output-plots-children/14-known-values.Rmd", eval = params$include_known}
+```
+
+```{r jags-info, child = "output-plots-children/15-jags-model-info.Rmd", eval = params$include_jags_info}
 ```
