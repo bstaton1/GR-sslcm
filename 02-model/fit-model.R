@@ -33,7 +33,7 @@ default_args = list(
   scenario    = "test",
   mcmc        = "vshort",
   rmd         = TRUE,
-  sim         = TRUE,
+  sim         = FALSE,
   pp_check    = TRUE,
   lppd        = FALSE
 )
@@ -330,7 +330,7 @@ jags_dims = list(
 )
 
 # calculate expected time to run and misc values for nice printing
-hrs_per_10k = ifelse(args$sim, 0.9, 2.5)
+hrs_per_10k = ifelse(args$sim, 1, 1.9)
 iters = with(jags_dims, (n_burn + n_post) * ifelse(parallel, 1, n_chain))
 pred_hrs = iters/1e4 * hrs_per_10k
 units_c = ifelse(pred_hrs > 1, "hour(s)", "minute(s)")
