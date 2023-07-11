@@ -135,7 +135,7 @@ jags_model_code = function() {
     for (i in 1:n_stray_yrs[j]) {
       G[stray_yrs[i,j],o_nor,j] <- 0
       G_random1[stray_yrs[i,j],o_hor,j] ~ dunif(0, 500)  # prior if an observed year
-      G_random2[stray_yrs[i,j],o_hor,j] ~ dunif(20,110) # prior if a simulated year, only applies for MIN
+      G_random2[stray_yrs[i,j],o_hor,j] ~ dunif(40,130) # prior if a simulated year, only applies for MIN
       G[stray_yrs[i,j],o_hor,j] <- ifelse(stray_yrs[i,j] <= ny_obs, G_random1[stray_yrs[i,j],o_hor,j], G_random2[stray_yrs[i,j],o_hor,j])
     }
     
