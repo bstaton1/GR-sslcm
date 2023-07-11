@@ -147,7 +147,7 @@ add_jags_data = append(add_jags_data, list(first_x_LGR = min(which(!is.na(jags_d
 
 # set upper boundaries for early Rb states
 if (!args$sim) {
-  add_jags_data = append(add_jags_data, list(max_Rb_init = c(50, 200, 200)))
+  add_jags_data = append(add_jags_data, list(max_Rb_init = c(50, 300, 300)))
 } else {
   add_jags_data = append(add_jags_data, list(max_Rb_init = c(200, 1000, 1000)))
 }
