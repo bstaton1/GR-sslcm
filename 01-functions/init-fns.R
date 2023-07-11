@@ -380,6 +380,61 @@ sim_Sigma = function(sig, correlation) {
   Sigma
 }
 
+get_Rb_init = function(jags_data) {
+  
+  get_Rb_init_j = function(jags_data, j) {
+    with(jags_data, {
+      
+      # obtain age/origin composition of RTR
+      # use weir comp data by default
+      x = x_Ra[,,j]
+      
+      # if the data are all missing, use carcas comp data
+      # this is for MIN and if Rb_init is for years without weir data in other pops
+      if (sum(x[1:5,1], na.rm = TRUE) == 0) x = x_Sa_prime[,,j]
+      
+      # get the composition values
+      p_j = t(apply(x, 1, function(xi) (xi+1)/sum(xi+1)))
+      
+      # apportion total RTR to age/origin
+      Ra_j = apply(p_j, 2, function(x) Ra_obs[,j] * x)
+      
+      # reformat harvest rates below BON
+      U_wide = cbind(U[1:ny_obs,,1], U[1:ny_obs,,2])
+      
+      # get BON to LGR survival
+      phi_Rb_Ra = x_LGR/x_BON
+      phi_Rb_Ra = apply(phi_Rb_Ra, 2, function(x) {x[x == 1] = 0.99; x[x == 0] = 0.01; x[is.na(x)] = mean(x, na.rm = TRUE); x})
+      phi_Rb_Ra = cbind(
+        sapply(1:nk, function(i) phi_Rb_Ra[,1]),
+        sapply(1:nk, function(i) phi_Rb_Ra[,2])
+      )
+      
+      # get adults at BON
+      Rb_j_BON = Ra_j/phi_Rb_Ra
+      
+      # get adults at mouth of trib
+      Rb_j = ceiling(Rb_j_BON/(1 - U_wide))
+      
+      # return only needed years
+      Rb_j = Rb_j[1:(kmax+1),]
+      fy = rownames(Rb_j)[1]
+      Rb_j1 = Rb_j[1,]
+      Rb_j = Rb_j[-1,]
+      Rb_j[(kmax-1):kmax,c(1,4)] = NA
+      Rb_j[kmax,c(2,5)] = NA
+      Rb_j = rbind(Rb_j1, Rb_j)
+      rownames(Rb_j)[1] = fy
+      abind(Rb_j[,1:3], Rb_j[,4:6], along = 3)
+    })
+  }
+  # apply to all populations, format, assign dimnames, and return
+  out = lapply(1:jags_data$nj, get_Rb_init_j, jags_data = jags_data)
+  out = do.call(abind, c(out, along = 4))
+  dimnames(out) = list(dimnames(out)[[1]], dimnames(jags_data$U)[[2]], dimnames(jags_data$U)[[3]], dimnames(jags_data$Ra_obs)[[2]])
+  out
+}
+
 gen_initials = function(CHAIN, jags_data) {
   
   with(jags_data, {
