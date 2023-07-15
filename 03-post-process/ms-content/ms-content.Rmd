@@ -11,9 +11,12 @@ params:
     label: "Proportion of Posterior Samples to Retain?"
     value: 1
     input: numeric
-  include_sim_years:
-    label: "Include Simulated Years on Plots?"
-    value: FALSE
+  beta_fig:
+    value: TRUE
+  relationship_fig:
+    value: TRUE
+  no_fall_fig:
+    value: TRUE
 header-includes:
   - \usepackage{sansmathfonts}
   - \usepackage{helvet}
@@ -37,6 +40,13 @@ editor_options:
 
 ::: {.Large data-latex=""}
 **GR-sslcm**
+:::
+
+\vspace{-6pt}
+
+::: {.normalsize data-latex=""}
+**Scenario:** ``r params$scenario``  
+**Kept MCMC Iterations:** `r paste0(params$thin_percent * 100, "\\%")`
 :::
 
 \vspace{-6pt}
@@ -109,7 +119,7 @@ no_fall_caption = "
 "
 ```
 
-```{r beta-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(beta_caption), time_it = TRUE}
+```{r beta-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(beta_caption), time_it = TRUE, eval = params$beta_fig}
 # extract posterior summaries of the capacity parameters
 beta_ests = post_summ(post, "^beta[", probs = c(0.025, 0.1, 0.5, 0.9, 0.975))
 
@@ -163,7 +173,7 @@ axis_labels("Weighted Usable Habitat Length (km)", "Parr Capacity (Thousands)")
 
 \newpage
 
-```{r relationship-fig, fig.width = 7.2, fig.height = 9, fig.cap = msdown::prep_caption(relationship_caption), time_it = TRUE}
+```{r relationship-fig, fig.width = 7.2, fig.height = 9, fig.cap = msdown::prep_caption(relationship_caption), time_it = TRUE, eval = params$relationship_fig}
 solid_col = "grey30"
 tranp_col = alpha(solid_col, 0.25)
 pt_cex = 1.3
@@ -654,7 +664,7 @@ junk = sapply(1:4, function(j) {
 
 \newpage
 
-```{r no-fall-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(no_fall_caption), time_it = TRUE}
+```{r no-fall-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(no_fall_caption), time_it = TRUE, eval = params$no_fall_fig}
 cv = function(x) {sd(x, na.rm = TRUE)/mean(x, na.rm = TRUE)}
 
 ##### STEP 1: EXTRACT POSTERIOR SAMPLES OF QUANTITIES NEEDED #####
