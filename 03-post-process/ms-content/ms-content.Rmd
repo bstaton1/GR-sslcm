@@ -17,6 +17,8 @@ params:
     value: TRUE
   no_fall_fig:
     value: TRUE
+  surv_compare_fig:
+    value: TRUE
 header-includes:
   - \usepackage{sansmathfonts}
   - \usepackage{helvet}
@@ -116,6 +118,12 @@ no_fall_caption = "
   The 'without' scenario was calculated by assuming all parr recruits experienced freshwater survival rates of spring migrants.
   Mean ratios <1 and CV ratios >1 indicate LGR smolt abundance would be lower and more variable, respectively, in the absence of the fall migrant strategy.
   Values presented are posterior means and 95% credible regions.
+"
+
+surv_compare_caption = "
+  Survival probability parameters estimated by the state-space model, separated by stage transition and other demographic features (migratory type, origin, population) where applicable.
+  Small points show posterior means of year-specific realized values (jitter for visual effect only) and large points show the average across years.
+  Information about mortality due to sources/stages not displayed here was either assumed known without error (e.g., prespawn mortality) or expressed as strong prior information with no inter-annual variability (i.e., mortality experienced in ocean-1 $\\to$ ocean-2 and ocean-2 $\\to$ ocean-3).
 "
 ```
 
@@ -749,6 +757,121 @@ legend("topright", title = "LGR Smolt", legend = c("Mean", "CV"), pch = 15,
 ```
 
 \newpage
+
+```{r compare-fn, eval = params$surv_compare_fig | params$apportion_compare_fig}
+pch = c(21, 23)
+
+cex_main = 2.5
+cex_sub = 1.1
+
+solid_col = "grey40"
+tranp_col = alpha(solid_col, 0.25)
+
+f_horiz = function(ests1, ests2, lim, label) {
+  # prepare the first group of estimates
+  ests1 = ests1[-1,]; x1 = colMeans(ests1)
+  
+  # figure out the correct axis labels
+  if (ncol(ests1) == 4) tick_labels = pops else tick_labels = c("NOR", "HOR")
+  jitter = runif(nrow(ests1), -0.25, 0.25)
+  
+  if (is.null(ests2)) {
+    # empty barplot with correct dimensions
+    mp = barplot(x1, col = "white", border = "white", xlim = lim, ylim = c(ncol(ests1) + 0.5, 0.05), horiz = TRUE)
+    
+    # figure out location of jittered points
+    mp_all = t(sapply(1:nrow(ests1), function(i) mp))
+    mp_all = apply(mp_all, 2, function(x) x + jitter)
+    
+    # draw year-specific estimates
+    points(ests1, mp_all, col = solid_col, bg = tranp_col, pch = pch[1], cex = cex_sub)
+    
+    # draw year averages
+    points(x1, mp, pch = pch[1], col = "white", bg = "black", cex = cex_main, lwd = 1.5)
+    
+    # draw axis
+    omgp = par("mgp"); nmgp = omgp; nmgp[2] = 0.15
+    par(mgp = nmgp)
+    usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
+    segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
+    axis(side = 2, at = mp, labels = tick_labels, las = 1)
+    par(mgp = omgp)
+    
+  } else {
+    # prepare the second group of estimates if supplied
+    ests2 = ests2[-1,]; x2 = colMeans(ests2)
+    
+    # empty barplot with correct dimensions
+    mp = barplot(rbind(x1, x2), beside = TRUE, space = c(0.25,1), col = "white", border = "white", xlim = lim, ylim = c(ncol(ests1) * 3 + 1, 0.15), horiz = TRUE)
+    mp1 = mp[1,]; mp2 = mp[2,]
+    
+    # figure out location of jittered points
+    mp1_all = t(sapply(1:nrow(ests1), function(i) mp1))
+    mp1_all = apply(mp1_all, 2, function(x) x + jitter)
+    mp2_all = t(sapply(1:nrow(ests2), function(i) mp2))
+    mp2_all = apply(mp2_all, 2, function(x) x + jitter)
+    
+    # draw year-specific estimates
+    points(ests1, mp1_all, col = solid_col, bg = tranp_col, pch = pch[1], cex = cex_sub)
+    points(ests2, mp2_all, col = solid_col, bg = tranp_col, pch = pch[2], cex = cex_sub)
+    
+    # draw year averages
+    points(x1, mp1, pch = pch[1], cex = cex_main, bg = "black", col = "white", lwd = 1.5)
+    points(x2, mp2, pch = pch[2], cex = cex_main, bg = "black", col = "white", lwd = 1.5)
+    
+    # draw axis
+    omgp = par("mgp"); nmgp = omgp; nmgp[2] = 0.15
+    par(mgp = nmgp)
+    usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
+    segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
+    axis(side = 2, at = (mp1 + mp2)/2, labels = tick_labels, las = 1)
+    par(mpg = omgp)
+  }
+  
+  # draw panel label
+  panel_label(label, y_inp = ifelse(ncol(ests1) == 4, 0.05, 0.1), cex = 1.2)
+}
+
+legend_f = function(title, grp1, grp2, loc = "topright") {
+  legend(loc, title = title, legend = c(grp1, grp2), pch = pch, pt.cex = 1.3, cex = 0.9, bty = "n",
+         text.col = par("col.axis"), col = "black", pt.bg = "black")
+}
+```
+
+```{r surv-compare-fig, fig.width = 3.4, fig.height = 8, fig.cap = msdown::prep_caption(surv_compare_caption), time_it = TRUE, eval = params$surv_compare_fig}
+
+# extract the posterior means to plot
+phi_E_Pb = array_format(post_summ(post, sub_index("^phi_E_Pb[year,pop]", year = observable, pop = ".+"))["mean",])
+phi_Pa_Mb_fall = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = observable, pop = ".+", LH_type = i_fall))["mean",])[,i_fall,]
+phi_Pa_Mb_spring = array_format(post_summ(post, sub_index("^phi_Pa_Mb[year,LH_type,pop]", year = observable, pop = ".+", LH_type = i_spring))["mean",])[,i_spring,]
+phi_Mb_Ma_nor = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = observable, pop = ".+", LH_type = i_spring, origin = o_nor))["mean",])[,i_spring,o_nor,]
+phi_Mb_Ma_hor = array_format(post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = observable, pop = ".+", LH_type = i_spring, origin = o_hor))["mean",])[,i_spring,o_hor,]
+phi_Ma_O0 = array_format(post_summ(post, sub_index("^phi_Ma_O0[year,origin]", year = observable, origin = ".+"))["mean",])
+phi_O0_O1_nor = array_format(post_summ(post, sub_index("^phi_O0_O1[year,origin,pop]", year = observable, pop = ".+", origin = o_nor))["mean",])[,o_nor,]
+phi_O0_O1_hor = array_format(post_summ(post, sub_index("^phi_O0_O1[year,origin,pop]", year = observable, pop = ".+", origin = o_hor))["mean",])[,o_hor,]
+phi_Rb_Ra = array_format(post_summ(post, sub_index("^phi_Rb_Ra[year,origin]", year = observable, origin = ".+"))["mean",])
+
+# set MIN to NA for HOR values
+phi_Mb_Ma_hor[,j_min] = NA
+phi_O0_O1_hor[,j_min] = NA
+
+mypar(mfrow = c(1,1), oma = c(1.5,1,0,1), col.axis = "black")
+layout(matrix(1:5, ncol = 1), height = c(1,1,1,0.5,1))
+f_horiz(ests1 = phi_E_Pb, ests2 = NULL, lim = c(0, 0.5), label = "(a) Egg \u2192 Parr")
+
+f_horiz(ests1 = phi_Pa_Mb_fall, ests2 = phi_Pa_Mb_spring, lim = c(0,1), label = "(b) Parr \u2192 Smolt")
+legend_f("Mig. Type", "Fall", "Spring")
+
+f_horiz(ests1 = phi_Mb_Ma_nor, ests2 = phi_Mb_Ma_hor, lim = c(0,1), label = "(c) Smolt \u2192 LGR")
+legend_f("Origin", "NOR", "HOR")
+
+f_horiz(ests1 = phi_Ma_O0, ests2 = phi_Rb_Ra, lim = c(0,1), label = "(d) Mainstem")
+legend_f("Direction", "LGR \u2192 BON", "BON \u2192 LGR", "bottomleft")
+
+f_horiz(ests1 = phi_O0_O1_nor, ests2 = phi_O0_O1_hor, lim = c(0,0.4), label = "(e) Ocean-0 \u2192 Ocean-1")
+legend_f("Origin", "NOR", "HOR", "bottomright")
+axis_labels("Survival Probability")
+```
 
 ```{r time-table}
 # calculate times elapsed for each chunk
