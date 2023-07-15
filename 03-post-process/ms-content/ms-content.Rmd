@@ -125,6 +125,12 @@ surv_compare_caption = "
   Small points show posterior means of year-specific realized values (jitter for visual effect only) and large points show the average across years.
   Information about mortality due to sources/stages not displayed here was either assumed known without error (e.g., prespawn mortality) or expressed as strong prior information with no inter-annual variability (i.e., mortality experienced in ocean-1 $\\to$ ocean-2 and ocean-2 $\\to$ ocean-3).
 "
+
+apportion_compare_caption = "
+  Transition probability parameters (unrelated to survival) estimated by the state-space model, separated by life stage and origin where applicable.
+  Small points show posterior means of year-specific realized values (jitter for visual effect only) and large points show the average across years.
+"
+
 ```
 
 ```{r beta-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(beta_caption), time_it = TRUE, eval = params$beta_fig}
@@ -872,6 +878,36 @@ f_horiz(ests1 = phi_O0_O1_nor, ests2 = phi_O0_O1_hor, lim = c(0,0.4), label = "(
 legend_f("Origin", "NOR", "HOR", "bottomright")
 axis_labels("Survival Probability")
 ```
+
+\newpage
+
+```{r apportion-compare-fig, fig.width = 3.4, fig.height = 8 * (3/4.5), fig.cap = msdown::prep_caption(apportion_compare_caption), time_it = TRUE, eval = params$apportion_compare_fig}
+
+# extract the posterior means to plot
+pi_fall = array_format(post_summ(post, sub_index("^pi[year,LH_type,pop]", year = observable, pop = ".+", LH_type = i_fall))["mean",])[,i_fall,]
+psi_O1_nor = array_format(post_summ(post, sub_index("^psi_O1[year,origin,pop]", year = observable, pop = ".+", origin = o_nor))["mean",])[,o_nor,]
+psi_O1_hor = array_format(post_summ(post, sub_index("^psi_O1[year,origin,pop]", year = observable, pop = ".+", origin = o_hor))["mean",])[,o_hor,]
+psi_O2_nor = array_format(post_summ(post, sub_index("^psi_O2[year,origin,pop]", year = observable, pop = ".+", origin = o_nor))["mean",])[,o_nor,]
+psi_O2_hor = array_format(post_summ(post, sub_index("^psi_O2[year,origin,pop]", year = observable, pop = ".+", origin = o_hor))["mean",])[,o_hor,]
+
+# set MIN to NA for HOR values
+psi_O1_hor[,j_min] = NA
+psi_O1_hor[,j_min] = NA
+
+mypar(mfrow = c(1,1), oma = c(1.5,1,0,1), col.axis = "black")
+layout(matrix(1:3, ncol = 1), height = c(1,1,1))
+f_horiz(ests1 = pi_fall, ests2 = NULL, lim = c(0, 0.6), label = "(a) Pr(Fall Migrant)")
+
+f_horiz(ests1 = psi_O1_nor, ests2 = psi_O1_hor, lim = c(0,0.4), label = "(b) Pr(Mature Age-3)")
+legend_f("Origin", "NOR", "HOR")
+
+f_horiz(ests1 = psi_O2_nor, ests2 = psi_O2_hor, lim = c(0,1), label = "(c) Pr(Mature Age-4)")
+legend_f("Origin", "NOR", "HOR", "bottomleft")
+
+axis_labels("Transition Probability (Non-Survival)")
+```
+
+\newpage
 
 ```{r time-table}
 # calculate times elapsed for each chunk
