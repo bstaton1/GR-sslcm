@@ -3,30 +3,26 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Model Info {.tabset .tabset-pills}
+# MCMC Dimensions & Run Time
 
-**Scenario Name:** `r params$scenario`
+```{r mcmc-dims-and-runtime}
 
-**Post-MCMC Percent of Samples Retained:** `r paste0(params$thin_percent * 100, "%")`
+## MCMC dimensions ##
 
-## Attributes
+# query the dimensions of the posterior samples: the full samples even if thin_percent not equal to 1
+dims = post_dim(model_info$post)
 
-```{r mcmc-dims}
-# query the dimensions of the posterior samples
-dims = post_dim(post)
+# build a data frame for printing this information
+df_dims = data.frame(
+  Quantity = c("Burn-in + Adapt Samples", "Post Burn-in Samples", "Thinning Interval", "Chains", "Saved Samples", "Monitored Quantities", "% of Saved Samples used Here", "Chains Ran in Parallel?"),
+  Value = c(unname(dims), NA, NA)
+)
+df_dims$Value = prettyNum(df_dims$Value, big.mark = ",", scientific = FALSE)
+df_dims$Value[df_dims$Quantity == "Chains Ran in Parallel?"] = ifelse(model_info$jags_dims$parallel, "Yes", "No")
+df_dims$Value[df_dims$Quantity == "% of Saved Samples used Here"] = paste0(params$thin_percent * 100, "%")
 
-# build a data frame for printing
-df = data.frame(Quantity = c("Burn-in + Adapt Iters", "Post Burn-in Iters", "Thinning Interval", "Chains", "Saved Iters", "Monitored Quantities"), Value = unname(dims))
+## MCMC Runtime ##
 
-# render the table
-kable(df, format.args = list(big.mark = ","), caption = "Dimensions of the MCMC run. If post-MCMC percent of samples retained (above) is less than 100%, the numbers in this table are unreliable.") %>%
-  kable_styling(full_width = F, bootstrap_options = c("striped", "condensed")) %>%
-  column_spec(1, bold = TRUE)
-```
-
-## Run Time
-
-```{r mcmc-time-info}
 # Calculate hours per 10,000 iterations
 hrs_per_ten_thousand_iters = with(model_info$jags_dims, {
   # calculation of total iters differs if parallel or not
@@ -53,11 +49,21 @@ hrs_per_ten_thousand_iters = with(model_info$jags_dims, {
 })
 
 # combine relevant info into a data frame
-df = data.frame(Value = c(model_info$jags_time, ifelse(model_info$jags_dims$parallel, "Yes", "No"), hrs_per_ten_thousand_iters))
-rownames(df) = c("Time Started", "Time Ended", "Time Elapsed", "Chains Ran in Parallel?", "Hours Per 10,000 Iterations")
+df_time = data.frame(
+  Quantity = c("Time Started", "Time Ended", "Time Elapsed", "Hours Per 10,000 Iterations"),
+  Value = c(model_info$jags_time, hrs_per_ten_thousand_iters)
+)
 
-# make a kable for printing in output
-kable(df, caption = "Run time for MCMC sampling. Includes any time the computer spent sleeping and not running MCMC. If post-MCMC percent of samples retained (above) is less than 100%, the numbers in this table are unreliable.") %>%
-  kable_styling(full_width = F, bootstrap_options = "condensed") %>%
-  column_spec(1, bold = TRUE)
+# combine the dimensions and run time dfs into one
+df = rbind(df_dims, df_time)
+groups = c(rep(1, nrow(df_dims)), rep(2, nrow(df_time)))
+rownames(df) = NULL
+
+# render the table
+kable(df, format.args = list(big.mark = ","), caption = "MCMC sampling dimensions and run time.", col.names = c(" ", " "), escape = FALSE) |>
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "condensed")) |>
+  group_rows("Dimensions", start_row = min(which(groups == 1)), end_row = max(which(groups == 1))) |>
+  group_rows("Per Chain", start_row = 1, end_row = 3, escape = FALSE) |>
+  group_rows("Overall", start_row = 4, end_row = max(which(groups == 1))) |>
+  group_rows("Run Time", start_row = min(which(groups == 2)), end_row = max(which(groups == 2)))
 ```
