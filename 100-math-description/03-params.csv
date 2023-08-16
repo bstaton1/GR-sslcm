@@ -38,6 +38,5 @@ Phase,Symbol,Prior,Eqs.,Description
 3,$\\Sigma_{\\phi^{R^{b} \\to R^{a}}}$,"$\\mathcal{SIW}(0.30,2)$",get-Ra,Covariance matrix for variability in migration survival from BON to LGR; constructed of $\\sigma_{\\phi^{R^{b} \\to R^{a}}_o}$ and $\\rho_{\\phi^{R^{b} \\to R^{a}}}$ following eq. \\ref{eq:generic-Sigma2by2}
 3,"$G_{y,o,j}$","$\\mathcal{U}(0,500)$",get-Ra,Total hatchery-origin ``strays''; only for $o = \\mathrm{HOR}$ and $y$ where presence of HOR adults could not be explained by non-zero smolt releases
 3,"$p^{G}_{k,j}$","$\\mathcal{D}(1,1,1)$",get-Ra,Age composition of hatchery-origin ``strays''
-3,$\\dot{\\phi}^{S^{b} \\to S^{a}}_{j}$,"$b(1,1)$",,Pre-spawn survival
 3,$\\dot{z}_k$,"$\\mathcal{U}(-10,10)$",z-random,"Across-population expected coefficient of log-linear carcass composition correction model; only for $k \\in [1,3]$"
 3,$\\sigma_{z_k}$,"$\\mathcal{U}(0,5)$",z-random,"Across-population SD for coefficients of log-linear carcass composition correction model; only for $k \\in [1,3]$"
