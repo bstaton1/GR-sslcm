@@ -23,6 +23,6 @@ Phase,Type,Symbol,Eqs.,Description,Footnote
 3,state,"$S^{a}_{y,k,o,j}$","get-E, get-Sa, get-pSa-prime",Abundance of spawning adults \\textit{after} pre-spawn mortality,NA
 3,rate,"$U_{y,k,o}$",get-Ra,Fishery harvest rate downstream of Bonneville Dam,NA
 3,rate,"$\\phi^{R^{b} \\to R^{a}}_{y,o}$","get-Ra, upstream-surv-data",Survival from all mortality sources during the migration between Bonneville Dam and arrival to natal tributaries,NA
-3,rate,"$\\phi^{S^{b} \\to S^{a}}_{y,j}$","get-Sa, prespawn-surv-data",Pre-spawn survival rate,NA
+3,rate,"$\\phi^{S^{b} \\to S^{a}}_{y,j}$","get-Sa",Pre-spawn survival rate,NA
 3,rate,$\\Omega_{k}$,get-E,Proportion of spawners that are female by age,NA
 3,rate,"$f_{y,k,j}$",get-E,Eggs per female spawner,NA

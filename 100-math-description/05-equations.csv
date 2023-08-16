@@ -43,7 +43,6 @@ Phase,Component,Eq.,Description
 3,process,get-Sa,Obtain abundance of successful spawners
 3,observation,Ra-data,Assumption for natal tributary return abundance data likelihood
 3,observation,upstream-surv-data,Assumption for migration from BON to LGR survival data likelihood
-3,observation,prespawn-surv-data,Assumption for pre-spawn survival data likelihood
 3,observation,get-pRa,Obtain expected composition by age and origin of adults counted at weirs
 3,observation,weir-comp-data,Assumption for age and origin composition at weir data likelihood
 3,observation,z-random,Add stochasticity to carcass composition correction factor coefficients
