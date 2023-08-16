@@ -41,6 +41,13 @@
 100-math-description/*.tex
 100-math-description/*.tdo
 
+# ignore intermediate LaTeX files in ms-content subdirectory
+03-post-process/ms-content/*.log
+03-post-process/ms-content/*.aux
+03-post-process/ms-content/*.bbl
+03-post-process/ms-content/*.tex
+03-post-process/ms-content/*.tdo
+
 # ignore .docx files in math description subdirectory
 100-math-description/*.docx
 100-math-description/*.tmp
