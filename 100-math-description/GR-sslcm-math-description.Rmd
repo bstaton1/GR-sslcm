@@ -656,8 +656,10 @@ S^{b}_{y,k,o,j} = \max\left(R^{a}_{y,k,o,j} - B_{y,k,o,j} - H_{y,k,o,j}, 1\right
 
 The maximum constraint was used to ensure all $S^{b}_{y,k,o,j} > 0$.
 
-It is well-known that some potential spawners die prior to spawning; these "pre-spawn survival" outcomes, denoted by $\phi^{S^{b} \to S^{a}}_{y,j}$, were modeled as having time-constant values (i.e., all $\phi^{S^{b} \to S^{a}}_{y,j} = \dot{\phi}^{S^{b} \to S^{a}}_{j}$) for each population.
-The initial desire was to allow for time-varying pre-spawn survival probabilities, but it was discovered that the observational data (counts of spawned vs. gravid female carcasses, see eq. \@ref(eq:prespawn-surv-data)) were not informative enough for all populations to prevent parameter confounding with egg-to-parr survival.
+It is well-known that some potential spawners die prior to spawning [e.g., @bowerman-etal-2021]; these "pre-spawn survival" outcomes are denoted by $\phi^{S^{b} \to S^{a}}_{y,j}$.
+The initial desire was to allow for the model to internally estimate time-varying pre-spawn survival probabilities, but it was discovered that the observational data (counts of spawned vs. gravid female carcasses) were not informative enough for all populations to prevent parameter confounding with egg-to-parr survival.
+As alternative, binary logistic regression models were fitted that included year-specific random effects around a time-constant expected value (one per population; success represented by year-specific counts of spawned female carcasses, trials represented by total female carcasses examined) and the resulting time- and population-varying estimates were supplied to the model as known without error.
+The abundance of adults spawning successfully was then:
 
 \begin{equation}
 S^{a}_{y,k,o,j} = S^{b}_{y,k,o,j} \cdot \phi^{S^{b} \to S^{a}}_{y,j}
@@ -668,7 +670,7 @@ This $S^{a}_{y,k,o,j}$ value was used to calculate total egg production ($E_{y,j
 
 ## Observation Model
 
-The adult observation model relied on three primary data types: (_i_) total abundance of adult returns to the natal tributaries, (_ii_) information about survival on the upstream migration between LGR and BON as well as on the spawning grounds, and (_iii_) composition data to inform the relative abundance of adults of different ages and origins returning each year.
+The adult observation model relied on three primary data types: (_i_) total abundance of adult returns to the natal tributaries, (_ii_) information about survival on the upstream migration between LGR and BON, and (_iii_) composition data to inform the relative abundance of adults of different ages and origins returning each year.
 
 ### Abundance Data Source
 
@@ -689,15 +691,6 @@ The latter was assumed to be a binomial random variable to build the likelihood 
 \begin{equation}
 \hat{x}^{\mathrm{LGR}}_{y,o} \sim \Bdist\left(\phi^{R^{b} \to R^{a}}_{y,o}, \hat{x}^{\mathrm{BON}}_{y,o}\right)
 (\#eq:upstream-surv-data)
-\end{equation}
-
-The other survival data set informing the freshwater adult observation model was for spawning success, i.e., pre-spawn survival.
-Surveyors in annual spawning ground carcass surveys have recorded counts of total females encountered ($\hat{x}^{\mathrm{carcass,total}}_{y,j}$) and counts of those found to have successfully spawned ($\hat{x}^{\mathrm{carcass,spawned}}_{y,j}$; `r highlight("REPORT CITATION NEEDED")`).
-These counts were treated as binomial random variables to build the likelihood:
-
-\begin{equation}
-\hat{x}^{\mathrm{carcass,spawned}}_{y,j} \sim \Bdist\left(\phi^{S^{b} \to S^{a}}_{y,j}, \hat{x}^{\mathrm{carcass,total}}_{y,j}\right)
-(\#eq:prespawn-surv-data)
 \end{equation}
 
 ### Composition Data Sources
