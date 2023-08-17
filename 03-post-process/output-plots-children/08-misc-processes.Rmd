@@ -3,7 +3,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Miscellaneous Processes {.tabset .tabset-pills}
+# Miscellaneous Processes {.tabset .tabset-dropdown}
 
 ## Migratory Strategy Apportionment
 
@@ -18,15 +18,15 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Proportion of Parr with Fall Migration Strategy")
 ```
 
-## Ocean Survival {.tabset .tabset-pills}
+## Ocean Survival {.tabset .tabset-dropdown}
 
 ### Yr1 {.tabset .tabset-pills}
 
-#### NOR {.tabset .tabset-pills}
-
-##### Realized Alone
+#### Realized Alone {.tabset .tabset-pills}
 
 The `r colorize("realized time series", main_cols["model"])`.
+
+##### NOR {-}
 
 ```{r phi-O0-O1-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -39,7 +39,26 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Yr1 Ocean Survival (NOR)")
 ```
 
-##### Realized & [Expected + AR(1)]
+##### HOR {-}
+
+```{r phi-O0-O1-hor-plots, fig.width = p4_width, fig.height = p4_height}
+plot_f = function(j) {
+  if (j != j_min) {
+    keep = sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
+    plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = c(0, 0.4))
+  } else {
+    empty_plot(label_text = pops[j])
+  }
+}
+
+mypar()
+junk = sapply(1:jags_data$nj, plot_f)
+axis_labels("Brood Year", "Yr1 Ocean Survival (HOR)")
+```
+
+#### Realized & [Expected + AR(1)] {.tabset .tabset-dropdown}
+
+##### HOR {-}
 
 The `r colorize("realized time series", main_cols["model"])` and the `r colorize("expected time series including the carry-over residual", main_cols["model2"])`.
 
@@ -57,30 +76,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Yr1 Ocean Survival (NOR)")
 ```
 
-#### HOR {.tabset .tabset-pills}
-
-##### Realized Alone
-
-The `r colorize("realized time series", main_cols["model"])`.
-
-```{r phi-O0-O1-hor-plots, fig.width = p4_width, fig.height = p4_height}
-plot_f = function(j) {
-  if (j != j_min) {
-    keep = sub_index("^phi_O0_O1[year,origin,pop]", year = ts_yrs, origin = o_hor, pop = j)
-    plot_tseries(est = post_summ(post, keep), yrs = all_yrs[ts_yrs], label_text = pops[j], ylim = c(0, 0.4))
-  } else {
-    empty_plot(label_text = pops[j])
-  }
-}
-
-mypar()
-junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr1 Ocean Survival (HOR)")
-```
-
 ### Yr2 {.tabset .tabset-pills}
 
-#### NOR
+#### NOR {-}
 
 ```{r phi-O1-O2-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -93,7 +91,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Yr2 Ocean Survival (NOR)")
 ```
 
-#### HOR
+#### HOR {-}
 
 ```{r phi-O1-O2-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -112,7 +110,7 @@ axis_labels("Brood Year", "Yr2 Ocean Survival (HOR)")
 
 ### Yr3 {.tabset .tabset-pills}
 
-#### NOR
+#### NOR {-}
 
 ```{r phi-O2-O3-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -125,7 +123,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Yr3 Ocean Survival (NOR)")
 ```
 
-#### HOR
+#### HOR {-}
 
 ```{r phi-O2-O3-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -146,7 +144,7 @@ axis_labels("Brood Year", "Yr3 Ocean Survival (HOR)")
 
 ### Pr(Age-3) {.tabset .tabset-pills}
 
-#### NOR
+#### NOR {-}
 
 ```{r psi-O1-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -159,7 +157,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Pr(Mature Age-3|NOR)")
 ```
 
-#### HOR
+#### HOR {-}
 
 ```{r psi-O1-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -178,7 +176,7 @@ axis_labels("Brood Year", "Pr(Mature Age-3|HOR)")
 
 ### Pr(Age-4) {.tabset .tabset-pills}
 
-#### NOR
+#### NOR {-}
 
 ```{r psi-O2-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -191,7 +189,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Pr(Mature Age-4|NOR)")
 ```
 
-#### HOR
+#### HOR {-}
 
 ```{r psi-O2-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
