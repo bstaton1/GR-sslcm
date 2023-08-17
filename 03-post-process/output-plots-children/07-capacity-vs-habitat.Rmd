@@ -3,11 +3,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Parr Capacity vs. Habitat Relationship {.tabset .tabset-pills}
+# Parr Capacity vs. Habitat Relationship
 
-## Scatterplot
-
-Error bars represent the central 80% of the posterior. The many grey lines are individual posterior draws.
+Error bars represent the central 80% of the posterior; grey lines are individual posterior draws of the expected relationship.
 
 ```{r beta-v-habitat-relationship, fig.width = 5, fig.height = 4, out.width="50%"}
 # extract posterior summaries of the capacity parameters
@@ -49,12 +47,10 @@ axis_labels("Weighted Usable Length (km)", "Parr Capacity (000s)")
 box(col = par("col.axis"))
 ```
 
-## Slope Parameter
-
 ```{r beta-v-habitat-slope}
 # extract posterior summary of slope
 est = post_summ(post, "^lambda$")
-colnames(est) = "slope"
+colnames(est) = "Slope"
 
 # print a table 
 kable(t(est), digits = 0, format.args = list(big.mark = ",")) %>%
