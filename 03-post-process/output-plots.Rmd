@@ -39,8 +39,8 @@ params:
   include_misc_processes:
     label: "Include Misc. Processes Output?"
     value: TRUE
-  include_equiv_rates:
-    label: "Include Equivilency Rate Output?"
+  include_composite_rates:
+    label: "Include Composite Rate Output?"
     value: TRUE
   include_rho_params:
     label: "Include Process Model Correlation Output?"
@@ -220,7 +220,7 @@ ylim_01 = c(0, 1.05)
 ```{r misc-processes, child = "output-plots-children/08-misc-processes.Rmd", eval = params$include_misc_processes}
 ```
 
-```{r equiv-rates, child = "output-plots-children/09-equiv-rates.Rmd", eval = params$include_equiv_rates}
+```{r equiv-rates, child = "output-plots-children/09-composite-rates.Rmd", eval = params$include_composite_rates}
 ```
 
 ```{r rho-params, child = "output-plots-children/10-rho-params.Rmd", eval = params$include_rho_params}
