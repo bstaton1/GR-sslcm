@@ -3,9 +3,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Egg-to-Parr Survival {.tabset .tabset-pills}
+# Parr Recruitment {.tabset .tabset-dropdown}
 
-## Survival Time Series {.tabset .tabset-pills}
+## Egg $\to$ Parr Survival Time Series {.tabset .tabset-pills}
 
 ### Realized Alone
 
@@ -69,7 +69,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Egg \u2192 Parr Survival")
 ```
 
-## Survival vs. Total Egg Production
+## Egg $\to$ Parr Survival vs. Total Egg Production
 
 This is the scale the Beverton-Holt recruitment function is modeled on.
 
@@ -175,7 +175,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Total Egg Production (Millions)", "Parr Recruits (Thousands)")
 ```
 
-## Total Eggs vs. Total Spawners {.tabset .tabset-pills}
+## Per Capita Egg Production {.tabset .tabset-pills}
 
 ### Scatterplot
 
