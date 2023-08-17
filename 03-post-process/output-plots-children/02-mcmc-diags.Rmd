@@ -400,13 +400,21 @@ diags_table = diags_table[diags_table$n_params > 0,]
 
 ## Summary Table
 
-This table displays summaries of MCMC diagnostics for all unobserved stochastic nodes in the model (excluding those that are not informed by data, such as HOR Minam maturation or HOR smolt survival; these parameters are sampled purely for organizational purposes in the model). Values in cells represent the percentage of parameters of a given type that fail a diagnostic check. E.g., 50% in the "Rhat > 1.05" column means that half of the parameters of that type had $\hat{R}$ values greater than 1.05. Cells with no color indicate no offense and darker reds indicate greater frequency of an offense.
+This table displays summaries of MCMC diagnostics for all unobserved stochastic nodes in the model (excluding those that are not informed by data, such as HOR Minam maturation or HOR smolt survival; these parameters are sampled purely for organizational purposes in the model).
+Values in cells represent the percentage of parameters of a given type that fail a diagnostic check.
+E.g., 50% in the "Rhat > 1.05" column means that half of the parameters of that type had Rhat values greater than 1.05.
+Cells with no color indicate no offense and darker reds indicate greater frequency of an offense.
 
-* $\boldsymbol{\hat{R}}$ measures convergence of multiple chains to a common target distribution. Values close to 1 are ideal but values greater than 1.2 should be considered not well-converged (general rules of thumb).
-* **ESS** measures the number of effective MCMC samples are available to estimate a given summary statistic of the posterior -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have fewer than 400 ESS -- Vehtari et al. [2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full) suggests 400 as a good rule of thumb.
-* **MCCV** is Monte Carlo Standard Error of a summary statistic divided by the estimated posterior summary statistic, intended to represent a measure of precision for estimating posterior summary statistics -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have greater than 5% MCCV -- which Staton has deemed an acceptable level of imprecision.
+All convergence diagnostics were calculated using the '[posterior](https://mc-stan.org/posterior/articles/posterior.html)' R package, which implements updated versions (based on rank-normalization) of the classical convergence diagnostics (presented in Vehtari et al. [2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full)).
 
-The calculations behind this table are implemented using the '[posterior](https://mc-stan.org/posterior/articles/posterior.html)' R package, which contains updated MCMC diagnostics (Vehtari et al. [2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full)).
+* **Rhat** measures convergence of multiple chains to a common target distribution. Values close to 1 are better -- we've chosen these approximate categories for ease of interpretation: 
+  * _Ideal_: [1,1.01] 
+  * _No Issue_: (1.01,1.05]
+  * _Acceptable_: (1.05,1.1]
+  * _Potential Concern_: (1.1,1.2]
+  * _Definite Concern_: (1.2,100)
+* **ESS** measures the number of effective MCMC samples are available to estimate a given summary statistic of the posterior -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have fewer than 400 ESS -- Vehtari et al. ([2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full)) suggests 400 as a good rule of thumb.
+* **MCCV** is Monte Carlo Standard Error of a summary statistic divided by the estimated posterior summary statistic, intended to represent a measure of precision for estimating posterior summary statistics -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have greater than 5% MCCV, which we have deemed an acceptable level of imprecision.
 
 ```{r mcmc-diag-table, warning = FALSE}
 # duplicate the diagnostic output
@@ -448,25 +456,25 @@ assign_color = function(x, colors = c("white","red")) {
 }
 
 # produce the kable
-kable(kable_table, row.names = FALSE, align = c("lllcccccccccc")) %>%
-  kable_styling(full_width = TRUE, fixed_thead = TRUE, bootstrap_options = c("condensed")) %>%
-  add_header_above(c(" " = 4, "Rhat" = 4, "ESS < 400" = 3, "MCCV > 5%" = 3)) %>%
-  column_spec(2:3, width = "150px") %>%
-  column_spec(c(4,8,11), border_right = TRUE) %>%
-  column_spec(5, background = assign_color(as.numeric(stringr::str_remove(kable_table[,5], "%")))) %>%
-  column_spec(6, background = assign_color(as.numeric(stringr::str_remove(kable_table[,6], "%")))) %>%
-  column_spec(7, background = assign_color(as.numeric(stringr::str_remove(kable_table[,7], "%")))) %>%
-  column_spec(8, background = assign_color(as.numeric(stringr::str_remove(kable_table[,8], "%")))) %>%
-  column_spec(9, background = assign_color(as.numeric(stringr::str_remove(kable_table[,9], "%")))) %>%
-  column_spec(10, background = assign_color(as.numeric(stringr::str_remove(kable_table[,10], "%")))) %>%
-  column_spec(11, background = assign_color(as.numeric(stringr::str_remove(kable_table[,11], "%")))) %>%
-  column_spec(12, background = assign_color(as.numeric(stringr::str_remove(kable_table[,12], "%")))) %>%
-  column_spec(13, background = assign_color(as.numeric(stringr::str_remove(kable_table[,13], "%")))) %>%
-  column_spec(14, background = assign_color(as.numeric(stringr::str_remove(kable_table[,14], "%")))) %>%
+kable(kable_table, row.names = FALSE, align = c("lllcccccccccc")) |>
+  kable_styling(full_width = TRUE, fixed_thead = TRUE, bootstrap_options = c("condensed")) |>
+  add_header_above(c(" " = 4, "Rhat" = 4, "ESS < 400" = 3, "MCCV > 5%" = 3)) |>
+  column_spec(2:3, width = "150px") |>
+  column_spec(c(4,8,11), border_right = TRUE) |>
+  column_spec(5, background = assign_color(as.numeric(stringr::str_remove(kable_table[,5], "%")))) |>
+  column_spec(6, background = assign_color(as.numeric(stringr::str_remove(kable_table[,6], "%")))) |>
+  column_spec(7, background = assign_color(as.numeric(stringr::str_remove(kable_table[,7], "%")))) |>
+  column_spec(8, background = assign_color(as.numeric(stringr::str_remove(kable_table[,8], "%")))) |>
+  column_spec(9, background = assign_color(as.numeric(stringr::str_remove(kable_table[,9], "%")))) |>
+  column_spec(10, background = assign_color(as.numeric(stringr::str_remove(kable_table[,10], "%")))) |>
+  column_spec(11, background = assign_color(as.numeric(stringr::str_remove(kable_table[,11], "%")))) |>
+  column_spec(12, background = assign_color(as.numeric(stringr::str_remove(kable_table[,12], "%")))) |>
+  column_spec(13, background = assign_color(as.numeric(stringr::str_remove(kable_table[,13], "%")))) |>
+  column_spec(14, background = assign_color(as.numeric(stringr::str_remove(kable_table[,14], "%")))) |>
   collapse_rows(columns = 1:2)
 ```
 
-## Figures {.tabset .tabset-pills}
+## Figures {.tabset .tabset-dropdown}
 
 ```{r mcmc-diag-plots-prep}
 n_max_draw = 30
@@ -492,13 +500,15 @@ post_sub_3 = post_subset(post, rhat_3_params_draw)
 
 # function to plot a histogram of rhat values
 rhat_hist = function(rhat) {
-  par(mgp = c(2,0.35, 0), tcl = -0.15, xaxs = "i", yaxs = "i", mar = c(3,3,1,1))
+  # par(mgp = c(2,0.35, 0), tcl = -0.15, xaxs = "i", yaxs = "i", mar = c(3,3,1,1))
+  mypar(xaxs = "i", yaxs = "i", mfrow = c(1,1))
   breaks = seq(min(rhat), max(rhat), length = 20)
   max_count = max(hist(rhat, breaks = breaks, plot = FALSE)$count)
-  hist(rhat, breaks = breaks, col = "grey50", border = "white", ylim = c(0, max_count) * 1.025, xlab = TeX("$\\hat{R}$"), main = "")
+  hist(rhat, breaks = breaks, col = "grey50", border = "white", ylim = c(0, max_count) * 1.025, main = "")
+  axis_labels(xlab = TeX("$\\hat{R}$"), ylab = "Frequency")
   usr = par("usr")
-  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE)
-  segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE)
+  segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE, col = par("col.axis"))
+  segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
 }
 ```
 
@@ -506,7 +516,7 @@ rhat_hist = function(rhat) {
 
 #### Distribution
 
-There were **`r length(rhat_1_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes with $\hat{R}$ in this group. Here is their distribution:
+There were **`r length(rhat_1_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes with Rhat in this group. Here is their distribution:
   
 ```{r rhat-hist-1, fig.width = 6, fig.height = 4}
 rhat_hist(rhat_1)
@@ -514,7 +524,7 @@ rhat_hist(rhat_1)
 
 #### Least Converged
 
-Density and trace plots by chain for the `r min(n_max_draw, length(rhat_1_params))` parameters with the highest $\hat{R}$ values in this group are shown.
+Density and trace plots by chain for the `r min(n_max_draw, length(rhat_1_params))` parameters with the highest Rhat values in this group are shown.
 
 ```{r mcmc-diag-plots-1, fig.width = 11, fig.height = 8.5}
 diag_plots(post_sub_1, ".", show_diags = "never")
@@ -532,7 +542,7 @@ rhat_hist(rhat_2)
 
 #### Least Converged
 
-Density and trace plots by chain for the `r min(n_max_draw, length(rhat_2_params))` parameters with the highest $\hat{R}$ values in this group are shown.
+Density and trace plots by chain for the `r min(n_max_draw, length(rhat_2_params))` parameters with the highest Rhat values in this group are shown.
 
 ```{r mcmc-diag-plots-2, fig.width = 11, fig.height = 8.5}
 diag_plots(post_sub_2, ".", show_diags = "never")
@@ -550,7 +560,7 @@ rhat_hist(rhat_3)
 
 #### Least Converged
 
-Density and trace plots by chain for the `r min(n_max_draw, length(rhat_3_params))` parameters with the highest $\hat{R}$ values in this group are shown.
+Density and trace plots by chain for the `r min(n_max_draw, length(rhat_3_params))` parameters with the highest Rhat values in this group are shown.
 
 ```{r mcmc-diag-plots-3, fig.width = 11, fig.height = 8.5}
 diag_plots(post_sub_3, ".", show_diags = "never")
