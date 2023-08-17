@@ -3,15 +3,13 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Fit to Data {.tabset .tabset-pills}
-
-## Figures {.tabset .tabset-dropdown}
+# Fit to Data {.tabset .tabset-dropdown}
 
 Figures in this section show the consistencies between the `r colorize("posterior", main_cols["model"])` (mean with 95% equal-tailed credible interval) and the `r colorize("data", main_cols["data"])` (point estimate with approximate 95% confidence interval illustrating the magnitude of assumed observation error).
 
-### Abundance Data {.tabset .tabset-pills}
+## Abundance Data {.tabset .tabset-dropdown}
 
-#### Fall Parr Abundance
+### Fall Parr Abundance
 
 ```{r fall-trap-N-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -27,7 +25,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Fall Parr Abundance (1000s)")
 ```
 
-#### Spring Smolt Abundance
+### Spring Smolt Abundance
 
 ```{r spring-trap-N-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -43,7 +41,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Spring Smolt Abundance (1000s)")
 ```
 
-#### Adult Return Abundance
+### Adult Return Abundance
 
 ```{r adult-N-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -60,9 +58,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Return Year", "Adult Return Abundance (1000s)")
 ```
 
-### Survival Data {.tabset .tabset-dropdown}
+## Survival Data {.tabset .tabset-dropdown}
 
-#### Summer Parr $\rightarrow$ LGR
+### Summer Parr $\rightarrow$ LGR
 
 ```{r summer-surv-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -78,7 +76,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Summer Parr \u2192 LGR Survival")
 ```
 
-#### Fall Parr $\rightarrow$ LGR
+### Fall Parr $\rightarrow$ LGR
 
 ```{r fall-surv-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -94,7 +92,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Fall Parr \u2192 LGR Survival")
 ```
 
-#### Winter Parr $\rightarrow$ LGR
+### Winter Parr $\rightarrow$ LGR
 
 ```{r winter-surv-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -110,9 +108,9 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Winter Parr \u2192 LGR Survival")
 ```
 
-#### Spring Smolt $\rightarrow$ LGR {.tabset .tabset-pills}
+### Spring Smolt $\rightarrow$ LGR {.tabset .tabset-pills}
 
-##### NOR
+#### NOR {-}
 
 ```{r spring-surv-fit-nor, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -128,7 +126,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Spring Smolt \u2192 LGR Survival (NOR)")
 ```
 
-##### HOR
+#### HOR {-}
 
 ```{r spring-surv-fit-hor, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -149,7 +147,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Spring Smolt \u2192 LGR Survival (HOR)")
 ```
 
-#### LGR Smolt $\rightarrow$ BON
+### LGR Smolt $\rightarrow$ BON
 
 ```{r hydro-down-surv-fit, fig.width = p2_width, fig.height = p2_height}
 # function to create the plot for one origin type
@@ -165,7 +163,7 @@ junk = sapply(1:jags_data$no, plot_f)
 axis_labels("Brood Year", "LGR Smolt \u2192 BON")
 ```
 
-#### BON Adults $\rightarrow$ LGR
+### BON Adults $\rightarrow$ LGR
 
 ```{r hydro-up-nor-surv-fit, fig.width = p2_width, fig.height = p2_height}
 # function to create the plot for one origin type
@@ -181,7 +179,7 @@ junk = sapply(1:jags_data$no, plot_f)
 axis_labels("Brood Year", "BON \u2192 LGR Survival")
 ```
 
-### Composition Data {.tabset .tabset-pills}
+## Composition Data {.tabset .tabset-pills}
 
 ```{r calculate-aggregated-comps-model}
 # extract the full posteriors of the two composition sets
@@ -308,7 +306,7 @@ x_Sa_prime_new_obs = list(
 
 Within a single year, the values across all panels sum to one.
 
-#### Weir Sampling {.tabset .tabset-dropdown}
+### Weir Sampling {.tabset .tabset-dropdown}
 
 ```{r weir-comp-fit-funcs}
 # for multinomial sample size
@@ -379,120 +377,120 @@ weir_comp_fit_plot_origin = function(j) {
 }
 ```
 
-##### By Age/Origin {.tabset .tabset-pills}
+#### By Age/Origin {.tabset .tabset-pills}
 
 This is the resolution the model fits to: each year slice is treated as a 6-element multinomial vector.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-weir-comp-fit, fig.width = p6_width, fig.height = p6_height}
 weir_comp_fit_plot(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-weir-comp-fit, fig.width = p6_width, fig.height = p6_height}
 weir_comp_fit_plot(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-weir-comp-fit, fig.width = p6_width, fig.height = p6_height}
 weir_comp_fit_plot(j_min)
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-weir-comp-fit, fig.width = p6_width, fig.height = p6_height}
 weir_comp_fit_plot(j_ugr)
 ```
 
-##### By Age {.tabset .tabset-pills}
+#### By Age {.tabset .tabset-pills}
 
 These figures show the agreement of the model with the weir composition data by age, aggregated across origins.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-weir-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 weir_comp_fit_plot_age(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-weir-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 weir_comp_fit_plot_age(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-weir-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 weir_comp_fit_plot_age(j_min)
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-weir-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 weir_comp_fit_plot_age(j_ugr)
 ```
 
-##### By Origin {.tabset .tabset-pills}
+#### By Origin {.tabset .tabset-pills}
 
 These figures show the agreement of the model with the weir composition data by origin, aggregated across ages.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-weir-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 weir_comp_fit_plot_origin(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-weir-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 weir_comp_fit_plot_origin(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-weir-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 weir_comp_fit_plot_origin(j_min)
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-weir-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 weir_comp_fit_plot_origin(j_ugr)
 ```
 
-##### Total Sample Size {.tabset .tabset-pills}
+#### Total Sample Size {.tabset .tabset-pills}
 
 These figures show the number of samples gathered for age/origin composition information during carcass surveys. The model will fit more closely to years with more samples.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-weir-ss, fig.width = 5, fig.height = 2.5}
 weir_sample_size(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-weir-ss, fig.width = 5, fig.height = 2.5}
 weir_sample_size(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-weir-ss, fig.width = 5, fig.height = 2.5}
 mypar(mfrow = c(1,1), mar = c(1,1,1,1), oma = c(0,0,0,0))
 empty_plot(text = "No Weir Data")
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-weir-ss, fig.width = 5, fig.height = 2.5}
 weir_sample_size(j_ugr)
 ```
 
-#### Carcass Sampling {.tabset .tabset-dropdown}
+### Carcass Sampling {.tabset .tabset-dropdown}
 
 ```{r carc-comp-fit-funcs}
 # for multinomial sample size
@@ -563,121 +561,121 @@ carc_comp_fit_plot_origin = function(j) {
 }
 ```
 
-##### By Age/Origin {.tabset .tabset-pills}
+#### By Age/Origin {.tabset .tabset-pills}
 
 This is the resolution the model fits to: each year slice is treated as a 12-element multinomial vector.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-carc-comp-fit, fig.width = p6_width, fig.height = p6_height}
 carc_comp_fit_plot(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-carc-comp-fit, fig.width = p6_width, fig.height = p6_height}
 carc_comp_fit_plot(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-carc-comp-fit, fig.width = p6_width, fig.height = p6_height}
 carc_comp_fit_plot(j_min)
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-carc-comp-fit, fig.width = p6_width, fig.height = p6_height}
 carc_comp_fit_plot(j_ugr)
 ```
 
-##### By Age {.tabset .tabset-pills}
+#### By Age {.tabset .tabset-pills}
 
 These figures show the agreement of the model with the carcass composition data by age, aggregated across origins.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-carc-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 carc_comp_fit_plot_age(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-carc-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 carc_comp_fit_plot_age(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-carc-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 carc_comp_fit_plot_age(j_min)
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-carc-comp-fit-age, fig.width = p3_width, fig.height = p3_height}
 carc_comp_fit_plot_age(j_ugr)
 ```
 
-##### By Origin {.tabset .tabset-pills}
+#### By Origin {.tabset .tabset-pills}
 
 These figures show the agreement of the model with the carcass composition data by origin, aggregated across ages.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-carc-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 carc_comp_fit_plot_origin(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-carc-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 carc_comp_fit_plot_origin(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-carc-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 carc_comp_fit_plot_origin(j_min)
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-carc-comp-fit-origin, fig.width = p2_width, fig.height = p2_height}
 carc_comp_fit_plot_origin(j_ugr)
 ```
 
-##### Total Sample Size {.tabset .tabset-pills}
+#### Total Sample Size {.tabset .tabset-pills}
 
 These figures show the number of samples gathered for age/origin composition information during carcass surveys. The model will fit more closely to years with more samples.
 
-###### CAT
+##### CAT {-}
 
 ```{r cat-carc-ss, fig.width = 5, fig.height = 2.5}
 carc_sample_size(j_cat)
 ```
 
-###### LOS
+##### LOS {-}
 
 ```{r los-carc-ss, fig.width = 5, fig.height = 2.5}
 carc_sample_size(j_los)
 ```
 
-###### MIN
+##### MIN {-}
 
 ```{r min-carc-ss, fig.width = 5, fig.height = 2.5}
 carc_sample_size(j_min)
 ```
 
-###### UGR
+##### UGR {-}
 
 ```{r ugr-carc-ss, fig.width = 5, fig.height = 2.5}
 carc_sample_size(j_ugr)
 ```
 
-### Mean Length Data {.tabset .tabset-pills}
+## Mean Length Data {.tabset .tabset-pills}
 
-#### Summer Parr
+### Summer Parr
 
 ```{r summer-length-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -693,7 +691,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Parr Mean Length (mm)")
 ```
 
-#### Spring Smolt
+### Spring Smolt
 
 ```{r spring-length-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -708,10 +706,3 @@ mypar()
 junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Smolt Mean Length (mm)")
 ```
-
-```{r pp-check-output, child = "output-plots-children/03a-pp-checks.Rmd", eval = model_info$do_pp_check}
-```
-
-```{r waic-output, child = "output-plots-children/03b-waic.Rmd", eval = model_info$do_lppd}
-```
-
