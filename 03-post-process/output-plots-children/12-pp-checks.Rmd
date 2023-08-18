@@ -3,9 +3,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Posterior Predictive Checks
+# Posterior Predictive Checks
 
-This output is a diagnostic of the consistency of variability in the data with the variability assumed by the model.
+This output is a diagnostic of the consistency of variability in the data with the variability assumed by the model, similar to the residual diagnostic section.
 For each observed data point and MCMC iteration, a value was simulated from the model.
 The fit of the observed and simulated data was calculated, and the proportion of MCMC iterations in which the observed data fitted more poorly than the simulated data (i.e., a Bayesian p-value) was calculated.
 
@@ -16,10 +16,10 @@ The left two columns show the percent of years that had extreme p-values, provid
 
 The fit criterion differed depending on the likelihood function used to fit the model to the data set:
   
-  * **Log-normal**: squared difference of the log-scale observation and log-scale expectation. This applies to all abundance data.
+* **Log-normal**: squared difference of the log-scale observation and log-scale expectation. This applies to all abundance data.
 * **Logit-normal**: squared difference of the logit-scale observation and logit-scale expectation. This applies to all survival data, except the BON to LGR and the pre-spawn survival which were fitted using binomial distributions.
-* **Binomial/Multinomial**: Freeman-Tukey fit statistic, which is similar to the $\chi^2$ statistic but better handles small bin probabilities by performing calculations on the square root of observed and expected counts..
-This applies to all composition data, the survival from BON to LGR data, and the spawn status data.
+* **Binomial/Multinomial**: Freeman-Tukey fit statistic, which is similar to the $\chi^2$ statistic but better handles small bin probabilities by performing calculations on the square root of observed and expected counts.
+This applies to all composition data and the survival from BON to LGR data.
 
 ```{r calculate-bayesian-pvals}
 # function to summarize bayesian p-values within a data source

@@ -44,9 +44,12 @@ params:
     value: TRUE
   include_rho_params:
     label: "Include Process Model Correlation Output?"
-    value: TRUE
-  include_noise_term_diags:
-    label: "Include Noise Term Diagnostic Output?"
+    value: FALSE
+  include_residual_diags:
+    label: "Include Residual Diagnostic Output?"
+    value: FALSE
+  include_pp_check:
+    label: "Include Posterior Predictive Check Output?"
     value: TRUE
   include_param_summaries:
     label: "Include Posterior Boxplot Output?"
@@ -226,7 +229,10 @@ ylim_01 = c(0, 1.05)
 ```{r rho-params, child = "output-plots-children/10-rho-params.Rmd", eval = params$include_rho_params}
 ```
 
-```{r noise-term-diags, child = "output-plots-children/11-noise-term-diags.Rmd", eval = params$include_noise_term_diags}
+```{r noise-term-diags, child = "output-plots-children/11-resid-diags.Rmd", eval = params$include_resid_diags}
+```
+
+```{r pp-check, child = "output-plots-children/12-pp-checks.Rmd", eval = params$include_pp_check & model_info$do_pp_check}
 ```
 
 ```{r param-summaries, child = "output-plots-children/12-param-summaries.Rmd", eval = params$include_param_summaries}
