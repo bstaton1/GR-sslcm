@@ -152,7 +152,7 @@ post_v_prior_origins = function(post_param, prior_param, legend_loc = "topright"
 }
 ```
 
-## "Location" Parameters {.tabset .tabset-dropdown}
+## Average Rate Parameters {.tabset .tabset-dropdown}
 
 ### Max. Egg-to-Parr Survival
 
@@ -194,7 +194,7 @@ post_v_prior_pops(post_param = "mu_phi_O2_O3[origin,pop]", prior_param = "mu_phi
 )
 ```
 
-### Mean Maturation {.tabset .tabset-pills}
+### Maturation Maturation {.tabset .tabset-pills}
 
 #### Age-3 {.tabset .tabset-pills}
 
@@ -236,7 +236,7 @@ post_v_prior_pops(post_param = "mu_psi_O2[origin,pop]", prior_param = "mu_psi_O2
 )
 ```
 
-## "Scale" Parameters {.tabset .tabset-dropdown}
+## St. Dev. Parameters {.tabset .tabset-dropdown}
 
 ### Egg-to-Parr Survival
 
