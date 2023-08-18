@@ -229,7 +229,7 @@ ylim_01 = c(0, 1.05)
 ```{r rho-params, child = "output-plots-children/10-rho-params.Rmd", eval = params$include_rho_params}
 ```
 
-```{r noise-term-diags, child = "output-plots-children/11-resid-diags.Rmd", eval = params$include_resid_diags}
+```{r noise-term-diags, child = "output-plots-children/11-resid-diags.Rmd", eval = params$include_residual_diags}
 ```
 
 ```{r pp-check, child = "output-plots-children/12-pp-checks.Rmd", eval = params$include_pp_check & model_info$do_pp_check}
