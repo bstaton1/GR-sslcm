@@ -63,6 +63,9 @@ params:
   include_jags_info:
     label: "Include JAGS Code/Data?"
     value: TRUE
+  include_waic:
+    labels: "Include WAIC Output"
+    value: FALSE
 editor_options: 
   chunk_output_type: console
 ---
@@ -241,8 +244,11 @@ ylim_01 = c(0, 1.05)
 ```{r post-v-prior, child = "output-plots-children/14-post-vs-prior.Rmd", eval = params$include_post_v_prior}
 ```
 
-```{r known-values, child = "output-plots-children/14-known-values.Rmd", eval = params$include_known}
+```{r known-values, child = "output-plots-children/15-known-values.Rmd", eval = params$include_known}
 ```
 
-```{r jags-info, child = "output-plots-children/15-jags-model-info.Rmd", eval = params$include_jags_info}
+```{r jags-info, child = "output-plots-children/16-jags-model-info.Rmd", eval = params$include_jags_info}
+```
+
+```{r waic-output, child = "output-plots-children/99-waic.Rmd", eval = params$include_waic & model_info$do_lppd}
 ```
