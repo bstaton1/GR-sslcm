@@ -3,9 +3,10 @@ title: "Output Summary"
 subtitle: "`r paste0('Model Scenario: ', params$scenario)`" 
 date: "`r paste0('Date Rendered: ', Sys.Date())`"
 output: 
-  html_document:
+  bookdown::html_document2:
     toc: true
     toc_float: true
+    number_sections: true
 params:
   scenario:
     label: "Scenario"
@@ -24,9 +25,9 @@ params:
   include_fit_to_data:
     label: "Include Model Fit Output?"
     value: TRUE
-    value: TRUE
   include_parr_recruitment:
     label: "Include Parr Recruitment Output?"
+    value: TRUE
   include_mean_length:
     label: "Include Mean Length Output?"
     value: TRUE
@@ -44,10 +45,10 @@ params:
     value: TRUE
   include_rho_params:
     label: "Include Process Model Correlation Output?"
-    value: FALSE
+    value: TRUE
   include_residual_diags:
     label: "Include Residual Diagnostic Output?"
-    value: FALSE
+    value: TRUE
   include_pp_check:
     label: "Include Posterior Predictive Check Output?"
     value: TRUE
