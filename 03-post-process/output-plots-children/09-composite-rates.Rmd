@@ -219,7 +219,7 @@ junk = sapply(1:jags_data$nj, plot_f, include_age3 = TRUE)
 axis_labels("Return Year", "Spawners per Returning Adult (All Ages)")
 ```
 
-### Ages 4&5 {-}
+#### Ages 4&5 {-}
 
 ```{r spawners-per-return-old-ages, fig.width = p4_width, fig.height = p4_height}
 
