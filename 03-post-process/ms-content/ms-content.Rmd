@@ -31,9 +31,11 @@ header-includes:
   - \usepackage{sansmathfonts}
   - \usepackage{helvet}
   - \renewcommand{\rmdefault}{\sfdefault}
-  - \usepackage{float}
   - \usepackage[labelfont={bf,sc},labelsep=period]{caption}
   - \captionsetup{width=\textwidth}
+  - \usepackage{floatrow}
+  - \floatsetup[figure]{style=plaintop}
+  - \floatsetup[table]{style=plaintop}
 editor_options: 
   chunk_output_type: console
 ---
