@@ -123,11 +123,16 @@ relationship_caption = "
   Panels within the same row show the process model relationship for each of the four populations; _x_- and _y_-axis limits are identical for all panels within a row.
 "
 
-no_fall_caption = "
+no_fall_fig_caption = "
   Ratios between the across-year mean (dark grey) and coefficient of variation (light grey) abundance of natural-origin smolt reaching Lower Granite Dam with (denominator) and without (numerator) the fall migrant life history strategy.
   The 'without' scenario was calculated by assuming all parr recruits experienced freshwater survival rates of spring migrants.
   Mean ratios <1 and CV ratios >1 indicate LGR smolt abundance would be lower and more variable, respectively, in the absence of the fall migrant strategy.
   Values presented are posterior means and 95% credible regions.
+"
+
+no_fall_table_caption = "
+  Inter-annual mean and coefficient of variation (\\%CV) of natural-origin smolt reaching Lower Granite Dam in the presence and (hypothetical) absence of the fall migrant life history type.
+  Findings indicate that smolt abundance would be lower on average and more variable across years if the fall migrant strategy did not exist.
 "
 
 surv_compare_caption = "
@@ -1085,7 +1090,7 @@ axis_labels(xlab = "Egg Production (Millions)")
 
 \newpage
 
-```{r no-fall-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(no_fall_caption), time_it = TRUE, eval = params$no_fall_fig}
+```{r no-fall-analysis, time_it = TRUE, eval = params$no_fall_fig | params$no_fall_tab}
 cv = function(x) {sd(x, na.rm = TRUE)/mean(x, na.rm = TRUE)}
 
 ##### STEP 1: EXTRACT POSTERIOR SAMPLES OF QUANTITIES NEEDED #####
@@ -1121,25 +1126,44 @@ f = function(i) {
   Ma_tot_real_i = cbind(Ma_tot_real_i, rowSums(Ma_tot_real_i))
   
   # calculate the ratios between the actual and hypothetical
-  mean_p_ratio = colMeans(Ma_tot_hyp_i/Ma_tot_real_i, na.rm = TRUE)
-  cv_ratio = apply(Ma_tot_hyp_i, 2, cv)/apply(Ma_tot_real_i, 2, cv)
+  mean_p_ratio_i = colMeans(Ma_tot_hyp_i/Ma_tot_real_i, na.rm = TRUE)
+  cv_ratio_i = apply(Ma_tot_hyp_i, 2, cv)/apply(Ma_tot_real_i, 2, cv)
   
-  names(mean_p_ratio) = paste0("mean_p_ratio[", 1:5, "]")
-  names(cv_ratio) = paste0("cv_ratio[", 1:5, "]")
-  c(mean_p_ratio, cv_ratio)
+  # calculate interannual cv by population and scenario
+  Ma_cv_hyp_i = apply(Ma_tot_hyp_i, 2, cv)
+  Ma_cv_real_i = apply(Ma_tot_real_i, 2, cv)
+  
+  # calculate interannual mean by population and scenario
+  Ma_mean_hyp_i = colMeans(Ma_tot_hyp_i, na.rm = TRUE)
+  Ma_mean_real_i = colMeans(Ma_tot_real_i, na.rm = TRUE)
+  
+  # calculate percent changes
+  Ma_mean_change_i = (Ma_mean_hyp_i - Ma_mean_real_i)/Ma_mean_real_i
+  Ma_cv_change_i = (Ma_cv_hyp_i - Ma_cv_real_i)/Ma_cv_real_i
+  
+  # add names
+  names(Ma_mean_hyp_i) = paste0("Ma_mean_hyp[", 1:5, "]")
+  names(Ma_mean_real_i) = paste0("Ma_mean_real[", 1:5, "]")
+  names(Ma_cv_hyp_i) = paste0("Ma_cv_hyp[", 1:5, "]")
+  names(Ma_cv_real_i) = paste0("Ma_cv_real[", 1:5, "]")
+  names(Ma_mean_change_i) = paste0("Ma_mean_change[", 1:5, "]")
+  names(Ma_cv_change_i) = paste0("Ma_cv_change[", 1:5, "]")
+  
+  names(mean_p_ratio_i) = paste0("mean_p_ratio[", 1:5, "]")
+  names(cv_ratio_i) = paste0("cv_ratio[", 1:5, "]")
+  c(mean_p_ratio_i, cv_ratio_i, Ma_mean_hyp_i, Ma_mean_real_i, Ma_cv_hyp_i, Ma_cv_real_i, Ma_mean_change_i, Ma_cv_change_i)
 }
 
-##### STEP 3: APPLY FUNCTION TO ALL POSTERIOR SAMPLES, FORMAT, AND SUMMARIZE #####
+# apply to each posterior sample
+out = t(sapply(1:nrow(Pb), f))
+out = post_convert(cbind(postpack:::id_mat(post), out))
 
-# apply
-ratio_out = t(sapply(1:nrow(Pb), f))
+```
 
-# format
-ratio_post = post_convert(cbind(postpack:::id_mat(post), ratio_out))
-
+```{r no-fall-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(no_fall_fig_caption), eval = params$no_fall_fig}
 # summarize
-mean_summ = post_summ(ratio_post, "mean")
-cv_summ = post_summ(ratio_post, "cv")
+mean_summ = post_summ(out, "mean_p_ratio")
+cv_summ = post_summ(out, "cv_ratio")
 
 # format the summaries for barplotting
 mns = rbind(mean_summ["mean",], cv_summ["mean",])
@@ -1168,6 +1192,52 @@ abline(h = 1, lty = 2)
 legend("topright", title = "LGR Smolt", legend = c("Mean", "CV"), pch = 15,
        col = cols, pt.cex = 1.5, bty = "n", text.col = par("col.axis"), cex = 0.8)
 ```
+
+`r ifelse(params$no_fall_fig & params$no_fall_tab, "_**Alternatively**, as a table, showing the actual numbers and a percent change, rather than as ratios._", "")`
+
+```{r no-fall-tab, eval = params$no_fall_tab}
+f = function(x, is_percent) {
+  g = function(x, is_percent) {
+    if (!is_percent) {
+      prettyNum(round(x, 1), big.mark = ",", scientific = FALSE)
+    } else {
+      paste0(round(x, 2) * 100, "\\%")
+    }
+  }
+  paste0(g(x["mean",], is_percent), " (", g(x["sd",], is_percent), ")")
+}
+
+tab = cbind(
+  pop = c("CAT", "LOS", "MIN", "UGR", "Total"),
+  f(post_summ(out, "Ma_mean_real")/1000, FALSE),
+  f(post_summ(out, "Ma_mean_hyp")/1000, FALSE),
+  f(post_summ(out, "Ma_mean_change"), TRUE),
+  f(post_summ(out, "Ma_cv_real"), TRUE),
+  f(post_summ(out, "Ma_cv_hyp"), TRUE)
+)
+
+kbl(tab, "latex", booktabs = TRUE, 
+    col.names = c(
+      " ", "Real\\textsuperscript{1,3}", "All Spring\\textsuperscript{2,3}", "\\%$\\Delta$",
+      "Real\\textsuperscript{1}", "All Spring\\textsuperscript{2}"), escape = FALSE,
+    caption = msdown::prep_caption(no_fall_table_caption)) |>
+  kable_styling(full_width = FALSE, latex_options = "HOLD") |>
+  add_header_above(c(" " = 1, "Inter-Annual Mean" = 3, "Inter-Annual \\\\%CV" = 2), bold = TRUE, escape = FALSE) |>
+  column_spec(1, bold = TRUE) |>
+  row_spec(0, bold = TRUE) |>
+  footnote(general_title = "",
+           general = c(
+             "\\\\textit{Posterior summaries represented as mean (standard deviation).}"
+           ),
+           number =  c(
+             "Based on the observed time series, in which both spring and fall migrants were present.",
+             "Based on the hypothetical case where no parr recruits were fall migrants -- calculated after model fitting by assuming all parr recruits experience the higher mortality rates of the spring migrant life history type.",
+             "Abundance expressed as thousands of natural-origin smolt reaching Lower Granite Dam."
+           ), threeparttable = TRUE, escape = FALSE)
+
+```
+
+\clearpage
 
 \clearpage
 
