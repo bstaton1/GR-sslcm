@@ -5,7 +5,7 @@ editor_options:
 
 # Parr Capacity vs. Habitat Relationship
 
-Error bars represent the central 80% of the posterior; grey lines are individual posterior draws of the expected relationship.
+Error bars represent the central 80% of the posterior for population-specific parr capacity; thin lines are individual posterior draws of the expected relationship, thick line is the posterior mean relationship.
 
 ```{r beta-v-habitat-relationship, fig.width = 5, fig.height = 4, out.width="50%"}
 # extract posterior summaries of the capacity parameters
