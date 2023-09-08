@@ -405,9 +405,10 @@ Values in cells represent the percentage of parameters of a given type that fail
 E.g., 50% in the "Rhat > 1.05" column means that half of the parameters of that type had Rhat values greater than 1.05.
 Cells with no color indicate no offense and darker reds indicate greater frequency of an offense.
 
-All convergence diagnostics were calculated using the '[posterior](https://mc-stan.org/posterior/articles/posterior.html)' R package, which implements updated versions (based on rank-normalization) of the classical convergence diagnostics (presented in Vehtari et al. [2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full)).
+<details>
+<summary>Click to View Diagnostic Descriptions</summary>
 
-* **Rhat** measures convergence of multiple chains to a common target distribution. Values close to 1 are better -- we've chosen these approximate categories for ease of interpretation: 
+* **Rhat** measures convergence of multiple chains to a common target distribution. Values close to 1 are better -- we've chosen these categories for ease of interpretation: 
   * _Ideal_: [1,1.01] 
   * _No Issue_: (1.01,1.05]
   * _Acceptable_: (1.05,1.1]
@@ -415,6 +416,10 @@ All convergence diagnostics were calculated using the '[posterior](https://mc-st
   * _Definite Concern_: (1.2,100)
 * **ESS** measures the number of effective MCMC samples are available to estimate a given summary statistic of the posterior -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have fewer than 400 ESS -- Vehtari et al. ([2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full)) suggests 400 as a good rule of thumb.
 * **MCCV** is Monte Carlo Standard Error of a summary statistic divided by the estimated posterior summary statistic, intended to represent a measure of precision for estimating posterior summary statistics -- here the posterior mean and quantiles of the 95% equal-tailed CRI. Percentages shown represent the fraction of parameters that have greater than 5% MCCV, which we have deemed an acceptable level of imprecision.
+
+_All convergence diagnostics were calculated using the '[posterior](https://mc-stan.org/posterior/articles/posterior.html)' R package, which implements updated versions (based on rank-normalization) of the classical convergence diagnostics (presented in Vehtari et al. [2021](https://projecteuclid.org/journals/bayesian-analysis/advance-publication/Rank-Normalization-Folding-and-Localization--An-Improved-R%cb%86-for/10.1214/20-BA1221.full))._
+
+</details>
 
 ```{r mcmc-diag-table, warning = FALSE}
 # duplicate the diagnostic output
@@ -482,7 +487,7 @@ n_max_draw = 30
 # which parameters fall in each Rhat bin
 rhat_1_params = subset(diags_out, rhat >= 0.8 & rhat < 1.05)$variable
 rhat_2_params = subset(diags_out, rhat >= 1.05 & rhat < 1.1)$variable
-rhat_3_params = subset(diags_out, rhat >= 1.1 & rhat < 1.5)$variable
+rhat_3_params = subset(diags_out, rhat >= 1.1)$variable
 
 # extract the Rhat values and the names of the parameters with the 
 # worst Rhat values by bin
@@ -496,7 +501,8 @@ rhat_3_params_draw = rhat_3_params[order(rhat_3, decreasing = TRUE)][1:min(n_max
 # subset out these parameters: makes postpack::diag_plots() much faster
 post_sub_1 = post_subset(post, rhat_1_params_draw)
 post_sub_2 = post_subset(post, rhat_2_params_draw)
-post_sub_3 = post_subset(post, rhat_3_params_draw)
+
+if (length(rhat_3_params) > 0) post_sub_3 = post_subset(post, rhat_3_params_draw)
 
 # function to plot a histogram of rhat values
 rhat_hist = function(rhat) {
@@ -505,14 +511,14 @@ rhat_hist = function(rhat) {
   breaks = seq(min(rhat), max(rhat), length = 20)
   max_count = max(hist(rhat, breaks = breaks, plot = FALSE)$count)
   hist(rhat, breaks = breaks, col = "grey50", border = "white", ylim = c(0, max_count) * 1.025, main = "")
-  axis_labels(xlab = TeX("$\\hat{R}$"), ylab = "Frequency")
+  axis_labels(xlab = "Rhat", ylab = "Frequency")
   usr = par("usr")
   segments(usr[1], usr[3], usr[2], usr[3], xpd = TRUE, col = par("col.axis"))
   segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
 }
 ```
 
-### $1 < \hat{R} < 1.05$ {.tabset .tabset-pills}
+### Ideal/No Issue {.tabset .tabset-pills}
 
 #### Distribution
 
@@ -530,7 +536,7 @@ Density and trace plots by chain for the `r min(n_max_draw, length(rhat_1_params
 diag_plots(post_sub_1, ".", show_diags = "never")
 ```
 
-### $1.05 < \hat{R} < 1.1$ {.tabset .tabset-pills}
+### Acceptable {.tabset .tabset-pills}
 
 #### Distribution
 
@@ -548,13 +554,13 @@ Density and trace plots by chain for the `r min(n_max_draw, length(rhat_2_params
 diag_plots(post_sub_2, ".", show_diags = "never")
 ```
 
-### $\hat{R} > 1.1$ {.tabset .tabset-pills}
+### Concerning {.tabset .tabset-pills}
 
 #### Distribution
 
-There were **`r length(rhat_3_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. Here is their distribution:
+There were **`r length(rhat_3_params)`** of **`r nrow(diags_out)`** unobserved stochastic nodes in this group. `r ifelse(nrow(rhat_3_params) > 0, "Here is their distribution:", "")`
   
-```{r rhat-hist-3, fig.width = 6, fig.height = 4}
+```{r rhat-hist-3, fig.width = 6, fig.height = 4, eval = length(rhat_3_params) > 0}
 rhat_hist(rhat_3)
 ```
 
@@ -562,7 +568,7 @@ rhat_hist(rhat_3)
 
 Density and trace plots by chain for the `r min(n_max_draw, length(rhat_3_params))` parameters with the highest Rhat values in this group are shown.
 
-```{r mcmc-diag-plots-3, fig.width = 11, fig.height = 8.5}
+```{r mcmc-diag-plots-3, fig.width = 11, fig.height = 8.5, eval = length(rhat_3_params) > 0}
 diag_plots(post_sub_3, ".", show_diags = "never")
 ```
 
