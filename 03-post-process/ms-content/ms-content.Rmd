@@ -233,7 +233,7 @@ f_horiz = function(ests1, ests2, lim, label) {
     usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
     segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
     axis(side = 2, at = (mp1 + mp2)/2, labels = tick_labels, las = 1)
-    par(mpg = omgp)
+    par(mgp = omgp)
   }
   
   # draw panel label
@@ -311,9 +311,9 @@ axis_labels("Transition Probability (Non-Survival)")
 
 \newpage
 
-
 ```{r relationship-fig, fig.width = 7.2, fig.height = 9, fig.cap = msdown::prep_caption(relationship_caption), time_it = TRUE, eval = params$relationship_fig}
 solid_col = "grey30"
+solid_col2 = "black"
 tranp_col = alpha(solid_col, 0.25)
 pt_cex = 1.3
 
@@ -364,7 +364,7 @@ phi_E_Pa_VS_E_per_WUL = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(E_pred, rev(E_pred)), c(phi_E_Pb_pred["2.5%",], rev(phi_E_Pb_pred["97.5%",])), col = tranp_col, border = NA)
   
   # add posterior mean predicted curve
-  lines(phi_E_Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col)
+  lines(phi_E_Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col2)
   
   # add posterior mean of realized pairs
   points(phi_E_Pb["mean",] ~ E["mean",], pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -425,7 +425,7 @@ Pb_VS_E = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(E_pred, rev(E_pred)), c(Pb_pred["2.5%",], rev(Pb_pred["97.5%",])), col = tranp_col, border = NA)
   
   # add posterior mean predicted curve
-  lines(Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col)
+  lines(Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col2)
   
   # add posterior mean of realized pairs
   points(Pb["mean",] ~ E["mean",], pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -494,7 +494,7 @@ L_Pb_VS_E_per_WUL = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(E_scaled_seq, rev(E_scaled_seq)), c(pred_L_Pb_lwr, rev(pred_L_Pb_upr)), border = NA, col = tranp_col)
   
   # add posterior mean predicted curve
-  lines(pred_L_Pb_mean ~ E_scaled_seq, col = solid_col, lwd = 2)
+  lines(pred_L_Pb_mean ~ E_scaled_seq, col = solid_col2, lwd = 2)
   
   # add posterior mean of realized pairs
   points(L_Pb_mean ~ E_scaled_mean, pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -565,7 +565,7 @@ phi_Pa_Mb_VS_L_Pb = function(j, i, xlim = NULL, ylim = NULL) {
   polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_phi_Pa_Mb_lwr, rev(pred_phi_Pa_Mb_upr)), border = NA, col = tranp_col)
   
   # add posterior mean predicted curve
-  lines(pred_phi_Pa_Mb_mean ~ L_Pb_seq, col = solid_col, lwd = 2, lty = lty[i])
+  lines(pred_phi_Pa_Mb_mean ~ L_Pb_seq, col = solid_col2, lwd = 2, lty = lty[i])
   
   # add posterior mean of realized pairs
   points(phi_Pa_Mb_mean ~ L_Pb_mean, pch = pch[i], col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -634,7 +634,7 @@ L_Mb_VS_L_Pb = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_L_Mb_lwr, rev(pred_L_Mb_upr)), border = NA, col = tranp_col)
   
   # add posterior mean of predicted curve
-  lines(pred_L_Mb_mean ~ L_Pb_seq, col = solid_col, lwd = 2)
+  lines(pred_L_Mb_mean ~ L_Pb_seq, col = solid_col2, lwd = 2)
   
   # add posterior mean of realized pairs
   points(L_Mb_mean ~ L_Pb_mean, pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -700,7 +700,7 @@ phi_Mb_Ma_VS_L_Mb = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(L_Mb_seq, rev(L_Mb_seq)), c(pred_phi_Mb_Ma_lwr, rev(pred_phi_Mb_Ma_upr)), border = NA, col = tranp_col)
   
   # add posterior mean of predicted curve
-  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = solid_col, lwd = 2)
+  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = solid_col2, lwd = 2)
   
   # add posterior mean of realized pairs
   points(phi_Mb_Ma_mean ~ L_Mb_mean, pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -739,8 +739,6 @@ xaxis_label = function(label) {
   plot(1, 1, type = "n", xlim = c(0,1), ylim = c(0,1), axes = FALSE)
   text(0.5, 0.3, label = label, cex = 1.25, xpd = TRUE)
 }
-
-
 
 make_layout(nrow = 6, ncol = 4, show = FALSE)
 
@@ -837,12 +835,12 @@ polygon(x = c(wul_seq, rev(wul_seq)), y = c(pred_beta_summ["2.5%",], rev(pred_be
 polygon(x = c(wul_seq, rev(wul_seq)), y = c(pred_beta_summ["10%",], rev(pred_beta_summ["90%",])), border = NA, col = tranp_col)
 
 # draw the posterior mean regression line
-lines(pred_beta_summ["mean",] ~ wul_seq, lwd = 2, lty = 2, col = solid_col)
+lines(pred_beta_summ["mean",] ~ wul_seq, lwd = 2, lty = 2, col = solid_col2)
 
 # draw the population-specific capacity estimates w/error bars and labels
-segments(jags_data$wul, beta_ests["2.5%",], jags_data$wul, beta_ests["97.5%",], col = solid_col)
-segments(jags_data$wul, beta_ests["10%",], jags_data$wul, beta_ests["90%",], col = solid_col, lwd = 3)
-points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 21, col = solid_col, bg = solid_col)
+segments(jags_data$wul, beta_ests["2.5%",], jags_data$wul, beta_ests["97.5%",], col = solid_col2)
+segments(jags_data$wul, beta_ests["10%",], jags_data$wul, beta_ests["90%",], col = solid_col2, lwd = 3)
+points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 21, col = solid_col2, bg = solid_col2)
 
 # draw the population labels
 xoff = 0.015
@@ -916,12 +914,13 @@ pop_rhos = function(param, at_mp) {
 abline(v = 0, lty = 1, lwd = 2, col = "grey")
 
 junk = sapply(1:nrow(mp), function(i) pop_rhos(rownames(rho_mean_out)[i], mp[i,]))
-segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 7, col = "white")
+segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 5, col = "white")
 segments(rho_mean_out[,"2.5%"], mp, rho_mean_out[,"97.5%"], mp, col = "white", lwd = 2)
-points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "white", lwd = 4)
-segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 6, col = "black")
-segments(rho_mean_out[,"2.5%"], mp, rho_mean_out[,"97.5%"], mp, col = "black")
-points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "black", lwd = 3)
+points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "white", lwd = 3)
+
+segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 4, col = "black")
+segments(rho_mean_out[,"2.5%"], mp, rho_mean_out[,"97.5%"], mp, col = "black", lwd = 1)
+points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "black", lwd = 2)
 
 abline(h = mp + rbind(diff(mp)/2, NA), xpd = FALSE, col = "grey", lty = 2)
 # par(tcl = -7)
