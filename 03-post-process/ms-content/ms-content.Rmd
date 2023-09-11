@@ -14,10 +14,12 @@ params:
   include_sim_years:
     value: FALSE
   beta_fig:
-    value: FALSE
+    value: TRUE
   relationship_fig:
     value: TRUE
   no_fall_fig:
+    value: TRUE
+  no_fall_tab:
     value: TRUE
   surv_compare_fig:
     value: TRUE
@@ -26,6 +28,10 @@ params:
   corr_compare_fig:
     value: TRUE
   WUL_change_fig:
+    value: TRUE
+  obs_vs_fit_fig:
+    value: TRUE
+  time_table:
     value: TRUE
 header-includes:
   - \usepackage{sansmathfonts}
@@ -1607,7 +1613,7 @@ axis_labels("Observed Value", "Fitted Value", yline = 0.25)
 
 \clearpage
 
-```{r time-table}
+```{r time-table, eval = params$time_table}
 # calculate times elapsed for each chunk
 tab = data.frame(
   Item = names(start_times),
