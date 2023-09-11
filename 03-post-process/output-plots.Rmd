@@ -10,7 +10,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base_vlong"
+    value: "new-wul_vlong"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
