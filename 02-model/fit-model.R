@@ -43,19 +43,19 @@ default_args = list(
 parser = arg_parser("Fit the GR-sslcm to Data", hide.opts = TRUE) |>
   
   add_argument("scenario", "Name of model run",
-               type = "character", default = default_args$scenario) %>%
+               type = "character", default = default_args$scenario) |> 
   
   add_argument("--mcmc", paste0("Overall run length, ranging from ~5mins to ~24hrs. Accepted options are: ", knitr::combine_words(accepted_mcmc, before = "'", and = " or ")),
-               type = "character", default = default_args$mcmc) %>%
+               type = "character", default = default_args$mcmc) |> 
   
   add_argument("--sim", "Perform simulation as a validation?",
-               type = "logical", default = default_args$sim, short = "sim") %>%
+               type = "logical", default = default_args$sim, short = "sim") |> 
   
   add_argument("--rmd", "Render Rmarkdown output?",
-               type = "logical", default = default_args$rmd, short = "rmd") %>%
+               type = "logical", default = default_args$rmd, short = "rmd") |> 
   
   add_argument("--pp_check", "Include posterior predictive check calculations?",
-               type = "logical", default = default_args$pp_check, short = "pp_check") %>%
+               type = "logical", default = default_args$pp_check, short = "pp_check") |> 
   
   add_argument("--lppd", "Include log posterior predictive density calculations (for WAIC)?",
                type = "logical", default = default_args$lppd, short = "lppd") 

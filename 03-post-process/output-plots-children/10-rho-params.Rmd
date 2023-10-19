@@ -169,7 +169,7 @@ rho_mat_plots("rho_Lphi_Mb_Ma[")
 
 ```{r rho_Lphi_Mb_O0-plot}
 est = post_summ(post, "rho_Lphi_Ma_O0[2,1]")
-kable(t(est), digits = 3, row.names = FALSE) %>%
+kable(t(est), digits = 3, row.names = FALSE) |> 
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
 ```
 
@@ -197,6 +197,6 @@ rho_mat_plots("rho_Lpsi_O2[")
 
 ```{r rho_Lphi_Rb_Ra-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
 est = post_summ(post, "rho_Lphi_Rb_Ra[2,1]")
-kable(t(est), digits = 3, row.names = FALSE) %>%
+kable(t(est), digits = 3, row.names = FALSE) |> 
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
 ```

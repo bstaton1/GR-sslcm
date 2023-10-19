@@ -646,13 +646,13 @@ proc_error_table = function(var) {
   out_colors[is.na(out_colors)] = "#FFFFFF80"
   
   # make the table
-  knitr::kable(out_values, "html", col.names = c("Life Phase", "Process", "Origin", "Migratory Type", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "llllccccc") %>%
-    kableExtra::kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
-    column_spec(5, background = out_colors[,5]) %>%
-    column_spec(6, background = out_colors[,6]) %>%
-    column_spec(7, background = out_colors[,7]) %>%
-    column_spec(8, background = out_colors[,8]) %>%
-    column_spec(9, background = out_colors[,9]) %>%
+  knitr::kable(out_values, "html", col.names = c("Life Phase", "Process", "Origin", "Migratory Type", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "llllccccc") |>
+    kableExtra::kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) |> 
+    column_spec(5, background = out_colors[,5]) |> 
+    column_spec(6, background = out_colors[,6]) |> 
+    column_spec(7, background = out_colors[,7]) |> 
+    column_spec(8, background = out_colors[,8]) |> 
+    column_spec(9, background = out_colors[,9]) |> 
     collapse_rows(columns = 1:4)
 }
 ```
@@ -1099,13 +1099,13 @@ obs_error_table = function(var) {
   out_colors = reshape2::dcast(obs_error_ests, type + param + origin + LH_type + age ~ pop, value.var = stringr::str_replace(var, "_mean$", "_col"))
   out_colors[is.na(out_colors)] = "#FFFFFF80"
   
-  knitr::kable(out_values, "html", col.names = c("Class", "Type", "Origin", "Migratory Type", "Age-of-Maturity", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "lllllccccc") %>%
-    kableExtra::kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
-    column_spec(6, background = out_colors[,6]) %>%
-    column_spec(7, background = out_colors[,7]) %>%
-    column_spec(8, background = out_colors[,8]) %>%
-    column_spec(9, background = out_colors[,9]) %>%
-    column_spec(10, background = out_colors[,10]) %>%
+  knitr::kable(out_values, "html", col.names = c("Class", "Type", "Origin", "Migratory Type", "Age-of-Maturity", "CAT", "LOS", "MIN", "UGR", "Combined"), escape = FALSE, align = "lllllccccc") |> 
+    kableExtra::kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) |> 
+    column_spec(6, background = out_colors[,6]) |> 
+    column_spec(7, background = out_colors[,7]) |> 
+    column_spec(8, background = out_colors[,8]) |> 
+    column_spec(9, background = out_colors[,9]) |> 
+    column_spec(10, background = out_colors[,10]) |> 
     collapse_rows(columns = 1:5)
 }
 ```

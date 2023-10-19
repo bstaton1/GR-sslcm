@@ -53,6 +53,6 @@ est = post_summ(post, "^lambda$")
 colnames(est) = "Slope"
 
 # print a table 
-kable(t(est), digits = 0, format.args = list(big.mark = ",")) %>%
+kable(t(est), digits = 0, format.args = list(big.mark = ",")) |> 
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed", "striped"))
 ```

@@ -26,7 +26,7 @@ summarize_lppd = function(param, LH_type = NULL, origin = NULL, pop = NULL) {
 waic_out = summarize_lppd("_lppd[year,.+]$")
 
 waic_out = as.data.frame(as.list(waic_out))
-waic_out %>%
-  kbl(format.args = list(big.mark = ",")) %>%
+waic_out |> 
+  kbl(format.args = list(big.mark = ",")) |> 
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
 ```

@@ -1650,9 +1650,9 @@ tab = data.frame(
 tab = rbind(tab, data.frame(Item = "Total", "Minutes" = sum(tab$Minutes)))
 
 # create the table
-kbl(tab, format = "latex", booktabs = TRUE, longtable = FALSE, linesep = "", caption = "Time elapsed in calculating the content in this document.") %>%
-  kable_styling(full_width = FALSE, latex_options = "HOLD_position") %>%
-  row_spec(0, bold = TRUE) %>%
-  column_spec(1, monospace = TRUE) %>%
+kbl(tab, format = "latex", booktabs = TRUE, longtable = FALSE, linesep = "", caption = "Time elapsed in calculating the content in this document.") |> 
+  kable_styling(full_width = FALSE, latex_options = "HOLD_position") |> 
+  row_spec(0, bold = TRUE) |> 
+  column_spec(1, monospace = TRUE) |> 
   row_spec(nrow(tab), bold = TRUE)
 ```

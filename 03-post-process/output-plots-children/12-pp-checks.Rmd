@@ -242,13 +242,13 @@ assign_color = function(x) {
 }
 
 # produce the kable
-bp_tab %>%
+bp_tab |> 
   kbl(digits = 2, col.names = c("Class", "Lifestage", "Population", "Migratory Type", "Origin", "Years w/Data", "Median", "2.5%", "97.5%", "<0.05", ">0.95"),
-      align = c("lllllcccccc")) %>%
-  kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
-  add_header_above(c("Data Type Information" = 5, "P-value Summaries" = 4, "% of Extreme P-values" = 2)) %>%
-  column_spec(7, background = assign_color(bp_tab[,7])) %>%
-  column_spec(8, background = assign_color(bp_tab[,8])) %>%
-  column_spec(9, background = assign_color(bp_tab[,9])) %>%
+      align = c("lllllcccccc")) |> 
+  kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) |> 
+  add_header_above(c("Data Type Information" = 5, "P-value Summaries" = 4, "% of Extreme P-values" = 2)) |> 
+  column_spec(7, background = assign_color(bp_tab[,7])) |> 
+  column_spec(8, background = assign_color(bp_tab[,8])) |> 
+  column_spec(9, background = assign_color(bp_tab[,9])) |> 
   collapse_rows(1:5) 
 ```

@@ -1075,13 +1075,13 @@ make_ratios_table = function(ratios, q) {
     assign_color = assign_color_0
   }
   
-  kable(table_x, "html", digits = 2, row.names = FALSE, align = "llllccccc") %>%
-    kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) %>%
-    column_spec(5, background = assign_color(x[,5])) %>%
-    column_spec(6, background = assign_color(x[,6])) %>%
-    column_spec(7, background = assign_color(x[,7])) %>%
-    column_spec(8, background = assign_color(x[,8])) %>%
-    column_spec(9, background = assign_color(x[,9])) %>%
+  kable(table_x, "html", digits = 2, row.names = FALSE, align = "llllccccc") |> 
+    kable_styling(full_width = FALSE, bootstrap_options = c("condensed")) |> 
+    column_spec(5, background = assign_color(x[,5])) |> 
+    column_spec(6, background = assign_color(x[,6])) |> 
+    column_spec(7, background = assign_color(x[,7])) |> 
+    column_spec(8, background = assign_color(x[,8])) |> 
+    column_spec(9, background = assign_color(x[,9])) |> 
     collapse_rows(1:4)
 }
 ```
