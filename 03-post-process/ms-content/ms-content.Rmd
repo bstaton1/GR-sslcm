@@ -13,6 +13,10 @@ params:
     input: numeric
   include_sim_years:
     value: FALSE
+  map_fig:
+    value: TRUE
+  diagram_fig:
+    value: TRUE
   beta_fig:
     value: TRUE
   relationship_fig:
@@ -32,7 +36,7 @@ params:
   obs_vs_fit_fig:
     value: TRUE
   time_table:
-    value: TRUE
+    value: FALSE
 header-includes:
   - \usepackage{sansmathfonts}
   - \usepackage{helvet}
@@ -113,11 +117,20 @@ source("../00-packages.R")
 
 ```{r plot-settings}
 solid_col = "grey30"
+solid_col2 = "black"
 tranp_col = alpha(solid_col, 0.25)
 pt_cex = 1.3
 ```
 
 ```{r captions}
+map_caption = "
+  Placeholder for a map figure. The map should show at least: Grande Ronde basin with relevant tributaries, locations of weirs and screw traps, inset map showing region of US covered.
+"
+
+diagram_caption = "
+  Schematic of the primary states and transitions among states that are captured in the state-space life cycle model for Grande Ronde spring Chinook salmon.
+"
+
 beta_caption = "
   Estimated relationship between parr capacity and weighted usable habitat length.
   Darker grey/thicker error bars represent 80% credible regions and lighter grey/thinner error bars represent 95% credible regions.
@@ -171,6 +184,359 @@ obs_vs_fit_fig_caption = "
   More detailed visualizations of model fit are shown in Supplement B (Section 3: model fits as time series with magnitude of observation uncertainty shown; Section 11: diagnostics based on quantile-standardized residuals; Section 12: posterior predictive checks).
 "
 ```
+
+```{r map-fig, fig.width = 7.2, fig.height = 5, fig.cap = msdown::prep_caption(map_caption), eval = params$map_fig}
+par(mar = rep(0.25, 4), ljoin = "mitre")
+plot(1,1, xlim = c(0,1), ylim = c(0,1), type = "n", axes = FALSE, ann = FALSE)
+text(x = 0.5, y = 0.5, "MAP\nPLACEHOLDER", font = 2, cex = 3)
+box(lwd = 4)
+```
+
+\newpage
+
+\begin{figure}[H]
+{\centering \includegraphics[width=1\linewidth,]{../../100-math-description/GR-sslcm-diagram.pdf}}
+\caption{Schematic of the primary states and transitions among states that are captured in the state-space life cycle model for Grande Ronde spring Chinook salmon.}
+\label{fig:diagram}
+\end{figure}
+
+\newpage
+
+```{r obs-vs-fit-fig, fig.width = 7.2, fig.height = 7, eval = params$obs_vs_fit_fig, fig.cap = msdown::prep_caption(obs_vs_fit_fig_caption)}
+# initialize an empty list
+plot_dat = list()
+
+# prep values to plot: fall trap passage
+plot_dat$Pa_fall = list(
+  obs = jags_data$Pa_obs[,i_fall,],
+  fitted = {
+    tmp = post_summ(post, sub_index("^Pa[.+,LH_type,.]", LH_type = i_fall))
+    list(
+      mn = array_format(tmp["mean",])[,i_fall,],
+      lwr = array_format(tmp["2.5%",])[,i_fall,],
+      upr = array_format(tmp["97.5%",])[,i_fall,]
+    )
+  }
+)
+
+# prep values to plot: spring trap passage
+plot_dat$Mb_spring = list(
+  obs = jags_data$Mb_obs[,i_spring,o_nor,],
+  fitted = {
+    tmp = post_summ(post, sub_index("^Mb[.+,LH_type,origin,.]", LH_type = i_spring, origin = o_nor))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,o_nor,],
+      upr = array_format(tmp["97.5%",])[,i_spring,o_nor,]
+    )
+  }
+)
+
+# prep values to plot: adult return to river
+plot_dat$Ra_tot = list(
+  obs = jags_data$Ra_obs,
+  fitted = {
+    tmp = post_summ(post, "^Ra_tot[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# prep values to plot: summer to LGR survival
+plot_dat$phi_Pb_Ma = list(
+  obs = plogis(jags_data$Lphi_obs_Pb_Ma),
+  fitted = {
+    tmp = post_summ(post, "^phi_Pb_Ma[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# prep values to plot: fall to LGR survival
+plot_dat$phi_Pa_Ma_fall = list(
+  obs = plogis(jags_data$Lphi_obs_Pa_Ma[,i_fall,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]", year = ".+", LH_type = i_fall, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_fall,],
+      lwr = array_format(tmp["2.5%",])[,i_fall,],
+      upr = array_format(tmp["97.5%",])[,i_fall,]
+    )
+  }
+)
+
+# prep values to plot: winter to LGR survival
+plot_dat$phi_Pa_Ma_winter = list(
+  obs = plogis(jags_data$Lphi_obs_Pa_Ma[,i_spring,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]", year = ".+", LH_type = i_spring, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,],
+      upr = array_format(tmp["97.5%",])[,i_spring,]
+    )
+  }
+)
+
+# prep values to plot: spring to LGR survival (NOR)
+plot_dat$phi_Mb_Ma_nor = list(
+  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,o_nor,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ".+", LH_type = i_spring, origin = o_nor, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,o_nor,],
+      upr = array_format(tmp["97.5%",])[,i_spring,o_nor,]
+    )
+  }
+)
+
+# prep values to plot: spring to LGR survival (HOR)
+plot_dat$phi_Mb_Ma_hor = list(
+  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,o_hor,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ".+", LH_type = i_spring, origin = o_hor, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,o_hor,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,o_hor,],
+      upr = array_format(tmp["97.5%",])[,i_spring,o_hor,]
+    )
+  }
+)
+
+# prep values to plot: spring to LGR survival (NOR & HOR both)
+plot_dat$phi_Mb_Ma = list(
+  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,.,pop]", year = ".+", LH_type = i_spring, origin = o_hor, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,,],
+      upr = array_format(tmp["97.5%",])[,i_spring,,]
+    )
+  }
+)
+
+# prep values to plot: LGR to BON (NOR & HOR both)
+plot_dat$phi_Ma_O0 = list(
+  obs = plogis(jags_data$Lphi_obs_Ma_O0),
+  fitted = {
+    tmp = post_summ(post, "^phi_Ma_O0[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# prep values to plot: BON to LGR (NOR & HOR both)
+plot_dat$phi_Rb_Ra = list(
+  obs = jags_data$x_LGR/jags_data$x_BON,
+  fitted = {
+    tmp = post_summ(post, "^phi_Rb_Ra[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# add aggregate age/origin compositions
+source_rmd_chunk("output-plots-children/03-fit-to-data.Rmd", "calculate-aggregated-comps-model")
+source_rmd_chunk("output-plots-children/03-fit-to-data.Rmd", "calculate-aggregated-comps-data")
+
+# prep values to plot: weir compositon age-3
+plot_dat$p_Ra_age3 = list(
+  obs = x_Ra_new_obs$x_Ra_age_obs[,k_3,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_age[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_3,],
+      lwr = array_format(tmp["2.5%",])[,k_3,],
+      upr = array_format(tmp["97.5%",])[,k_3,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon age-4
+plot_dat$p_Ra_age4 = list(
+  obs = x_Ra_new_obs$x_Ra_age_obs[,k_4,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_age[year,2,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_4,],
+      lwr = array_format(tmp["2.5%",])[,k_4,],
+      upr = array_format(tmp["97.5%",])[,k_4,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon age-5
+plot_dat$p_Ra_age5 = list(
+  obs = x_Ra_new_obs$x_Ra_age_obs[,k_5,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_age[year,3,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_5,],
+      lwr = array_format(tmp["2.5%",])[,k_5,],
+      upr = array_format(tmp["97.5%",])[,k_5,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon origin
+plot_dat$p_Ra_nor = list(
+  obs = x_Ra_new_obs$x_Ra_origin_obs[,o_nor,]/apply(x_Ra_new_obs$x_Ra_origin_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_origin[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,o_nor,],
+      upr = array_format(tmp["97.5%",])[,o_nor,]
+    )
+  }
+)
+
+# prep values to plot: carcass compositon age-3
+plot_dat$p_Sa_prime_age3 = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_3,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_3,],
+      lwr = array_format(tmp["2.5%",])[,k_3,],
+      upr = array_format(tmp["97.5%",])[,k_3,]
+    )
+  }
+)
+
+# prep values to plot: carcass compositon age-4
+plot_dat$p_Sa_prime_age4 = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_4,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,2,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_4,],
+      lwr = array_format(tmp["2.5%",])[,k_4,],
+      upr = array_format(tmp["97.5%",])[,k_4,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon age-5
+plot_dat$p_Sa_prime_age5 = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_5,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,3,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_5,],
+      lwr = array_format(tmp["2.5%",])[,k_5,],
+      upr = array_format(tmp["97.5%",])[,k_5,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon origin
+plot_dat$p_Sa_prime_nor = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_origin_obs[,o_nor,]/apply(x_Sa_prime_new_obs$x_Sa_prime_origin_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_origin[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,o_nor,],
+      upr = array_format(tmp["97.5%",])[,o_nor,]
+    )
+  }
+)
+
+# function to create plot for one data type
+plot_f = function(dat_list, f, label = "", adj_label = FALSE) {
+  
+  with(dat_list, {
+    
+    # handle outlying values
+    # obs[obs == 0] = NA
+    # obs[obs == 1] = NA
+    obs[obs == "NaN"] = NA
+    
+    # apply transformations
+    obs = f(obs)
+    mn = f(fitted$mn)
+    lwr = f(fitted$lwr)
+    upr = f(fitted$upr)
+    
+    # set fitted value to NA if no data value
+    mn[is.na(obs)] = NA
+    lwr[is.na(obs)] = NA
+    upr[is.na(obs)] = NA
+    
+    # obtain axis limits
+    lim = range(mn, lwr, upr, obs, na.rm = TRUE)
+    
+    # create the plot
+    plot(mn ~ obs, xlim = lim, ylim = lim, pch = 21, col = solid_col, bg = tranp_col, cex = 1.5)
+    
+    # draw fitted value CRIs
+    # segments(obs, lwr, obs, upr)
+    
+    # draw 1:1 line
+    abline(0,1, lty = 2)
+    
+    # add text
+    panel_label(label, x_inp = ifelse(adj_label, 0.05, 0.015), cex = 0.95)
+  })
+}
+
+# identity function
+ifun = function(x) x
+
+# png("fig.png", h = 7 * ppi, w = 7.2 * ppi, res = ppi)
+mypar(mfrow = c(1,1), oma = c(1.5,1.5,0,1.5), col.axis = "black", mar = c(1,0.75,0.5,0.25))
+# r1 = rep(1:3, each = 4); r2 = rep(4:7, each = 3); r3 = rep(8:11, each = 3); r4 = rep(12:15, each = 3)
+r1 = rep(1:3, each = 4); r2 = rep(4:9, each = 2); r3 = rep(10:13, each = 3); r4 = rep(14:17, each = 3)
+layout(rbind(r1, r2, r3, r4))
+# layout.show(17); dev.off()
+
+# abundance plots
+plot_f(plot_dat[["Pa_fall"]], ifun, "(a) Fall Trap Passage")
+plot_f(plot_dat[["Mb_spring"]], ifun, "(b) Spring Trap Passage")
+plot_f(plot_dat[["Ra_tot"]], ifun, "(c) Adult Return to River"); mtext(side = 4, text = "Abundance", outer = FALSE, line = 0.55)
+
+# survival plots
+plot_f(plot_dat[["phi_Pb_Ma"]], ifun, "(d) Summer \u2192 LGR", TRUE)
+plot_f(plot_dat[["phi_Pa_Ma_fall"]], ifun, "(e) Fall \u2192 LGR", TRUE)
+plot_f(plot_dat[["phi_Pa_Ma_winter"]], ifun, "(f) Winter \u2192 LGR", TRUE)
+plot_f(plot_dat[["phi_Mb_Ma"]], ifun, "(g) Spring \u2192 LGR", TRUE)#; mtext(side = 4, text = "Survival", outer = FALSE, line = 0.75)
+plot_f(plot_dat[["phi_Ma_O0"]], ifun, "(h) LGR \u2192 BON", TRUE)
+plot_f(plot_dat[["phi_Rb_Ra"]], ifun, "(i) BON \u2192 LGR", TRUE); mtext(side = 4, text = "Survival", outer = FALSE, line = 0.55)
+
+# composition plots
+plot_f(plot_dat[["p_Ra_age3"]], ifun, "(j) Proportion Age-3")
+plot_f(plot_dat[["p_Ra_age4"]], ifun, "(k) Proportion Age-4")
+plot_f(plot_dat[["p_Ra_age5"]], ifun, "(l) Proportion Age-5")
+plot_f(plot_dat[["p_Ra_nor"]], ifun, "(m) Proportion NOR"); mtext(side = 4, text = "Weir Composition", outer = FALSE, line = 0.55)
+
+# composition plots
+plot_f(plot_dat[["p_Sa_prime_age3"]], ifun, "(n) Proportion Age-3")
+plot_f(plot_dat[["p_Sa_prime_age4"]], ifun, "(o) Proportion Age-4")
+plot_f(plot_dat[["p_Sa_prime_age5"]], ifun, "(p) Proportion Age-5")
+plot_f(plot_dat[["p_Sa_prime_nor"]], ifun, "(q) Proportion NOR"); mtext(side = 4, text = "Carcass Composition", outer = FALSE, line = 0.55)
+
+# axis labels
+axis_labels("Observed Value", "Fitted Value", yline = 0.25)
+
+# dev.off(); file.show("fig.png")
+```
+
+\newpage
 
 ```{r compare-fn, eval = params$surv_compare_fig | params$apportion_compare_fig}
 pch = c(21, 23)
@@ -318,10 +684,6 @@ axis_labels("Transition Probability (Non-Survival)")
 \newpage
 
 ```{r relationship-fig, fig.width = 7.2, fig.height = 9, fig.cap = msdown::prep_caption(relationship_caption), time_it = TRUE, eval = params$relationship_fig}
-solid_col = "grey30"
-solid_col2 = "black"
-tranp_col = alpha(solid_col, 0.25)
-pt_cex = 1.3
 
 ##### EGG-TO-PARR SURVIVAL VS. EGG DENSITY #####
 
@@ -1275,343 +1637,7 @@ kbl(tab, "latex", booktabs = TRUE,
 
 ```
 
-\clearpage
-
-```{r obs-vs-fit-fig, fig.width = 7.2, fig.height = 7, eval = params$obs_vs_fit_fig, fig.cap = msdown::prep_caption(obs_vs_fit_fig_caption)}
-# initialize an empty list
-plot_dat = list()
-
-# prep values to plot: fall trap passage
-plot_dat$Pa_fall = list(
-  obs = jags_data$Pa_obs[,i_fall,],
-  fitted = {
-    tmp = post_summ(post, sub_index("^Pa[.+,LH_type,.]", LH_type = i_fall))
-    list(
-      mn = array_format(tmp["mean",])[,i_fall,],
-      lwr = array_format(tmp["2.5%",])[,i_fall,],
-      upr = array_format(tmp["97.5%",])[,i_fall,]
-    )
-  }
-)
-
-# prep values to plot: spring trap passage
-plot_dat$Mb_spring = list(
-  obs = jags_data$Mb_obs[,i_spring,o_nor,],
-  fitted = {
-    tmp = post_summ(post, sub_index("^Mb[.+,LH_type,origin,.]", LH_type = i_spring, origin = o_nor))
-    list(
-      mn = array_format(tmp["mean",])[,i_spring,o_nor,],
-      lwr = array_format(tmp["2.5%",])[,i_spring,o_nor,],
-      upr = array_format(tmp["97.5%",])[,i_spring,o_nor,]
-    )
-  }
-)
-
-# prep values to plot: adult return to river
-plot_dat$Ra_tot = list(
-  obs = jags_data$Ra_obs,
-  fitted = {
-    tmp = post_summ(post, "^Ra_tot[")
-    list(
-      mn = array_format(tmp["mean",]),
-      lwr = array_format(tmp["2.5%",]),
-      upr = array_format(tmp["97.5%",])
-    )
-  }
-)
-
-# prep values to plot: summer to LGR survival
-plot_dat$phi_Pb_Ma = list(
-  obs = plogis(jags_data$Lphi_obs_Pb_Ma),
-  fitted = {
-    tmp = post_summ(post, "^phi_Pb_Ma[")
-    list(
-      mn = array_format(tmp["mean",]),
-      lwr = array_format(tmp["2.5%",]),
-      upr = array_format(tmp["97.5%",])
-    )
-  }
-)
-
-# prep values to plot: fall to LGR survival
-plot_dat$phi_Pa_Ma_fall = list(
-  obs = plogis(jags_data$Lphi_obs_Pa_Ma[,i_fall,]),
-  fitted = {
-    tmp = post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]", year = ".+", LH_type = i_fall, pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,i_fall,],
-      lwr = array_format(tmp["2.5%",])[,i_fall,],
-      upr = array_format(tmp["97.5%",])[,i_fall,]
-    )
-  }
-)
-
-# prep values to plot: winter to LGR survival
-plot_dat$phi_Pa_Ma_winter = list(
-  obs = plogis(jags_data$Lphi_obs_Pa_Ma[,i_spring,]),
-  fitted = {
-    tmp = post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]", year = ".+", LH_type = i_spring, pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,i_spring,],
-      lwr = array_format(tmp["2.5%",])[,i_spring,],
-      upr = array_format(tmp["97.5%",])[,i_spring,]
-    )
-  }
-)
-
-# prep values to plot: spring to LGR survival (NOR)
-plot_dat$phi_Mb_Ma_nor = list(
-  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,o_nor,]),
-  fitted = {
-    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ".+", LH_type = i_spring, origin = o_nor, pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,i_spring,o_nor,],
-      lwr = array_format(tmp["2.5%",])[,i_spring,o_nor,],
-      upr = array_format(tmp["97.5%",])[,i_spring,o_nor,]
-    )
-  }
-)
-
-# prep values to plot: spring to LGR survival (HOR)
-plot_dat$phi_Mb_Ma_hor = list(
-  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,o_hor,]),
-  fitted = {
-    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ".+", LH_type = i_spring, origin = o_hor, pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,i_spring,o_hor,],
-      lwr = array_format(tmp["2.5%",])[,i_spring,o_hor,],
-      upr = array_format(tmp["97.5%",])[,i_spring,o_hor,]
-    )
-  }
-)
-
-# prep values to plot: spring to LGR survival (NOR & HOR both)
-plot_dat$phi_Mb_Ma = list(
-  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,,]),
-  fitted = {
-    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,.,pop]", year = ".+", LH_type = i_spring, origin = o_hor, pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,i_spring,,],
-      lwr = array_format(tmp["2.5%",])[,i_spring,,],
-      upr = array_format(tmp["97.5%",])[,i_spring,,]
-    )
-  }
-)
-
-# prep values to plot: LGR to BON (NOR & HOR both)
-plot_dat$phi_Ma_O0 = list(
-  obs = plogis(jags_data$Lphi_obs_Ma_O0),
-  fitted = {
-    tmp = post_summ(post, "^phi_Ma_O0[")
-    list(
-      mn = array_format(tmp["mean",]),
-      lwr = array_format(tmp["2.5%",]),
-      upr = array_format(tmp["97.5%",])
-    )
-  }
-)
-
-# prep values to plot: BON to LGR (NOR & HOR both)
-plot_dat$phi_Rb_Ra = list(
-  obs = jags_data$x_LGR/jags_data$x_BON,
-  fitted = {
-    tmp = post_summ(post, "^phi_Rb_Ra[")
-    list(
-      mn = array_format(tmp["mean",]),
-      lwr = array_format(tmp["2.5%",]),
-      upr = array_format(tmp["97.5%",])
-    )
-  }
-)
-
-# add aggregate age/origin compositions
-source_rmd_chunk("output-plots-children/03-fit-to-data.Rmd", "calculate-aggregated-comps-model")
-source_rmd_chunk("output-plots-children/03-fit-to-data.Rmd", "calculate-aggregated-comps-data")
-
-# prep values to plot: weir compositon age-3
-plot_dat$p_Ra_age3 = list(
-  obs = x_Ra_new_obs$x_Ra_age_obs[,k_3,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Ra_age[year,1,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,k_3,],
-      lwr = array_format(tmp["2.5%",])[,k_3,],
-      upr = array_format(tmp["97.5%",])[,k_3,]
-    )
-  }
-)
-
-# prep values to plot: weir compositon age-4
-plot_dat$p_Ra_age4 = list(
-  obs = x_Ra_new_obs$x_Ra_age_obs[,k_4,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Ra_age[year,2,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,k_4,],
-      lwr = array_format(tmp["2.5%",])[,k_4,],
-      upr = array_format(tmp["97.5%",])[,k_4,]
-    )
-  }
-)
-
-# prep values to plot: weir compositon age-5
-plot_dat$p_Ra_age5 = list(
-  obs = x_Ra_new_obs$x_Ra_age_obs[,k_5,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Ra_age[year,3,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,k_5,],
-      lwr = array_format(tmp["2.5%",])[,k_5,],
-      upr = array_format(tmp["97.5%",])[,k_5,]
-    )
-  }
-)
-
-# prep values to plot: weir compositon origin
-plot_dat$p_Ra_nor = list(
-  obs = x_Ra_new_obs$x_Ra_origin_obs[,o_nor,]/apply(x_Ra_new_obs$x_Ra_origin_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Ra_origin[year,1,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,o_nor,],
-      lwr = array_format(tmp["2.5%",])[,o_nor,],
-      upr = array_format(tmp["97.5%",])[,o_nor,]
-    )
-  }
-)
-
-# prep values to plot: carcass compositon age-3
-plot_dat$p_Sa_prime_age3 = list(
-  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_3,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,1,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,k_3,],
-      lwr = array_format(tmp["2.5%",])[,k_3,],
-      upr = array_format(tmp["97.5%",])[,k_3,]
-    )
-  }
-)
-
-# prep values to plot: carcass compositon age-4
-plot_dat$p_Sa_prime_age4 = list(
-  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_4,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,2,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,k_4,],
-      lwr = array_format(tmp["2.5%",])[,k_4,],
-      upr = array_format(tmp["97.5%",])[,k_4,]
-    )
-  }
-)
-
-# prep values to plot: weir compositon age-5
-plot_dat$p_Sa_prime_age5 = list(
-  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_5,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,3,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,k_5,],
-      lwr = array_format(tmp["2.5%",])[,k_5,],
-      upr = array_format(tmp["97.5%",])[,k_5,]
-    )
-  }
-)
-
-# prep values to plot: weir compositon origin
-plot_dat$p_Sa_prime_nor = list(
-  obs = x_Sa_prime_new_obs$x_Sa_prime_origin_obs[,o_nor,]/apply(x_Sa_prime_new_obs$x_Sa_prime_origin_obs, 3, rowSums),
-  fitted = {
-    tmp = post_summ(post, sub_index("^p_Sa_prime_origin[year,1,pop]", year = ".+", pop = ".+"))
-    list(
-      mn = array_format(tmp["mean",])[,o_nor,],
-      lwr = array_format(tmp["2.5%",])[,o_nor,],
-      upr = array_format(tmp["97.5%",])[,o_nor,]
-    )
-  }
-)
-
-# function to create plot for one data type
-plot_f = function(dat_list, f, label = "", adj_label = FALSE) {
-  
-  with(dat_list, {
-    
-    # handle outlying values
-    # obs[obs == 0] = NA
-    # obs[obs == 1] = NA
-    obs[obs == "NaN"] = NA
-    
-    # apply transformations
-    obs = f(obs)
-    mn = f(fitted$mn)
-    lwr = f(fitted$lwr)
-    upr = f(fitted$upr)
-    
-    # set fitted value to NA if no data value
-    mn[is.na(obs)] = NA
-    lwr[is.na(obs)] = NA
-    upr[is.na(obs)] = NA
-    
-    # obtain axis limits
-    lim = range(mn, lwr, upr, obs, na.rm = TRUE)
-    
-    # create the plot
-    plot(mn ~ obs, xlim = lim, ylim = lim, pch = 21, col = solid_col, bg = tranp_col, cex = 1.5)
-    
-    # draw fitted value CRIs
-    # segments(obs, lwr, obs, upr)
-    
-    # draw 1:1 line
-    abline(0,1, lty = 2)
-    
-    # add text
-    panel_label(label, x_inp = ifelse(adj_label, 0.05, 0.015), cex = 0.95)
-  })
-}
-
-# identity function
-ifun = function(x) x
-
-# png("fig.png", h = 7 * ppi, w = 7.2 * ppi, res = ppi)
-mypar(mfrow = c(1,1), oma = c(1.5,1.5,0,1.5), col.axis = "black", mar = c(1,0.75,0.5,0.25))
-# r1 = rep(1:3, each = 4); r2 = rep(4:7, each = 3); r3 = rep(8:11, each = 3); r4 = rep(12:15, each = 3)
-r1 = rep(1:3, each = 4); r2 = rep(4:9, each = 2); r3 = rep(10:13, each = 3); r4 = rep(14:17, each = 3)
-layout(rbind(r1, r2, r3, r4))
-# layout.show(17); dev.off()
-
-# abundance plots
-plot_f(plot_dat[["Pa_fall"]], ifun, "(a) Fall Trap Passage")
-plot_f(plot_dat[["Mb_spring"]], ifun, "(b) Spring Trap Passage")
-plot_f(plot_dat[["Ra_tot"]], ifun, "(c) Adult Return to River"); mtext(side = 4, text = "Abundance", outer = FALSE, line = 0.55)
-
-# survival plots
-plot_f(plot_dat[["phi_Pb_Ma"]], ifun, "(d) Summer \u2192 LGR", TRUE)
-plot_f(plot_dat[["phi_Pa_Ma_fall"]], ifun, "(e) Fall \u2192 LGR", TRUE)
-plot_f(plot_dat[["phi_Pa_Ma_winter"]], ifun, "(f) Winter \u2192 LGR", TRUE)
-plot_f(plot_dat[["phi_Mb_Ma"]], ifun, "(g) Spring \u2192 LGR", TRUE)#; mtext(side = 4, text = "Survival", outer = FALSE, line = 0.75)
-plot_f(plot_dat[["phi_Ma_O0"]], ifun, "(h) LGR \u2192 BON", TRUE)
-plot_f(plot_dat[["phi_Rb_Ra"]], ifun, "(i) BON \u2192 LGR", TRUE); mtext(side = 4, text = "Survival", outer = FALSE, line = 0.55)
-
-# composition plots
-plot_f(plot_dat[["p_Ra_age3"]], ifun, "(j) Proportion Age-3")
-plot_f(plot_dat[["p_Ra_age4"]], ifun, "(k) Proportion Age-4")
-plot_f(plot_dat[["p_Ra_age5"]], ifun, "(l) Proportion Age-5")
-plot_f(plot_dat[["p_Ra_nor"]], ifun, "(m) Proportion NOR"); mtext(side = 4, text = "Weir Composition", outer = FALSE, line = 0.55)
-
-# composition plots
-plot_f(plot_dat[["p_Sa_prime_age3"]], ifun, "(n) Proportion Age-3")
-plot_f(plot_dat[["p_Sa_prime_age4"]], ifun, "(o) Proportion Age-4")
-plot_f(plot_dat[["p_Sa_prime_age5"]], ifun, "(p) Proportion Age-5")
-plot_f(plot_dat[["p_Sa_prime_nor"]], ifun, "(q) Proportion NOR"); mtext(side = 4, text = "Carcass Composition", outer = FALSE, line = 0.55)
-
-# axis labels
-axis_labels("Observed Value", "Fitted Value", yline = 0.25)
-
-# dev.off(); file.show("fig.png")
-```
-
-\clearpage
+\newpage
 
 ```{r time-table, eval = params$time_table}
 # calculate times elapsed for each chunk
