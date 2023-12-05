@@ -127,10 +127,10 @@ Unlike the previous figures, this figure shows the proportion of the adults that
 # function to calculate the survival term for a given origin, population, and combo of ages
 f = function(o, j, include_age3) {
   # spawning adult abundance
-  Sa = post_subset(post, sub_index("^Sa[year,age,origin,pop]", year = ".+", age = ".+", origin = o, pop = j), matrix = TRUE)
+  Sa = post_subset(post, sub_index("^Sa[year,age,origin,pop]", year = ts_yrs, age = ".+", origin = o, pop = j), matrix = TRUE)
   
   # adults at estuary
-  Rb = post_subset(post, sub_index("^Rb[year,age,origin,pop]", year = 2:33, age = ".+", origin = o, pop = j), matrix = TRUE)
+  Rb = post_subset(post, sub_index("^Rb[year,age,origin,pop]", year = ts_yrs, age = ".+", origin = o, pop = j), matrix = TRUE)
   
   # function to calculate for a given MCMC iteration
   g = function(i, include_age3) {
@@ -211,7 +211,6 @@ plot_f = function(j, include_age3) {
 #### All Ages {-}
 
 ```{r spawners-per-return-all-ages, fig.width = p4_width, fig.height = p4_height}
-
 # loop over populations
 # includes all ages
 mypar()
@@ -222,7 +221,6 @@ axis_labels("Return Year", "Spawners per Returning Adult (All Ages)")
 #### Ages 4&5 {-}
 
 ```{r spawners-per-return-old-ages, fig.width = p4_width, fig.height = p4_height}
-
 # loop over populations
 # includes only ages 4 and 5
 mypar()
