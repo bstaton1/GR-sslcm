@@ -382,3 +382,27 @@ correct_origins = function(x, y, k) {
   smart_round(count_fixed, digits = 0)
 }
 
+##### OPEN A PLOTTING DEVICE #####
+## generalized wrapper around png(), jpeg(), and pdf()
+
+dev.on = function(file, width, height, format = "png", ppi = 600) {
+  
+  # set the accepted format types
+  accepted_formats = c("png", "pdf", "jpg")
+  if (!format %in% accepted_formats) stop ("format '", format, "' not accepted. Must be one of ", knitr::combine_words(accepted_formats, and = "or ", before = "'"))
+  
+  # open a png device if instructed
+  if (format == "png") {
+    png(paste0(file, ".", format), width = width * ppi, height = height * ppi, res = ppi)
+  }
+  
+  # open a jpeg device if instructed
+  if (format == "jpg") {
+    jpeg(paste0(file, ".", format), width = width * ppi, height = height * ppi, res = ppi)
+  }
+  
+  # open a pdf device if instructed
+  if (format == "pdf") {
+    pdf(paste0(file, ".", format), width = width, height = height)
+  }
+}
