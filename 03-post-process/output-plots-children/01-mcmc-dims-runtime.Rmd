@@ -1,0 +1,69 @@
+---
+editor_options: 
+  chunk_output_type: console
+---
+
+# MCMC Dimensions & Run Time
+
+```{r mcmc-dims-and-runtime}
+
+## MCMC dimensions ##
+
+# query the dimensions of the posterior samples: the full samples even if thin_percent not equal to 1
+dims = post_dim(model_info$post)
+
+# build a data frame for printing this information
+df_dims = data.frame(
+  Quantity = c("Burn-in + Adapt Samples", "Post Burn-in Samples", "Thinning Interval", "Chains", "Saved Samples", "Monitored Quantities", "% of Saved Samples used Here", "Chains Ran in Parallel?"),
+  Value = c(unname(dims), NA, NA)
+)
+df_dims$Value = prettyNum(df_dims$Value, big.mark = ",", scientific = FALSE)
+df_dims$Value[df_dims$Quantity == "Chains Ran in Parallel?"] = ifelse(model_info$jags_dims$parallel, "Yes", "No")
+df_dims$Value[df_dims$Quantity == "% of Saved Samples used Here"] = paste0(params$thin_percent * 100, "%")
+
+## MCMC Runtime ##
+
+# Calculate hours per 10,000 iterations
+hrs_per_ten_thousand_iters = with(model_info$jags_dims, {
+  # calculation of total iters differs if parallel or not
+  if (parallel) {
+    total_iters = n_adapt + n_post + n_burn
+  } else {
+    total_iters = (n_adapt + n_post + n_burn) * n_chains
+  }
+  ten_thousands_of_total_iters = total_iters/10000
+  
+  # calculate hours elapsed
+  time_diff = as.POSIXct.default(model_info$jags_time["stoptime"]) - as.POSIXct.default(model_info$jags_time["starttime"])
+  time_number = as.numeric(time_diff)
+  time_units = attributes(time_diff)$units
+  hour_convert = switch(time_units,
+                        "secs" = 3600,
+                        "mins" = 60,
+                        "hours" = 1,
+                        "days" = 1/24)
+  hours_diff = time_number/hour_convert
+  
+  # calculate/round rate
+  round(hours_diff/ten_thousands_of_total_iters, 2)
+})
+
+# combine relevant info into a data frame
+df_time = data.frame(
+  Quantity = c("Time Started", "Time Ended", "Time Elapsed", "Hours Per 10,000 Iterations"),
+  Value = c(model_info$jags_time, hrs_per_ten_thousand_iters)
+)
+
+# combine the dimensions and run time dfs into one
+df = rbind(df_dims, df_time)
+groups = c(rep(1, nrow(df_dims)), rep(2, nrow(df_time)))
+rownames(df) = NULL
+
+# render the table
+kable(df, format.args = list(big.mark = ","), caption = "MCMC sampling dimensions and run time.", col.names = c(" ", " "), escape = FALSE) |>
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "condensed")) |>
+  group_rows("Dimensions", start_row = min(which(groups == 1)), end_row = max(which(groups == 1))) |>
+  group_rows("Per Chain", start_row = 1, end_row = 3, escape = FALSE) |>
+  group_rows("Overall", start_row = 4, end_row = max(which(groups == 1))) |>
+  group_rows("Run Time", start_row = min(which(groups == 2)), end_row = max(which(groups == 2)))
+```

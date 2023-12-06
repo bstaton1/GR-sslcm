@@ -13,11 +13,17 @@ params:
     input: numeric
   include_sim_years:
     value: FALSE
+  map_fig:
+    value: TRUE
+  diagram_fig:
+    value: TRUE
   beta_fig:
-    value: FALSE
+    value: TRUE
   relationship_fig:
     value: TRUE
   no_fall_fig:
+    value: TRUE
+  no_fall_tab:
     value: TRUE
   surv_compare_fig:
     value: TRUE
@@ -27,13 +33,19 @@ params:
     value: TRUE
   WUL_change_fig:
     value: TRUE
+  obs_vs_fit_fig:
+    value: TRUE
+  time_table:
+    value: FALSE
 header-includes:
   - \usepackage{sansmathfonts}
   - \usepackage{helvet}
   - \renewcommand{\rmdefault}{\sfdefault}
-  - \usepackage{float}
   - \usepackage[labelfont={bf,sc},labelsep=period]{caption}
   - \captionsetup{width=\textwidth}
+  - \usepackage{floatrow}
+  - \floatsetup[figure]{style=plaintop}
+  - \floatsetup[table]{style=plaintop}
 editor_options: 
   chunk_output_type: console
 ---
@@ -105,11 +117,20 @@ source("../00-packages.R")
 
 ```{r plot-settings}
 solid_col = "grey30"
+solid_col2 = "black"
 tranp_col = alpha(solid_col, 0.25)
 pt_cex = 1.3
 ```
 
 ```{r captions}
+map_caption = "
+  Placeholder for a map figure. The map should show at least: Grande Ronde basin with relevant tributaries, locations of weirs and screw traps, inset map showing region of US covered.
+"
+
+diagram_caption = "
+  Schematic of the primary states and transitions among states that are captured in the state-space life cycle model for Grande Ronde spring Chinook salmon.
+"
+
 beta_caption = "
   Estimated relationship between parr capacity and weighted usable habitat length.
   Darker grey/thicker error bars represent 80% credible regions and lighter grey/thinner error bars represent 95% credible regions.
@@ -121,11 +142,16 @@ relationship_caption = "
   Panels within the same row show the process model relationship for each of the four populations; _x_- and _y_-axis limits are identical for all panels within a row.
 "
 
-no_fall_caption = "
+no_fall_fig_caption = "
   Ratios between the across-year mean (dark grey) and coefficient of variation (light grey) abundance of natural-origin smolt reaching Lower Granite Dam with (denominator) and without (numerator) the fall migrant life history strategy.
   The 'without' scenario was calculated by assuming all parr recruits experienced freshwater survival rates of spring migrants.
   Mean ratios <1 and CV ratios >1 indicate LGR smolt abundance would be lower and more variable, respectively, in the absence of the fall migrant strategy.
   Values presented are posterior means and 95% credible regions.
+"
+
+no_fall_table_caption = "
+  Inter-annual mean and coefficient of variation (\\%CV) of natural-origin smolt reaching Lower Granite Dam in the presence and (hypothetical) absence of the fall migrant life history type.
+  Findings indicate that smolt abundance would be lower on average and more variable across years if the fall migrant strategy did not exist.
 "
 
 surv_compare_caption = "
@@ -147,10 +173,370 @@ corr_compare_caption = "
 "
 
 WUL_change_fig_caption = "
-  Density-dependent survival relationships from egg (panels a-d) and parr (panels e-f) to smolt arriving at Lower Granite Dam (LGR) under current (solid lines) and increased (dashed lines) weighted usable habitat (WUL).
-  Egg $\\to$ LGR survival includes density effects that are both direct (e.g., egg survival varies as a function of egg density) and indirect (parr size varies as a function of egg density, and survival varies with size), whereas parr $\\to$ LGR survival includes only the indirect density effects.
+  Freshwater juvenile density-dependent relationships under current (solid lines) and increased (dashed lines) weighted usable habitat.
+  Panels (_a_-_d_): composite survival from egg to smolt at Lower Granite Dam (LGR) including both direct (i.e., egg density affects egg survival via Beverton-Holt dynamics) and indirect (i.e., egg density affects growth rates, size affects parr and smolt survival) density effects; panels (_e_-_h_): composite survival from parr to smolt at LGR which includes only indirect effects; panels (_i_-_l_): smolt reaching LGR.
+  Calculations operate based on density of juveniles -- _x_-axis converted to approximate spawner abundance (all ages, origins, and sexes) for ease of interpretation. Grey bands show the 95% credible region for the current relationship only; lines show posterior means.
+"
+
+obs_vs_fit_fig_caption = "
+  Consistency between model fitted values (posterior means) and nearly all data sources with an explicit likelihood function; only parr and smolt mean length data have been omitted here for space.
+  Each data point is one year for one population, with the exceptions of panels _g_, _h_, and _i_, which display values for both natural- and hatchery-origin survival rates, and in the cases of _h_ and _i_, these rates apply equally to all populations.
+  More detailed visualizations of model fit are shown in Supplement B (Section 3: model fits as time series with magnitude of observation uncertainty shown; Section 11: diagnostics based on quantile-standardized residuals; Section 12: posterior predictive checks).
 "
 ```
+
+```{r map-fig, fig.width = 7.2, fig.height = 5, fig.cap = msdown::prep_caption(map_caption), eval = params$map_fig}
+par(mar = rep(0.25, 4), ljoin = "mitre")
+plot(1,1, xlim = c(0,1), ylim = c(0,1), type = "n", axes = FALSE, ann = FALSE)
+text(x = 0.5, y = 0.5, "MAP\nPLACEHOLDER", font = 2, cex = 3)
+box(lwd = 4)
+```
+
+\newpage
+
+\begin{figure}[H]
+{\centering \includegraphics[width=1\linewidth,]{../../100-math-description/GR-sslcm-diagram.pdf}}
+\caption{Schematic of the primary states and transitions among states that are captured in the state-space life cycle model for Grande Ronde spring Chinook salmon.}
+\label{fig:diagram}
+\end{figure}
+
+\newpage
+
+```{r obs-vs-fit-fig, fig.width = 7.2, fig.height = 7, eval = params$obs_vs_fit_fig, fig.cap = msdown::prep_caption(obs_vs_fit_fig_caption)}
+# initialize an empty list
+plot_dat = list()
+
+# prep values to plot: fall trap passage
+plot_dat$Pa_fall = list(
+  obs = jags_data$Pa_obs[,i_fall,],
+  fitted = {
+    tmp = post_summ(post, sub_index("^Pa[.+,LH_type,.]", LH_type = i_fall))
+    list(
+      mn = array_format(tmp["mean",])[,i_fall,],
+      lwr = array_format(tmp["2.5%",])[,i_fall,],
+      upr = array_format(tmp["97.5%",])[,i_fall,]
+    )
+  }
+)
+
+# prep values to plot: spring trap passage
+plot_dat$Mb_spring = list(
+  obs = jags_data$Mb_obs[,i_spring,o_nor,],
+  fitted = {
+    tmp = post_summ(post, sub_index("^Mb[.+,LH_type,origin,.]", LH_type = i_spring, origin = o_nor))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,o_nor,],
+      upr = array_format(tmp["97.5%",])[,i_spring,o_nor,]
+    )
+  }
+)
+
+# prep values to plot: adult return to river
+plot_dat$Ra_tot = list(
+  obs = jags_data$Ra_obs,
+  fitted = {
+    tmp = post_summ(post, "^Ra_tot[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# prep values to plot: summer to LGR survival
+plot_dat$phi_Pb_Ma = list(
+  obs = plogis(jags_data$Lphi_obs_Pb_Ma),
+  fitted = {
+    tmp = post_summ(post, "^phi_Pb_Ma[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# prep values to plot: fall to LGR survival
+plot_dat$phi_Pa_Ma_fall = list(
+  obs = plogis(jags_data$Lphi_obs_Pa_Ma[,i_fall,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]", year = ".+", LH_type = i_fall, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_fall,],
+      lwr = array_format(tmp["2.5%",])[,i_fall,],
+      upr = array_format(tmp["97.5%",])[,i_fall,]
+    )
+  }
+)
+
+# prep values to plot: winter to LGR survival
+plot_dat$phi_Pa_Ma_winter = list(
+  obs = plogis(jags_data$Lphi_obs_Pa_Ma[,i_spring,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Pa_Ma[year,LH_type,pop]", year = ".+", LH_type = i_spring, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,],
+      upr = array_format(tmp["97.5%",])[,i_spring,]
+    )
+  }
+)
+
+# prep values to plot: spring to LGR survival (NOR)
+plot_dat$phi_Mb_Ma_nor = list(
+  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,o_nor,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ".+", LH_type = i_spring, origin = o_nor, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,o_nor,],
+      upr = array_format(tmp["97.5%",])[,i_spring,o_nor,]
+    )
+  }
+)
+
+# prep values to plot: spring to LGR survival (HOR)
+plot_dat$phi_Mb_Ma_hor = list(
+  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,o_hor,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,origin,pop]", year = ".+", LH_type = i_spring, origin = o_hor, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,o_hor,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,o_hor,],
+      upr = array_format(tmp["97.5%",])[,i_spring,o_hor,]
+    )
+  }
+)
+
+# prep values to plot: spring to LGR survival (NOR & HOR both)
+plot_dat$phi_Mb_Ma = list(
+  obs = plogis(jags_data$Lphi_obs_Mb_Ma[,i_spring,,]),
+  fitted = {
+    tmp = post_summ(post, sub_index("^phi_Mb_Ma[year,LH_type,.,pop]", year = ".+", LH_type = i_spring, origin = o_hor, pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,i_spring,,],
+      lwr = array_format(tmp["2.5%",])[,i_spring,,],
+      upr = array_format(tmp["97.5%",])[,i_spring,,]
+    )
+  }
+)
+
+# prep values to plot: LGR to BON (NOR & HOR both)
+plot_dat$phi_Ma_O0 = list(
+  obs = plogis(jags_data$Lphi_obs_Ma_O0),
+  fitted = {
+    tmp = post_summ(post, "^phi_Ma_O0[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# prep values to plot: BON to LGR (NOR & HOR both)
+plot_dat$phi_Rb_Ra = list(
+  obs = jags_data$x_LGR/jags_data$x_BON,
+  fitted = {
+    tmp = post_summ(post, "^phi_Rb_Ra[")
+    list(
+      mn = array_format(tmp["mean",]),
+      lwr = array_format(tmp["2.5%",]),
+      upr = array_format(tmp["97.5%",])
+    )
+  }
+)
+
+# add aggregate age/origin compositions
+source_rmd_chunk("output-plots-children/03-fit-to-data.Rmd", "calculate-aggregated-comps-model")
+source_rmd_chunk("output-plots-children/03-fit-to-data.Rmd", "calculate-aggregated-comps-data")
+
+# prep values to plot: weir compositon age-3
+plot_dat$p_Ra_age3 = list(
+  obs = x_Ra_new_obs$x_Ra_age_obs[,k_3,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_age[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_3,],
+      lwr = array_format(tmp["2.5%",])[,k_3,],
+      upr = array_format(tmp["97.5%",])[,k_3,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon age-4
+plot_dat$p_Ra_age4 = list(
+  obs = x_Ra_new_obs$x_Ra_age_obs[,k_4,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_age[year,2,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_4,],
+      lwr = array_format(tmp["2.5%",])[,k_4,],
+      upr = array_format(tmp["97.5%",])[,k_4,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon age-5
+plot_dat$p_Ra_age5 = list(
+  obs = x_Ra_new_obs$x_Ra_age_obs[,k_5,]/apply(x_Ra_new_obs$x_Ra_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_age[year,3,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_5,],
+      lwr = array_format(tmp["2.5%",])[,k_5,],
+      upr = array_format(tmp["97.5%",])[,k_5,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon origin
+plot_dat$p_Ra_nor = list(
+  obs = x_Ra_new_obs$x_Ra_origin_obs[,o_nor,]/apply(x_Ra_new_obs$x_Ra_origin_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Ra_origin[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,o_nor,],
+      upr = array_format(tmp["97.5%",])[,o_nor,]
+    )
+  }
+)
+
+# prep values to plot: carcass compositon age-3
+plot_dat$p_Sa_prime_age3 = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_3,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_3,],
+      lwr = array_format(tmp["2.5%",])[,k_3,],
+      upr = array_format(tmp["97.5%",])[,k_3,]
+    )
+  }
+)
+
+# prep values to plot: carcass compositon age-4
+plot_dat$p_Sa_prime_age4 = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_4,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,2,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_4,],
+      lwr = array_format(tmp["2.5%",])[,k_4,],
+      upr = array_format(tmp["97.5%",])[,k_4,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon age-5
+plot_dat$p_Sa_prime_age5 = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_age_obs[,k_5,]/apply(x_Sa_prime_new_obs$x_Sa_prime_age_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_age[year,3,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,k_5,],
+      lwr = array_format(tmp["2.5%",])[,k_5,],
+      upr = array_format(tmp["97.5%",])[,k_5,]
+    )
+  }
+)
+
+# prep values to plot: weir compositon origin
+plot_dat$p_Sa_prime_nor = list(
+  obs = x_Sa_prime_new_obs$x_Sa_prime_origin_obs[,o_nor,]/apply(x_Sa_prime_new_obs$x_Sa_prime_origin_obs, 3, rowSums),
+  fitted = {
+    tmp = post_summ(post, sub_index("^p_Sa_prime_origin[year,1,pop]", year = ".+", pop = ".+"))
+    list(
+      mn = array_format(tmp["mean",])[,o_nor,],
+      lwr = array_format(tmp["2.5%",])[,o_nor,],
+      upr = array_format(tmp["97.5%",])[,o_nor,]
+    )
+  }
+)
+
+# function to create plot for one data type
+plot_f = function(dat_list, f, label = "", adj_label = FALSE) {
+  
+  with(dat_list, {
+    
+    # handle outlying values
+    # obs[obs == 0] = NA
+    # obs[obs == 1] = NA
+    obs[obs == "NaN"] = NA
+    
+    # apply transformations
+    obs = f(obs)
+    mn = f(fitted$mn)
+    lwr = f(fitted$lwr)
+    upr = f(fitted$upr)
+    
+    # set fitted value to NA if no data value
+    mn[is.na(obs)] = NA
+    lwr[is.na(obs)] = NA
+    upr[is.na(obs)] = NA
+    
+    # obtain axis limits
+    lim = range(mn, lwr, upr, obs, na.rm = TRUE)
+    
+    # create the plot
+    plot(mn ~ obs, xlim = lim, ylim = lim, pch = 21, col = solid_col, bg = tranp_col, cex = 1.5)
+    
+    # draw fitted value CRIs
+    # segments(obs, lwr, obs, upr)
+    
+    # draw 1:1 line
+    abline(0,1, lty = 2)
+    
+    # add text
+    panel_label(label, x_inp = ifelse(adj_label, 0.05, 0.015), cex = 0.95)
+  })
+}
+
+# identity function
+ifun = function(x) x
+
+# png("fig.png", h = 7 * ppi, w = 7.2 * ppi, res = ppi)
+mypar(mfrow = c(1,1), oma = c(1.5,1.5,0,1.5), col.axis = "black", mar = c(1,0.75,0.5,0.25))
+# r1 = rep(1:3, each = 4); r2 = rep(4:7, each = 3); r3 = rep(8:11, each = 3); r4 = rep(12:15, each = 3)
+r1 = rep(1:3, each = 4); r2 = rep(4:9, each = 2); r3 = rep(10:13, each = 3); r4 = rep(14:17, each = 3)
+layout(rbind(r1, r2, r3, r4))
+# layout.show(17); dev.off()
+
+# abundance plots
+plot_f(plot_dat[["Pa_fall"]], ifun, "(a) Fall Trap Passage")
+plot_f(plot_dat[["Mb_spring"]], ifun, "(b) Spring Trap Passage")
+plot_f(plot_dat[["Ra_tot"]], ifun, "(c) Adult Return to River"); mtext(side = 4, text = "Abundance", outer = FALSE, line = 0.55)
+
+# survival plots
+plot_f(plot_dat[["phi_Pb_Ma"]], ifun, "(d) Summer \u2192 LGR", TRUE)
+plot_f(plot_dat[["phi_Pa_Ma_fall"]], ifun, "(e) Fall \u2192 LGR", TRUE)
+plot_f(plot_dat[["phi_Pa_Ma_winter"]], ifun, "(f) Winter \u2192 LGR", TRUE)
+plot_f(plot_dat[["phi_Mb_Ma"]], ifun, "(g) Spring \u2192 LGR", TRUE)#; mtext(side = 4, text = "Survival", outer = FALSE, line = 0.75)
+plot_f(plot_dat[["phi_Ma_O0"]], ifun, "(h) LGR \u2192 BON", TRUE)
+plot_f(plot_dat[["phi_Rb_Ra"]], ifun, "(i) BON \u2192 LGR", TRUE); mtext(side = 4, text = "Survival", outer = FALSE, line = 0.55)
+
+# composition plots
+plot_f(plot_dat[["p_Ra_age3"]], ifun, "(j) Proportion Age-3")
+plot_f(plot_dat[["p_Ra_age4"]], ifun, "(k) Proportion Age-4")
+plot_f(plot_dat[["p_Ra_age5"]], ifun, "(l) Proportion Age-5")
+plot_f(plot_dat[["p_Ra_nor"]], ifun, "(m) Proportion NOR"); mtext(side = 4, text = "Weir Composition", outer = FALSE, line = 0.55)
+
+# composition plots
+plot_f(plot_dat[["p_Sa_prime_age3"]], ifun, "(n) Proportion Age-3")
+plot_f(plot_dat[["p_Sa_prime_age4"]], ifun, "(o) Proportion Age-4")
+plot_f(plot_dat[["p_Sa_prime_age5"]], ifun, "(p) Proportion Age-5")
+plot_f(plot_dat[["p_Sa_prime_nor"]], ifun, "(q) Proportion NOR"); mtext(side = 4, text = "Carcass Composition", outer = FALSE, line = 0.55)
+
+# axis labels
+axis_labels("Observed Value", "Fitted Value", yline = 0.25)
+
+# dev.off(); file.show("fig.png")
+```
+
+\newpage
 
 ```{r compare-fn, eval = params$surv_compare_fig | params$apportion_compare_fig}
 pch = c(21, 23)
@@ -219,7 +605,7 @@ f_horiz = function(ests1, ests2, lim, label) {
     usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
     segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
     axis(side = 2, at = (mp1 + mp2)/2, labels = tick_labels, las = 1)
-    par(mpg = omgp)
+    par(mgp = omgp)
   }
   
   # draw panel label
@@ -297,11 +683,7 @@ axis_labels("Transition Probability (Non-Survival)")
 
 \newpage
 
-
 ```{r relationship-fig, fig.width = 7.2, fig.height = 9, fig.cap = msdown::prep_caption(relationship_caption), time_it = TRUE, eval = params$relationship_fig}
-solid_col = "grey30"
-tranp_col = alpha(solid_col, 0.25)
-pt_cex = 1.3
 
 ##### EGG-TO-PARR SURVIVAL VS. EGG DENSITY #####
 
@@ -350,7 +732,7 @@ phi_E_Pa_VS_E_per_WUL = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(E_pred, rev(E_pred)), c(phi_E_Pb_pred["2.5%",], rev(phi_E_Pb_pred["97.5%",])), col = tranp_col, border = NA)
   
   # add posterior mean predicted curve
-  lines(phi_E_Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col)
+  lines(phi_E_Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col2)
   
   # add posterior mean of realized pairs
   points(phi_E_Pb["mean",] ~ E["mean",], pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -411,7 +793,7 @@ Pb_VS_E = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(E_pred, rev(E_pred)), c(Pb_pred["2.5%",], rev(Pb_pred["97.5%",])), col = tranp_col, border = NA)
   
   # add posterior mean predicted curve
-  lines(Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col)
+  lines(Pb_pred["mean",] ~ E_pred, lwd = 2, col = solid_col2)
   
   # add posterior mean of realized pairs
   points(Pb["mean",] ~ E["mean",], pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -480,7 +862,7 @@ L_Pb_VS_E_per_WUL = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(E_scaled_seq, rev(E_scaled_seq)), c(pred_L_Pb_lwr, rev(pred_L_Pb_upr)), border = NA, col = tranp_col)
   
   # add posterior mean predicted curve
-  lines(pred_L_Pb_mean ~ E_scaled_seq, col = solid_col, lwd = 2)
+  lines(pred_L_Pb_mean ~ E_scaled_seq, col = solid_col2, lwd = 2)
   
   # add posterior mean of realized pairs
   points(L_Pb_mean ~ E_scaled_mean, pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -551,7 +933,7 @@ phi_Pa_Mb_VS_L_Pb = function(j, i, xlim = NULL, ylim = NULL) {
   polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_phi_Pa_Mb_lwr, rev(pred_phi_Pa_Mb_upr)), border = NA, col = tranp_col)
   
   # add posterior mean predicted curve
-  lines(pred_phi_Pa_Mb_mean ~ L_Pb_seq, col = solid_col, lwd = 2, lty = lty[i])
+  lines(pred_phi_Pa_Mb_mean ~ L_Pb_seq, col = solid_col2, lwd = 2, lty = lty[i])
   
   # add posterior mean of realized pairs
   points(phi_Pa_Mb_mean ~ L_Pb_mean, pch = pch[i], col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -620,7 +1002,7 @@ L_Mb_VS_L_Pb = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(L_Pb_seq, rev(L_Pb_seq)), c(pred_L_Mb_lwr, rev(pred_L_Mb_upr)), border = NA, col = tranp_col)
   
   # add posterior mean of predicted curve
-  lines(pred_L_Mb_mean ~ L_Pb_seq, col = solid_col, lwd = 2)
+  lines(pred_L_Mb_mean ~ L_Pb_seq, col = solid_col2, lwd = 2)
   
   # add posterior mean of realized pairs
   points(L_Mb_mean ~ L_Pb_mean, pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -686,7 +1068,7 @@ phi_Mb_Ma_VS_L_Mb = function(j, xlim = NULL, ylim = NULL) {
   polygon(c(L_Mb_seq, rev(L_Mb_seq)), c(pred_phi_Mb_Ma_lwr, rev(pred_phi_Mb_Ma_upr)), border = NA, col = tranp_col)
   
   # add posterior mean of predicted curve
-  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = solid_col, lwd = 2)
+  lines(pred_phi_Mb_Ma_mean ~ L_Mb_seq, col = solid_col2, lwd = 2)
   
   # add posterior mean of realized pairs
   points(phi_Mb_Ma_mean ~ L_Mb_mean, pch = 21, col = solid_col, bg = tranp_col, cex = pt_cex)
@@ -725,8 +1107,6 @@ xaxis_label = function(label) {
   plot(1, 1, type = "n", xlim = c(0,1), ylim = c(0,1), axes = FALSE)
   text(0.5, 0.3, label = label, cex = 1.25, xpd = TRUE)
 }
-
-
 
 make_layout(nrow = 6, ncol = 4, show = FALSE)
 
@@ -823,12 +1203,12 @@ polygon(x = c(wul_seq, rev(wul_seq)), y = c(pred_beta_summ["2.5%",], rev(pred_be
 polygon(x = c(wul_seq, rev(wul_seq)), y = c(pred_beta_summ["10%",], rev(pred_beta_summ["90%",])), border = NA, col = tranp_col)
 
 # draw the posterior mean regression line
-lines(pred_beta_summ["mean",] ~ wul_seq, lwd = 2, lty = 2, col = solid_col)
+lines(pred_beta_summ["mean",] ~ wul_seq, lwd = 2, lty = 2, col = solid_col2)
 
 # draw the population-specific capacity estimates w/error bars and labels
-segments(jags_data$wul, beta_ests["2.5%",], jags_data$wul, beta_ests["97.5%",], col = solid_col)
-segments(jags_data$wul, beta_ests["10%",], jags_data$wul, beta_ests["90%",], col = solid_col, lwd = 3)
-points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 21, col = solid_col, bg = solid_col)
+segments(jags_data$wul, beta_ests["2.5%",], jags_data$wul, beta_ests["97.5%",], col = solid_col2)
+segments(jags_data$wul, beta_ests["10%",], jags_data$wul, beta_ests["90%",], col = solid_col2, lwd = 3)
+points(beta_ests["mean",] ~ jags_data$wul, cex = 1.5, pch = 21, col = solid_col2, bg = solid_col2)
 
 # draw the population labels
 xoff = 0.015
@@ -902,12 +1282,13 @@ pop_rhos = function(param, at_mp) {
 abline(v = 0, lty = 1, lwd = 2, col = "grey")
 
 junk = sapply(1:nrow(mp), function(i) pop_rhos(rownames(rho_mean_out)[i], mp[i,]))
-segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 7, col = "white")
+segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 5, col = "white")
 segments(rho_mean_out[,"2.5%"], mp, rho_mean_out[,"97.5%"], mp, col = "white", lwd = 2)
-points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "white", lwd = 4)
-segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 6, col = "black")
-segments(rho_mean_out[,"2.5%"], mp, rho_mean_out[,"97.5%"], mp, col = "black")
-points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "black", lwd = 3)
+points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "white", lwd = 3)
+
+segments(rho_mean_out[,"25%"], mp, rho_mean_out[,"75%"], mp, lwd = 4, col = "black")
+segments(rho_mean_out[,"2.5%"], mp, rho_mean_out[,"97.5%"], mp, col = "black", lwd = 1)
+points(mp ~ rho_mean_out[,"mean"], pch = 3, cex = 1, col = "black", lwd = 2)
 
 abline(h = mp + rbind(diff(mp)/2, NA), xpd = FALSE, col = "grey", lty = 2)
 # par(tcl = -7)
@@ -918,11 +1299,11 @@ axis_labels(xlab = "Process Noise Correlation", xline = 1.25, outer = FALSE)
 
 \newpage
 
-```{r WUL-change-fig, fig.width = 7.2, fig.height = 4.5, eval = params$WUL_change_fig, fig.cap = WUL_change_fig_caption, time_it = TRUE}
+```{r WUL-change-fig, fig.width = 7.2, fig.height = 6, eval = params$WUL_change_fig, fig.cap = msdown::prep_caption(WUL_change_fig_caption), time_it = TRUE}
 
 prep_samples = function(j) {
   
-  # the parameters needed to calucate process model expected values
+  # the parameters needed to calculate process model expected values
   the_params = c("alpha[pop]", "beta[pop]", "^lambda$",
                  "omega0[pop]", "omega1[pop]", "mu_pi[1,pop]",
                  "gamma0[1,pop]", "gamma1[1,pop]",
@@ -951,10 +1332,10 @@ prep_sample = function(the_samps, i, j) {
     L_Pb_center = unname(jags_data$L_Pb_center[j]),
     L_Mb_scale = unname(jags_data$L_Mb_scale[j]),
     L_Mb_center = unname(jags_data$L_Mb_center[j])
-    )
+  )
 }
 
-get_phi_hat = function(x, E, WUL_change = 0, start = "E") {
+get_phi_hat = function(x, E, WUL_change = 0, start = "E", out_type = "phi") {
   with(as.list(c(x, E = E, WUL_change = WUL_change)), {
     beta_hat = lambda * WUL
     
@@ -990,17 +1371,19 @@ get_phi_hat = function(x, E, WUL_change = 0, start = "E") {
     
     if (start == "E") out = Ma/E
     if (start == "Pb") out = Pb/E
-    return(out)
+    
+    if (out_type == "phi") return(out)
+    if (out_type == "Ma") return(Ma)
   })
 }
 
-get_phi_hat_post = function(j, E_pred, WUL_change = 0, start = "E") {
+get_phi_hat_post = function(j, E_pred, WUL_change = 0, start = "E", out_type = "phi") {
   
   the_samps = prep_samples(j = j)
   
   out = sapply(1:nrow(the_samps), function(i) {
     x = prep_sample(the_samps, i = i, j = j)
-    sapply(E_pred, function(e) get_phi_hat(x, E = e, WUL_change = WUL_change, start = start))
+    sapply(E_pred, function(e) get_phi_hat(x, E = e, WUL_change = WUL_change, start = start, out_type = out_type))
   })
   
   out = t(out)
@@ -1024,66 +1407,90 @@ get_phi_real_post = function(j, start = "E") {
   postpack::post_convert(cbind(postpack:::id_mat(post), phi))
 }
 
-plot_f = function(j, start, WUL_change) {
+plot_f = function(j, start, out_type) {
+  
+  WUL_changes = c(0.5, 1, 2)
+  lwd = 1.5
+  
+  eps = mean(post_summ(post, sub_index("E_per_Sa[year,pop]", year = ".+", pop = j))["mean",])
   phi_real_post = get_phi_real_post(j = j, start = start)
   phi_real = post_summ(phi_real_post, ".")
   E_real = post_summ(post, sub_index("^E[.+,pop]", pop = j))
-  E_pred = seq(min(E_real["mean",]), max(E_real["mean",]), length = 30)
+  # E_pred = seq(min(E_real["mean",]), max(E_real["mean",]), length = 30)
+  E_pred = seq(eps * 100, max(E_real["mean",]), length = 30)
+  keep_yrs = stringr::str_extract(colnames(E_real), "[:digit:]+,") |> 
+    stringr::str_remove(",")
   
-  phi_hat_post = get_phi_hat_post(j = j, E_pred, start = start)
+  S_pred = E_pred/eps
+  S_real = post_summ(post, sub_index("^Sa_tot[year,pop]", year = keep_yrs, pop = j))
+  
+  phi_hat_post = get_phi_hat_post(j = j, E_pred, start = start, out_type = out_type)
   phi_hat = post_summ(phi_hat_post, ".")
-  phi_hat_new_post = get_phi_hat_post(j = j, E_pred, WUL_change = WUL_change, start = start)
-  phi_hat_new = post_summ(phi_hat_new_post, ".")
   
-  plot(phi_real["mean",] ~ E_real["mean",], type = "n",
-       ylim = make_lim(0, phi_hat[c("2.5%","97.5%"),],
-                phi_hat_new[c("2.5%","97.5%"),]),
-                # phi_real["mean",]),
+  phi_hat_new1_post = get_phi_hat_post(j = j, E_pred, WUL_change = WUL_changes[1], start = start, out_type = out_type)
+  phi_hat_new1 = post_summ(phi_hat_new1_post, ".")
+  phi_hat_new2_post = get_phi_hat_post(j = j, E_pred, WUL_change = WUL_changes[2], start = start, out_type = out_type)
+  phi_hat_new2 = post_summ(phi_hat_new2_post, ".")
+  phi_hat_new3_post = get_phi_hat_post(j = j, E_pred, WUL_change = WUL_changes[3], start = start, out_type = out_type)
+  phi_hat_new3 = post_summ(phi_hat_new3_post, ".")
+  
+  plot(phi_real["mean",] ~ S_real["mean",], type = "n",
+       ylim = make_lim(0, phi_hat[c("2.5%","97.5%"),], phi_hat_new3["mean",]),
+       # phi_real["mean",]),
        # ylim = make_lim(0, ifelse(start == "E", 0.075, 0.3)),
-       xlim = c(0, max(E_real["mean",], E_pred)),
-       xaxt = "n")
+       xlim = c(0, max(S_real["mean",], S_pred)),
+       xaxt = "n", yaxt = "n")
   
-  # points(phi_real["mean",] ~ E_real["mean",], pch = 21, 
+  # points(phi_real["mean",] ~ S_real["mean",], pch = 21,
   #        col = "black", bg = scales::alpha("grey25", 0.25), cex = 0.8)
   
-  polygon(x = c(E_pred, rev(E_pred)), 
+  polygon(x = c(S_pred, rev(S_pred)), 
           y = c(phi_hat["2.5%",], rev(phi_hat["97.5%",])),
           col = tranp_col, border = NA)
-  lines(phi_hat["mean",] ~ E_pred, lwd = 2)
-  lines(phi_hat["2.5%",] ~ E_pred)
-  lines(phi_hat["97.5%",] ~ E_pred)
   
-  polygon(x = c(E_pred, rev(E_pred)), 
-          y = c(phi_hat_new["2.5%",], rev(phi_hat_new["97.5%",])),
-          col = tranp_col, border = NA)
-  lines(phi_hat_new["mean",] ~ E_pred, lwd = 2, lty = 2)
-  lines(phi_hat_new["2.5%",] ~ E_pred,  lty = 2)
-  lines(phi_hat_new["97.5%",] ~ E_pred, lty = 2)
+  lines(phi_hat["mean",] ~ S_pred, lwd = lwd)
+  lines(phi_hat_new1["mean",] ~ S_pred, lty = 3, lwd = lwd)
+  lines(phi_hat_new2["mean",] ~ S_pred, lty = 2, lwd = lwd)
+  lines(phi_hat_new3["mean",] ~ S_pred, lty = 5, lwd = lwd)
+  
   at_x = axisTicks(par("usr")[1:2], log = FALSE)
-  axis(side = 1, at = at_x, labels = at_x/1e6)
-  panel_label(paste0("(", letters[ifelse(start == "E", 0, 3) + j], ") ", pops[j]))
+  axis(side = 1, at = at_x, labels = at_x/1000)
+  
+  at_y = axisTicks(par("usr")[3:4], log = FALSE)
+  axis(side = 2, at = at_y, labels = at_y/ifelse(out_type == "Ma", 1000, 1))
+  
+  base = ifelse(start == "E", 0, 4)
+  base = ifelse(out_type == "Ma", 8, base)
+  panel_label(paste0("(", letters[base + j], ") "))
   
   if (j == 1) {
-    if (start == "E") {
-      axis_labels(ylab = "Egg \u2192 LGR Survival", outer = FALSE, yline = 1)
-      legend("topright", title = "WUL", legend = c("Current", paste0("\u2191", WUL_change * 100, "%")), lty = c(1,2), seg.len = 1.5, bty = "n", cex = 0.8)
+    if (start == "E" & out_type == "phi") {
+      axis_labels(ylab = "Egg \u2192 LGR Survival", outer = FALSE, yline = 2)
+      legend("topright", title = "Weighted Habitat", legend = c("Current", paste0("\u2191", WUL_changes * 100, "%")), lty = c(1,3,2,5), seg.len = 2.7, bty = "n", lwd = lwd, cex = 0.9)
     } 
-    if (start == "Pb") axis_labels(ylab = "Parr \u2192 LGR Survival", outer = FALSE, yline = 1)
+    if (start == "Pb" & out_type == "phi") axis_labels(ylab = "Parr \u2192 LGR Survival", outer = FALSE, yline = 2)
+    if (out_type == "Ma") {
+      axis_labels(ylab = "LGR Smolt", outer = FALSE, yline = 2)
+      axis_labels(ylab = "Thousands", outer = FALSE, yline = 1, cex = 0.8, font = 3)
+    } 
   }
   
-  
-  
+  if (start == "E" & out_type == "phi") {
+    mtext(side = 3, line = 0.15, font = 2, text = pops[j], cex = 1)
+  }
 }
 
-mypar(mfrow = c(2,4), col.axis = "black")
-junk = sapply(1:4, function(j) plot_f(j, "E", 1))
-junk = sapply(1:4, function(j) plot_f(j, "Pb", 1))
-axis_labels(xlab = "Egg Production (Millions)")
+mypar(mfrow = c(3,4), oma = c(2.5,2.5,1,0), col.axis = "black")
+junk = sapply(1:4, function(j) plot_f(j, "E", "phi"))
+junk = sapply(1:4, function(j) plot_f(j, "Pb", "phi"))
+junk = sapply(1:4, function(j) plot_f(j, "Pb", "Ma"))
+axis_labels(xlab = "Spawner Abundance")
+axis_labels(xlab = "Thousands", outer = TRUE, xline = 1.5, cex = 0.8, font = 3)
 ```
 
 \newpage
 
-```{r no-fall-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(no_fall_caption), time_it = TRUE, eval = params$no_fall_fig}
+```{r no-fall-analysis, time_it = TRUE, eval = params$no_fall_fig | params$no_fall_tab}
 cv = function(x) {sd(x, na.rm = TRUE)/mean(x, na.rm = TRUE)}
 
 ##### STEP 1: EXTRACT POSTERIOR SAMPLES OF QUANTITIES NEEDED #####
@@ -1119,25 +1526,44 @@ f = function(i) {
   Ma_tot_real_i = cbind(Ma_tot_real_i, rowSums(Ma_tot_real_i))
   
   # calculate the ratios between the actual and hypothetical
-  mean_p_ratio = colMeans(Ma_tot_hyp_i/Ma_tot_real_i, na.rm = TRUE)
-  cv_ratio = apply(Ma_tot_hyp_i, 2, cv)/apply(Ma_tot_real_i, 2, cv)
+  mean_p_ratio_i = colMeans(Ma_tot_hyp_i/Ma_tot_real_i, na.rm = TRUE)
+  cv_ratio_i = apply(Ma_tot_hyp_i, 2, cv)/apply(Ma_tot_real_i, 2, cv)
   
-  names(mean_p_ratio) = paste0("mean_p_ratio[", 1:5, "]")
-  names(cv_ratio) = paste0("cv_ratio[", 1:5, "]")
-  c(mean_p_ratio, cv_ratio)
+  # calculate interannual cv by population and scenario
+  Ma_cv_hyp_i = apply(Ma_tot_hyp_i, 2, cv)
+  Ma_cv_real_i = apply(Ma_tot_real_i, 2, cv)
+  
+  # calculate interannual mean by population and scenario
+  Ma_mean_hyp_i = colMeans(Ma_tot_hyp_i, na.rm = TRUE)
+  Ma_mean_real_i = colMeans(Ma_tot_real_i, na.rm = TRUE)
+  
+  # calculate percent changes
+  Ma_mean_change_i = (Ma_mean_hyp_i - Ma_mean_real_i)/Ma_mean_real_i
+  Ma_cv_change_i = (Ma_cv_hyp_i - Ma_cv_real_i)/Ma_cv_real_i
+  
+  # add names
+  names(Ma_mean_hyp_i) = paste0("Ma_mean_hyp[", 1:5, "]")
+  names(Ma_mean_real_i) = paste0("Ma_mean_real[", 1:5, "]")
+  names(Ma_cv_hyp_i) = paste0("Ma_cv_hyp[", 1:5, "]")
+  names(Ma_cv_real_i) = paste0("Ma_cv_real[", 1:5, "]")
+  names(Ma_mean_change_i) = paste0("Ma_mean_change[", 1:5, "]")
+  names(Ma_cv_change_i) = paste0("Ma_cv_change[", 1:5, "]")
+  
+  names(mean_p_ratio_i) = paste0("mean_p_ratio[", 1:5, "]")
+  names(cv_ratio_i) = paste0("cv_ratio[", 1:5, "]")
+  c(mean_p_ratio_i, cv_ratio_i, Ma_mean_hyp_i, Ma_mean_real_i, Ma_cv_hyp_i, Ma_cv_real_i, Ma_mean_change_i, Ma_cv_change_i)
 }
 
-##### STEP 3: APPLY FUNCTION TO ALL POSTERIOR SAMPLES, FORMAT, AND SUMMARIZE #####
+# apply to each posterior sample
+out = t(sapply(1:nrow(Pb), f))
+out = post_convert(cbind(postpack:::id_mat(post), out))
 
-# apply
-ratio_out = t(sapply(1:nrow(Pb), f))
+```
 
-# format
-ratio_post = post_convert(cbind(postpack:::id_mat(post), ratio_out))
-
+```{r no-fall-fig, fig.width = 3.4, fig.height = 3.4, fig.cap = msdown::prep_caption(no_fall_fig_caption), eval = params$no_fall_fig}
 # summarize
-mean_summ = post_summ(ratio_post, "mean")
-cv_summ = post_summ(ratio_post, "cv")
+mean_summ = post_summ(out, "mean_p_ratio")
+cv_summ = post_summ(out, "cv_ratio")
 
 # format the summaries for barplotting
 mns = rbind(mean_summ["mean",], cv_summ["mean",])
@@ -1167,9 +1593,53 @@ legend("topright", title = "LGR Smolt", legend = c("Mean", "CV"), pch = 15,
        col = cols, pt.cex = 1.5, bty = "n", text.col = par("col.axis"), cex = 0.8)
 ```
 
-\clearpage
+`r ifelse(params$no_fall_fig & params$no_fall_tab, "_**Alternatively**, as a table, showing the actual numbers and a percent change, rather than as ratios._", "")`
 
-```{r time-table}
+```{r no-fall-tab, eval = params$no_fall_tab}
+f = function(x, is_percent) {
+  g = function(x, is_percent) {
+    if (!is_percent) {
+      prettyNum(round(x, 1), big.mark = ",", scientific = FALSE)
+    } else {
+      paste0(round(x, 2) * 100, "\\%")
+    }
+  }
+  paste0(g(x["mean",], is_percent), " (", g(x["sd",], is_percent), ")")
+}
+
+tab = cbind(
+  pop = c("CAT", "LOS", "MIN", "UGR", "Total"),
+  f(post_summ(out, "Ma_mean_real")/1000, FALSE),
+  f(post_summ(out, "Ma_mean_hyp")/1000, FALSE),
+  f(post_summ(out, "Ma_mean_change"), TRUE),
+  f(post_summ(out, "Ma_cv_real"), TRUE),
+  f(post_summ(out, "Ma_cv_hyp"), TRUE)
+)
+
+kbl(tab, "latex", booktabs = TRUE, 
+    col.names = c(
+      " ", "Real\\textsuperscript{1,3}", "All Spring\\textsuperscript{2,3}", "\\%$\\Delta$",
+      "Real\\textsuperscript{1}", "All Spring\\textsuperscript{2}"), escape = FALSE,
+    caption = msdown::prep_caption(no_fall_table_caption)) |>
+  kable_styling(full_width = FALSE, latex_options = "HOLD") |>
+  add_header_above(c(" " = 1, "Inter-Annual Mean" = 3, "Inter-Annual \\\\%CV" = 2), bold = TRUE, escape = FALSE) |>
+  column_spec(1, bold = TRUE) |>
+  row_spec(0, bold = TRUE) |>
+  footnote(general_title = "",
+           general = c(
+             "\\\\textit{Posterior summaries represented as mean (standard deviation).}"
+           ),
+           number =  c(
+             "Based on the observed time series, in which both spring and fall migrants were present.",
+             "Based on the hypothetical case where no parr recruits were fall migrants -- calculated after model fitting by assuming all parr recruits experience the higher mortality rates of the spring migrant life history type.",
+             "Abundance expressed as thousands of natural-origin smolt reaching Lower Granite Dam."
+           ), threeparttable = TRUE, escape = FALSE)
+
+```
+
+\newpage
+
+```{r time-table, eval = params$time_table}
 # calculate times elapsed for each chunk
 tab = data.frame(
   Item = names(start_times),
@@ -1180,9 +1650,9 @@ tab = data.frame(
 tab = rbind(tab, data.frame(Item = "Total", "Minutes" = sum(tab$Minutes)))
 
 # create the table
-kbl(tab, format = "latex", booktabs = TRUE, longtable = FALSE, linesep = "", caption = "Time elapsed in calculating the content in this document.") %>%
-  kable_styling(full_width = FALSE, latex_options = "HOLD_position") %>%
-  row_spec(0, bold = TRUE) %>%
-  column_spec(1, monospace = TRUE) %>%
+kbl(tab, format = "latex", booktabs = TRUE, longtable = FALSE, linesep = "", caption = "Time elapsed in calculating the content in this document.") |> 
+  kable_styling(full_width = FALSE, latex_options = "HOLD_position") |> 
+  row_spec(0, bold = TRUE) |> 
+  column_spec(1, monospace = TRUE) |> 
   row_spec(nrow(tab), bold = TRUE)
 ```

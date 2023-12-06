@@ -134,7 +134,7 @@ cat(commands, sep = "\n")
 The purpose of developing the state-space life cycle model for Grande Ronde spring Chinook salmon is to estimate posterior distributions of population dynamics parameters (e.g., average survival, rearing capacity, coefficients of relationships linking life stages, etc.).
 These posterior distributions can ultimately be sampled from to parameterize simulation models that evaluate habitat restoration and climate change scenarios grounded in empirical monitoring data.
 The model tracks the cohort-specific abundance of fish through various life stages and links these "state variables" over time across cohorts via production relationships (e.g., spawners produce eggs) or within cohorts via transition probabilities (e.g., parr become smolt after surviving overwinter).
-The model integrates many different data sources and fits to them simultaneously in a single joint likelihood; these data sources include rotary screw trap passage estimates, a variety of PIT tag-derived survival estimates, mean length data, hatchery smolt releases, adult return abundance, and the composition of adult returns by age and origin; other data sources that are used but are not fitted to include hatchery smolt release abundances, harvest information, fecundity estiamtes, and numbers of returning adults removed for hatchery operations.
+The model integrates many different data sources and fits to them simultaneously in a single joint likelihood; these data sources include rotary screw trap passage estimates, a variety of PIT tag-derived survival estimates, mean length data, hatchery smolt releases, adult return abundance, and the composition of adult returns by age and origin; other data sources that are used but are not fitted to include hatchery smolt release abundances, harvest information, fecundity estimates, and numbers of returning adults removed for hatchery operations.
 Four spawning populations within the Grande Ronde basin are simultaneously analyzed: Catherine Creek (CAT), Lostine River (LOS), Minam River (MIN) and the upper Grande Ronde River (UGR; `r highlight("FIGURE REFERENCE: map")`), and where relevant, the model stratifies life stages by juvenile migratory strategy (fall vs. spring migrants), rearing origin type (spawned in hatchery vs. natural setting), and adult return age (total age of 3, 4, or 5 years).
 
 Central to the notion of a "state-space" model is the partitioning of variability in the observed data sets into two types: (_i_) process noise, i.e., variability in the biological and environmental processes that produce population outcomes and (_ii_) observation error, i.e., variability in the measurement processes that result in an imperfect perception of the true value being measured.
@@ -814,13 +814,13 @@ footnote_key = c(
 tab$Description = paste0(ifelse(is.na(tab$Footnote), "", paste0("\\textsuperscript{", tab$Footnote, "}")), tab$Description)
 
 # build the table
-my_kable(x = tab[,1:3], caption = index_tab_cap) %>%
-  kable_styling(full_width = FALSE, latex_options = c("HOLD")) %>%
-  row_spec(0, bold = TRUE) %>%
-  column_spec(1, width = "50px") %>%
-  column_spec(2, width = "50px") %>%
-  column_spec(3, width = "332px") %>%
-  collapse_rows(1, valign = "bottom", latex_hline = "major") %>%
+my_kable(x = tab[,1:3], caption = index_tab_cap) |> 
+  kable_styling(full_width = FALSE, latex_options = c("HOLD")) |> 
+  row_spec(0, bold = TRUE) |> 
+  column_spec(1, width = "50px") |> 
+  column_spec(2, width = "50px") |> 
+  column_spec(3, width = "332px") |> 
+  collapse_rows(1, valign = "bottom", latex_hline = "major") |> 
   footnote(number = footnote_key, threeparttable = TRUE, escape = FALSE)
 ```
 
@@ -859,18 +859,18 @@ handle_eqs = function(x) {
 tab$Eqs. = unname(sapply(tab$Eqs., handle_eqs))
 colnames(tab)[4] = "Eq(s)."
 
-my_kable(x = tab[,2:5], caption = symbol_tab_cap, longtable = TRUE) %>%
+my_kable(x = tab[,2:5], caption = symbol_tab_cap, longtable = TRUE) |> 
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
-                ) %>%
-  row_spec(0, bold = TRUE) %>%
-  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) %>%
-  column_spec(1, width = "25px") %>%
-  column_spec(2, width = "50px") %>%
-  column_spec(3, width = "50px") %>%
-  column_spec(4, width = "300px") %>%
+                ) |> 
+  row_spec(0, bold = TRUE) |> 
+  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) |> 
+  column_spec(1, width = "25px") |> 
+  column_spec(2, width = "50px") |> 
+  column_spec(3, width = "50px") |> 
+  column_spec(4, width = "300px") |> 
   collapse_rows(1, valign = "bottom", latex_hline = "full")
 ```
 
@@ -902,19 +902,19 @@ if (!is_latex_output()) {
   tab$Description = stringr::str_replace_all(tab$Description, "''", '"')
 }
 
-my_kable(x = tab[,2:5], caption = param_tab_cap, longtable = TRUE) %>%
+my_kable(x = tab[,2:5], caption = param_tab_cap, longtable = TRUE) |> 
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
-                ) %>%
-  row_spec(0, bold = TRUE) %>%
-  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) %>%
-  column_spec(1, width = "50px") %>%
-  column_spec(2, width = "65px") %>%
-  column_spec(3, width = "20px") %>%
-  column_spec(4, width = "290px") %>%
-  row_spec(1:(nrow(tab)-1), hline_after = TRUE) %>%
+                ) |> 
+  row_spec(0, bold = TRUE) |> 
+  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) |> 
+  column_spec(1, width = "50px") |> 
+  column_spec(2, width = "65px") |> 
+  column_spec(3, width = "20px") |> 
+  column_spec(4, width = "290px") |> 
+  row_spec(1:(nrow(tab)-1), hline_after = TRUE) |> 
   footnote(number = footnote_key, number_title = "Prior Distributions:", title_format = c("italic", "underline"), escape = FALSE, threeparttable = TRUE)
 ```
 
@@ -940,17 +940,17 @@ tab$Type = type_key[as.character(tab$Type)]
 
 colnames(tab)[4] = "Eq."
 
-my_kable(x = tab[,2:5], caption = data_tab_cap, longtable = TRUE) %>%
+my_kable(x = tab[,2:5], caption = data_tab_cap, longtable = TRUE) |> 
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
-                ) %>%
-  row_spec(0, bold = TRUE) %>%
-  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) %>%
-  column_spec(1, width = "50px") %>%
-  column_spec(2, width = "70px") %>%
-  column_spec(3, width = "20px") %>%
-  column_spec(4, width = "295px") %>%
+                ) |> 
+  row_spec(0, bold = TRUE) |> 
+  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) |> 
+  column_spec(1, width = "50px") |> 
+  column_spec(2, width = "70px") |> 
+  column_spec(3, width = "20px") |> 
+  column_spec(4, width = "295px") |> 
   collapse_rows(1, valign = "bottom", latex_hline = "full")
 ```
 
@@ -974,18 +974,18 @@ tab$Eq. = unname(sapply(tab$Eq., handle_eqs))
 tab$Component = component_key[as.character(tab$Component)]
 colnames(tab)[2] = "Model Component"
 
-my_kable(x = tab[,2:4], caption = equation_tab_cap, longtable = TRUE, align = "lrl") %>%
+my_kable(x = tab[,2:4], caption = equation_tab_cap, longtable = TRUE, align = "lrl") |> 
   kable_styling(full_width = FALSE, latex_options = c("HOLD", "repeat_header")
                 # repeat_header_continued = "\\textit{(Continued on next page...)}"
-                ) %>%
-  row_spec(0, bold = TRUE) %>%
-  pack_rows("Generic", min(which(tab$Phase == 0)), max(which(tab$Phase == 0)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) %>%
-  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) %>%
-  column_spec(1, width = "55px") %>%
-  column_spec(2, width = "15px") %>%
-  column_spec(3, width = "365px") %>%
+                ) |> 
+  row_spec(0, bold = TRUE) |> 
+  pack_rows("Generic", min(which(tab$Phase == 0)), max(which(tab$Phase == 0)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Freshwater Juvenile", min(which(tab$Phase == 1)), max(which(tab$Phase == 1)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Ocean Juvenile", min(which(tab$Phase == 2)), max(which(tab$Phase == 2)), bold = TRUE, hline_after = TRUE) |> 
+  pack_rows("Freshwater Adult", min(which(tab$Phase == 3)), max(which(tab$Phase == 3)), bold = TRUE, hline_after = TRUE) |> 
+  column_spec(1, width = "55px") |> 
+  column_spec(2, width = "15px") |> 
+  column_spec(3, width = "365px") |> 
   collapse_rows(1, valign = "bottom", latex_hline = "major")
 ```
 
@@ -1016,11 +1016,11 @@ tab[,-1][tab[,-1] == 2000 & !is.na(tab[,-1])] = kableExtra::cell_spec(tab[,-1][t
 tab[is.na(tab)] = "$\\vdots$"
 
 my_kable(x = tab, align = "cccc", col.names = c("Return Year", "Age-3", "Age-4", "Age-5"), 
-         caption = year_tab_caption, row.names = FALSE) %>%
-  kable_styling(full_width = FALSE) %>%
-  add_header_above(c(" " = 1, "Brood Year of Returning Adults by Age" = 3), bold = TRUE) %>%
-  row_spec(0, bold = TRUE) %>%
-  column_spec(1, bold = TRUE) %>%
+         caption = year_tab_caption, row.names = FALSE) |> 
+  kable_styling(full_width = FALSE) |> 
+  add_header_above(c(" " = 1, "Brood Year of Returning Adults by Age" = 3), bold = TRUE) |> 
+  row_spec(0, bold = TRUE) |> 
+  column_spec(1, bold = TRUE) |> 
   column_spec(2:4, width = "50px")
 ```
 

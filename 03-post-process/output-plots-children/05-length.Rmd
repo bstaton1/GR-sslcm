@@ -3,7 +3,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Parr & Smolt Mean Length {.tabset .tabset-pills}
+# Parr & Smolt Mean Length {.tabset .tabset-dropdown}
 
 ## Parr Mean Length {.tabset .tabset-pills}
 

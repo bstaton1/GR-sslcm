@@ -55,3 +55,6 @@
 # ignore the .bib file in math description subdirectory
 # file is auto updated by zotero
 100-math-description/GR-sslcm-cites.bib
+
+# ignore backup files for the model diagram
+*.bkp

@@ -3,9 +3,10 @@ title: "Output Summary"
 subtitle: "`r paste0('Model Scenario: ', params$scenario)`" 
 date: "`r paste0('Date Rendered: ', Sys.Date())`"
 output: 
-  html_document:
+  bookdown::html_document2:
     toc: true
     toc_float: true
+    number_sections: true
 params:
   scenario:
     label: "Scenario"
@@ -24,8 +25,8 @@ params:
   include_fit_to_data:
     label: "Include Model Fit Output?"
     value: TRUE
-  include_egg_to_parr_surv:
-    label: "Include Egg-to-Parr Survival Output?"
+  include_parr_recruitment:
+    label: "Include Parr Recruitment Output?"
     value: TRUE
   include_mean_length:
     label: "Include Mean Length Output?"
@@ -39,14 +40,17 @@ params:
   include_misc_processes:
     label: "Include Misc. Processes Output?"
     value: TRUE
-  include_equiv_rates:
-    label: "Include Equivilency Rate Output?"
+  include_composite_rates:
+    label: "Include Composite Rate Output?"
     value: TRUE
   include_rho_params:
     label: "Include Process Model Correlation Output?"
     value: TRUE
-  include_noise_term_diags:
-    label: "Include Noise Term Diagnostic Output?"
+  include_residual_diags:
+    label: "Include Residual Diagnostic Output?"
+    value: TRUE
+  include_pp_check:
+    label: "Include Posterior Predictive Check Output?"
     value: TRUE
   include_param_summaries:
     label: "Include Posterior Boxplot Output?"
@@ -60,6 +64,9 @@ params:
   include_jags_info:
     label: "Include JAGS Code/Data?"
     value: TRUE
+  include_waic:
+    labels: "Include WAIC Output"
+    value: FALSE
 editor_options: 
   chunk_output_type: console
 ---
@@ -196,7 +203,7 @@ p6_height = 3.75
 ylim_01 = c(0, 1.05)
 ```
 
-```{r model-info, child = "output-plots-children/01-model-info.Rmd"}
+```{r model-info, child = "output-plots-children/01-mcmc-dims-runtime.Rmd"}
 ```
 
 ```{r mcmc, child = "output-plots-children/02-mcmc-diags.Rmd", eval = params$include_mcmc_diags}
@@ -205,7 +212,7 @@ ylim_01 = c(0, 1.05)
 ```{r fit-to-data, child = "output-plots-children/03-fit-to-data.Rmd", eval = params$include_fit_to_data}
 ```
 
-```{r egg-to-parr-surv, child = "output-plots-children/04-egg-to-parr-surv.Rmd", eval = params$include_egg_to_parr_surv}
+```{r egg-to-parr-surv, child = "output-plots-children/04-parr-recruitment.Rmd", eval = params$include_parr_recruitment}
 ```
 
 ```{r mean-length, child = "output-plots-children/05-length.Rmd", eval = params$include_mean_length}
@@ -220,23 +227,29 @@ ylim_01 = c(0, 1.05)
 ```{r misc-processes, child = "output-plots-children/08-misc-processes.Rmd", eval = params$include_misc_processes}
 ```
 
-```{r equiv-rates, child = "output-plots-children/09-equiv-rates.Rmd", eval = params$include_equiv_rates}
+```{r equiv-rates, child = "output-plots-children/09-composite-rates.Rmd", eval = params$include_composite_rates}
 ```
 
 ```{r rho-params, child = "output-plots-children/10-rho-params.Rmd", eval = params$include_rho_params}
 ```
 
-```{r noise-term-diags, child = "output-plots-children/11-noise-term-diags.Rmd", eval = params$include_noise_term_diags}
+```{r noise-term-diags, child = "output-plots-children/11-residual-diags.Rmd", eval = params$include_residual_diags}
 ```
 
-```{r param-summaries, child = "output-plots-children/12-param-summaries.Rmd", eval = params$include_param_summaries}
+```{r pp-check, child = "output-plots-children/12-pp-checks.Rmd", eval = params$include_pp_check & model_info$do_pp_check}
 ```
 
-```{r post-v-prior, child = "output-plots-children/13-post-vs-prior.Rmd", eval = params$include_post_v_prior}
+```{r param-summaries, child = "output-plots-children/13-param-summaries.Rmd", eval = params$include_param_summaries}
 ```
 
-```{r known-values, child = "output-plots-children/14-known-values.Rmd", eval = params$include_known}
+```{r post-v-prior, child = "output-plots-children/14-post-vs-prior.Rmd", eval = params$include_post_v_prior}
 ```
 
-```{r jags-info, child = "output-plots-children/15-jags-model-info.Rmd", eval = params$include_jags_info}
+```{r known-values, child = "output-plots-children/15-known-values.Rmd", eval = params$include_known}
+```
+
+```{r jags-info, child = "output-plots-children/16-jags-model-info.Rmd", eval = params$include_jags_info}
+```
+
+```{r waic-output, child = "output-plots-children/99-waic.Rmd", eval = params$include_waic & model_info$do_lppd}
 ```

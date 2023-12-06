@@ -23,17 +23,17 @@ rho_mean_out = rho_mean_out[order(rho_mean_out[,"mean"]),]
 
 # assign names to the different rho parameters
 rho_labels = c(
-  "rho_Lphi_E_Pb" = "Egg-to-Parr Survival",
+  "rho_Lphi_E_Pb" = "Egg \u2192 Parr Survival",
   "rho_Lphi_O0_O1" = "Yr1 Ocean Survival",
   "rho_Lpsi_O1" = "Pr(Mature Age-3)",
   "rho_Lpsi_O2" = "Pr(Mature Age-4)",
   "rho_lDelta_L_Pb_Mb" = "'Growth' Factor",
-  "rho_Lphi_Mb_Ma" = "Trib. to LGR Survival",
+  "rho_Lphi_Mb_Ma" = "Smolt \u2192 LGR Survival",
   "rho_lL_Pb" = "Mean Parr Length",
   "rho_Lphi_Pa_Mb" = "Overwinter Survival",
-  "rho_Lphi_Rb_Ra" = "BON -> LGR Survival",
+  "rho_Lphi_Rb_Ra" = "BON \u2192 LGR Survival",
   "rho_Lpi" = "Pr(Fall Migrant)",
-  "rho_Lphi_Ma_O0" = "LGR -> Ocean Survival"
+  "rho_Lphi_Ma_O0" = "LGR \u2192 Ocean Survival"
 )
 ```
 
@@ -44,7 +44,6 @@ Notation:
 
 * Main: Mean correlation of all population pairs ("+" = posterior mean, thick lines = 50% CRI, thin lines = 95% CRI)
 * Dots: Posterior mean correlation of individual population pairs
-<!-- * Grey: Prior distribution (95%, 80%, and 50% CRIs in increasing darkness) -->
 
 ```{r rho-mean-plot, fig.width = 5, fig.height = 5, out.width = "50%"}
 # plot to show summary of correlation parameters across processes
@@ -130,7 +129,7 @@ rho_mat_fig_w = 8
 rho_mat_plots("rho_Lphi_E_Pb_pr[", is_prior = TRUE)
 ```
 
-### Egg-to-Parr Survival
+### Egg $\to$ Parr Survival
 
 ```{r rho_Lphi_E_Pb-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
 rho_mat_plots("rho_Lphi_E_Pb[")
@@ -160,17 +159,17 @@ rho_mat_plots("rho_Lphi_Pa_Mb[")
 rho_mat_plots("rho_lDelta_L_Pb_Mb[")
 ```
 
-### Trib. to LGR Survival
+### Smolt $\to$ LGR Survival
 
 ```{r rho_Lphi_Mb_Ma-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
 rho_mat_plots("rho_Lphi_Mb_Ma[")
 ```
 
-### LGR to Ocean Survival
+### LGR $\to$ BON Survival
 
 ```{r rho_Lphi_Mb_O0-plot}
 est = post_summ(post, "rho_Lphi_Ma_O0[2,1]")
-kable(t(est), digits = 3, row.names = FALSE) %>%
+kable(t(est), digits = 3, row.names = FALSE) |> 
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
 ```
 
@@ -182,22 +181,22 @@ rho_mat_plots("rho_Lphi_O0_O1[")
 
 ### Maturity {.tabset .tabset-pills}
 
-#### Pr(Age-3)
+#### Pr(Age-3) {-}
 
 ```{r rho_Lpsi_O1-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
 rho_mat_plots("rho_Lpsi_O1[")
 ```
 
-#### Pr(Age-4)
+#### Pr(Age-4) {-}
 
 ```{r rho_Lpsi_O2-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
 rho_mat_plots("rho_Lpsi_O2[")
 ```
 
-### BON to LGR Survival
+### BON $\to$ LGR Survival
 
 ```{r rho_Lphi_Rb_Ra-plot, fig.height = rho_mat_fig_h, fig.width = rho_mat_fig_w}
 est = post_summ(post, "rho_Lphi_Rb_Ra[2,1]")
-kable(t(est), digits = 3, row.names = FALSE) %>%
+kable(t(est), digits = 3, row.names = FALSE) |> 
   kable_styling(full_width = FALSE, bootstrap_options = c("condensed"))
 ```
