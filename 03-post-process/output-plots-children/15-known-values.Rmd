@@ -3,7 +3,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Assumed-Known Quantities {.tabset .tabset-dropdown}
+# Auxiliary Data Sources {.tabset .tabset-dropdown}
 
 This section displays values of quantities passed to the model as non-stochastic, i.e., as being assumed known without error.
 These are quantities for which data exist to inform their inter-annual variability, but no process or observation model component exists to explain it.

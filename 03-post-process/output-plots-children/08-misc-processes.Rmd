@@ -20,13 +20,13 @@ axis_labels("Brood Year", "Proportion of Parr with Fall Migration Strategy")
 
 ## Ocean Survival {.tabset .tabset-dropdown}
 
-### Yr1 {.tabset .tabset-pills}
+### Year-1 {.tabset .tabset-pills}
 
 #### Realized Alone {.tabset .tabset-pills}
 
 The `r colorize("realized time series", main_cols["model"])`.
 
-##### NOR {-}
+##### (a) NOR {-}
 
 ```{r phi-O0-O1-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -36,10 +36,10 @@ plot_f = function(j) {
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr1 Ocean Survival (NOR)")
+axis_labels("Brood Year", "Year-1 Ocean Survival (NOR)")
 ```
 
-##### HOR {-}
+##### (b) HOR {-}
 
 ```{r phi-O0-O1-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -53,14 +53,14 @@ plot_f = function(j) {
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr1 Ocean Survival (HOR)")
+axis_labels("Brood Year", "Year-1 Ocean Survival (HOR)")
 ```
 
-#### Realized & [Expected + AR(1)] {.tabset .tabset-dropdown}
-
-##### HOR {-}
+#### Realized & [Expected + AR(1)] {.tabset .tabset-pills}
 
 The `r colorize("realized time series", main_cols["model"])` and the `r colorize("expected time series including the carry-over residual", main_cols["model2"])`.
+
+##### (a) NOR {-}
 
 ```{r phi-O0-O1-plots2, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -73,12 +73,12 @@ plot_f = function(j) {
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr1 Ocean Survival (NOR)")
+axis_labels("Brood Year", "Year-1 Ocean Survival (NOR)")
 ```
 
-### Yr2 {.tabset .tabset-pills}
+### Year-2 {.tabset .tabset-pills}
 
-#### NOR {-}
+#### (a) NOR {-}
 
 ```{r phi-O1-O2-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -88,10 +88,10 @@ plot_f = function(j) {
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr2 Ocean Survival (NOR)")
+axis_labels("Brood Year", "Year-2 Ocean Survival (NOR)")
 ```
 
-#### HOR {-}
+#### (b) HOR {-}
 
 ```{r phi-O1-O2-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -105,12 +105,12 @@ plot_f = function(j) {
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr2 Ocean Survival (HOR)")
+axis_labels("Brood Year", "Year-2 Ocean Survival (HOR)")
 ```
 
-### Yr3 {.tabset .tabset-pills}
+### Year-3 {.tabset .tabset-pills}
 
-#### NOR {-}
+#### (a) NOR {-}
 
 ```{r phi-O2-O3-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -120,10 +120,10 @@ plot_f = function(j) {
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr3 Ocean Survival (NOR)")
+axis_labels("Brood Year", "Year-3 Ocean Survival (NOR)")
 ```
 
-#### HOR {-}
+#### (b) HOR {-}
 
 ```{r phi-O2-O3-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -137,14 +137,14 @@ plot_f = function(j) {
 
 mypar()
 junk = sapply(1:jags_data$nj, plot_f)
-axis_labels("Brood Year", "Yr3 Ocean Survival (HOR)")
+axis_labels("Brood Year", "Year-3 Ocean Survival (HOR)")
 ```
 
 ## Maturity {.tabset .tabset-pills}
 
 ### Pr(Age-3) {.tabset .tabset-pills}
 
-#### NOR {-}
+#### (a) NOR {-}
 
 ```{r psi-O1-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -157,7 +157,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Pr(Mature Age-3|NOR)")
 ```
 
-#### HOR {-}
+#### (b) HOR {-}
 
 ```{r psi-O1-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -176,7 +176,7 @@ axis_labels("Brood Year", "Pr(Mature Age-3|HOR)")
 
 ### Pr(Age-4) {.tabset .tabset-pills}
 
-#### NOR {-}
+#### (a) NOR {-}
 
 ```{r psi-O2-nor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
@@ -189,7 +189,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Pr(Mature Age-4|NOR)")
 ```
 
-#### HOR {-}
+#### (b) HOR {-}
 
 ```{r psi-O2-hor-plots, fig.width = p4_width, fig.height = p4_height}
 plot_f = function(j) {
