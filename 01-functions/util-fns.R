@@ -403,6 +403,6 @@ dev.on = function(file, width, height, format = "png", ppi = 600) {
   
   # open a pdf device if instructed
   if (format == "pdf") {
-    pdf(paste0(file, ".", format), width = width, height = height)
+    grDevices::cairo_pdf(paste0(file, ".", format), width = width, height = height)
   }
 }
