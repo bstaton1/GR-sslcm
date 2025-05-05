@@ -508,7 +508,7 @@ if (length(rhat_3_params) > 0) post_sub_3 = post_subset(post, rhat_3_params_draw
 rhat_hist = function(rhat) {
   # par(mgp = c(2,0.35, 0), tcl = -0.15, xaxs = "i", yaxs = "i", mar = c(3,3,1,1))
   mypar(xaxs = "i", yaxs = "i", mfrow = c(1,1))
-  breaks = seq(min(rhat), max(rhat), length = 20)
+  breaks = seq(min(rhat[rhat != Inf]), max(rhat[rhat != Inf]), length = 20)
   max_count = max(hist(rhat, breaks = breaks, plot = FALSE)$count)
   hist(rhat, breaks = breaks, col = "grey50", border = "white", ylim = c(0, max_count) * 1.025, main = "")
   axis_labels(xlab = "Rhat", ylab = "Frequency")
@@ -571,4 +571,3 @@ Density and trace plots by chain for the `r min(n_max_draw, length(rhat_3_params
 ```{r mcmc-diag-plots-3, fig.width = 11, fig.height = 8.5, eval = length(rhat_3_params) > 0}
 diag_plots(post_sub_3, ".", show_diags = "never")
 ```
-

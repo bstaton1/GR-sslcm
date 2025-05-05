@@ -164,7 +164,7 @@ post_v_prior_pops(post_param = "alpha[pop]", prior_param = "alpha_pr", xlim = c(
 
 ### Mean Ocean Survival (NOR) {.tabset .tabset-pills}
 
-#### Yr1
+#### Year-1
 
 **Prior Used**: `dbeta(`r jags_data$mu_phi_O0_O1[1]`, `r jags_data$mu_phi_O0_O1[2]`)`
 
@@ -174,7 +174,7 @@ post_v_prior_pops(post_param = "mu_phi_O0_O1[origin,pop]", prior_param = "mu_phi
 )
 ```
 
-#### Yr2
+#### Year-2
 
 **Prior Used**: `dbeta(`r jags_data$mu_phi_O1_O2[1]`, `r jags_data$mu_phi_O1_O2[2]`)`
 
@@ -184,7 +184,7 @@ post_v_prior_pops(post_param = "mu_phi_O1_O2[origin,pop]", prior_param = "mu_phi
 )
 ```
 
-#### Yr3
+#### Year-3
 
 **Prior Used**: `dbeta(`r jags_data$mu_phi_O2_O3[1]`, `r jags_data$mu_phi_O2_O3[2]`)`
 
@@ -322,7 +322,7 @@ post_v_prior_origins(post_param = "sig_Lphi_Ma_O0[origin]", prior_param = "sig_L
 )
 ```
 
-### Yr 1 Ocean Survival
+### Year-1 Ocean Survival
 
 **Process Noise Distribution**: Multivariate logit-normal
 
@@ -467,7 +467,7 @@ post_v_prior(post_samps = post_subset(post, "rho_Lphi_Ma_O0[2,1]", matrix = TRUE
 axis_labels("Parameter Value", "Probability")
 ```
 
-### Yr 1 Ocean Survival
+### Year-1 Ocean Survival
 
 **Process Noise Distribution**: Multivariate logit-normal
 
