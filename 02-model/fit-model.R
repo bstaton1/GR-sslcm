@@ -30,8 +30,8 @@ accepted_mcmc = c("vshort", "short", "medium", "long", "vlong")
 
 # set defaults: if running interactively, adjust settings here
 default_args = list(
-  scenario    = "test",
-  mcmc        = "vshort",
+  scenario    = "final",
+  mcmc        = "vlong",
   rmd         = TRUE,
   sim         = FALSE,
   pp_check    = TRUE,
@@ -42,10 +42,10 @@ default_args = list(
 # provides defaults and instructions
 parser = arg_parser("Fit the GR-sslcm to Data", hide.opts = TRUE) |>
   
-  add_argument("scenario", "Name of model run",
+  add_argument("--scenario", "Name of model run, anything you like",
                type = "character", default = default_args$scenario) |> 
   
-  add_argument("--mcmc", paste0("Overall run length, ranging from ~5mins to ~24hrs. Accepted options are: ", knitr::combine_words(accepted_mcmc, before = "'", and = " or ")),
+  add_argument("--mcmc", paste0("Overall run length, ranging from ~5mins to ~18hrs. Accepted options are: ", knitr::combine_words(accepted_mcmc, before = "'", and = " or ")),
                type = "character", default = default_args$mcmc) |> 
   
   add_argument("--sim", "Perform simulation as a validation?",
