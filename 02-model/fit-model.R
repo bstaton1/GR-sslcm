@@ -33,6 +33,7 @@ default_args = list(
   scenario    = "final",
   mcmc        = "vlong",
   rmd         = TRUE,
+  ms          = TRUE,
   sim         = FALSE,
   pp_check    = TRUE,
   lppd        = FALSE
@@ -53,6 +54,9 @@ parser = arg_parser("Fit the GR-sslcm to Data", hide.opts = TRUE) |>
   
   add_argument("--rmd", "Render Rmarkdown output?",
                type = "logical", default = default_args$rmd, short = "rmd") |> 
+  
+  add_argument("--ms", "Build manuscript content?",
+               type = "logical", default = default_args$ms, short = "ms") |> 
   
   add_argument("--pp_check", "Include posterior predictive check calculations?",
                type = "logical", default = default_args$pp_check, short = "pp_check") |> 
@@ -513,6 +517,11 @@ if (args$rmd & args$sim) {
   
   # set the working dir back
   setwd("../")
+}
+
+# build the manuscript content (figures and tables) if requested
+if (args$ms) {
+  source("03-post-process/ms-content/run-all-ms-content.R")
 }
 
 ##### STEP 10: ALL DONE #####
