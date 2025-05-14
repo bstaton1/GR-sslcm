@@ -80,6 +80,8 @@ Either option will fit the state-space model, build the output summary file, and
 >Rscript 02-model/fit-model.R --mcmc vshort
 >```
 >_The last option should take only several minutes for MCMC and render the output in under an hour, however, because the chains will be far from converged, **it is intended for testing the code only**._
+>
+>_If using the RStudio and `source(02-model/fit-model.R)` approach, these defaults can be changed by altering the `default_args` object found near the top of the script._ 
 
 ## Dependencies: JAGS and R
 

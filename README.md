@@ -69,6 +69,8 @@ Either option will fit the state-space model, build the output summary file, and
 > ```
 >
 > *The last option should take only several minutes for MCMC and render the output in under an hour, however, because the chains will be far from converged, **it is intended for testing the code only**.*
+>
+> *If using the RStudio and `source(02-model/fit-model.R)` approach, these defaults can be changed by altering the `default_args` object found near the top of the script.*
 
 ## Dependencies: JAGS and R
 
@@ -125,7 +127,7 @@ pkgs[!pkgs %in% rownames(installed.packages())]
     ##  collate  English_United States.utf8
     ##  ctype    English_United States.utf8
     ##  tz       America/Los_Angeles
-    ##  date     2025-05-13
+    ##  date     2025-05-14
     ##  pandoc   3.1.11 @ C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools/ (via rmarkdown)
     ## 
     ## ─ Packages ───────────────────────────────────────────────────────────────────
