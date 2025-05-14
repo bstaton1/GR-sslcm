@@ -7,9 +7,9 @@ editor_options:
 
 Figures in this section show the consistencies between the `r colorize("posterior", main_cols["model"])` (mean with 95% equal-tailed credible interval) and the `r colorize("data", main_cols["data"])` (point estimate with approximate 95% confidence interval illustrating the magnitude of assumed observation error).
 
-## Abundance Data {.tabset .tabset-dropdown}
+## Abundance Data {.tabset .tabset-pills}
 
-### Fall Parr Abundance
+### Fall Parr
 
 ```{r fall-trap-N-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -25,7 +25,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Fall Parr Abundance (1000s)")
 ```
 
-### Spring Smolt Abundance
+### Spring Smolt
 
 ```{r spring-trap-N-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -41,7 +41,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Brood Year", "Spring Smolt Abundance (1000s)")
 ```
 
-### Adult Return Abundance
+### Adult Return
 
 ```{r adult-N-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population
@@ -58,7 +58,7 @@ junk = sapply(1:jags_data$nj, plot_f)
 axis_labels("Return Year", "Adult Return Abundance (1000s)")
 ```
 
-## Survival Data {.tabset .tabset-dropdown}
+## Survival Data {.tabset .tabset-pills}
 
 ### Summer Parr $\rightarrow$ LGR
 
@@ -93,6 +93,8 @@ axis_labels("Brood Year", "Fall Parr \u2192 LGR Survival")
 ```
 
 ### Winter Parr $\rightarrow$ LGR
+
+These data are not collected for the MIN population.
 
 ```{r winter-surv-fit, fig.width = p4_width, fig.height = p4_height}
 # function to create the plot for one population

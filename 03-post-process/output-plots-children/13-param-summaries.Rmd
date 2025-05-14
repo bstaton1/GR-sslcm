@@ -5,6 +5,8 @@ editor_options:
 
 # Parameter Summaries {.tabset .tabset-dropdown}
 
+Boxplots display the posterior median as the heavy line, central 50% CRL as the box boundaries, and central 95% CRL as the whisker boundaries.
+
 ```{r my-boxplot-function}
 my_boxplot = function(params, ylab = NULL, ticklabs = pops, ylim = NULL, boxfill = tran_cols["model"], border = main_cols["model"], las = 3, label_text = NULL, ...) {
   # extract posterior samples and rename them
@@ -185,7 +187,7 @@ my_boxplot(paste0("rho_Lpsi_O2", vcov_inds), "Correlation", ticklabs = vcov_labe
 
 ## Ocean Survival {.tabset .tabset-pills}
 
-### Year 1 {.tabset .tabset-pills}
+### Year-1 {.tabset .tabset-pills}
 
 #### Means
 
@@ -204,7 +206,7 @@ my_boxplot(sub_index("kappa_phi_O0_O1[pop]", pop = "."), ylab = "AR(1) Coef.", y
 my_boxplot(paste0("rho_Lphi_O0_O1", vcov_inds), ticklabs = vcov_labels, ylab = "Correlation", ylim = c(-1,1)); ref_line(h = 0)
 ```
 
-### Year 2 {.tabset .tabset-pills}
+### Year-2 {.tabset .tabset-pills}
 
 ```{r yr2-ocean-bxp, fig.width = p2_width, fig.height = p2_height}
 mypar(mfrow = c(1,2), mar = bp_mar, oma = bp_oma)
@@ -212,7 +214,7 @@ my_boxplot(sub_index("mu_phi_O1_O2[origin,.]", origin = o_nor), label_text = "NO
 my_boxplot(sub_index("mu_phi_O1_O2[origin,pop]", origin = o_hor, pop = c(1,2,4)), label_text = "HOR", ticklabs = pops[c(1,2,4)], ylim = ylim_01, ylab = "Average Survival")
 ```
 
-### Year 3 {.tabset .tabset-pills}
+### Year-3 {.tabset .tabset-pills}
 
 ```{r yr3-ocean-bxp, fig.width = p2_width, fig.height = p2_height}
 mypar(mfrow = c(1,2), mar = bp_mar, oma = bp_oma)

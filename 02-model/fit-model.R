@@ -30,9 +30,10 @@ accepted_mcmc = c("vshort", "short", "medium", "long", "vlong")
 
 # set defaults: if running interactively, adjust settings here
 default_args = list(
-  scenario    = "test",
-  mcmc        = "vshort",
+  scenario    = "final",
+  mcmc        = "vlong",
   rmd         = TRUE,
+  ms          = TRUE,
   sim         = FALSE,
   pp_check    = TRUE,
   lppd        = FALSE
@@ -42,10 +43,10 @@ default_args = list(
 # provides defaults and instructions
 parser = arg_parser("Fit the GR-sslcm to Data", hide.opts = TRUE) |>
   
-  add_argument("scenario", "Name of model run",
+  add_argument("--scenario", "Name of model run, anything you like",
                type = "character", default = default_args$scenario) |> 
   
-  add_argument("--mcmc", paste0("Overall run length, ranging from ~5mins to ~24hrs. Accepted options are: ", knitr::combine_words(accepted_mcmc, before = "'", and = " or ")),
+  add_argument("--mcmc", paste0("Overall run length, ranging from ~5mins to ~18hrs. Accepted options are: ", knitr::combine_words(accepted_mcmc, before = "'", and = " or ")),
                type = "character", default = default_args$mcmc) |> 
   
   add_argument("--sim", "Perform simulation as a validation?",
@@ -53,6 +54,9 @@ parser = arg_parser("Fit the GR-sslcm to Data", hide.opts = TRUE) |>
   
   add_argument("--rmd", "Render Rmarkdown output?",
                type = "logical", default = default_args$rmd, short = "rmd") |> 
+  
+  add_argument("--ms", "Build manuscript content?",
+               type = "logical", default = default_args$ms, short = "ms") |> 
   
   add_argument("--pp_check", "Include posterior predictive check calculations?",
                type = "logical", default = default_args$pp_check, short = "pp_check") |> 
@@ -513,6 +517,11 @@ if (args$rmd & args$sim) {
   
   # set the working dir back
   setwd("../")
+}
+
+# build the manuscript content (figures and tables) if requested
+if (args$ms) {
+  source("03-post-process/ms-content/run-all-ms-content.R")
 }
 
 ##### STEP 10: ALL DONE #####

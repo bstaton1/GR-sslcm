@@ -1,7 +1,8 @@
 ---
-title: "Output Summary"
-subtitle: "`r paste0('Model Scenario: ', params$scenario)`" 
-date: "`r paste0('Date Rendered: ', Sys.Date())`"
+title: '<span style="font-variant: small-caps;"><b><big>Supplement B</big></b></span>'
+subtitle: "<small>_A state-space model to quantify density dependence, demographic heterogeneity, and spatial synchrony in Grande Ronde Basin Chinook salmon populations_</small>"
+author: |
+  | <small>**Authors**: B.A. Staton <a href="https://orcid.org/0000-0002-2342-3482"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, P.P. Gibson <a href="https://orcid.org/0000-0002-9751-7895"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, M. Liermann <a href="https://orcid.org/0009-0004-5019-1471"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, C. Justice <a href="https://orcid.org/0000-0003-0663-5536"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, M.J. Kaylor <a href="https://orcid.org/0000-0001-5331-9830"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, R. Sharma <a href="https://orcid.org/0000-0002-3818-9393"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, and S.M. White <a href="https://orcid.org/0000-0003-4918-6865"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a></small>
 output: 
   bookdown::html_document2:
     toc: true
@@ -10,7 +11,7 @@ output:
 params:
   scenario:
     label: "Scenario"
-    value: "base_vlong"
+    value: "final_vlong"
     input: text
   thin_percent:
     label: "Proportion of Posterior Samples to Retain?"
@@ -70,6 +71,23 @@ params:
 editor_options: 
   chunk_output_type: console
 ---
+
+```{css, echo = FALSE}
+h1 {
+  color: black;
+  background-color: lightgrey;
+  font-size: 2.75em;
+  font-variant: small-caps;
+  font-weight: 700;
+  text-decoration: underline;
+  border-radius: 5px;
+  border-color: darkslategrey;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-top: 5px;
+}
+```
 
 ```{r directories, include = FALSE}
 # set root directory to the project directory: one level up from this location

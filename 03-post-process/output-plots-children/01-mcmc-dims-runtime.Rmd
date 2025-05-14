@@ -5,6 +5,10 @@ editor_options:
 
 # MCMC Dimensions & Run Time
 
+**Model Scenario Name**: ``r params$scenario``
+
+The table below displays MCMC sampling dimensions and run time.
+
 ```{r mcmc-dims-and-runtime}
 
 ## MCMC dimensions ##
@@ -60,7 +64,7 @@ groups = c(rep(1, nrow(df_dims)), rep(2, nrow(df_time)))
 rownames(df) = NULL
 
 # render the table
-kable(df, format.args = list(big.mark = ","), caption = "MCMC sampling dimensions and run time.", col.names = c(" ", " "), escape = FALSE) |>
+kable(df, format.args = list(big.mark = ","), col.names = c(" ", " "), escape = FALSE) |>
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "condensed")) |>
   group_rows("Dimensions", start_row = min(which(groups == 1)), end_row = max(which(groups == 1))) |>
   group_rows("Per Chain", start_row = 1, end_row = 3, escape = FALSE) |>

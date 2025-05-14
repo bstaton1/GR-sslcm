@@ -1,0 +1,154 @@
+---
+title: ""
+output: 
+  github_document:
+    pandoc_args: ["--wrap=preserve"]
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+> This repository stores the code code used to fit the model and compile the output presented in the manuscript _A state-space model to quantify density dependence, demographic heterogeneity, and spatial synchrony in Grande Ronde Basin Chinook salmon populations_ by B.A. Staton, P.P. Gibson, M. Liermann, C. Justice, M.J. Kaylor, R. Sharma, and S.M. White, which is currently undergoing peer review.
+
+[![ArticleDOI](https://img.shields.io/badge/Article-PLACEHOLDER-blue?logo=doi&logoColor=f5f5f5)]()  
+[![GitHub Repo Archive DOI](https://img.shields.io/badge/GitHub%20Repo%20Archive-PLACEHOLDER-blue?logo=github)]()
+
+## Repo Organization
+
+```{r subdir-table}
+tab = matrix(c(
+  "`00-data/`",          "Scripts for compiling the data files from their raw format in the [GR-sslcm-data](https://github.com/gibsonpp/GR-sslcm-data) repository for model fitting.",
+  "`01-functions/`",     "Scripts housing functions used by scripts throughout the repository, organized by those for data preparation, plotting, MCMC initialization, and miscellaneous utility tasks.",
+  "`02-model/`",         "Scripts to fit the model as well as the JAGS model code. MCMC samples are saved here after model fitting.",
+  "`03-post-process.`",  "Scripts to analyze the model output, including those to produce Rmarkdown files and the figures/tables presented in the manuscript.",
+  "`99-admin/`",         "Notes from various meetings discussing model development and preliminary results."
+), ncol = 2, byrow = TRUE)
+
+knitr::kable(tab, "markdown", col.names = c("Subdirectory", "Description"))
+
+```
+
+The additional script include `00-packages.R` loads most packages used by other scripts in this repository.
+
+## Reproducibility
+
+The output file from running the model is too large to track in a git repo, so this code will need to be executed locally to reproduce the output presented in the manuscript and supplement.
+
+First, download the contents of this repository and the data repository ([GR-sslcm-data](https://github.com/gibsonpp/GR-sslcm-data)), and unzip them such that they are in the same parent directory (called whatever you like), as follows:
+
+```bash
+├── parent
+    ├── GR-sslcm
+    ├── GR-sslcm-data
+```
+
+Then, navigate to the `GR-sslcm` directory and from the command line, execute:
+
+```bash
+Rscript 02-model/fit.model.R
+```
+
+To see the help documentation regarding the various arguments and their settings, execute:
+
+```bash
+Rscript 02-model/fit.model.R --help
+```
+
+If you do not have access to a command line, the model can still be executed from within [RStudio](https://posit.co/download/rstudio-desktop/). Open the `GR-sslcm.Rproj` and execute:
+
+```R
+source("02-model/fit-model.R")
+```
+
+Either option will fit the state-space model, build the output summary file, and the manuscript figures and tables using the same configurations as presented in the manuscript. The supplement will be a `.html` file in the `03-post-process` subdirectory, and the figures/tables will be saved in the `03-post-process/ms-content` subdirectory.
+
+>_The default is to use 4 CPU cores to run 150,000 MCMC iterations per each of the 4 chains. 
+>This takes approximately 18 hours for MCMC and an additional several hours for post-processing on a modern laptop computer (RAM: 64GB; Processor: 20 threads, 5.40 GHz Max Turbo, 24 MB Cache).
+>Similar results to those we present can be obtained with fewer MCMC iterations but lower convergence, for example:_
+>```bash
+>Rscript 02-model/fit-model.R --mcmc medium
+>```
+>_This should take approximately a third of the time, other options would be_:
+>```bash
+>Rscript 02-model/fit-model.R --mcmc short
+>```
+>_or even_:
+>```bash
+>Rscript 02-model/fit-model.R --mcmc vshort
+>```
+>_The last option should take only several minutes for MCMC and render the output in under an hour, however, because the chains will be far from converged, **it is intended for testing the code only**._
+>
+>_If using the RStudio and `source(02-model/fit-model.R)` approach, these defaults can be changed by altering the `default_args` object found near the top of the script._ 
+
+## Dependencies: JAGS and R
+
+Program JAGS was used to run the MCMC for fitting the state-space model (v4.3.1 at the time of manuscript publication). It can be downloaded [here](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/) and use all defaults for installation.
+
+Program R was used to perform all analyses (v.4.4.1 at the time of manuscript publication). It can be downloaded [here](https://www.r-project.org/) and use all defaults for installation.
+
+The table below shows all R packages (and their versions at time of publication) that are specifically called (typically with `pkg::fn()`) or loaded (using `library(pkg)`).
+
+```{r pkg-table}
+
+# detect all packages called specifically
+used_pkgs = renv::dependencies(quiet = TRUE)$Package |> 
+  unique() |> 
+  sort()
+
+# exclude any packages you don't wish to include in the table here
+# e.g., anything used solely in building this Rmd
+used_pkgs = used_pkgs[!used_pkgs %in% c("renv", "sessioninfo")]
+
+# get the version of each package
+versions = sapply(used_pkgs, function(pkg) paste(packageVersion(pkg), collapse = "."))
+
+# get the description (i.e., title field of DESCRIPTION file) of each package
+desc = sapply(used_pkgs, function(pkg) paste(packageDescription(pkg)$Title, collapse = ".")) |> 
+  stringr::str_replace_all("\\n", " ")
+
+# build a matrix
+tab = cbind(pkg = used_pkgs, version = versions, desc = desc)
+rownames(tab) = NULL
+
+# build package name as a markdown link, with a URL placeholder
+tab[,"pkg"] = paste0("[`", tab[,"pkg"], "`](URL)")
+
+# function to get the URL that will replace the placeholder
+get_url = function(pkg) {
+  paste0("https://CRAN.R-project.org/package=", pkg)
+}
+
+# get the URLs for each package and perform the replacement
+tab[,"pkg"] = stringr::str_replace(tab[,"pkg"], "URL", sapply(used_pkgs, get_url))
+
+# return the kable
+kableExtra::kbl(tab, "markdown", col.names = c("Package", "Version", "Description"), align = "lrl")
+```
+
+Running the code below will display the packages not already installed on your machine:
+
+```{r, eval = TRUE, echo = FALSE}
+check_code = paste0("```R\npkgs <- c(", knitr::combine_words(used_pkgs, before = '"', and = "", sep = ', '), ")\npkgs[!pkgs %in% rownames(installed.packages())]\n```")
+```
+
+`r check_code`
+
+## Session Info
+
+<details>
+<summary><b>Click to Expand/Hide Session Info</b></summary>
+
+```{r message = FALSE, warning = FALSE}
+junk = suppressPackageStartupMessages({
+  sapply(used_pkgs, library, character.only = TRUE)
+})
+```
+
+```{r}
+sessioninfo::session_info()
+```
+
+</details>
