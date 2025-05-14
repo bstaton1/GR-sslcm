@@ -2,7 +2,7 @@ This subdirectory contains scripts to summarize, analyze, and visualize the stat
 The content in this subdirectory is automatically built when executing:
 
 ```bash
-Rscript 02-model/fit-model.R --sim TRUE
+Rscript 02-model/fit-model.R
 ```
 
 To disable building this content and only run MCMC, instead execute:
