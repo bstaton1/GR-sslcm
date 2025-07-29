@@ -5,13 +5,13 @@ proj_dir = this.path::this.proj()
 this_dir = file.path(proj_dir, "03-post-process/ms-content")
 
 # scenario name
-if (!exists("scenario")) scenario = "test_vshort"
+if (!exists("scenario")) scenario = "final_vlong"
 
 # set the proportion of MCMC samples to retain
 keep_percent = 1
 
 # set the file extension of figures
-if (!exists("fig_type")) fig_type = "png"
+if (!exists("fig_type")) fig_type = "pdf"
 
 # load the model info
 source(file.path(this_dir, "load-model-info.R"))
