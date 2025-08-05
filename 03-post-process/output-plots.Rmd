@@ -3,6 +3,9 @@ title: '<span style="font-variant: small-caps;"><b><big>Supplement B</big></b></
 subtitle: "<small>_A state-space model to quantify density dependence, demographic heterogeneity, and spatial synchrony in Grande Ronde Basin Chinook salmon populations_</small>"
 author: |
   | <small>**Authors**: B.A. Staton <a href="https://orcid.org/0000-0002-2342-3482"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, P.P. Gibson <a href="https://orcid.org/0000-0002-9751-7895"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, M. Liermann <a href="https://orcid.org/0009-0004-5019-1471"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, C. Justice <a href="https://orcid.org/0000-0003-0663-5536"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, M.J. Kaylor <a href="https://orcid.org/0000-0001-5331-9830"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, R. Sharma <a href="https://orcid.org/0000-0002-3818-9393"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a>, and S.M. White <a href="https://orcid.org/0000-0003-4918-6865"><img src="https://orcid.filecamp.com/static/thumbs/03CaAkr1LaBp5PRz-small.png"/></a></small>
+  | [![ArticleDOI](https://img.shields.io/badge/Article-10.1016/j.ecolmodel.2025.111289-blue?logo=doi&logoColor=f5f5f5)](https://www.doi.org/10.1016/j.ecolmodel.2025.111289)    
+  | [![CodeDOI](https://img.shields.io/badge/Code%20Archive-PLACEHOLDER-blue?logo=github&logoColor=f5f5f5)](https://doi.org/PLACEHOLDER)  
+  | [![CodeDOI](https://img.shields.io/badge/Data%20Archive-PLACEHOLDER-blue?logo=github&logoColor=f5f5f5)](https://doi.org/PLACEHOLDER)  
 output: 
   bookdown::html_document2:
     toc: true
