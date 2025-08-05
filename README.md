@@ -1,8 +1,9 @@
 
-> This repository stores the code code used to fit the model and compile the output presented in the manuscript *A state-space model to quantify density dependence, demographic heterogeneity, and spatial synchrony in Grande Ronde Basin Chinook salmon populations* by B.A. Staton, P.P. Gibson, M. Liermann, C. Justice, M.J. Kaylor, R. Sharma, and S.M. White, which is currently undergoing peer review.
+> This repository stores the code used to fit the model and compile the output presented in the manuscript *A state-space model to quantify density dependence, demographic heterogeneity, and spatial synchrony in Grande Ronde Basin Chinook salmon populations* by B.A. Staton, P.P. Gibson, M. Liermann, C. Justice, M.J. Kaylor, R. Sharma, and S.M. White, which has been accepted for publication in the journal *Ecological Modelling*.
 
-[![ArticleDOI](https://img.shields.io/badge/Article-PLACEHOLDER-blue?logo=doi&logoColor=f5f5f5)]()  
-[![GitHub Repo Archive DOI](https://img.shields.io/badge/GitHub%20Repo%20Archive-PLACEHOLDER-blue?logo=github)]()
+[![ArticleDOI](https://img.shields.io/badge/Article-10.1016/j.ecolmodel.2025.111289-blue?logo=doi&logoColor=f5f5f5)](https://www.doi.org/10.1016/j.ecolmodel.2025.111289)  
+[![GitHub Code Repo Archive DOI](https://img.shields.io/badge/GitHub%20Code%20Repo%20Archive-PLACEHOLDER-blue?logo=github)]()  
+[![GitHub Data Repo Archive DOI](https://img.shields.io/badge/GitHub%20Data%20Repo%20Archive-PLACEHOLDER-blue?logo=github)]()
 
 ## Repo Organization
 
@@ -127,7 +128,7 @@ pkgs[!pkgs %in% rownames(installed.packages())]
     ##  collate  English_United States.utf8
     ##  ctype    English_United States.utf8
     ##  tz       America/Los_Angeles
-    ##  date     2025-05-14
+    ##  date     2025-08-05
     ##  pandoc   3.1.11 @ C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools/ (via rmarkdown)
     ## 
     ## ─ Packages ───────────────────────────────────────────────────────────────────

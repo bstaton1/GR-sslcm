@@ -431,7 +431,7 @@ dev.on(file.path(this_dir, "relationships"), width = 7.2, height = 9, format = f
 make_layout(nrow = 6, ncol = 4, show = FALSE)
 
 # graphical parameters
-par(mar = c(0.5,1.5,0,0), oma = c(0,2,1.5,1), tcl = 0, mgp = c(200,0.05,0),
+par(mar = c(0.5,1.5,0,0), oma = c(0,2,1.5,1), tcl = -0.1, mgp = c(200,0.05,0),
     lend = "square", ljoin = "mitre")
 
 # egg to parr survival vs. egg density

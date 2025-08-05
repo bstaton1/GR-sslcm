@@ -414,39 +414,62 @@ ifun = function(x) x
 dev.on(file.path(this_dir, "obs-v-fit"), height = 7, width = 7.2, format = fig_type)
 
 # graphical parameters
-mypar(mfrow = c(1,1), oma = c(1.5,1.5,0,1.5), col.axis = "black", mar = c(1,0.75,0.5,0.25))
+mypar(mfrow = c(1,1), oma = c(2,2,0,0.5), col.axis = "black", mar = c(0.5,0.75,0.25,0.25), tcl = -0.1)
 
 # set up the layout
-r1 = rep(1:3, each = 4); r2 = rep(4:9, each = 2); r3 = rep(10:13, each = 3); r4 = rep(14:17, each = 3)
-layout(rbind(r1, r2, r3, r4))
+t1 = rep(1, 12)
+r1 = rep(2:4, each = 4)
+t2 = rep(5, 12)
+r2 = rep(6:11, each = 2)
+t3 = rep(12, 12)
+r3 = rep(13:16, each = 3)
+t4 = rep(17, 12)
+r4 = rep(18:21, each = 3)
+
+m = rbind(t1, r1, t2, r2, t3, r3, t4, r4)
+layout(m, heights = rep(c(0.2,1), 4))
+
+# view the layout
+# layout.show(max(m))
+
+# function to add a row title
+title_panel = function(text) {
+  par(mar = c(0,0,0,0))
+  plot(1,1, type = "n", xlim = c(0,1), ylim = c(0,1), axes = FALSE); text(x = 0.5, y = 0.25, text, cex = 1.4, font = 2)
+  par(mar = c(0.5,0.75,0.25,0.25))
+}
 
 # abundance plots
+title_panel("Abundance Data")
 plot_f(plot_dat[["Pa_fall"]], ifun, "(a) Fall Trap Passage")
 plot_f(plot_dat[["Mb_spring"]], ifun, "(b) Spring Trap Passage")
-plot_f(plot_dat[["Ra_tot"]], ifun, "(c) Adult Return to River"); mtext(side = 4, text = "Abundance", outer = FALSE, line = 0.55)
+plot_f(plot_dat[["Ra_tot"]], ifun, "(c) Adult Return to River")
 
 # survival plots
+title_panel("Survival Data")
 plot_f(plot_dat[["phi_Pb_Ma"]], ifun, "(d) Summer \u2192 LGR", TRUE)
 plot_f(plot_dat[["phi_Pa_Ma_fall"]], ifun, "(e) Fall \u2192 LGR", TRUE)
 plot_f(plot_dat[["phi_Pa_Ma_winter"]], ifun, "(f) Winter \u2192 LGR", TRUE)
-plot_f(plot_dat[["phi_Mb_Ma"]], ifun, "(g) Spring \u2192 LGR", TRUE)#; mtext(side = 4, text = "Survival", outer = FALSE, line = 0.75)
+plot_f(plot_dat[["phi_Mb_Ma"]], ifun, "(g) Spring \u2192 LGR", TRUE)
 plot_f(plot_dat[["phi_Ma_O0"]], ifun, "(h) LGR \u2192 BON", TRUE)
-plot_f(plot_dat[["phi_Rb_Ra"]], ifun, "(i) BON \u2192 LGR", TRUE); mtext(side = 4, text = "Survival", outer = FALSE, line = 0.55)
+plot_f(plot_dat[["phi_Rb_Ra"]], ifun, "(i) BON \u2192 LGR", TRUE)
 
 # composition plots
+title_panel("Weir Composition Data")
 plot_f(plot_dat[["p_Ra_age3"]], ifun, "(j) Proportion Age-3")
 plot_f(plot_dat[["p_Ra_age4"]], ifun, "(k) Proportion Age-4")
 plot_f(plot_dat[["p_Ra_age5"]], ifun, "(l) Proportion Age-5")
-plot_f(plot_dat[["p_Ra_nor"]], ifun, "(m) Proportion NOR"); mtext(side = 4, text = "Weir Composition", outer = FALSE, line = 0.55)
+plot_f(plot_dat[["p_Ra_nor"]], ifun, "(m) Proportion NOR")
 
 # composition plots
+title_panel("Carcass Composition Data")
 plot_f(plot_dat[["p_Sa_prime_age3"]], ifun, "(n) Proportion Age-3")
 plot_f(plot_dat[["p_Sa_prime_age4"]], ifun, "(o) Proportion Age-4")
 plot_f(plot_dat[["p_Sa_prime_age5"]], ifun, "(p) Proportion Age-5")
-plot_f(plot_dat[["p_Sa_prime_nor"]], ifun, "(q) Proportion NOR"); mtext(side = 4, text = "Carcass Composition", outer = FALSE, line = 0.55)
+plot_f(plot_dat[["p_Sa_prime_nor"]], ifun, "(q) Proportion NOR")
 
 # axis labels
-axis_labels("Observed Value", "Fitted Value", yline = 0.25)
+axis_labels("Observed Value", "Fitted Value", xline = 1, yline = 0.5)
 
 # close the device
 dev.off()

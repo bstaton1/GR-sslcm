@@ -37,7 +37,7 @@ rho_labels = c(
 dev.on(file.path(this_dir, "rho-compare"), width = 3.4, height = 3.4, format = fig_type)
 
 # set up empty plotting region
-mypar(mar = c(2,6,0.75,0.75), yaxs = "i", mfrow = c(1,1), oma = c(0,0,0,0), mgp = c(2,0.1,0), col.axis = "black", cex.axis = 0.75)
+mypar(mar = c(2,6,0.75,0.75), yaxs = "i", mfrow = c(1,1), oma = c(0,0,0,0), mgp = c(2,0.1,0), col.axis = "black", cex.axis = 0.75, tcl = -0.1)
 mp = barplot(rho_mean_out[,"mean"], 
              horiz = TRUE, xlim = c(-1,1),
              names.arg = rho_labels[rownames(rho_mean_out)],
