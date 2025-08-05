@@ -21,7 +21,7 @@ pred_beta_summ = apply(pred_beta, 2, function(x) c(mean = mean(x), quantile(x, c
 dev.on(file.path(this_dir, "capacity-v-wul"), width = 3.4, height = 3.4, format = fig_type)
 
 # empty plot with correct labeling/dimensions
-mypar(mfrow = c(1,1), col.axis = "black")
+mypar(mfrow = c(1,1), col.axis = "black", tcl = -0.1)
 plot(1,1, type = "n", xlim = range(wul_seq),
      # ylim = c(0, max(beta_ests["97.5%",], pred_beta_summ["97.5%",])),
      ylim = c(0, 3000) * 1000,

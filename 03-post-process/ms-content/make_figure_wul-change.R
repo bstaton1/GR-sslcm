@@ -247,7 +247,7 @@ plot_f = function(j, start, out_type) {
 
 # open a graphics device
 dev.on(file.path(this_dir, "wul-change"), width = 7.2, height = 6, format = fig_type)
-mypar(mfrow = c(3,4), oma = c(2.5,2.5,1,0), col.axis = "black")
+mypar(mfrow = c(3,4), oma = c(2.5,2.5,1,0), col.axis = "black", tcl = -0.1)
 junk = sapply(1:4, function(j) plot_f(j, "E", "phi"))
 junk = sapply(1:4, function(j) plot_f(j, "Pb", "phi"))
 junk = sapply(1:4, function(j) plot_f(j, "Pb", "Ma"))

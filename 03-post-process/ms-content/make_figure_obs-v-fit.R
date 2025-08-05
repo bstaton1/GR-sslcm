@@ -414,7 +414,7 @@ ifun = function(x) x
 dev.on(file.path(this_dir, "obs-v-fit"), height = 7, width = 7.2, format = fig_type)
 
 # graphical parameters
-mypar(mfrow = c(1,1), oma = c(2,2,0,0.5), col.axis = "black", mar = c(0.5,0.75,0.25,0.25))
+mypar(mfrow = c(1,1), oma = c(2,2,0,0.5), col.axis = "black", mar = c(0.5,0.75,0.25,0.25), tcl = -0.1)
 
 # set up the layout
 t1 = rep(1, 12)

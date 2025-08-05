@@ -31,12 +31,12 @@ f_horiz = function(ests1, ests2, lim, label) {
     points(x1, mp, pch = pch[1], col = "white", bg = "black", cex = cex_main, lwd = 1.5)
     
     # draw axis
-    omgp = par("mgp"); nmgp = omgp; nmgp[2] = 0.15
-    par(mgp = nmgp)
+    omgp = par("mgp"); nmgp = omgp; nmgp[2] = 0.15; otcl = par("tcl")
+    par(mgp = nmgp, tcl = 0)
     usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
     segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
     axis(side = 2, at = mp, labels = tick_labels, las = 1)
-    par(mgp = omgp)
+    par(mgp = omgp, tcl = otcl)
     
   } else {
     # prepare the second group of estimates if supplied
@@ -61,12 +61,12 @@ f_horiz = function(ests1, ests2, lim, label) {
     points(x2, mp2, pch = pch[2], cex = cex_main, bg = "black", col = "white", lwd = 1.5)
     
     # draw axis
-    omgp = par("mgp"); nmgp = omgp; nmgp[2] = 0.15
-    par(mgp = nmgp)
+    omgp = par("mgp"); nmgp = omgp; nmgp[2] = 0.15; otcl = par("tcl")
+    par(mgp = nmgp, tcl = 0)
     usr = par("usr"); xdiff = diff(usr[1:2]); ydiff = diff(usr[3:4])
     segments(usr[1], usr[3], usr[1], usr[4], xpd = TRUE, col = par("col.axis"))
     axis(side = 2, at = (mp1 + mp2)/2, labels = tick_labels, las = 1)
-    par(mgp = omgp)
+    par(mgp = omgp, tcl = otcl)
   }
   
   # draw panel label
@@ -99,7 +99,7 @@ phi_O0_O1_hor[,j_min] = NA
 dev.on(file.path(this_dir, "surv-compare"), width = 3.4, height = 8, format = fig_type)
 
 # graphical parameters/layout
-mypar(mfrow = c(1,1), oma = c(1.5,1,0,1), col.axis = "black")
+mypar(mfrow = c(1,1), oma = c(1.5,1,0,1), col.axis = "black", tcl = -0.1)
 layout(matrix(1:5, ncol = 1), height = c(1,1,1,0.5,1))
 
 # egg survival panel
@@ -142,7 +142,7 @@ psi_O2_hor[,j_min] = NA
 dev.on(file.path(this_dir, "apportion-compare"), width = 3.4, height = 8 * (3/4.5), format = fig_type)
 
 # set graphical parameters/layout
-mypar(mfrow = c(1,1), oma = c(1.5,1,0,1), col.axis = "black")
+mypar(mfrow = c(1,1), oma = c(1.5,1,0,1), col.axis = "black", tcl = -0.1)
 layout(matrix(1:3, ncol = 1), height = c(1,1,1))
 
 # migratory strategy apportionment
